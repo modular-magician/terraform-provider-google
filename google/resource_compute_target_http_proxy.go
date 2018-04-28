@@ -187,13 +187,23 @@ func resourceComputeTargetHttpProxyUpdate(d *schema.ResourceData, meta interface
 	d.Partial(true)
 
 	if d.HasChange("url_map") {
+		descriptionProp, err := expandComputeTargetHttpProxyDescription(d.Get("description"), d, config)
+		if err != nil {
+			return err
+		}
+		nameProp, err := expandComputeTargetHttpProxyName(d.Get("name"), d, config)
+		if err != nil {
+			return err
+		}
 		urlMapProp, err := expandComputeTargetHttpProxyUrlMap(d.Get("url_map"), d, config)
 		if err != nil {
 			return err
 		}
 
 		obj := map[string]interface{}{
-			"urlMap": urlMapProp,
+			"description": descriptionProp,
+			"name":        nameProp,
+			"urlMap":      urlMapProp,
 		}
 		url, err = replaceVars(d, config, "https://www.googleapis.com/compute/v1/projects/{{project}}/targetHttpProxies/{{name}}/setUrlMap")
 		if err != nil {

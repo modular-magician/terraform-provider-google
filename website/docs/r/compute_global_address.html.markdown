@@ -44,25 +44,25 @@ The following arguments are supported:
 
 * `name` -
   (Required)
-  Name of the resource. Provided by the client when the resource is
-created. The name must be 1-63 characters long, and comply with
-RFC1035.  Specifically, the name must be 1-63 characters long and
-match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?` which means
-the first character must be a lowercase letter, and all following
-characters must be a dash, lowercase letter, or digit, except the last
-character, which cannot be a dash.
+    Name of the resource. Provided by the client when the resource is
+  created. The name must be 1-63 characters long, and comply with
+  RFC1035.  Specifically, the name must be 1-63 characters long and
+  match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?` which means
+  the first character must be a lowercase letter, and all following
+  characters must be a dash, lowercase letter, or digit, except the last
+  character, which cannot be a dash.
 
 
 - - -
 
 * `description` -
   (Optional)
-  An optional description of this resource.
-Provide this property when you create the resource.
+    An optional description of this resource.
+  Provide this property when you create the resource.
 * `ip_version` -
   (Optional)
-  The IP Version that will be used by this address. Valid options are
-IPV4 or IPV6. The default value is IPV4.
+    The IP Version that will be used by this address. Valid options are
+  IPV4 or IPV6. The default value is IPV4.
 * `project` (Optional) The ID of the project in which the resource belongs.
     If it is not provided, the provider project is used.
 
@@ -72,9 +72,9 @@ IPV4 or IPV6. The default value is IPV4.
 In addition to the arguments listed above, the following computed attributes are exported:
 
 * `address` -
-  The static external IP address represented by this resource.
+    The static external IP address represented by this resource.
 * `creation_timestamp` -
-  Creation timestamp in RFC3339 text format.
+    Creation timestamp in RFC3339 text format.
 * `self_link` - The URI of the created resource.
 
 

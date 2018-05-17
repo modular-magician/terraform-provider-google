@@ -50,7 +50,6 @@ func resourceComputeHttpsHealthCheck() *schema.Resource {
 			"check_interval_sec": {
 				Type:     schema.TypeInt,
 				Optional: true,
-				Default:  5,
 			},
 			"description": {
 				Type:     schema.TypeString,
@@ -59,7 +58,6 @@ func resourceComputeHttpsHealthCheck() *schema.Resource {
 			"healthy_threshold": {
 				Type:     schema.TypeInt,
 				Optional: true,
-				Default:  2,
 			},
 			"host": {
 				Type:     schema.TypeString,
@@ -68,22 +66,18 @@ func resourceComputeHttpsHealthCheck() *schema.Resource {
 			"port": {
 				Type:     schema.TypeInt,
 				Optional: true,
-				Default:  443,
 			},
 			"request_path": {
 				Type:     schema.TypeString,
 				Optional: true,
-				Default:  "/",
 			},
 			"timeout_sec": {
 				Type:     schema.TypeInt,
 				Optional: true,
-				Default:  5,
 			},
 			"unhealthy_threshold": {
 				Type:     schema.TypeInt,
 				Optional: true,
-				Default:  2,
 			},
 			"creation_timestamp": {
 				Type:     schema.TypeString,

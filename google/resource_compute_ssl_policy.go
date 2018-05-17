@@ -78,13 +78,11 @@ func resourceComputeSslPolicy() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ValidateFunc: validation.StringInSlice([]string{"COMPATIBLE", "MODERN", "RESTRICTED", "CUSTOM", ""}, false),
-				Default:      "COMPATIBLE",
 			},
 			"min_tls_version": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ValidateFunc: validation.StringInSlice([]string{"TLS_1_0", "TLS_1_1", "TLS_1_2", ""}, false),
-				Default:      "TLS_1_0",
 			},
 			"custom_features": {
 				Type:     schema.TypeSet,

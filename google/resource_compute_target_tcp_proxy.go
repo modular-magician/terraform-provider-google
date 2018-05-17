@@ -62,7 +62,6 @@ func resourceComputeTargetTcpProxy() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ValidateFunc: validation.StringInSlice([]string{"NONE", "PROXY_V1", ""}, false),
-				Default:      "NONE",
 			},
 			"creation_timestamp": {
 				Type:     schema.TypeString,

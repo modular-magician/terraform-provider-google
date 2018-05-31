@@ -17,14 +17,15 @@ package google
 import "github.com/hashicorp/terraform/helper/schema"
 
 var GeneratedComputeResourcesMap = map[string]*schema.Resource{
-	"google_compute_backend_bucket":     resourceComputeBackendBucket(),
-	"google_compute_global_address":     resourceComputeGlobalAddress(),
-	"google_compute_http_health_check":  resourceComputeHttpHealthCheck(),
-	"google_compute_https_health_check": resourceComputeHttpsHealthCheck(),
-	"google_compute_ssl_policy":         resourceComputeSslPolicy(),
-	"google_compute_target_http_proxy":  resourceComputeTargetHttpProxy(),
-	"google_compute_target_https_proxy": resourceComputeTargetHttpsProxy(),
-	"google_compute_target_ssl_proxy":   resourceComputeTargetSslProxy(),
-	"google_compute_target_tcp_proxy":   resourceComputeTargetTcpProxy(),
-	"google_compute_vpn_gateway":        resourceComputeVpnGateway(),
+	"google_compute_backend_bucket":          resourceComputeBackendBucket(),
+	"google_compute_global_address":          resourceComputeGlobalAddress(),
+	"google_compute_http_health_check":       resourceComputeHttpHealthCheck(),
+	"google_compute_https_health_check":      resourceComputeHttpsHealthCheck(),
+	"google_compute_interconnect_attachment": resourceComputeInterconnectAttachment(),
+	"google_compute_ssl_policy":              resourceComputeSslPolicy(),
+	"google_compute_target_http_proxy":       resourceComputeTargetHttpProxy(),
+	"google_compute_target_https_proxy":      resourceComputeTargetHttpsProxy(),
+	"google_compute_target_ssl_proxy":        resourceComputeTargetSslProxy(),
+	"google_compute_target_tcp_proxy":        resourceComputeTargetTcpProxy(),
+	"google_compute_vpn_gateway":             resourceComputeVpnGateway(),
 }

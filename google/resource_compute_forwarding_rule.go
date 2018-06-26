@@ -681,14 +681,8 @@ func expandComputeForwardingRuleBackendService(v interface{}, d *schema.Resource
 			return nil, err
 		}
 		return url + v.(string), nil
-	} else if strings.HasPrefix(v.(string), "computeForwardingRule") {
-		url, err := replaceVars(d, config, "https://www.googleapis.com/compute/v1/projects/{{project}}/regions/{{region}}/")
-		if err != nil {
-			return nil, err
-		}
-		return url + v.(string), nil
 	}
-	url, err := replaceVars(d, config, "https://www.googleapis.com/compute/v1/projects/{{project}}/regions/{{region}}/computeForwardingRule/")
+	url, err := replaceVars(d, config, "https://www.googleapis.com/compute/v1/projects/{{project}}/regions/{{region}}/")
 	if err != nil {
 		return nil, err
 	}
@@ -732,11 +726,24 @@ func expandComputeForwardingRuleSubnetwork(v interface{}, d *schema.ResourceData
 }
 
 func expandComputeForwardingRuleTarget(v interface{}, d *schema.ResourceData, config *Config) (interface{}, error) {
-	f, err := parseRegionalFieldValue("targetPools", v.(string), "project", "region", "zone", d, config, true)
-	if err != nil {
-		return nil, fmt.Errorf("Invalid value for target: %s", err)
+	if v == nil || v.(string) == "" {
+		return "", nil
+	} else if strings.HasPrefix(v.(string), "https://") {
+		return v, nil
+	} else if strings.HasPrefix(v.(string), "projects/") {
+		return "https://www.googleapis.com/compute/v1/" + v.(string), nil
+	} else if strings.HasPrefix(v.(string), "regions/") {
+		url, err := replaceVars(d, config, "https://www.googleapis.com/compute/v1/projects/{{project}}/")
+		if err != nil {
+			return nil, err
+		}
+		return url + v.(string), nil
 	}
-	return f.RelativeLink(), nil
+	url, err := replaceVars(d, config, "https://www.googleapis.com/compute/v1/projects/{{project}}/regions/{{region}}/")
+	if err != nil {
+		return nil, err
+	}
+	return url + v.(string), nil
 }
 
 func expandComputeForwardingRuleLabels(v interface{}, d *schema.ResourceData, config *Config) (map[string]string, error) {

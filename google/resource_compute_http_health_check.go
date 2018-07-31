@@ -14,82 +14,73 @@
 
 package google
 
-import (
-	"fmt"
-	"log"
-	"reflect"
-	"strconv"
-	"time"
 
-	"github.com/hashicorp/terraform/helper/schema"
-	compute "google.golang.org/api/compute/v1"
-)
 
 func resourceComputeHttpHealthCheck() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceComputeHttpHealthCheckCreate,
-		Read:   resourceComputeHttpHealthCheckRead,
-		Update: resourceComputeHttpHealthCheckUpdate,
-		Delete: resourceComputeHttpHealthCheckDelete,
-
+		Read: resourceComputeHttpHealthCheckRead,
+				Update: resourceComputeHttpHealthCheckUpdate,
+				Delete: resourceComputeHttpHealthCheckDelete,
+        
 		Importer: &schema.ResourceImporter{
 			State: resourceComputeHttpHealthCheckImport,
 		},
 
-		Timeouts: &schema.ResourceTimeout{
+				Timeouts: &schema.ResourceTimeout {
 			Create: schema.DefaultTimeout(240 * time.Second),
-			Update: schema.DefaultTimeout(240 * time.Second),
-			Delete: schema.DefaultTimeout(240 * time.Second),
+						Update: schema.DefaultTimeout(240 * time.Second),
+						Delete: schema.DefaultTimeout(240 * time.Second),
 		},
-
+		
 		Schema: map[string]*schema.Schema{
-			"name": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-			},
-			"check_interval_sec": {
-				Type:     schema.TypeInt,
-				Optional: true,
-				Default:  5,
-			},
-			"description": {
-				Type:     schema.TypeString,
-				Optional: true,
-			},
-			"healthy_threshold": {
-				Type:     schema.TypeInt,
-				Optional: true,
-				Default:  2,
-			},
-			"host": {
-				Type:     schema.TypeString,
-				Optional: true,
-			},
-			"port": {
-				Type:     schema.TypeInt,
-				Optional: true,
-				Default:  80,
-			},
-			"request_path": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Default:  "/",
-			},
-			"timeout_sec": {
-				Type:     schema.TypeInt,
-				Optional: true,
-				Default:  5,
-			},
-			"unhealthy_threshold": {
-				Type:     schema.TypeInt,
-				Optional: true,
-				Default:  2,
-			},
-			"creation_timestamp": {
-				Type:     schema.TypeString,
-				Computed: true,
-			},
+	"name": {
+    Type: schema.TypeString,
+    Required: true,
+  ForceNew: true,
+},
+	"check_interval_sec": {
+    Type: schema.TypeInt,
+    Optional: true,
+    Default: 5,
+},
+	"description": {
+    Type: schema.TypeString,
+    Optional: true,
+},
+	"healthy_threshold": {
+    Type: schema.TypeInt,
+    Optional: true,
+    Default: 2,
+},
+	"host": {
+    Type: schema.TypeString,
+    Optional: true,
+},
+	"port": {
+    Type: schema.TypeInt,
+    Optional: true,
+    Default: 80,
+},
+	"request_path": {
+    Type: schema.TypeString,
+    Optional: true,
+    Default: "/",
+},
+	"timeout_sec": {
+    Type: schema.TypeInt,
+    Optional: true,
+    Default: 5,
+},
+	"unhealthy_threshold": {
+    Type: schema.TypeInt,
+    Optional: true,
+    Default: 2,
+},
+	"creation_timestamp": {
+    Type: schema.TypeString,
+    Computed: true,
+},
 			"project": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -107,66 +98,68 @@ func resourceComputeHttpHealthCheck() *schema.Resource {
 func resourceComputeHttpHealthCheckCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 
-	project, err := getProject(d, config)
+  	project, err := getProject(d, config)
 	if err != nil {
 		return err
-	}
-
+  }
+  
 	obj := make(map[string]interface{})
 	checkIntervalSecProp, err := expandComputeHttpHealthCheckCheckIntervalSec(d.Get("check_interval_sec"), d, config)
 	if err != nil {
 		return err
-	} else if v, ok := d.GetOkExists("check_interval_sec"); !isEmptyValue(reflect.ValueOf(checkIntervalSecProp)) && (ok || !reflect.DeepEqual(v, checkIntervalSecProp)) {
-		obj["checkIntervalSec"] = checkIntervalSecProp
+		} else if v, ok := d.GetOkExists("check_interval_sec"); !isEmptyValue(reflect.ValueOf(checkIntervalSecProp)) && (ok || !reflect.DeepEqual(v, checkIntervalSecProp)) {
+			obj["checkIntervalSec"] = checkIntervalSecProp
 	}
 	descriptionProp, err := expandComputeHttpHealthCheckDescription(d.Get("description"), d, config)
 	if err != nil {
 		return err
-	} else if v, ok := d.GetOkExists("description"); !isEmptyValue(reflect.ValueOf(descriptionProp)) && (ok || !reflect.DeepEqual(v, descriptionProp)) {
-		obj["description"] = descriptionProp
+		} else if v, ok := d.GetOkExists("description"); !isEmptyValue(reflect.ValueOf(descriptionProp)) && (ok || !reflect.DeepEqual(v, descriptionProp)) {
+			obj["description"] = descriptionProp
 	}
 	healthyThresholdProp, err := expandComputeHttpHealthCheckHealthyThreshold(d.Get("healthy_threshold"), d, config)
 	if err != nil {
 		return err
-	} else if v, ok := d.GetOkExists("healthy_threshold"); !isEmptyValue(reflect.ValueOf(healthyThresholdProp)) && (ok || !reflect.DeepEqual(v, healthyThresholdProp)) {
-		obj["healthyThreshold"] = healthyThresholdProp
+		} else if v, ok := d.GetOkExists("healthy_threshold"); !isEmptyValue(reflect.ValueOf(healthyThresholdProp)) && (ok || !reflect.DeepEqual(v, healthyThresholdProp)) {
+			obj["healthyThreshold"] = healthyThresholdProp
 	}
 	hostProp, err := expandComputeHttpHealthCheckHost(d.Get("host"), d, config)
 	if err != nil {
 		return err
-	} else if v, ok := d.GetOkExists("host"); !isEmptyValue(reflect.ValueOf(hostProp)) && (ok || !reflect.DeepEqual(v, hostProp)) {
-		obj["host"] = hostProp
+		} else if v, ok := d.GetOkExists("host"); !isEmptyValue(reflect.ValueOf(hostProp)) && (ok || !reflect.DeepEqual(v, hostProp)) {
+			obj["host"] = hostProp
 	}
 	nameProp, err := expandComputeHttpHealthCheckName(d.Get("name"), d, config)
 	if err != nil {
 		return err
-	} else if v, ok := d.GetOkExists("name"); !isEmptyValue(reflect.ValueOf(nameProp)) && (ok || !reflect.DeepEqual(v, nameProp)) {
-		obj["name"] = nameProp
+		} else if v, ok := d.GetOkExists("name"); !isEmptyValue(reflect.ValueOf(nameProp)) && (ok || !reflect.DeepEqual(v, nameProp)) {
+			obj["name"] = nameProp
 	}
 	portProp, err := expandComputeHttpHealthCheckPort(d.Get("port"), d, config)
 	if err != nil {
 		return err
-	} else if v, ok := d.GetOkExists("port"); !isEmptyValue(reflect.ValueOf(portProp)) && (ok || !reflect.DeepEqual(v, portProp)) {
-		obj["port"] = portProp
+		} else if v, ok := d.GetOkExists("port"); !isEmptyValue(reflect.ValueOf(portProp)) && (ok || !reflect.DeepEqual(v, portProp)) {
+			obj["port"] = portProp
 	}
 	requestPathProp, err := expandComputeHttpHealthCheckRequestPath(d.Get("request_path"), d, config)
 	if err != nil {
 		return err
-	} else if v, ok := d.GetOkExists("request_path"); !isEmptyValue(reflect.ValueOf(requestPathProp)) && (ok || !reflect.DeepEqual(v, requestPathProp)) {
-		obj["requestPath"] = requestPathProp
+		} else if v, ok := d.GetOkExists("request_path"); !isEmptyValue(reflect.ValueOf(requestPathProp)) && (ok || !reflect.DeepEqual(v, requestPathProp)) {
+			obj["requestPath"] = requestPathProp
 	}
 	timeoutSecProp, err := expandComputeHttpHealthCheckTimeoutSec(d.Get("timeout_sec"), d, config)
 	if err != nil {
 		return err
-	} else if v, ok := d.GetOkExists("timeout_sec"); !isEmptyValue(reflect.ValueOf(timeoutSecProp)) && (ok || !reflect.DeepEqual(v, timeoutSecProp)) {
-		obj["timeoutSec"] = timeoutSecProp
+		} else if v, ok := d.GetOkExists("timeout_sec"); !isEmptyValue(reflect.ValueOf(timeoutSecProp)) && (ok || !reflect.DeepEqual(v, timeoutSecProp)) {
+			obj["timeoutSec"] = timeoutSecProp
 	}
 	unhealthyThresholdProp, err := expandComputeHttpHealthCheckUnhealthyThreshold(d.Get("unhealthy_threshold"), d, config)
 	if err != nil {
 		return err
-	} else if v, ok := d.GetOkExists("unhealthy_threshold"); !isEmptyValue(reflect.ValueOf(unhealthyThresholdProp)) && (ok || !reflect.DeepEqual(v, unhealthyThresholdProp)) {
-		obj["unhealthyThreshold"] = unhealthyThresholdProp
+		} else if v, ok := d.GetOkExists("unhealthy_threshold"); !isEmptyValue(reflect.ValueOf(unhealthyThresholdProp)) && (ok || !reflect.DeepEqual(v, unhealthyThresholdProp)) {
+			obj["unhealthyThreshold"] = unhealthyThresholdProp
 	}
+
+  
 
 	url, err := replaceVars(d, config, "https://www.googleapis.com/compute/v1/projects/{{project}}/global/httpHealthChecks")
 	if err != nil {
@@ -186,14 +179,14 @@ func resourceComputeHttpHealthCheckCreate(d *schema.ResourceData, meta interface
 	}
 	d.SetId(id)
 
-	op := &compute.Operation{}
+		op := &compute.Operation{}
 	err = Convert(res, op)
 	if err != nil {
 		return err
 	}
 
 	waitErr := computeOperationWaitTime(
-		config.clientCompute, op, project, "Creating HttpHealthCheck",
+	config.clientCompute, op, project,  "Creating HttpHealthCheck",
 		int(d.Timeout(schema.TimeoutCreate).Minutes()))
 
 	if waitErr != nil {
@@ -201,8 +194,9 @@ func resourceComputeHttpHealthCheckCreate(d *schema.ResourceData, meta interface
 		d.SetId("")
 		return fmt.Errorf("Error waiting to create HttpHealthCheck: %s", waitErr)
 	}
-
+	
 	log.Printf("[DEBUG] Finished creating HttpHealthCheck %q: %#v", d.Id(), res)
+
 
 	return resourceComputeHttpHealthCheckRead(d, meta)
 }
@@ -210,11 +204,11 @@ func resourceComputeHttpHealthCheckCreate(d *schema.ResourceData, meta interface
 func resourceComputeHttpHealthCheckRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 
-	project, err := getProject(d, config)
+  	project, err := getProject(d, config)
 	if err != nil {
 		return err
-	}
-
+  }
+  
 	url, err := replaceVars(d, config, "https://www.googleapis.com/compute/v1/projects/{{project}}/global/httpHealthChecks/{{name}}")
 	if err != nil {
 		return err
@@ -225,34 +219,38 @@ func resourceComputeHttpHealthCheckRead(d *schema.ResourceData, meta interface{}
 		return handleNotFoundError(err, d, fmt.Sprintf("ComputeHttpHealthCheck %q", d.Id()))
 	}
 
-	if err := d.Set("check_interval_sec", flattenComputeHttpHealthCheckCheckIntervalSec(res["checkIntervalSec"])); err != nil {
+
+
+
+
+  if err := d.Set("check_interval_sec", flattenComputeHttpHealthCheckCheckIntervalSec(res["checkIntervalSec"])); err != nil {
 		return fmt.Errorf("Error reading HttpHealthCheck: %s", err)
 	}
-	if err := d.Set("creation_timestamp", flattenComputeHttpHealthCheckCreationTimestamp(res["creationTimestamp"])); err != nil {
+  if err := d.Set("creation_timestamp", flattenComputeHttpHealthCheckCreationTimestamp(res["creationTimestamp"])); err != nil {
 		return fmt.Errorf("Error reading HttpHealthCheck: %s", err)
 	}
-	if err := d.Set("description", flattenComputeHttpHealthCheckDescription(res["description"])); err != nil {
+  if err := d.Set("description", flattenComputeHttpHealthCheckDescription(res["description"])); err != nil {
 		return fmt.Errorf("Error reading HttpHealthCheck: %s", err)
 	}
-	if err := d.Set("healthy_threshold", flattenComputeHttpHealthCheckHealthyThreshold(res["healthyThreshold"])); err != nil {
+  if err := d.Set("healthy_threshold", flattenComputeHttpHealthCheckHealthyThreshold(res["healthyThreshold"])); err != nil {
 		return fmt.Errorf("Error reading HttpHealthCheck: %s", err)
 	}
-	if err := d.Set("host", flattenComputeHttpHealthCheckHost(res["host"])); err != nil {
+  if err := d.Set("host", flattenComputeHttpHealthCheckHost(res["host"])); err != nil {
 		return fmt.Errorf("Error reading HttpHealthCheck: %s", err)
 	}
-	if err := d.Set("name", flattenComputeHttpHealthCheckName(res["name"])); err != nil {
+  if err := d.Set("name", flattenComputeHttpHealthCheckName(res["name"])); err != nil {
 		return fmt.Errorf("Error reading HttpHealthCheck: %s", err)
 	}
-	if err := d.Set("port", flattenComputeHttpHealthCheckPort(res["port"])); err != nil {
+  if err := d.Set("port", flattenComputeHttpHealthCheckPort(res["port"])); err != nil {
 		return fmt.Errorf("Error reading HttpHealthCheck: %s", err)
 	}
-	if err := d.Set("request_path", flattenComputeHttpHealthCheckRequestPath(res["requestPath"])); err != nil {
+  if err := d.Set("request_path", flattenComputeHttpHealthCheckRequestPath(res["requestPath"])); err != nil {
 		return fmt.Errorf("Error reading HttpHealthCheck: %s", err)
 	}
-	if err := d.Set("timeout_sec", flattenComputeHttpHealthCheckTimeoutSec(res["timeoutSec"])); err != nil {
+  if err := d.Set("timeout_sec", flattenComputeHttpHealthCheckTimeoutSec(res["timeoutSec"])); err != nil {
 		return fmt.Errorf("Error reading HttpHealthCheck: %s", err)
 	}
-	if err := d.Set("unhealthy_threshold", flattenComputeHttpHealthCheckUnhealthyThreshold(res["unhealthyThreshold"])); err != nil {
+  if err := d.Set("unhealthy_threshold", flattenComputeHttpHealthCheckUnhealthyThreshold(res["unhealthyThreshold"])); err != nil {
 		return fmt.Errorf("Error reading HttpHealthCheck: %s", err)
 	}
 	if err := d.Set("self_link", ConvertSelfLinkToV1(res["selfLink"].(string))); err != nil {
@@ -268,103 +266,106 @@ func resourceComputeHttpHealthCheckRead(d *schema.ResourceData, meta interface{}
 func resourceComputeHttpHealthCheckUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 
-	project, err := getProject(d, config)
+  	project, err := getProject(d, config)
 	if err != nil {
 		return err
 	}
+  
+		obj := make(map[string]interface{})
+			checkIntervalSecProp, err := expandComputeHttpHealthCheckCheckIntervalSec(d.Get("check_interval_sec"), d, config)
+		if err != nil {
+				return err
+				} else if v, ok := d.GetOkExists("check_interval_sec"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, checkIntervalSecProp)) {
+					obj["checkIntervalSec"] = checkIntervalSecProp
+		}
+			descriptionProp, err := expandComputeHttpHealthCheckDescription(d.Get("description"), d, config)
+		if err != nil {
+				return err
+				} else if v, ok := d.GetOkExists("description"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, descriptionProp)) {
+					obj["description"] = descriptionProp
+		}
+			healthyThresholdProp, err := expandComputeHttpHealthCheckHealthyThreshold(d.Get("healthy_threshold"), d, config)
+		if err != nil {
+				return err
+				} else if v, ok := d.GetOkExists("healthy_threshold"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, healthyThresholdProp)) {
+					obj["healthyThreshold"] = healthyThresholdProp
+		}
+			hostProp, err := expandComputeHttpHealthCheckHost(d.Get("host"), d, config)
+		if err != nil {
+				return err
+				} else if v, ok := d.GetOkExists("host"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, hostProp)) {
+					obj["host"] = hostProp
+		}
+			nameProp, err := expandComputeHttpHealthCheckName(d.Get("name"), d, config)
+		if err != nil {
+				return err
+				} else if v, ok := d.GetOkExists("name"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, nameProp)) {
+					obj["name"] = nameProp
+		}
+			portProp, err := expandComputeHttpHealthCheckPort(d.Get("port"), d, config)
+		if err != nil {
+				return err
+				} else if v, ok := d.GetOkExists("port"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, portProp)) {
+					obj["port"] = portProp
+		}
+			requestPathProp, err := expandComputeHttpHealthCheckRequestPath(d.Get("request_path"), d, config)
+		if err != nil {
+				return err
+				} else if v, ok := d.GetOkExists("request_path"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, requestPathProp)) {
+					obj["requestPath"] = requestPathProp
+		}
+			timeoutSecProp, err := expandComputeHttpHealthCheckTimeoutSec(d.Get("timeout_sec"), d, config)
+		if err != nil {
+				return err
+				} else if v, ok := d.GetOkExists("timeout_sec"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, timeoutSecProp)) {
+					obj["timeoutSec"] = timeoutSecProp
+		}
+			unhealthyThresholdProp, err := expandComputeHttpHealthCheckUnhealthyThreshold(d.Get("unhealthy_threshold"), d, config)
+		if err != nil {
+				return err
+				} else if v, ok := d.GetOkExists("unhealthy_threshold"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, unhealthyThresholdProp)) {
+					obj["unhealthyThreshold"] = unhealthyThresholdProp
+		}
+	
+		
 
-	obj := make(map[string]interface{})
-	checkIntervalSecProp, err := expandComputeHttpHealthCheckCheckIntervalSec(d.Get("check_interval_sec"), d, config)
+	url, err := replaceVars(d, config, "[["https://www.googleapis.com/compute/v1/"], "projects/{{project}}/global/httpHealthChecks/{{name}}"]")
 	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("check_interval_sec"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, checkIntervalSecProp)) {
-		obj["checkIntervalSec"] = checkIntervalSecProp
-	}
-	descriptionProp, err := expandComputeHttpHealthCheckDescription(d.Get("description"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("description"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, descriptionProp)) {
-		obj["description"] = descriptionProp
-	}
-	healthyThresholdProp, err := expandComputeHttpHealthCheckHealthyThreshold(d.Get("healthy_threshold"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("healthy_threshold"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, healthyThresholdProp)) {
-		obj["healthyThreshold"] = healthyThresholdProp
-	}
-	hostProp, err := expandComputeHttpHealthCheckHost(d.Get("host"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("host"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, hostProp)) {
-		obj["host"] = hostProp
-	}
-	nameProp, err := expandComputeHttpHealthCheckName(d.Get("name"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("name"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, nameProp)) {
-		obj["name"] = nameProp
-	}
-	portProp, err := expandComputeHttpHealthCheckPort(d.Get("port"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("port"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, portProp)) {
-		obj["port"] = portProp
-	}
-	requestPathProp, err := expandComputeHttpHealthCheckRequestPath(d.Get("request_path"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("request_path"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, requestPathProp)) {
-		obj["requestPath"] = requestPathProp
-	}
-	timeoutSecProp, err := expandComputeHttpHealthCheckTimeoutSec(d.Get("timeout_sec"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("timeout_sec"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, timeoutSecProp)) {
-		obj["timeoutSec"] = timeoutSecProp
-	}
-	unhealthyThresholdProp, err := expandComputeHttpHealthCheckUnhealthyThreshold(d.Get("unhealthy_threshold"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("unhealthy_threshold"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, unhealthyThresholdProp)) {
-		obj["unhealthyThreshold"] = unhealthyThresholdProp
-	}
-
-	url, err := replaceVars(d, config, "https://www.googleapis.com/compute/v1/projects/{{project}}/global/httpHealthChecks/{{name}}")
-	if err != nil {
-		return err
+	return err
 	}
 
 	log.Printf("[DEBUG] Updating HttpHealthCheck %q: %#v", d.Id(), obj)
 	res, err := sendRequest(config, "PUT", url, obj)
 
 	if err != nil {
-		return fmt.Errorf("Error updating HttpHealthCheck %q: %s", d.Id(), err)
+	return fmt.Errorf("Error updating HttpHealthCheck %q: %s", d.Id(), err)
 	}
 
-	op := &compute.Operation{}
+		op := &compute.Operation{}
 	err = Convert(res, op)
 	if err != nil {
-		return err
+	return err
 	}
 
 	err = computeOperationWaitTime(
-		config.clientCompute, op, project, "Updating HttpHealthCheck",
-		int(d.Timeout(schema.TimeoutUpdate).Minutes()))
+	config.clientCompute, op,  project,  "Updating HttpHealthCheck",
+	int(d.Timeout(schema.TimeoutUpdate).Minutes()))
 
 	if err != nil {
-		return err
+	return err
 	}
-
+		
 	return resourceComputeHttpHealthCheckRead(d, meta)
 }
 
 func resourceComputeHttpHealthCheckDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 
-	project, err := getProject(d, config)
+  	project, err := getProject(d, config)
 	if err != nil {
 		return err
-	}
+  }
+  
 
 	url, err := replaceVars(d, config, "https://www.googleapis.com/compute/v1/projects/{{project}}/global/httpHealthChecks/{{name}}")
 	if err != nil {
@@ -377,27 +378,27 @@ func resourceComputeHttpHealthCheckDelete(d *schema.ResourceData, meta interface
 		return handleNotFoundError(err, d, "HttpHealthCheck")
 	}
 
-	op := &compute.Operation{}
+		op := &compute.Operation{}
 	err = Convert(res, op)
 	if err != nil {
 		return err
 	}
 
 	err = computeOperationWaitTime(
-		config.clientCompute, op, project, "Deleting HttpHealthCheck",
+		config.clientCompute, op,  project,  "Deleting HttpHealthCheck",
 		int(d.Timeout(schema.TimeoutDelete).Minutes()))
 
 	if err != nil {
 		return err
 	}
-
+	
 	log.Printf("[DEBUG] Finished deleting HttpHealthCheck %q: %#v", d.Id(), res)
 	return nil
 }
 
 func resourceComputeHttpHealthCheckImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
-	parseImportId([]string{"projects/(?P<project>[^/]+)/global/httpHealthChecks/(?P<name>[^/]+)", "(?P<project>[^/]+)/(?P<name>[^/]+)", "(?P<name>[^/]+)"}, d, config)
+	parseImportId([]string{"projects/(?P<project>[^/]+)/global/httpHealthChecks/(?P<name>[^/]+)","(?P<project>[^/]+)/(?P<name>[^/]+)","(?P<name>[^/]+)"}, d, config)
 
 	// Replace import id for the resource id
 	id, err := replaceVars(d, config, "{{name}}")
@@ -405,7 +406,7 @@ func resourceComputeHttpHealthCheckImport(d *schema.ResourceData, meta interface
 		return nil, fmt.Errorf("Error constructing id: %s", err)
 	}
 	d.SetId(id)
-
+  
 	return []*schema.ResourceData{d}, nil
 }
 
@@ -420,11 +421,11 @@ func flattenComputeHttpHealthCheckCheckIntervalSec(v interface{}) interface{} {
 }
 
 func flattenComputeHttpHealthCheckCreationTimestamp(v interface{}) interface{} {
-	return v
+  return v
 }
 
 func flattenComputeHttpHealthCheckDescription(v interface{}) interface{} {
-	return v
+  return v
 }
 
 func flattenComputeHttpHealthCheckHealthyThreshold(v interface{}) interface{} {
@@ -438,11 +439,11 @@ func flattenComputeHttpHealthCheckHealthyThreshold(v interface{}) interface{} {
 }
 
 func flattenComputeHttpHealthCheckHost(v interface{}) interface{} {
-	return v
+  return v
 }
 
 func flattenComputeHttpHealthCheckName(v interface{}) interface{} {
-	return v
+  return v
 }
 
 func flattenComputeHttpHealthCheckPort(v interface{}) interface{} {
@@ -456,7 +457,7 @@ func flattenComputeHttpHealthCheckPort(v interface{}) interface{} {
 }
 
 func flattenComputeHttpHealthCheckRequestPath(v interface{}) interface{} {
-	return v
+  return v
 }
 
 func flattenComputeHttpHealthCheckTimeoutSec(v interface{}) interface{} {
@@ -479,38 +480,39 @@ func flattenComputeHttpHealthCheckUnhealthyThreshold(v interface{}) interface{} 
 	return v
 }
 
+
 func expandComputeHttpHealthCheckCheckIntervalSec(v interface{}, d *schema.ResourceData, config *Config) (interface{}, error) {
-	return v, nil
+  return v, nil
 }
 
 func expandComputeHttpHealthCheckDescription(v interface{}, d *schema.ResourceData, config *Config) (interface{}, error) {
-	return v, nil
+  return v, nil
 }
 
 func expandComputeHttpHealthCheckHealthyThreshold(v interface{}, d *schema.ResourceData, config *Config) (interface{}, error) {
-	return v, nil
+  return v, nil
 }
 
 func expandComputeHttpHealthCheckHost(v interface{}, d *schema.ResourceData, config *Config) (interface{}, error) {
-	return v, nil
+  return v, nil
 }
 
 func expandComputeHttpHealthCheckName(v interface{}, d *schema.ResourceData, config *Config) (interface{}, error) {
-	return v, nil
+  return v, nil
 }
 
 func expandComputeHttpHealthCheckPort(v interface{}, d *schema.ResourceData, config *Config) (interface{}, error) {
-	return v, nil
+  return v, nil
 }
 
 func expandComputeHttpHealthCheckRequestPath(v interface{}, d *schema.ResourceData, config *Config) (interface{}, error) {
-	return v, nil
+  return v, nil
 }
 
 func expandComputeHttpHealthCheckTimeoutSec(v interface{}, d *schema.ResourceData, config *Config) (interface{}, error) {
-	return v, nil
+  return v, nil
 }
 
 func expandComputeHttpHealthCheckUnhealthyThreshold(v interface{}, d *schema.ResourceData, config *Config) (interface{}, error) {
-	return v, nil
+  return v, nil
 }

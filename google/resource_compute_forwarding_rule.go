@@ -666,9 +666,6 @@ func flattenComputeForwardingRuleServiceName(v interface{}) interface{} {
 }
 
 func flattenComputeForwardingRuleRegion(v interface{}) interface{} {
-	if v == nil {
-		return v
-	}
 	return NameFromSelfLinkStateFunc(v)
 }
 

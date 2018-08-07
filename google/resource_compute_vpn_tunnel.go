@@ -211,6 +211,11 @@ func resourceComputeVpnTunnel() *schema.Resource {
 				Optional: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
+			"detailed_status": {
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+			},
 			"region": {
 				Type:             schema.TypeString,
 				Computed:         true,
@@ -219,10 +224,6 @@ func resourceComputeVpnTunnel() *schema.Resource {
 				DiffSuppressFunc: compareSelfLinkOrResourceName,
 			},
 			"creation_timestamp": {
-				Type:     schema.TypeString,
-				Computed: true,
-			},
-			"detailed_status": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
@@ -317,6 +318,12 @@ func resourceComputeVpnTunnelCreate(d *schema.ResourceData, meta interface{}) er
 	} else if v, ok := d.GetOkExists("labels"); !isEmptyValue(reflect.ValueOf(labelsProp)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
 		obj["labels"] = labelsProp
 	}
+	detailedStatusProp, err := expandComputeVpnTunnelDetailedStatus(d.Get("detailed_status"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("detailed_status"); !isEmptyValue(reflect.ValueOf(detailedStatusProp)) && (ok || !reflect.DeepEqual(v, detailedStatusProp)) {
+		obj["detailedStatus"] = detailedStatusProp
+	}
 	regionProp, err := expandComputeVpnTunnelRegion(d.Get("region"), d, config)
 	if err != nil {
 		return err
@@ -397,6 +404,9 @@ func resourceComputeVpnTunnelRead(d *schema.ResourceData, meta interface{}) erro
 		return fmt.Errorf("Error reading VpnTunnel: %s", err)
 	}
 	if err := d.Set("peer_ip", flattenComputeVpnTunnelPeerIp(res["peerIp"])); err != nil {
+		return fmt.Errorf("Error reading VpnTunnel: %s", err)
+	}
+	if err := d.Set("shared_secret", flattenComputeVpnTunnelSharedSecret(res["sharedSecret"])); err != nil {
 		return fmt.Errorf("Error reading VpnTunnel: %s", err)
 	}
 	if err := d.Set("shared_secret_hash", flattenComputeVpnTunnelSharedSecretHash(res["sharedSecretHash"])); err != nil {
@@ -553,7 +563,10 @@ func flattenComputeVpnTunnelDescription(v interface{}) interface{} {
 }
 
 func flattenComputeVpnTunnelTargetVpnGateway(v interface{}) interface{} {
-	return v
+	if v == nil {
+		return v
+	}
+	return ConvertSelfLinkToV1(v.(string))
 }
 
 func flattenComputeVpnTunnelRouter(v interface{}) interface{} {
@@ -670,6 +683,10 @@ func expandComputeVpnTunnelLabels(v interface{}, d *schema.ResourceData, config 
 		m[k] = val.(string)
 	}
 	return m, nil
+}
+
+func expandComputeVpnTunnelDetailedStatus(v interface{}, d *schema.ResourceData, config *Config) (interface{}, error) {
+	return v, nil
 }
 
 func expandComputeVpnTunnelRegion(v interface{}, d *schema.ResourceData, config *Config) (interface{}, error) {

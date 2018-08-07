@@ -399,6 +399,9 @@ func resourceComputeVpnTunnelRead(d *schema.ResourceData, meta interface{}) erro
 	if err := d.Set("peer_ip", flattenComputeVpnTunnelPeerIp(res["peerIp"])); err != nil {
 		return fmt.Errorf("Error reading VpnTunnel: %s", err)
 	}
+	if err := d.Set("shared_secret", flattenComputeVpnTunnelSharedSecret(res["sharedSecret"])); err != nil {
+		return fmt.Errorf("Error reading VpnTunnel: %s", err)
+	}
 	if err := d.Set("shared_secret_hash", flattenComputeVpnTunnelSharedSecretHash(res["sharedSecretHash"])); err != nil {
 		return fmt.Errorf("Error reading VpnTunnel: %s", err)
 	}
@@ -553,7 +556,10 @@ func flattenComputeVpnTunnelDescription(v interface{}) interface{} {
 }
 
 func flattenComputeVpnTunnelTargetVpnGateway(v interface{}) interface{} {
-	return v
+	if v == nil {
+		return v
+	}
+	return ConvertSelfLinkToV1(v.(string))
 }
 
 func flattenComputeVpnTunnelRouter(v interface{}) interface{} {

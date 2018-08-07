@@ -601,9 +601,6 @@ func flattenComputeSubnetworkPrivateIpGoogleAccess(v interface{}) interface{} {
 }
 
 func flattenComputeSubnetworkRegion(v interface{}) interface{} {
-	if v == nil {
-		return v
-	}
 	return NameFromSelfLinkStateFunc(v)
 }
 

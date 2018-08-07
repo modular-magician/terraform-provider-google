@@ -562,9 +562,6 @@ func flattenRedisInstanceLocationId(v interface{}) interface{} {
 }
 
 func flattenRedisInstanceName(v interface{}) interface{} {
-	if v == nil {
-		return v
-	}
 	return NameFromSelfLinkStateFunc(v)
 }
 

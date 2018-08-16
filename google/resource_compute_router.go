@@ -130,11 +130,6 @@ func resourceComputeRouter() *schema.Resource {
 func resourceComputeRouterCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 
-	project, err := getProject(d, config)
-	if err != nil {
-		return err
-	}
-
 	obj := make(map[string]interface{})
 	nameProp, err := expandComputeRouterName(d.Get("name"), d, config)
 	if err != nil {
@@ -192,6 +187,10 @@ func resourceComputeRouterCreate(d *schema.ResourceData, meta interface{}) error
 	}
 	d.SetId(id)
 
+	project, err := getProject(d, config)
+	if err != nil {
+		return err
+	}
 	op := &compute.Operation{}
 	err = Convert(res, op)
 	if err != nil {
@@ -262,11 +261,6 @@ func resourceComputeRouterRead(d *schema.ResourceData, meta interface{}) error {
 func resourceComputeRouterUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 
-	project, err := getProject(d, config)
-	if err != nil {
-		return err
-	}
-
 	obj := make(map[string]interface{})
 	nameProp, err := expandComputeRouterName(d.Get("name"), d, config)
 	if err != nil {
@@ -318,6 +312,10 @@ func resourceComputeRouterUpdate(d *schema.ResourceData, meta interface{}) error
 		return fmt.Errorf("Error updating Router %q: %s", d.Id(), err)
 	}
 
+	project, err := getProject(d, config)
+	if err != nil {
+		return err
+	}
 	op := &compute.Operation{}
 	err = Convert(res, op)
 	if err != nil {
@@ -338,11 +336,6 @@ func resourceComputeRouterUpdate(d *schema.ResourceData, meta interface{}) error
 func resourceComputeRouterDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 
-	project, err := getProject(d, config)
-	if err != nil {
-		return err
-	}
-
 	lockName, err := replaceVars(d, config, "router/{{region}}/{{name}}")
 	if err != nil {
 		return err
@@ -355,12 +348,17 @@ func resourceComputeRouterDelete(d *schema.ResourceData, meta interface{}) error
 		return err
 	}
 
+	var obj map[string]interface{}
 	log.Printf("[DEBUG] Deleting Router %q", d.Id())
-	res, err := sendRequest(config, "DELETE", url, nil)
+	res, err := sendRequest(config, "DELETE", url, obj)
 	if err != nil {
 		return handleNotFoundError(err, d, "Router")
 	}
 
+	project, err := getProject(d, config)
+	if err != nil {
+		return err
+	}
 	op := &compute.Operation{}
 	err = Convert(res, op)
 	if err != nil {

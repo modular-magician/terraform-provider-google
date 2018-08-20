@@ -140,6 +140,11 @@ func resourceComputeForwardingRule() *schema.Resource {
 				ForceNew:     true,
 				ValidateFunc: validateGCPName,
 			},
+			"all_ports": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				ForceNew: true,
+			},
 			"region": {
 				Type:             schema.TypeString,
 				Computed:         true,
@@ -266,6 +271,12 @@ func resourceComputeForwardingRuleCreate(d *schema.ResourceData, meta interface{
 		return err
 	} else if v, ok := d.GetOkExists("service_label"); !isEmptyValue(reflect.ValueOf(serviceLabelProp)) && (ok || !reflect.DeepEqual(v, serviceLabelProp)) {
 		obj["serviceLabel"] = serviceLabelProp
+	}
+	allPortsProp, err := expandComputeForwardingRuleAllPorts(d.Get("all_ports"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("all_ports"); !isEmptyValue(reflect.ValueOf(allPortsProp)) && (ok || !reflect.DeepEqual(v, allPortsProp)) {
+		obj["allPorts"] = allPortsProp
 	}
 	regionProp, err := expandComputeForwardingRuleRegion(d.Get("region"), d, config)
 	if err != nil {
@@ -420,6 +431,9 @@ func resourceComputeForwardingRuleRead(d *schema.ResourceData, meta interface{})
 		return fmt.Errorf("Error reading ForwardingRule: %s", err)
 	}
 	if err := d.Set("service_name", flattenComputeForwardingRuleServiceName(res["serviceName"])); err != nil {
+		return fmt.Errorf("Error reading ForwardingRule: %s", err)
+	}
+	if err := d.Set("all_ports", flattenComputeForwardingRuleAllPorts(res["allPorts"])); err != nil {
 		return fmt.Errorf("Error reading ForwardingRule: %s", err)
 	}
 	if err := d.Set("region", flattenComputeForwardingRuleRegion(res["region"])); err != nil {
@@ -667,6 +681,10 @@ func flattenComputeForwardingRuleServiceName(v interface{}) interface{} {
 	return v
 }
 
+func flattenComputeForwardingRuleAllPorts(v interface{}) interface{} {
+	return v
+}
+
 func flattenComputeForwardingRuleRegion(v interface{}) interface{} {
 	if v == nil {
 		return v
@@ -796,6 +814,10 @@ func expandComputeForwardingRuleNetworkTier(v interface{}, d *schema.ResourceDat
 }
 
 func expandComputeForwardingRuleServiceLabel(v interface{}, d *schema.ResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandComputeForwardingRuleAllPorts(v interface{}, d *schema.ResourceData, config *Config) (interface{}, error) {
 	return v, nil
 }
 

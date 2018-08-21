@@ -36,6 +36,22 @@ To get more information about BackendBucket, see:
 * How-to Guides
     * [Using a Cloud Storage bucket as a load balancer backend](https://cloud.google.com/compute/docs/load-balancing/http/backend-bucket)
 
+~> **Warning:** Due to limitations of the API, there are a few unexpected behaviors
+for `cdn_policy` attributes.
+
+`cdn_policy.signed_url_key_names` will be
+treated as a readonly attribute. Please use seperate resource type
+[`google_compute_backend_bucket_signed_url_key`](/docs/providers/google/r/compute_backend_bucket_signed_url_key.html)
+to actually manage CDN signed URL keys for backend buckets. This
+attribute may also include unexpected key names if keys have been added
+outside of Terraform.
+
+If `cdn_policy` is omitted, it will be computed from the API value.
+Whatever value was set for `cdn_policy.signed_url_cache_max_age_sec`
+prior to removing the cdn_policy will still be in effect. To set
+`signed_url_cache_max_age_sec` back to default, leave a empty
+`cdn_policy { }` in your config.
+
 ## Example Usage
 
 ```hcl
@@ -75,6 +91,10 @@ The following arguments are supported:
 - - -
 
 
+* `cdn_policy` -
+  (Optional)
+  Cloud CDN configuration for this Backend Bucket.  Structure is documented below.
+
 * `description` -
   (Optional)
   An optional textual description of the resource; provided by the
@@ -86,6 +106,24 @@ The following arguments are supported:
 * `project` - (Optional) The ID of the project in which the resource belongs.
     If it is not provided, the provider project is used.
 
+
+The `cdn_policy` block supports:
+
+* `signed_url_key_names` -
+  Names of the keys for signing request URLs.
+  Output only. To change, use the BackendBucketSignedUrlKey
+  resource instead.
+
+* `signed_url_cache_max_age_sec` -
+  (Optional)
+  Maximum number of seconds the response to a signed URL request will
+  be considered fresh. Defaults to 1hr (3600s).
+  After this time period, the response will be revalidated before
+  being served. When serving responses to signed URL requests,
+  Cloud CDN will internally behave as though
+  all responses from this backend had a "Cache-Control: public,
+  max-age=[TTL]" header, regardless of any existing Cache-Control
+  header. The actual headers served in responses will not be altered.
 
 ## Attributes Reference
 

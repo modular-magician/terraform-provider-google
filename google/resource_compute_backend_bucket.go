@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"log"
 	"reflect"
+	"strconv"
 	"time"
 
 	"github.com/hashicorp/terraform/helper/schema"
@@ -51,6 +52,28 @@ func resourceComputeBackendBucket() *schema.Resource {
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: validateRegexp(`^(?:[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?)$`),
+			},
+			"cdn_policy": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Optional: true,
+				MaxItems: 1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"signed_url_cache_max_age_sec": {
+							Type:     schema.TypeInt,
+							Optional: true,
+							Default:  3600,
+						},
+						"signed_url_key_names": {
+							Type:     schema.TypeList,
+							Computed: true,
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+					},
+				},
 			},
 			"description": {
 				Type:     schema.TypeString,
@@ -87,6 +110,12 @@ func resourceComputeBackendBucketCreate(d *schema.ResourceData, meta interface{}
 		return err
 	} else if v, ok := d.GetOkExists("bucket_name"); !isEmptyValue(reflect.ValueOf(bucketNameProp)) && (ok || !reflect.DeepEqual(v, bucketNameProp)) {
 		obj["bucketName"] = bucketNameProp
+	}
+	cdnPolicyProp, err := expandComputeBackendBucketCdnPolicy(d.Get("cdn_policy"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("cdn_policy"); !isEmptyValue(reflect.ValueOf(cdnPolicyProp)) && (ok || !reflect.DeepEqual(v, cdnPolicyProp)) {
+		obj["cdnPolicy"] = cdnPolicyProp
 	}
 	descriptionProp, err := expandComputeBackendBucketDescription(d.Get("description"), d, config)
 	if err != nil {
@@ -166,6 +195,9 @@ func resourceComputeBackendBucketRead(d *schema.ResourceData, meta interface{}) 
 	if err := d.Set("bucket_name", flattenComputeBackendBucketBucketName(res["bucketName"])); err != nil {
 		return fmt.Errorf("Error reading BackendBucket: %s", err)
 	}
+	if err := d.Set("cdn_policy", flattenComputeBackendBucketCdnPolicy(res["cdnPolicy"])); err != nil {
+		return fmt.Errorf("Error reading BackendBucket: %s", err)
+	}
 	if err := d.Set("creation_timestamp", flattenComputeBackendBucketCreationTimestamp(res["creationTimestamp"])); err != nil {
 		return fmt.Errorf("Error reading BackendBucket: %s", err)
 	}
@@ -201,6 +233,12 @@ func resourceComputeBackendBucketUpdate(d *schema.ResourceData, meta interface{}
 		return err
 	} else if v, ok := d.GetOkExists("bucket_name"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, bucketNameProp)) {
 		obj["bucketName"] = bucketNameProp
+	}
+	cdnPolicyProp, err := expandComputeBackendBucketCdnPolicy(d.Get("cdn_policy"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("cdn_policy"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, cdnPolicyProp)) {
+		obj["cdnPolicy"] = cdnPolicyProp
 	}
 	descriptionProp, err := expandComputeBackendBucketDescription(d.Get("description"), d, config)
 	if err != nil {
@@ -309,6 +347,32 @@ func flattenComputeBackendBucketBucketName(v interface{}) interface{} {
 	return v
 }
 
+func flattenComputeBackendBucketCdnPolicy(v interface{}) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	transformed := make(map[string]interface{})
+	transformed["signed_url_key_names"] =
+		flattenComputeBackendBucketCdnPolicySignedUrlKeyNames(original["signedUrlKeyNames"])
+	transformed["signed_url_cache_max_age_sec"] =
+		flattenComputeBackendBucketCdnPolicySignedUrlCacheMaxAgeSec(original["signedUrlCacheMaxAgeSec"])
+	return []interface{}{transformed}
+}
+func flattenComputeBackendBucketCdnPolicySignedUrlKeyNames(v interface{}) interface{} {
+	return v
+}
+
+func flattenComputeBackendBucketCdnPolicySignedUrlCacheMaxAgeSec(v interface{}) interface{} {
+	// Handles the string fixed64 format
+	if strVal, ok := v.(string); ok {
+		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+			return intVal
+		} // let terraform core handle it if we can't convert the string to an int.
+	}
+	return v
+}
+
 func flattenComputeBackendBucketCreationTimestamp(v interface{}) interface{} {
 	return v
 }
@@ -326,6 +390,36 @@ func flattenComputeBackendBucketName(v interface{}) interface{} {
 }
 
 func expandComputeBackendBucketBucketName(v interface{}, d *schema.ResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandComputeBackendBucketCdnPolicy(v interface{}, d *schema.ResourceData, config *Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedSignedUrlKeyNames, err := expandComputeBackendBucketCdnPolicySignedUrlKeyNames(original["signed_url_key_names"], d, config)
+	if err != nil {
+		return nil, err
+	}
+	transformed["signedUrlKeyNames"] = transformedSignedUrlKeyNames
+	transformedSignedUrlCacheMaxAgeSec, err := expandComputeBackendBucketCdnPolicySignedUrlCacheMaxAgeSec(original["signed_url_cache_max_age_sec"], d, config)
+	if err != nil {
+		return nil, err
+	}
+	transformed["signedUrlCacheMaxAgeSec"] = transformedSignedUrlCacheMaxAgeSec
+	return transformed, nil
+}
+
+func expandComputeBackendBucketCdnPolicySignedUrlKeyNames(v interface{}, d *schema.ResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandComputeBackendBucketCdnPolicySignedUrlCacheMaxAgeSec(v interface{}, d *schema.ResourceData, config *Config) (interface{}, error) {
 	return v, nil
 }
 

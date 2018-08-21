@@ -78,6 +78,66 @@ func TestAccComputeBackendBucket_basicModified(t *testing.T) {
 	}
 }
 
+func TestAccComputeBackendBucket_withCdnEnabled(t *testing.T) {
+	t.Parallel()
+
+	backendName := fmt.Sprintf("tf-test-%s", acctest.RandString(10))
+	storageName := fmt.Sprintf("tf-test-%s", acctest.RandString(10))
+	var svc compute.BackendBucket
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckComputeBackendBucketDestroy,
+		Steps: []resource.TestStep{
+			resource.TestStep{
+				Config: testAccComputeBackendBucket_withCdnEnabled(
+					backendName, storageName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckComputeBackendBucketExists(
+						"google_compute_backend_bucket.foobar", &svc),
+				),
+			},
+		},
+	})
+
+	if svc.EnableCdn != true {
+		t.Errorf("Expected EnableCdn == true, got %t", svc.EnableCdn)
+	}
+}
+
+func TestAccComputeBackendBucket_withCdnPolicy(t *testing.T) {
+	t.Parallel()
+
+	backendName := fmt.Sprintf("tf-test-%s", acctest.RandString(10))
+	storageName := fmt.Sprintf("tf-test-%s", acctest.RandString(10))
+	var cacheAgeSec int64 = 1000
+	var svc compute.BackendBucket
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckComputeBackendBucketDestroy,
+		Steps: []resource.TestStep{
+			resource.TestStep{
+				Config: testAccComputeBackendBucket_withCdnPolicy(
+					cacheAgeSec, backendName, storageName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckComputeBackendBucketExists(
+						"google_compute_backend_bucket.foobar", &svc),
+				),
+			},
+		},
+	})
+
+	if svc.CdnPolicy == nil {
+		t.Errorf("Expected CdnPolicy SignedUrlCacheMaxAgeSec to be %d, got nil CdnPolicy", cacheAgeSec)
+	}
+	if svc.CdnPolicy.SignedUrlCacheMaxAgeSec != cacheAgeSec {
+		t.Errorf("Expected CdnPolicy to be SignedUrlCacheMaxAgeSec, got %d", svc.CdnPolicy.SignedUrlCacheMaxAgeSec)
+	}
+}
+
 func testAccCheckComputeBackendBucketDestroy(s *terraform.State) error {
 	config := testAccProvider.Meta().(*Config)
 
@@ -122,34 +182,6 @@ func testAccCheckComputeBackendBucketExists(n string, svc *compute.BackendBucket
 		*svc = *found
 
 		return nil
-	}
-}
-
-func TestAccComputeBackendBucket_withCdnEnabled(t *testing.T) {
-	t.Parallel()
-
-	backendName := fmt.Sprintf("tf-test-%s", acctest.RandString(10))
-	storageName := fmt.Sprintf("tf-test-%s", acctest.RandString(10))
-	var svc compute.BackendBucket
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckComputeBackendBucketDestroy,
-		Steps: []resource.TestStep{
-			resource.TestStep{
-				Config: testAccComputeBackendBucket_withCdnEnabled(
-					backendName, storageName),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckComputeBackendBucketExists(
-						"google_compute_backend_bucket.foobar", &svc),
-				),
-			},
-		},
-	})
-
-	if svc.EnableCdn != true {
-		t.Errorf("Expected EnableCdn == true, got %t", svc.EnableCdn)
 	}
 }
 
@@ -199,4 +231,21 @@ resource "google_storage_bucket" "bucket" {
   location = "EU"
 }
 `, backendName, storageName)
+}
+
+func testAccComputeBackendBucket_withCdnPolicy(cacheAgeSec int64, backendName, storageName string) string {
+	return fmt.Sprintf(`
+resource "google_compute_backend_bucket" "foobar" {
+  name        = "%s"
+  bucket_name = "${google_storage_bucket.bucket.name}"
+  cdn_policy  {
+	signed_url_cache_max_age_sec = %d
+  }
+}
+
+resource "google_storage_bucket" "bucket" {
+  name     = "%s"
+  location = "EU"
+}
+`, backendName, cacheAgeSec, storageName)
 }

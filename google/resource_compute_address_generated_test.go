@@ -73,23 +73,23 @@ func TestAccComputeAddress_addressWithSubnetworkExample(t *testing.T) {
 
 func testAccComputeAddress_addressWithSubnetworkExample(val string) string {
 	return fmt.Sprintf(`
-resource "google_compute_network" "default" {
-  name = "my-network-%s"
+resource "google_compute_address" "internal_with_subnet_and_address" {
+  name = "my-internal-address-%s"
+  subnetwork = "${google_compute_subnetwork.default.self_link}"
+  address_type = "INTERNAL"
+  address = "10.0.42.42"
+  region = "us-central1"
 }
 
 resource "google_compute_subnetwork" "default" {
-  name          = "my-subnet-%s"
+  name = "my-subnet-%s"
+  network = "${google_compute_network.default.self_link}"
   ip_cidr_range = "10.0.0.0/16"
-  region        = "us-central1"
-  network       = "${google_compute_network.default.self_link}"
+  region = "us-central1"
 }
 
-resource "google_compute_address" "internal_with_subnet_and_address" {
-  name         = "my-internal-address-%s"
-  subnetwork   = "${google_compute_subnetwork.default.self_link}"
-  address_type = "INTERNAL"
-  address      = "10.0.42.42"
-  region       = "us-central1"
+resource "google_compute_network" "default" {
+  name = "my-network-%s"
 }
 `, val, val, val,
 	)

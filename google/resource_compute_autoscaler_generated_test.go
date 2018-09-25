@@ -34,9 +34,9 @@ func TestAccComputeAutoscaler_autoscalerBasicExample(t *testing.T) {
 				Config: testAccComputeAutoscaler_autoscalerBasicExample(acctest.RandString(10)),
 			},
 			{
-				ResourceName:      "google_compute_autoscaler.foobar",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            "google_compute_autoscaler.foobar",
+				ImportState:             true,
+				ImportStateVerify:       true,
 			},
 		},
 	})

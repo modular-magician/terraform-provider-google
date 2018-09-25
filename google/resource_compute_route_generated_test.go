@@ -34,9 +34,9 @@ func TestAccComputeRoute_routeBasicExample(t *testing.T) {
 				Config: testAccComputeRoute_routeBasicExample(acctest.RandString(10)),
 			},
 			{
-				ResourceName:      "google_compute_route.default",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            "google_compute_route.default",
+				ImportState:             true,
+				ImportStateVerify:       true,
 			},
 		},
 	})

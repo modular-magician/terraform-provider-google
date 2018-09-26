@@ -34,9 +34,9 @@ func TestAccComputeSubnetwork_subnetworkBasicExample(t *testing.T) {
 				Config: testAccComputeSubnetwork_subnetworkBasicExample(acctest.RandString(10)),
 			},
 			{
-				ResourceName:      "google_compute_subnetwork.network-with-private-secondary-ip-ranges",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            "google_compute_subnetwork.network-with-private-secondary-ip-ranges",
+				ImportState:             true,
+				ImportStateVerify:       true,
 			},
 		},
 	})

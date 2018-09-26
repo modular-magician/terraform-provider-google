@@ -34,9 +34,9 @@ func TestAccComputeHttpsHealthCheck_httpsHealthCheckBasicExample(t *testing.T) {
 				Config: testAccComputeHttpsHealthCheck_httpsHealthCheckBasicExample(acctest.RandString(10)),
 			},
 			{
-				ResourceName:      "google_compute_https_health_check.default",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            "google_compute_https_health_check.default",
+				ImportState:             true,
+				ImportStateVerify:       true,
 			},
 		},
 	})

@@ -34,9 +34,9 @@ func TestAccComputeHealthCheck_healthCheckBasicExample(t *testing.T) {
 				Config: testAccComputeHealthCheck_healthCheckBasicExample(acctest.RandString(10)),
 			},
 			{
-				ResourceName:      "google_compute_health_check.internal-health-check",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            "google_compute_health_check.internal-health-check",
+				ImportState:             true,
+				ImportStateVerify:       true,
 			},
 		},
 	})

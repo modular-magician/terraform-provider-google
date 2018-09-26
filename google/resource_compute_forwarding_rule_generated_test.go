@@ -34,9 +34,9 @@ func TestAccComputeForwardingRule_forwardingRuleBasicExample(t *testing.T) {
 				Config: testAccComputeForwardingRule_forwardingRuleBasicExample(acctest.RandString(10)),
 			},
 			{
-				ResourceName:      "google_compute_forwarding_rule.default",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            "google_compute_forwarding_rule.default",
+				ImportState:             true,
+				ImportStateVerify:       true,
 			},
 		},
 	})

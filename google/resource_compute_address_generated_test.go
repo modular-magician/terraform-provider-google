@@ -34,9 +34,9 @@ func TestAccComputeAddress_addressBasicExample(t *testing.T) {
 				Config: testAccComputeAddress_addressBasicExample(acctest.RandString(10)),
 			},
 			{
-				ResourceName:      "google_compute_address.ip_address",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            "google_compute_address.ip_address",
+				ImportState:             true,
+				ImportStateVerify:       true,
 			},
 		},
 	})
@@ -63,9 +63,9 @@ func TestAccComputeAddress_addressWithSubnetworkExample(t *testing.T) {
 				Config: testAccComputeAddress_addressWithSubnetworkExample(acctest.RandString(10)),
 			},
 			{
-				ResourceName:      "google_compute_address.internal_with_subnet_and_address",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            "google_compute_address.internal_with_subnet_and_address",
+				ImportState:             true,
+				ImportStateVerify:       true,
 			},
 		},
 	})

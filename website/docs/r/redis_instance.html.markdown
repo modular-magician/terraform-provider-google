@@ -67,6 +67,9 @@ resource "google_redis_instance" "test" {
 }
 ```
 
+## Example Usage
+
+
 ## Argument Reference
 
 The following arguments are supported:

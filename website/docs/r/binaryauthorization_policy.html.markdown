@@ -67,6 +67,9 @@ resource "google_binary_authorization_policy" "policy" {
 }
 ```
 
+## Example Usage
+
+
 ## Argument Reference
 
 The following arguments are supported:

@@ -42,6 +42,9 @@ resource "google_container_analysis_note" "note" {
 }
 ```
 
+## Example Usage
+
+
 ## Argument Reference
 
 The following arguments are supported:

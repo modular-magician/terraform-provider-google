@@ -34,9 +34,9 @@ func TestAccComputeRouter_routerBasicExample(t *testing.T) {
 				Config: testAccComputeRouter_routerBasicExample(acctest.RandString(10)),
 			},
 			{
-				ResourceName:      "google_compute_router.foobar",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            "google_compute_router.foobar",
+				ImportState:             true,
+				ImportStateVerify:       true,
 			},
 		},
 	})

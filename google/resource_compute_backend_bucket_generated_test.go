@@ -34,9 +34,9 @@ func TestAccComputeBackendBucket_backendBucketBasicExample(t *testing.T) {
 				Config: testAccComputeBackendBucket_backendBucketBasicExample(acctest.RandString(10)),
 			},
 			{
-				ResourceName:      "google_compute_backend_bucket.image_backend",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            "google_compute_backend_bucket.image_backend",
+				ImportState:             true,
+				ImportStateVerify:       true,
 			},
 		},
 	})

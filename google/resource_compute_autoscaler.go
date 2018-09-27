@@ -548,33 +548,45 @@ func expandComputeAutoscalerAutoscalingPolicy(v interface{}, d *schema.ResourceD
 	transformedMinReplicas, err := expandComputeAutoscalerAutoscalingPolicyMinReplicas(original["min_replicas"], d, config)
 	if err != nil {
 		return nil, err
+	} else if val := reflect.ValueOf(transformedMinReplicas); val.IsValid() && !isEmptyValue(val) {
+		transformed["minNumReplicas"] = transformedMinReplicas
 	}
-	transformed["minNumReplicas"] = transformedMinReplicas
+
 	transformedMaxReplicas, err := expandComputeAutoscalerAutoscalingPolicyMaxReplicas(original["max_replicas"], d, config)
 	if err != nil {
 		return nil, err
+	} else if val := reflect.ValueOf(transformedMaxReplicas); val.IsValid() && !isEmptyValue(val) {
+		transformed["maxNumReplicas"] = transformedMaxReplicas
 	}
-	transformed["maxNumReplicas"] = transformedMaxReplicas
+
 	transformedCooldownPeriod, err := expandComputeAutoscalerAutoscalingPolicyCooldownPeriod(original["cooldown_period"], d, config)
 	if err != nil {
 		return nil, err
+	} else if val := reflect.ValueOf(transformedCooldownPeriod); val.IsValid() && !isEmptyValue(val) {
+		transformed["coolDownPeriodSec"] = transformedCooldownPeriod
 	}
-	transformed["coolDownPeriodSec"] = transformedCooldownPeriod
+
 	transformedCpuUtilization, err := expandComputeAutoscalerAutoscalingPolicyCpuUtilization(original["cpu_utilization"], d, config)
 	if err != nil {
 		return nil, err
+	} else if val := reflect.ValueOf(transformedCpuUtilization); val.IsValid() && !isEmptyValue(val) {
+		transformed["cpuUtilization"] = transformedCpuUtilization
 	}
-	transformed["cpuUtilization"] = transformedCpuUtilization
+
 	transformedMetric, err := expandComputeAutoscalerAutoscalingPolicyMetric(original["metric"], d, config)
 	if err != nil {
 		return nil, err
+	} else if val := reflect.ValueOf(transformedMetric); val.IsValid() && !isEmptyValue(val) {
+		transformed["customMetricUtilizations"] = transformedMetric
 	}
-	transformed["customMetricUtilizations"] = transformedMetric
+
 	transformedLoadBalancingUtilization, err := expandComputeAutoscalerAutoscalingPolicyLoadBalancingUtilization(original["load_balancing_utilization"], d, config)
 	if err != nil {
 		return nil, err
+	} else if val := reflect.ValueOf(transformedLoadBalancingUtilization); val.IsValid() && !isEmptyValue(val) {
+		transformed["loadBalancingUtilization"] = transformedLoadBalancingUtilization
 	}
-	transformed["loadBalancingUtilization"] = transformedLoadBalancingUtilization
+
 	return transformed, nil
 }
 
@@ -602,8 +614,10 @@ func expandComputeAutoscalerAutoscalingPolicyCpuUtilization(v interface{}, d *sc
 	transformedTarget, err := expandComputeAutoscalerAutoscalingPolicyCpuUtilizationTarget(original["target"], d, config)
 	if err != nil {
 		return nil, err
+	} else if val := reflect.ValueOf(transformedTarget); val.IsValid() && !isEmptyValue(val) {
+		transformed["utilizationTarget"] = transformedTarget
 	}
-	transformed["utilizationTarget"] = transformedTarget
+
 	return transformed, nil
 }
 
@@ -615,24 +629,33 @@ func expandComputeAutoscalerAutoscalingPolicyMetric(v interface{}, d *schema.Res
 	l := v.([]interface{})
 	req := make([]interface{}, 0, len(l))
 	for _, raw := range l {
+		if raw == nil {
+			continue
+		}
 		original := raw.(map[string]interface{})
 		transformed := make(map[string]interface{})
 
 		transformedName, err := expandComputeAutoscalerAutoscalingPolicyMetricName(original["name"], d, config)
 		if err != nil {
 			return nil, err
+		} else if val := reflect.ValueOf(transformedName); val.IsValid() && !isEmptyValue(val) {
+			transformed["metric"] = transformedName
 		}
-		transformed["metric"] = transformedName
+
 		transformedTarget, err := expandComputeAutoscalerAutoscalingPolicyMetricTarget(original["target"], d, config)
 		if err != nil {
 			return nil, err
+		} else if val := reflect.ValueOf(transformedTarget); val.IsValid() && !isEmptyValue(val) {
+			transformed["utilizationTarget"] = transformedTarget
 		}
-		transformed["utilizationTarget"] = transformedTarget
+
 		transformedType, err := expandComputeAutoscalerAutoscalingPolicyMetricType(original["type"], d, config)
 		if err != nil {
 			return nil, err
+		} else if val := reflect.ValueOf(transformedType); val.IsValid() && !isEmptyValue(val) {
+			transformed["utilizationTargetType"] = transformedType
 		}
-		transformed["utilizationTargetType"] = transformedType
+
 		req = append(req, transformed)
 	}
 	return req, nil
@@ -662,8 +685,10 @@ func expandComputeAutoscalerAutoscalingPolicyLoadBalancingUtilization(v interfac
 	transformedTarget, err := expandComputeAutoscalerAutoscalingPolicyLoadBalancingUtilizationTarget(original["target"], d, config)
 	if err != nil {
 		return nil, err
+	} else if val := reflect.ValueOf(transformedTarget); val.IsValid() && !isEmptyValue(val) {
+		transformed["utilizationTarget"] = transformedTarget
 	}
-	transformed["utilizationTarget"] = transformedTarget
+
 	return transformed, nil
 }
 

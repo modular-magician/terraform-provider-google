@@ -501,23 +501,31 @@ func expandComputeRouterBgp(v interface{}, d *schema.ResourceData, config *Confi
 	transformedAsn, err := expandComputeRouterBgpAsn(original["asn"], d, config)
 	if err != nil {
 		return nil, err
+	} else if val := reflect.ValueOf(transformedAsn); val.IsValid() && !isEmptyValue(val) {
+		transformed["asn"] = transformedAsn
 	}
-	transformed["asn"] = transformedAsn
+
 	transformedAdvertiseMode, err := expandComputeRouterBgpAdvertiseMode(original["advertise_mode"], d, config)
 	if err != nil {
 		return nil, err
+	} else if val := reflect.ValueOf(transformedAdvertiseMode); val.IsValid() && !isEmptyValue(val) {
+		transformed["advertiseMode"] = transformedAdvertiseMode
 	}
-	transformed["advertiseMode"] = transformedAdvertiseMode
+
 	transformedAdvertisedGroups, err := expandComputeRouterBgpAdvertisedGroups(original["advertised_groups"], d, config)
 	if err != nil {
 		return nil, err
+	} else if val := reflect.ValueOf(transformedAdvertisedGroups); val.IsValid() && !isEmptyValue(val) {
+		transformed["advertisedGroups"] = transformedAdvertisedGroups
 	}
-	transformed["advertisedGroups"] = transformedAdvertisedGroups
+
 	transformedAdvertisedIpRanges, err := expandComputeRouterBgpAdvertisedIpRanges(original["advertised_ip_ranges"], d, config)
 	if err != nil {
 		return nil, err
+	} else if val := reflect.ValueOf(transformedAdvertisedIpRanges); val.IsValid() && !isEmptyValue(val) {
+		transformed["advertisedIpRanges"] = transformedAdvertisedIpRanges
 	}
-	transformed["advertisedIpRanges"] = transformedAdvertisedIpRanges
+
 	return transformed, nil
 }
 
@@ -537,19 +545,26 @@ func expandComputeRouterBgpAdvertisedIpRanges(v interface{}, d *schema.ResourceD
 	l := v.([]interface{})
 	req := make([]interface{}, 0, len(l))
 	for _, raw := range l {
+		if raw == nil {
+			continue
+		}
 		original := raw.(map[string]interface{})
 		transformed := make(map[string]interface{})
 
 		transformedRange, err := expandComputeRouterBgpAdvertisedIpRangesRange(original["range"], d, config)
 		if err != nil {
 			return nil, err
+		} else if val := reflect.ValueOf(transformedRange); val.IsValid() && !isEmptyValue(val) {
+			transformed["range"] = transformedRange
 		}
-		transformed["range"] = transformedRange
+
 		transformedDescription, err := expandComputeRouterBgpAdvertisedIpRangesDescription(original["description"], d, config)
 		if err != nil {
 			return nil, err
+		} else if val := reflect.ValueOf(transformedDescription); val.IsValid() && !isEmptyValue(val) {
+			transformed["description"] = transformedDescription
 		}
-		transformed["description"] = transformedDescription
+
 		req = append(req, transformed)
 	}
 	return req, nil

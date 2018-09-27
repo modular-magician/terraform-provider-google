@@ -639,19 +639,26 @@ func expandComputeSubnetworkSecondaryIpRange(v interface{}, d *schema.ResourceDa
 	l := v.([]interface{})
 	req := make([]interface{}, 0, len(l))
 	for _, raw := range l {
+		if raw == nil {
+			continue
+		}
 		original := raw.(map[string]interface{})
 		transformed := make(map[string]interface{})
 
 		transformedRangeName, err := expandComputeSubnetworkSecondaryIpRangeRangeName(original["range_name"], d, config)
 		if err != nil {
 			return nil, err
+		} else if val := reflect.ValueOf(transformedRangeName); val.IsValid() && !isEmptyValue(val) {
+			transformed["rangeName"] = transformedRangeName
 		}
-		transformed["rangeName"] = transformedRangeName
+
 		transformedIpCidrRange, err := expandComputeSubnetworkSecondaryIpRangeIpCidrRange(original["ip_cidr_range"], d, config)
 		if err != nil {
 			return nil, err
+		} else if val := reflect.ValueOf(transformedIpCidrRange); val.IsValid() && !isEmptyValue(val) {
+			transformed["ipCidrRange"] = transformedIpCidrRange
 		}
-		transformed["ipCidrRange"] = transformedIpCidrRange
+
 		req = append(req, transformed)
 	}
 	return req, nil

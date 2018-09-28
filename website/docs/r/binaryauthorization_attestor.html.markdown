@@ -32,15 +32,6 @@ To get more information about Attestor, see:
 ## Example Usage
 
 ```hcl
-resource "google_container_analysis_note" "note" {
-  name = "test-attestor-note"
-  attestation_authority {
-    hint {
-      human_readable_name = "Attestor Note"
-    }
-  }
-}
-
 resource "google_binary_authorization_attestor" "attestor" {
   name = "test-attestor"
   attestation_authority_note {
@@ -63,6 +54,15 @@ MAU9vdm1DIv567meMqTaVZgR3w7bck2P49AO8lO5ERFpVkErtu/98y+rUy9d789l
 qoIRW6y0+UlAc+MbqfL0ziHDOAmcqz1GnROg
 =6Bvm
 EOF
+    }
+  }
+}
+
+resource "google_container_analysis_note" "note" {
+  name = "test-attestor-note"
+  attestation_authority {
+    hint {
+      human_readable_name = "Attestor Note"
     }
   }
 }

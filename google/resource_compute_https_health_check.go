@@ -35,7 +35,6 @@ func resourceComputeHttpsHealthCheck() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			State: resourceComputeHttpsHealthCheckImport,
 		},
-
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(240 * time.Second),
 			Update: schema.DefaultTimeout(240 * time.Second),

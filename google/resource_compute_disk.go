@@ -262,7 +262,6 @@ func resourceComputeDisk() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			State: resourceComputeDiskImport,
 		},
-
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(300 * time.Second),
 			Update: schema.DefaultTimeout(240 * time.Second),

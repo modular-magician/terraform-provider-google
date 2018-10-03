@@ -33,7 +33,6 @@ func resourceComputeVpnGateway() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			State: resourceComputeVpnGatewayImport,
 		},
-
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(240 * time.Second),
 			Delete: schema.DefaultTimeout(240 * time.Second),

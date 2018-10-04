@@ -231,7 +231,8 @@ func resourceMonitoringAlertPolicy() *schema.Resource {
 			},
 			"enabled": {
 				Type:     schema.TypeBool,
-				Required: true,
+				Optional: true,
+				Default:  true,
 			},
 			"labels": {
 				Type:     schema.TypeList,

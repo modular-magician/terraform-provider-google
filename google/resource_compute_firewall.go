@@ -58,7 +58,6 @@ func resourceComputeFirewall() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			State: resourceComputeFirewallImport,
 		},
-
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(240 * time.Second),
 			Update: schema.DefaultTimeout(240 * time.Second),
@@ -144,10 +143,16 @@ func resourceComputeFirewall() *schema.Resource {
 			"disabled": {
 				Type:     schema.TypeBool,
 				Optional: true,
+				Deprecated: `This field is in beta and will be removed from this provider.
+Use the terraform-provider-google-beta provider to continue using it.
+See http://terraform.io/docs/provider/google/provider_versions.html for more details on beta fields.`,
 			},
 			"enable_logging": {
 				Type:     schema.TypeBool,
 				Optional: true,
+				Deprecated: `This field is in beta and will be removed from this provider.
+Use the terraform-provider-google-beta provider to continue using it.
+See http://terraform.io/docs/provider/google/provider_versions.html for more details on beta fields.`,
 			},
 			"priority": {
 				Type:         schema.TypeInt,

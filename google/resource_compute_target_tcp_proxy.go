@@ -36,7 +36,6 @@ func resourceComputeTargetTcpProxy() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			State: resourceComputeTargetTcpProxyImport,
 		},
-
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(240 * time.Second),
 			Update: schema.DefaultTimeout(240 * time.Second),

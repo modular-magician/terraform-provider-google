@@ -36,7 +36,6 @@ func resourceComputeRegionAutoscaler() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			State: resourceComputeRegionAutoscalerImport,
 		},
-
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(240 * time.Second),
 			Update: schema.DefaultTimeout(240 * time.Second),

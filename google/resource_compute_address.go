@@ -35,7 +35,6 @@ func resourceComputeAddress() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			State: resourceComputeAddressImport,
 		},
-
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(240 * time.Second),
 			Update: schema.DefaultTimeout(240 * time.Second),
@@ -70,13 +69,19 @@ func resourceComputeAddress() *schema.Resource {
 			"labels": {
 				Type:     schema.TypeMap,
 				Optional: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Deprecated: `This field is in beta and will be removed from this provider.
+Use the terraform-provider-google-beta provider to continue using it.
+See http://terraform.io/docs/provider/google/provider_versions.html for more details on beta fields.`,
+				Elem: &schema.Schema{Type: schema.TypeString},
 			},
 			"network_tier": {
-				Type:         schema.TypeString,
-				Computed:     true,
-				Optional:     true,
-				ForceNew:     true,
+				Type:     schema.TypeString,
+				Computed: true,
+				Optional: true,
+				ForceNew: true,
+				Deprecated: `This field is in beta and will be removed from this provider.
+Use the terraform-provider-google-beta provider to continue using it.
+See http://terraform.io/docs/provider/google/provider_versions.html for more details on beta fields.`,
 				ValidateFunc: validation.StringInSlice([]string{"PREMIUM", "STANDARD", ""}, false),
 			},
 			"region": {
@@ -100,6 +105,9 @@ func resourceComputeAddress() *schema.Resource {
 			"label_fingerprint": {
 				Type:     schema.TypeString,
 				Computed: true,
+				Deprecated: `This field is in beta and will be removed from this provider.
+Use the terraform-provider-google-beta provider to continue using it.
+See http://terraform.io/docs/provider/google/provider_versions.html for more details on beta fields.`,
 			},
 			"users": {
 				Type:     schema.TypeList,

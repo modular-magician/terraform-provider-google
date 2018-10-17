@@ -161,12 +161,12 @@ func TestAccRegionInstanceGroupManager_rollingUpdatePolicy(t *testing.T) {
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckInstanceGroupManagerDestroy,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testAccRegionInstanceGroupManager_rollingUpdatePolicy(igm),
 			},
 			// No import step because rolling updates are broken and the field will be removed in 2.0.0.
 			// TODO(danawillow): Remove this test once we've removed the field.
-			resource.TestStep{
+			{
 				Config: testAccRegionInstanceGroupManager_rollingUpdatePolicy2(igm),
 			},
 		},
@@ -625,7 +625,7 @@ func testAccRegionInstanceGroupManager_separateRegions(igm1, igm2 string) string
 	resource "google_compute_region_instance_group_manager" "igm-basic" {
 		description = "Terraform test instance group manager"
 		name = "%s"
-		instance_template = "${google_compute_instance_template.igm-basic.self_link}"
+		instance_template = "${google_compute_instance_template.igm-update.self_link}"
 		base_instance_name = "igm-basic"
 		region = "us-central1"
 		target_size = 2
@@ -698,6 +698,7 @@ resource "google_compute_http_health_check" "zero" {
 }
 	`, template, target, igm, hck)
 }
+
 func testAccRegionInstanceGroupManager_versions(primaryTemplate string, canaryTemplate string, igm string) string {
 	return fmt.Sprintf(`
 data "google_compute_image" "my_image" {
@@ -944,7 +945,7 @@ resource "google_compute_region_instance_group_manager" "igm-rolling-update-poli
 	region                     = "us-central1"
 	distribution_policy_zones  = ["us-central1-a", "us-central1-f"]
 	target_size                = 3
-	update_strategy            = "ROLLING_UPDATE"
+	update_strategy = "ROLLING_UPDATE"
 
 	rolling_update_policy {
 		type                  = "PROACTIVE"

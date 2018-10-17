@@ -1211,6 +1211,9 @@ func resourceComputeDiskDecoder(d *schema.ResourceData, meta interface{}, res ma
 		// The raw key won't be returned, so we need to use the original.
 		transformed["rawKey"] = d.Get("disk_encryption_key.0.raw_key")
 		transformed["sha256"] = original["sha256"]
+		// The response for crypto keys often includes the version of the key which needs to be removed
+		// format: projects/<project>/locations/<region>/keyRings/<keyring>/cryptoKeys/<key>/cryptoKeyVersions/1
+		transformed["kmsKeyName"] = strings.Split(original["kmsKeyName"].(string), "/cryptoKeyVersions")[0]
 		res["diskEncryptionKey"] = transformed
 	}
 
@@ -1220,6 +1223,9 @@ func resourceComputeDiskDecoder(d *schema.ResourceData, meta interface{}, res ma
 		// The raw key won't be returned, so we need to use the original.
 		transformed["rawKey"] = d.Get("source_image_encryption_key.0.raw_key")
 		transformed["sha256"] = original["sha256"]
+		// The response for crypto keys often includes the version of the key which needs to be removed
+		// format: projects/<project>/locations/<region>/keyRings/<keyring>/cryptoKeys/<key>/cryptoKeyVersions/1
+		transformed["kmsKeyName"] = strings.Split(original["kmsKeyName"].(string), "/cryptoKeyVersions")[0]
 		res["sourceImageEncryptionKey"] = transformed
 	}
 
@@ -1229,6 +1235,9 @@ func resourceComputeDiskDecoder(d *schema.ResourceData, meta interface{}, res ma
 		// The raw key won't be returned, so we need to use the original.
 		transformed["rawKey"] = d.Get("source_snapshot_encryption_key.0.raw_key")
 		transformed["sha256"] = original["sha256"]
+		// The response for crypto keys often includes the version of the key which needs to be removed
+		// format: projects/<project>/locations/<region>/keyRings/<keyring>/cryptoKeys/<key>/cryptoKeyVersions/1
+		transformed["kmsKeyName"] = strings.Split(original["kmsKeyName"].(string), "/cryptoKeyVersions")[0]
 		res["sourceSnapshotEncryptionKey"] = transformed
 	}
 

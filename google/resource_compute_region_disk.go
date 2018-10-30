@@ -48,6 +48,25 @@ func resourceComputeRegionDisk() *schema.Resource {
 			customdiff.ForceNewIfChange("size", isDiskShrinkage)),
 
 		Schema: map[string]*schema.Schema{
+			"disk_encryption_key": {
+				Type:     schema.TypeList,
+				Required: true,
+				ForceNew: true,
+				MaxItems: 1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"raw_key": {
+							Type:     schema.TypeString,
+							Optional: true,
+							ForceNew: true,
+						},
+						"sha256": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+					},
+				},
+			},
 			"name": {
 				Type:     schema.TypeString,
 				Required: true,
@@ -64,14 +83,15 @@ func resourceComputeRegionDisk() *schema.Resource {
 					DiffSuppressFunc: compareSelfLinkOrResourceName,
 				},
 			},
-			"description": {
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
+			"snapshot": {
+				Type:             schema.TypeString,
+				Required:         true,
+				ForceNew:         true,
+				DiffSuppressFunc: compareSelfLinkOrResourceName,
 			},
-			"disk_encryption_key": {
+			"source_snapshot_encryption_key": {
 				Type:     schema.TypeList,
-				Optional: true,
+				Required: true,
 				ForceNew: true,
 				MaxItems: 1,
 				Elem: &schema.Resource{
@@ -87,6 +107,15 @@ func resourceComputeRegionDisk() *schema.Resource {
 						},
 					},
 				},
+			},
+			"source_snapshot_id": {
+				Type:     schema.TypeString,
+				Required: true,
+			},
+			"description": {
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
 			},
 			"labels": {
 				Type:     schema.TypeMap,
@@ -104,31 +133,6 @@ func resourceComputeRegionDisk() *schema.Resource {
 				Type:     schema.TypeInt,
 				Computed: true,
 				Optional: true,
-			},
-			"snapshot": {
-				Type:             schema.TypeString,
-				Optional:         true,
-				ForceNew:         true,
-				DiffSuppressFunc: compareSelfLinkOrResourceName,
-			},
-			"source_snapshot_encryption_key": {
-				Type:     schema.TypeList,
-				Optional: true,
-				ForceNew: true,
-				MaxItems: 1,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"raw_key": {
-							Type:     schema.TypeString,
-							Optional: true,
-							ForceNew: true,
-						},
-						"sha256": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
-				},
 			},
 			"type": {
 				Type:             schema.TypeString,
@@ -155,7 +159,7 @@ func resourceComputeRegionDisk() *schema.Resource {
 			},
 			"source_snapshot_id": {
 				Type:     schema.TypeString,
-				Computed: true,
+				Required: true,
 			},
 			"users": {
 				Type:     schema.TypeList,

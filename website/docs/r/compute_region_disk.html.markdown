@@ -101,6 +101,65 @@ The following arguments are supported:
   (Required)
   URLs of the zones where the disk should be replicated to.
 
+* `disk_encryption_key` -
+  (Required)
+  Encrypts the disk using a customer-supplied encryption key.
+  After you encrypt a disk with a customer-supplied key, you must
+  provide the same key if you use the disk later (e.g. to create a disk
+  snapshot or an image, or to attach the disk to a virtual machine).
+  Customer-supplied encryption keys do not protect access to metadata of
+  the disk.
+  If you do not provide an encryption key when creating the disk, then
+  the disk will be encrypted using an automatically generated key and
+  you do not need to provide a key to use the disk later.  Structure is documented below.
+
+* `snapshot` -
+  (Required)
+  The source snapshot used to create this disk. You can provide this as
+  a partial or full URL to the resource. For example, the following are
+  valid values:
+  * `https://www.googleapis.com/compute/v1/projects/project/global/snapshots/snapshot`
+  * `projects/project/global/snapshots/snapshot`
+  * `global/snapshots/snapshot`
+  * `snapshot`
+
+* `source_snapshot_encryption_key` -
+  (Required)
+  The customer-supplied encryption key of the source snapshot. Required
+  if the source snapshot is protected by a customer-supplied encryption
+  key.  Structure is documented below.
+
+* `source_snapshot_id` -
+  (Required)
+  The unique ID of the snapshot used to create this disk. This value
+  identifies the exact snapshot that was used to create this persistent
+  disk. For example, if you created the persistent disk from a snapshot
+  that was later deleted and recreated under the same name, the source
+  snapshot ID would identify the exact version of the snapshot that was
+  used.
+
+
+The `disk_encryption_key` block supports:
+
+* `raw_key` -
+  (Optional)
+  Specifies a 256-bit customer-supplied encryption key, encoded in
+  RFC 4648 base64 to either encrypt or decrypt this resource.
+
+* `sha256` -
+  The RFC 4648 base64 encoded SHA-256 hash of the customer-supplied
+  encryption key that protects this resource.
+
+The `source_snapshot_encryption_key` block supports:
+
+* `raw_key` -
+  (Optional)
+  Specifies a 256-bit customer-supplied encryption key, encoded in
+  RFC 4648 base64 to either encrypt or decrypt this resource.
+
+* `sha256` -
+  The RFC 4648 base64 encoded SHA-256 hash of the customer-supplied
+  encryption key that protects this resource.
 
 - - -
 
@@ -132,59 +191,9 @@ The following arguments are supported:
 * `region` -
   (Optional)
   A reference to the region where the disk resides.
-
-* `disk_encryption_key` -
-  (Optional)
-  Encrypts the disk using a customer-supplied encryption key.
-  After you encrypt a disk with a customer-supplied key, you must
-  provide the same key if you use the disk later (e.g. to create a disk
-  snapshot or an image, or to attach the disk to a virtual machine).
-  Customer-supplied encryption keys do not protect access to metadata of
-  the disk.
-  If you do not provide an encryption key when creating the disk, then
-  the disk will be encrypted using an automatically generated key and
-  you do not need to provide a key to use the disk later.  Structure is documented below.
-
-* `snapshot` -
-  (Optional)
-  The source snapshot used to create this disk. You can provide this as
-  a partial or full URL to the resource. For example, the following are
-  valid values:
-  * `https://www.googleapis.com/compute/v1/projects/project/global/snapshots/snapshot`
-  * `projects/project/global/snapshots/snapshot`
-  * `global/snapshots/snapshot`
-  * `snapshot`
-
-* `source_snapshot_encryption_key` -
-  (Optional)
-  The customer-supplied encryption key of the source snapshot. Required
-  if the source snapshot is protected by a customer-supplied encryption
-  key.  Structure is documented below.
 * `project` - (Optional) The ID of the project in which the resource belongs.
     If it is not provided, the provider project is used.
 
-
-The `disk_encryption_key` block supports:
-
-* `raw_key` -
-  (Optional)
-  Specifies a 256-bit customer-supplied encryption key, encoded in
-  RFC 4648 base64 to either encrypt or decrypt this resource.
-
-* `sha256` -
-  The RFC 4648 base64 encoded SHA-256 hash of the customer-supplied
-  encryption key that protects this resource.
-
-The `source_snapshot_encryption_key` block supports:
-
-* `raw_key` -
-  (Optional)
-  Specifies a 256-bit customer-supplied encryption key, encoded in
-  RFC 4648 base64 to either encrypt or decrypt this resource.
-
-* `sha256` -
-  The RFC 4648 base64 encoded SHA-256 hash of the customer-supplied
-  encryption key that protects this resource.
 
 ## Attributes Reference
 
@@ -209,6 +218,7 @@ In addition to the arguments listed above, the following computed attributes are
   project/zones/zone/instances/instance
 
 * `source_snapshot_id` -
+  (Required)
   The unique ID of the snapshot used to create this disk. This value
   identifies the exact snapshot that was used to create this persistent
   disk. For example, if you created the persistent disk from a snapshot

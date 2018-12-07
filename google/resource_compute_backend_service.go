@@ -532,6 +532,7 @@ func expandBackendService(d *schema.ResourceData) (*computeBeta.BackendService, 
 				ForceSendFields: []string{"IncludeProtocol", "IncludeHost", "IncludeQueryString", "QueryStringWhitelist", "QueryStringBlacklist"},
 			},
 		},
+		CustomRequestHeaders: convertStringSet(d.Get("custom_request_headers").(*schema.Set)),
 	}
 
 	if v, ok := d.GetOk("iap"); ok {

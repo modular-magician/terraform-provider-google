@@ -295,14 +295,17 @@ func resourceComputeRegionInstanceGroupManagerCreate(d *schema.ResourceData, met
 	}
 
 	manager := &computeBeta.InstanceGroupManager{
-		Name:               d.Get("name").(string),
-		Description:        d.Get("description").(string),
-		BaseInstanceName:   d.Get("base_instance_name").(string),
-		InstanceTemplate:   d.Get("instance_template").(string),
-		TargetSize:         int64(d.Get("target_size").(int)),
-		NamedPorts:         getNamedPortsBeta(d.Get("named_port").(*schema.Set).List()),
-		TargetPools:        convertStringSet(d.Get("target_pools").(*schema.Set)),
-		DistributionPolicy: expandDistributionPolicy(d.Get("distribution_policy_zones").(*schema.Set)),
+		Name:                d.Get("name").(string),
+		Description:         d.Get("description").(string),
+		BaseInstanceName:    d.Get("base_instance_name").(string),
+		InstanceTemplate:    d.Get("instance_template").(string),
+		TargetSize:          int64(d.Get("target_size").(int)),
+		NamedPorts:          getNamedPortsBeta(d.Get("named_port").(*schema.Set).List()),
+		TargetPools:         convertStringSet(d.Get("target_pools").(*schema.Set)),
+		AutoHealingPolicies: expandAutoHealingPolicies(d.Get("auto_healing_policies").([]interface{})),
+		Versions:            expandVersions(d.Get("version").([]interface{})),
+		UpdatePolicy:        expandUpdatePolicy(d.Get("update_policy").([]interface{})),
+		DistributionPolicy:  expandDistributionPolicy(d.Get("distribution_policy_zones").(*schema.Set)),
 		// Force send TargetSize to allow size of 0.
 		ForceSendFields: []string{"TargetSize"},
 	}

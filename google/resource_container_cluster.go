@@ -637,8 +637,14 @@ func resourceContainerClusterCreate(d *schema.ResourceData, meta interface{}) er
 		EnableKubernetesAlpha:   d.Get("enable_kubernetes_alpha").(bool),
 		IpAllocationPolicy:      expandIPAllocationPolicy(d.Get("ip_allocation_policy")),
 		PodSecurityPolicyConfig: expandPodSecurityPolicyConfig(d.Get("pod_security_policy_config")),
-		MasterAuth:              expandMasterAuth(d.Get("master_auth")),
-		ResourceLabels:          expandStringMap(d, "resource_labels"),
+		EnableTpu:               d.Get("enable_tpu").(bool),
+		BinaryAuthorization: &containerBeta.BinaryAuthorization{
+			Enabled:         d.Get("enable_binary_authorization").(bool),
+			ForceSendFields: []string{"Enabled"},
+		},
+		Autoscaling:    expandClusterAutoscaling(d.Get("cluster_autoscaling"), d),
+		MasterAuth:     expandMasterAuth(d.Get("master_auth")),
+		ResourceLabels: expandStringMap(d, "resource_labels"),
 	}
 
 	// Only allow setting node_version on create if it's set to the equivalent master version,
@@ -812,7 +818,9 @@ func resourceContainerClusterRead(d *schema.ResourceData, meta interface{}) erro
 	d.Set("monitoring_service", cluster.MonitoringService)
 	d.Set("network", cluster.NetworkConfig.Network)
 	d.Set("subnetwork", cluster.NetworkConfig.Subnetwork)
-	if err := d.Set("cluster_autoscaling", nil); err != nil {
+	d.Set("enable_binary_authorization", cluster.BinaryAuthorization != nil && cluster.BinaryAuthorization.Enabled)
+	d.Set("enable_tpu", cluster.EnableTpu)
+	if err := d.Set("cluster_autoscaling", flattenClusterAutoscaling(cluster.Autoscaling)); err != nil {
 		return err
 	}
 	if err := d.Set("node_config", flattenNodeConfig(cluster.NodeConfig)); err != nil {
@@ -843,6 +851,10 @@ func resourceContainerClusterRead(d *schema.ResourceData, meta interface{}) erro
 		return err
 	}
 	if err := d.Set("instance_group_urls", igUrls); err != nil {
+		return err
+	}
+
+	if err := d.Set("pod_security_policy_config", flattenPodSecurityPolicyConfig(cluster.PodSecurityPolicyConfig)); err != nil {
 		return err
 	}
 
@@ -970,6 +982,44 @@ func resourceContainerClusterUpdate(d *schema.ResourceData, meta interface{}) er
 
 			d.SetPartial("addons_config")
 		}
+	}
+	if d.HasChange("enable_binary_authorization") {
+		enabled := d.Get("enable_binary_authorization").(bool)
+		req := &containerBeta.UpdateClusterRequest{
+			Update: &containerBeta.ClusterUpdate{
+				DesiredBinaryAuthorization: &containerBeta.BinaryAuthorization{
+					Enabled:         enabled,
+					ForceSendFields: []string{"Enabled"},
+				},
+			},
+		}
+
+		updateF := updateFunc(req, "updating GKE binary authorization")
+		// Call update serially.
+		if err := lockedCall(lockKey, updateF); err != nil {
+			return err
+		}
+
+		log.Printf("[INFO] GKE cluster %s's binary authorization has been updated to %v", d.Id(), enabled)
+
+		d.SetPartial("enable_binary_authorization")
+	}
+
+	if d.HasChange("cluster_autoscaling") {
+		req := &containerBeta.UpdateClusterRequest{
+			Update: &containerBeta.ClusterUpdate{
+				DesiredClusterAutoscaling: expandClusterAutoscaling(d.Get("cluster_autoscaling"), d),
+			}}
+
+		updateF := updateFunc(req, "updating GKE cluster autoscaling")
+		// Call update serially.
+		if err := lockedCall(lockKey, updateF); err != nil {
+			return err
+		}
+
+		log.Printf("[INFO] GKE cluster %s's cluster-wide autoscaling has been updated", d.Id())
+
+		d.SetPartial("cluster_autoscaling")
 	}
 
 	if d.HasChange("maintenance_policy") {
@@ -1244,6 +1294,31 @@ func resourceContainerClusterUpdate(d *schema.ResourceData, meta interface{}) er
 		d.SetPartial("master_auth")
 	}
 
+	if d.HasChange("pod_security_policy_config") {
+		c := d.Get("pod_security_policy_config")
+		req := &containerBeta.UpdateClusterRequest{
+			Update: &containerBeta.ClusterUpdate{
+				DesiredPodSecurityPolicyConfig: expandPodSecurityPolicyConfig(c),
+			},
+		}
+
+		updateF := func() error {
+			name := containerClusterFullName(project, location, clusterName)
+			op, err := config.clientContainerBeta.Projects.Locations.Clusters.Update(name, req).Do()
+			if err != nil {
+				return err
+			}
+			// Wait until it's updated
+			return containerSharedOperationWait(config, op, project, location, "updating GKE cluster pod security policy config", timeoutInMinutes, 2)
+		}
+		if err := lockedCall(lockKey, updateF); err != nil {
+			return err
+		}
+		log.Printf("[INFO] GKE cluster %s pod security policy config has been updated", d.Id())
+
+		d.SetPartial("pod_security_policy_config")
+	}
+
 	if d.HasChange("resource_labels") {
 		resourceLabels := d.Get("resource_labels").(map[string]interface{})
 		req := &containerBeta.SetLabelsRequest{
@@ -1456,6 +1531,63 @@ func expandMaintenancePolicy(configured interface{}) *containerBeta.MaintenanceP
 	}
 }
 
+func expandClusterAutoscaling(configured interface{}, d *schema.ResourceData) *containerBeta.ClusterAutoscaling {
+	l, ok := configured.([]interface{})
+	if !ok || l == nil || len(l) == 0 || l[0] == nil {
+		// Before master version 1.11.2, we must send 'nil' values if autoscaling isn't
+		// turned on - the cluster will return an error even if we're setting
+		// EnableNodeAutoprovisioning to false.
+		cmv, err := version.NewVersion(d.Get("master_version").(string))
+		if err != nil {
+			log.Printf("[DEBUG] Could not parse master_version into version (%q), trying min_master_version.", d.Get("master_version").(string))
+			cmv, err = version.NewVersion(d.Get("min_master_version").(string))
+			if err != nil {
+				log.Printf("[DEBUG] Could not parse min_master_version into version (%q), assuming we are not already using cluster autoscaling.", d.Get("min_master_version").(string))
+				// This deserves a little explanation.  The only reason we would ever want to send
+				// `EnableNodeAutoprovisioning: false` is because we think we might need to
+				// disable it (e.g. it is already enabled).  Otherwise, there is no difference
+				// between sending `nil` and sending `EnableNodeAutoprovisioning: false`.
+				// The only circumstance in which neither master_version nor min_master_version
+				// can be parsed into version objects would be if the user has not set either one,
+				// and we have not yet had a `read` call.  e.g. first-time creates, and possibly
+				// some circumstance related to import.  It is probably safe to assume that
+				// we are not going to be changing cluster autoscaling from on to off in those
+				// circumstances.  Therefore, if we don't know what version we're running, and
+				// the user has not requested cluster autoscaling, we'll fail "safe" and not touch
+				// it.
+				cmv, _ = version.NewVersion("0.0.0")
+			}
+		}
+		dmv, _ := version.NewVersion("1.11.2")
+		if cmv.LessThan(dmv) {
+			return nil
+		} else {
+			return &containerBeta.ClusterAutoscaling{
+				EnableNodeAutoprovisioning: false,
+				ForceSendFields:            []string{"EnableNodeAutoprovisioning"},
+			}
+		}
+	}
+	r := &containerBeta.ClusterAutoscaling{}
+	if config, ok := l[0].(map[string]interface{}); ok {
+		r.EnableNodeAutoprovisioning = config["enabled"].(bool)
+		if limits, ok := config["resource_limits"]; ok {
+			if lmts, ok := limits.([]interface{}); ok {
+				for _, v := range lmts {
+					limit := v.(map[string]interface{})
+					r.ResourceLimits = append(r.ResourceLimits, &containerBeta.ResourceLimit{
+						ResourceType: limit["resource_type"].(string),
+						// Here we're relying on *not* setting ForceSendFields for 0-values.
+						Minimum: int64(limit["minimum"].(int)),
+						Maximum: int64(limit["maximum"].(int)),
+					})
+				}
+			}
+		}
+	}
+	return r
+}
+
 func expandMasterAuth(configured interface{}) *containerBeta.MasterAuth {
 	l := configured.([]interface{})
 	if len(l) == 0 || l[0] == nil {
@@ -1535,9 +1667,16 @@ func expandPrivateClusterConfig(configured interface{}) *containerBeta.PrivateCl
 }
 
 func expandPodSecurityPolicyConfig(configured interface{}) *containerBeta.PodSecurityPolicyConfig {
-	// Removing lists is hard - the element count (#) will have a diff from nil -> computed
-	// If we set this to empty on Read, it will be stable.
-	return nil
+	l := configured.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil
+	}
+
+	config := l[0].(map[string]interface{})
+	return &containerBeta.PodSecurityPolicyConfig{
+		Enabled:         config["enabled"].(bool),
+		ForceSendFields: []string{"Enabled"},
+	}
 }
 
 func flattenNetworkPolicy(c *containerBeta.NetworkPolicy) []map[string]interface{} {
@@ -1678,6 +1817,25 @@ func flattenMasterAuth(ma *containerBeta.MasterAuth) []map[string]interface{} {
 	return masterAuth
 }
 
+func flattenClusterAutoscaling(a *containerBeta.ClusterAutoscaling) []map[string]interface{} {
+	r := make(map[string]interface{})
+	if a == nil || !a.EnableNodeAutoprovisioning {
+		r["enabled"] = false
+	} else {
+		resourceLimits := make([]interface{}, 0, len(a.ResourceLimits))
+		for _, rl := range a.ResourceLimits {
+			resourceLimits = append(resourceLimits, map[string]interface{}{
+				"resource_type": rl.ResourceType,
+				"minimum":       rl.Minimum,
+				"maximum":       rl.Maximum,
+			})
+		}
+		r["resource_limits"] = resourceLimits
+		r["enabled"] = true
+	}
+	return []map[string]interface{}{r}
+}
+
 func flattenMasterAuthorizedNetworksConfig(c *containerBeta.MasterAuthorizedNetworksConfig) []map[string]interface{} {
 	if c == nil {
 		return nil
@@ -1694,6 +1852,17 @@ func flattenMasterAuthorizedNetworksConfig(c *containerBeta.MasterAuthorizedNetw
 		result["cidr_blocks"] = schema.NewSet(schema.HashResource(cidrBlockConfig), cidrBlocks)
 	}
 	return []map[string]interface{}{result}
+}
+
+func flattenPodSecurityPolicyConfig(c *containerBeta.PodSecurityPolicyConfig) []map[string]interface{} {
+	if c == nil {
+		return nil
+	}
+	return []map[string]interface{}{
+		{
+			"enabled": c.Enabled,
+		},
+	}
 }
 
 func resourceContainerClusterStateImporter(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
@@ -1771,4 +1940,18 @@ func masterAuthClientCertCfgSuppress(k, old, new string, r *schema.ResourceData)
 	}
 
 	return strings.HasSuffix(k, ".issue_client_certificate") && old == "" && new == "true"
+}
+
+func podSecurityPolicyCfgSuppress(k, old, new string, r *schema.ResourceData) bool {
+	if k == "pod_security_policy_config.#" && old == "1" && new == "0" {
+		if v, ok := r.GetOk("pod_security_policy_config"); ok {
+			cfgList := v.([]interface{})
+			if len(cfgList) > 0 {
+				d := cfgList[0].(map[string]interface{})
+				// Suppress if old value was {enabled == false}
+				return !d["enabled"].(bool)
+			}
+		}
+	}
+	return false
 }

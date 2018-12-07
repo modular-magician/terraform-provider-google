@@ -101,6 +101,12 @@ func Provider() terraform.ResourceProvider {
 		},
 
 		ResourcesMap: mergeResourceMaps(
+			// start beta-only products
+			GeneratedBinaryAuthorizationResourcesMap,
+			GeneratedContainerAnalysisResourcesMap,
+			GeneratedFilestoreResourcesMap,
+			GeneratedAccessContextManagerResourcesMap,
+			// end beta-only products
 			GeneratedComputeResourcesMap,
 			GeneratedDnsResourcesMap,
 			GeneratedRedisResourcesMap,
@@ -153,6 +159,9 @@ func Provider() terraform.ResourceProvider {
 				"google_compute_ssl_certificate":               resourceComputeSslCertificate(),
 				"google_compute_ssl_policy":                    resourceComputeSslPolicy(),
 				"google_compute_subnetwork":                    resourceComputeSubnetwork(),
+				"google_compute_subnetwork_iam_binding":        ResourceIamBindingWithImport(IamComputeSubnetworkSchema, NewComputeSubnetworkIamUpdater, ComputeSubnetworkIdParseFunc),
+				"google_compute_subnetwork_iam_member":         ResourceIamMemberWithImport(IamComputeSubnetworkSchema, NewComputeSubnetworkIamUpdater, ComputeSubnetworkIdParseFunc),
+				"google_compute_subnetwork_iam_policy":         ResourceIamPolicyWithImport(IamComputeSubnetworkSchema, NewComputeSubnetworkIamUpdater, ComputeSubnetworkIdParseFunc),
 				"google_compute_target_https_proxy":            resourceComputeTargetHttpsProxy(),
 				"google_compute_target_tcp_proxy":              resourceComputeTargetTcpProxy(),
 				"google_compute_target_pool":                   resourceComputeTargetPool(),
@@ -186,6 +195,7 @@ func Provider() terraform.ResourceProvider {
 				"google_kms_crypto_key":                        resourceKmsCryptoKey(),
 				"google_kms_crypto_key_iam_binding":            ResourceIamBindingWithImport(IamKmsCryptoKeySchema, NewKmsCryptoKeyIamUpdater, CryptoIdParseFunc),
 				"google_kms_crypto_key_iam_member":             ResourceIamMemberWithImport(IamKmsCryptoKeySchema, NewKmsCryptoKeyIamUpdater, CryptoIdParseFunc),
+				"google_service_networking_connection":         resourceServiceNetworkingConnection(),
 				"google_sourcerepo_repository":                 resourceSourceRepoRepository(),
 				"google_spanner_instance":                      resourceSpannerInstance(),
 				"google_spanner_instance_iam_binding":          ResourceIamBindingWithImport(IamSpannerInstanceSchema, NewSpannerInstanceIamUpdater, SpannerInstanceIdParseFunc),

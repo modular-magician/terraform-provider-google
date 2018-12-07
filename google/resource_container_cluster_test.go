@@ -458,6 +458,32 @@ func TestAccContainerCluster_withKubernetesAlpha(t *testing.T) {
 	})
 }
 
+func TestAccContainerCluster_withTpu(t *testing.T) {
+	t.Parallel()
+
+	clusterName := fmt.Sprintf("cluster-test-%s", acctest.RandString(10))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckContainerClusterDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccContainerCluster_withTpu(clusterName),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("google_container_cluster.with_tpu", "enable_tpu", "true"),
+				),
+			},
+			{
+				ResourceName:        "google_container_cluster.with_tpu",
+				ImportStateIdPrefix: "us-central1-b/",
+				ImportState:         true,
+				ImportStateVerify:   true,
+			},
+		},
+	})
+}
+
 func TestAccContainerCluster_withPrivateClusterConfig(t *testing.T) {
 	t.Parallel()
 
@@ -1091,6 +1117,114 @@ func TestAccContainerCluster_withIPAllocationPolicy_createSubnetwork(t *testing.
 	})
 }
 
+func TestAccContainerCluster_withPodSecurityPolicy(t *testing.T) {
+	t.Parallel()
+
+	clusterName := fmt.Sprintf("cluster-test-%s", acctest.RandString(10))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckContainerClusterDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccContainerCluster_withPodSecurityPolicy(clusterName, true),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("google_container_cluster.with_pod_security_policy",
+						"pod_security_policy_config.0.enabled", "true"),
+				),
+			},
+			{
+				ResourceName:        "google_container_cluster.with_pod_security_policy",
+				ImportStateIdPrefix: "us-central1-a/",
+				ImportState:         true,
+				ImportStateVerify:   true,
+			},
+			{
+				Config: testAccContainerCluster_withPodSecurityPolicy(clusterName, false),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("google_container_cluster.with_pod_security_policy",
+						"pod_security_policy_config.0.enabled", "false"),
+				),
+			},
+			{
+				ResourceName:        "google_container_cluster.with_pod_security_policy",
+				ImportStateIdPrefix: "us-central1-a/",
+				ImportState:         true,
+				ImportStateVerify:   true,
+			},
+		},
+	})
+}
+
+func TestAccContainerCluster_autoprovisioning(t *testing.T) {
+	t.Parallel()
+
+	clusterName := fmt.Sprintf("cluster-test-%s", acctest.RandString(10))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckContainerClusterDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccContainerCluster_autoprovisioning(clusterName, true),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("google_container_cluster.with_autoprovisioning",
+						"cluster_autoscaling.0.enabled", "true"),
+				),
+			},
+			{
+				ResourceName:            "google_container_cluster.with_autoprovisioning",
+				ImportStateIdPrefix:     "us-central1-a/",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"min_master_version"},
+			},
+			{
+				Config: testAccContainerCluster_autoprovisioning(clusterName, false),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("google_container_cluster.with_autoprovisioning",
+						"cluster_autoscaling.0.enabled", "false"),
+				),
+			},
+			{
+				ResourceName:            "google_container_cluster.with_autoprovisioning",
+				ImportStateIdPrefix:     "us-central1-a/",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"min_master_version"},
+			},
+		},
+	})
+}
+
+func TestAccContainerCluster_sharedVpc(t *testing.T) {
+	t.Parallel()
+
+	clusterName := fmt.Sprintf("cluster-test-%s", acctest.RandString(10))
+	org := getTestOrgFromEnv(t)
+	billingId := getTestBillingAccountFromEnv(t)
+	projectName := fmt.Sprintf("tf-xpntest-%s", acctest.RandString(10))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckContainerClusterDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccContainerCluster_sharedVpc(org, billingId, projectName, clusterName),
+			},
+			{
+				ResourceName:        "google_container_cluster.shared_vpc_cluster",
+				ImportStateIdPrefix: fmt.Sprintf("%s-service/us-central1-a/", projectName),
+				ImportState:         true,
+				ImportStateVerify:   true,
+			},
+		},
+	})
+}
+
 func TestAccContainerCluster_withResourceLabels(t *testing.T) {
 	t.Parallel()
 
@@ -1132,6 +1266,38 @@ func TestAccContainerCluster_withResourceLabelsUpdate(t *testing.T) {
 			},
 			{
 				ResourceName:        "google_container_cluster.with_resource_labels",
+				ImportStateIdPrefix: "us-central1-a/",
+				ImportState:         true,
+				ImportStateVerify:   true,
+			},
+		},
+	})
+}
+
+func TestAccContainerCluster_withBinaryAuthorization(t *testing.T) {
+	t.Parallel()
+
+	clusterName := fmt.Sprintf("cluster-test-%s", acctest.RandString(10))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckContainerClusterDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccContainerCluster_withBinaryAuthorization(clusterName, true),
+			},
+			{
+				ResourceName:        "google_container_cluster.with_binary_authorization",
+				ImportStateIdPrefix: "us-central1-a/",
+				ImportState:         true,
+				ImportStateVerify:   true,
+			},
+			{
+				Config: testAccContainerCluster_withBinaryAuthorization(clusterName, false),
+			},
+			{
+				ResourceName:        "google_container_cluster.with_binary_authorization",
 				ImportStateIdPrefix: "us-central1-a/",
 				ImportState:         true,
 				ImportStateVerify:   true,
@@ -1555,6 +1721,54 @@ resource "google_container_cluster" "with_kubernetes_alpha" {
 }`, clusterName)
 }
 
+func testAccContainerCluster_withTpu(clusterName string) string {
+	return fmt.Sprintf(`
+resource "google_compute_network" "container_network" {
+	name = "container-net-%s"
+	auto_create_subnetworks = false
+}
+
+resource "google_compute_subnetwork" "container_subnetwork" {
+	name                     = "${google_compute_network.container_network.name}"
+	network                  = "${google_compute_network.container_network.name}"
+	ip_cidr_range            = "10.0.35.0/24"
+	region                   = "us-central1"
+
+	secondary_ip_range {
+		range_name    = "pod"
+		ip_cidr_range = "10.1.0.0/19"
+	}
+
+	secondary_ip_range {
+		range_name    = "svc"
+		ip_cidr_range = "10.2.0.0/22"
+	}
+}
+
+resource "google_container_cluster" "with_tpu" {
+	name = "cluster-test-%s"
+	zone = "us-central1-b"
+	initial_node_count = 1
+
+	enable_tpu = true
+
+	network = "${google_compute_network.container_network.name}"
+	subnetwork = "${google_compute_subnetwork.container_subnetwork.name}"
+
+	private_cluster_config {
+		enable_private_endpoint = true
+		enable_private_nodes = true
+		master_ipv4_cidr_block = "10.42.0.0/28"
+	}
+
+	master_authorized_networks_config { cidr_blocks = [] }
+	ip_allocation_policy {
+		cluster_secondary_range_name  = "${google_compute_subnetwork.container_subnetwork.secondary_ip_range.0.range_name}"
+		services_secondary_range_name = "${google_compute_subnetwork.container_subnetwork.secondary_ip_range.1.range_name}"
+	}
+}`, clusterName, clusterName)
+}
+
 func testAccContainerCluster_defaultLegacyAbac(clusterName string) string {
 	return fmt.Sprintf(`
 resource "google_container_cluster" "default_legacy_abac" {
@@ -1874,6 +2088,43 @@ resource "google_container_cluster" "with_node_pool" {
 }`, cluster, nodePool)
 }
 
+func testAccContainerCluster_autoprovisioning(cluster string, autoprovisioning bool) string {
+	config := fmt.Sprintf(`
+data "google_container_engine_versions" "central1a" {
+  zone = "us-central1-a"
+}
+
+resource "google_container_cluster" "with_autoprovisioning" {
+	name = "%s"
+	zone = "us-central1-a"
+  min_master_version = "${data.google_container_engine_versions.central1a.latest_master_version}"
+  node_version       = "${data.google_container_engine_versions.central1a.latest_node_version}"
+	initial_node_count = 3
+`, cluster)
+	if autoprovisioning {
+		config += `
+	cluster_autoscaling {
+		enabled = true
+		resource_limits {
+			resource_type = "cpu"
+			maximum = 2
+		}
+		resource_limits {
+			resource_type = "memory"
+			maximum = 2048
+		}
+	}`
+	} else {
+		config += `
+		cluster_autoscaling {
+			enabled = false
+		}`
+	}
+	config += `
+}`
+	return config
+}
+
 func testAccContainerCluster_withNodePoolAutoscaling(cluster, np string) string {
 	return fmt.Sprintf(`
 resource "google_container_cluster" "with_node_pool" {
@@ -2088,6 +2339,19 @@ resource "google_container_cluster" "with_ip_allocation_policy" {
 }`, cluster)
 }
 
+func testAccContainerCluster_withPodSecurityPolicy(clusterName string, enabled bool) string {
+	return fmt.Sprintf(`
+resource "google_container_cluster" "with_pod_security_policy" {
+	name = "cluster-test-%s"
+	zone = "us-central1-a"
+	initial_node_count = 1
+
+	pod_security_policy_config {
+		enabled = %v
+	}
+}`, clusterName, enabled)
+}
+
 func testAccContainerCluster_withPrivateClusterConfig(clusterName string) string {
 	return fmt.Sprintf(`
 resource "google_compute_network" "container_network" {
@@ -2156,4 +2420,16 @@ resource "google_container_cluster" "with_resource_labels" {
 	}
 }
 `, clusterName)
+}
+
+func testAccContainerCluster_withBinaryAuthorization(clusterName string, enabled bool) string {
+	return fmt.Sprintf(`
+resource "google_container_cluster" "with_binary_authorization" {
+	name = "%s"
+	zone = "us-central1-a"
+	initial_node_count = 1
+
+	enable_binary_authorization = %v
+}
+`, clusterName, enabled)
 }

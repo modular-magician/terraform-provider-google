@@ -312,13 +312,16 @@ func resourceComputeInstanceGroupManagerCreate(d *schema.ResourceData, meta inte
 
 	// Build the parameter
 	manager := &computeBeta.InstanceGroupManager{
-		Name:             d.Get("name").(string),
-		Description:      d.Get("description").(string),
-		BaseInstanceName: d.Get("base_instance_name").(string),
-		InstanceTemplate: d.Get("instance_template").(string),
-		TargetSize:       int64(d.Get("target_size").(int)),
-		NamedPorts:       getNamedPortsBeta(d.Get("named_port").(*schema.Set).List()),
-		TargetPools:      convertStringSet(d.Get("target_pools").(*schema.Set)),
+		Name:                d.Get("name").(string),
+		Description:         d.Get("description").(string),
+		BaseInstanceName:    d.Get("base_instance_name").(string),
+		InstanceTemplate:    d.Get("instance_template").(string),
+		TargetSize:          int64(d.Get("target_size").(int)),
+		NamedPorts:          getNamedPortsBeta(d.Get("named_port").(*schema.Set).List()),
+		TargetPools:         convertStringSet(d.Get("target_pools").(*schema.Set)),
+		AutoHealingPolicies: expandAutoHealingPolicies(d.Get("auto_healing_policies").([]interface{})),
+		Versions:            expandVersions(d.Get("version").([]interface{})),
+		UpdatePolicy:        expandUpdatePolicy(d.Get("update_policy").([]interface{})),
 		// Force send TargetSize to allow a value of 0.
 		ForceSendFields: []string{"TargetSize"},
 	}
@@ -713,6 +716,136 @@ func resourceComputeInstanceGroupManagerDelete(d *schema.ResourceData, meta inte
 
 	d.SetId("")
 	return nil
+}
+
+func expandAutoHealingPolicies(configured []interface{}) []*computeBeta.InstanceGroupManagerAutoHealingPolicy {
+	autoHealingPolicies := make([]*computeBeta.InstanceGroupManagerAutoHealingPolicy, 0, len(configured))
+	for _, raw := range configured {
+		data := raw.(map[string]interface{})
+		autoHealingPolicy := computeBeta.InstanceGroupManagerAutoHealingPolicy{
+			HealthCheck:     data["health_check"].(string),
+			InitialDelaySec: int64(data["initial_delay_sec"].(int)),
+		}
+
+		autoHealingPolicies = append(autoHealingPolicies, &autoHealingPolicy)
+	}
+	return autoHealingPolicies
+}
+
+func expandVersions(configured []interface{}) []*computeBeta.InstanceGroupManagerVersion {
+	versions := make([]*computeBeta.InstanceGroupManagerVersion, 0, len(configured))
+	for _, raw := range configured {
+		data := raw.(map[string]interface{})
+
+		version := computeBeta.InstanceGroupManagerVersion{
+			Name:             data["name"].(string),
+			InstanceTemplate: data["instance_template"].(string),
+			TargetSize:       expandFixedOrPercent(data["target_size"].([]interface{})),
+		}
+
+		versions = append(versions, &version)
+	}
+	return versions
+}
+
+func expandFixedOrPercent(configured []interface{}) *computeBeta.FixedOrPercent {
+	fixedOrPercent := &computeBeta.FixedOrPercent{}
+
+	for _, raw := range configured {
+		data := raw.(map[string]interface{})
+		if percent := data["percent"]; percent.(int) > 0 {
+			fixedOrPercent.Percent = int64(percent.(int))
+		} else {
+			fixedOrPercent.Fixed = int64(data["fixed"].(int))
+			fixedOrPercent.ForceSendFields = []string{"Fixed"}
+		}
+	}
+	return fixedOrPercent
+}
+
+func expandUpdatePolicy(configured []interface{}) *computeBeta.InstanceGroupManagerUpdatePolicy {
+	updatePolicy := &computeBeta.InstanceGroupManagerUpdatePolicy{}
+
+	for _, raw := range configured {
+		data := raw.(map[string]interface{})
+
+		updatePolicy.MinimalAction = data["minimal_action"].(string)
+		updatePolicy.Type = data["type"].(string)
+
+		// percent and fixed values are conflicting
+		// when the percent values are set, the fixed values will be ignored
+		if v := data["max_surge_percent"]; v.(int) > 0 {
+			updatePolicy.MaxSurge = &computeBeta.FixedOrPercent{
+				Percent:    int64(v.(int)),
+				NullFields: []string{"Fixed"},
+			}
+		} else {
+			updatePolicy.MaxSurge = &computeBeta.FixedOrPercent{
+				Fixed: int64(data["max_surge_fixed"].(int)),
+				// allow setting this value to 0
+				ForceSendFields: []string{"Fixed"},
+				NullFields:      []string{"Percent"},
+			}
+		}
+
+		if v := data["max_unavailable_percent"]; v.(int) > 0 {
+			updatePolicy.MaxUnavailable = &computeBeta.FixedOrPercent{
+				Percent:    int64(v.(int)),
+				NullFields: []string{"Fixed"},
+			}
+		} else {
+			updatePolicy.MaxUnavailable = &computeBeta.FixedOrPercent{
+				Fixed: int64(data["max_unavailable_fixed"].(int)),
+				// allow setting this value to 0
+				ForceSendFields: []string{"Fixed"},
+				NullFields:      []string{"Percent"},
+			}
+		}
+
+		if v, ok := data["min_ready_sec"]; ok {
+			updatePolicy.MinReadySec = int64(v.(int))
+		}
+	}
+	return updatePolicy
+}
+
+func flattenAutoHealingPolicies(autoHealingPolicies []*computeBeta.InstanceGroupManagerAutoHealingPolicy) []map[string]interface{} {
+	autoHealingPoliciesSchema := make([]map[string]interface{}, 0, len(autoHealingPolicies))
+	for _, autoHealingPolicy := range autoHealingPolicies {
+		data := map[string]interface{}{
+			"health_check":      autoHealingPolicy.HealthCheck,
+			"initial_delay_sec": autoHealingPolicy.InitialDelaySec,
+		}
+
+		autoHealingPoliciesSchema = append(autoHealingPoliciesSchema, data)
+	}
+	return autoHealingPoliciesSchema
+}
+
+func flattenUpdatePolicy(updatePolicy *computeBeta.InstanceGroupManagerUpdatePolicy) []map[string]interface{} {
+	results := []map[string]interface{}{}
+	if updatePolicy != nil {
+		up := map[string]interface{}{}
+		if updatePolicy.MaxSurge != nil {
+			up["max_surge_fixed"] = updatePolicy.MaxSurge.Fixed
+			up["max_surge_percent"] = updatePolicy.MaxSurge.Percent
+		} else {
+			up["max_surge_fixed"] = 0
+			up["max_surge_percent"] = 0
+		}
+		if updatePolicy.MaxUnavailable != nil {
+			up["max_unavailable_fixed"] = updatePolicy.MaxUnavailable.Fixed
+			up["max_unavailable_percent"] = updatePolicy.MaxUnavailable.Percent
+		} else {
+			up["max_unavailable_fixed"] = 0
+			up["max_unavailable_percent"] = 0
+		}
+		up["min_ready_sec"] = updatePolicy.MinReadySec
+		up["minimal_action"] = updatePolicy.MinimalAction
+		up["type"] = updatePolicy.Type
+		results = append(results, up)
+	}
+	return results
 }
 
 func resourceInstanceGroupManagerStateImporter(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {

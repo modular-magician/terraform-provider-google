@@ -1825,6 +1825,18 @@ resource "google_container_cluster" "with_monitoring" {
 }`, clusterName)
 }
 
+func testAccContainerCluster_withLoggingAndMonitoring(clusterName, logging, monitoring string) string {
+	return fmt.Sprintf(`
+resource "google_container_cluster" "with_logging_monitoring" {
+	name               = "cluster-test-%s"
+	zone               = "us-central1-a"
+	initial_node_count = 1
+
+	logging_service    = "%s"
+	monitoring_service = "%s"
+}`, clusterName, logging, monitoring)
+}
+
 func testAccContainerCluster_withNodePoolBasic(cluster, nodePool string) string {
 	return fmt.Sprintf(`
 resource "google_container_cluster" "with_node_pool" {

@@ -665,6 +665,10 @@ func flattenComputeRegionDiskDiskEncryptionKeySha256(v interface{}, d *schema.Re
 	return v
 }
 
+func flattenComputeRegionDiskDiskEncryptionKeyKmsKeyName(v interface{}, d *schema.ResourceData) interface{} {
+	return v
+}
+
 func flattenComputeRegionDiskSnapshot(v interface{}, d *schema.ResourceData) interface{} {
 	if v == nil {
 		return v
@@ -688,6 +692,10 @@ func flattenComputeRegionDiskSourceSnapshotEncryptionKey(v interface{}, d *schem
 	return []interface{}{transformed}
 }
 func flattenComputeRegionDiskSourceSnapshotEncryptionKeyRawKey(v interface{}, d *schema.ResourceData) interface{} {
+	return v
+}
+
+func flattenComputeRegionDiskSourceSnapshotEncryptionKeyKmsKeyName(v interface{}, d *schema.ResourceData) interface{} {
 	return v
 }
 
@@ -778,6 +786,13 @@ func expandComputeRegionDiskDiskEncryptionKey(v interface{}, d *schema.ResourceD
 		transformed["sha256"] = transformedSha256
 	}
 
+	transformedKmsKeyName, err := expandComputeRegionDiskDiskEncryptionKeyKmsKeyName(original["kms_key_name"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedKmsKeyName); val.IsValid() && !isEmptyValue(val) {
+		transformed["kmsKeyName"] = transformedKmsKeyName
+	}
+
 	return transformed, nil
 }
 
@@ -786,6 +801,10 @@ func expandComputeRegionDiskDiskEncryptionKeyRawKey(v interface{}, d *schema.Res
 }
 
 func expandComputeRegionDiskDiskEncryptionKeySha256(v interface{}, d *schema.ResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandComputeRegionDiskDiskEncryptionKeyKmsKeyName(v interface{}, d *schema.ResourceData, config *Config) (interface{}, error) {
 	return v, nil
 }
 
@@ -813,6 +832,13 @@ func expandComputeRegionDiskSourceSnapshotEncryptionKey(v interface{}, d *schema
 		transformed["rawKey"] = transformedRawKey
 	}
 
+	transformedKmsKeyName, err := expandComputeRegionDiskSourceSnapshotEncryptionKeyKmsKeyName(original["kms_key_name"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedKmsKeyName); val.IsValid() && !isEmptyValue(val) {
+		transformed["kmsKeyName"] = transformedKmsKeyName
+	}
+
 	transformedSha256, err := expandComputeRegionDiskSourceSnapshotEncryptionKeySha256(original["sha256"], d, config)
 	if err != nil {
 		return nil, err
@@ -824,6 +850,10 @@ func expandComputeRegionDiskSourceSnapshotEncryptionKey(v interface{}, d *schema
 }
 
 func expandComputeRegionDiskSourceSnapshotEncryptionKeyRawKey(v interface{}, d *schema.ResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandComputeRegionDiskSourceSnapshotEncryptionKeyKmsKeyName(v interface{}, d *schema.ResourceData, config *Config) (interface{}, error) {
 	return v, nil
 }
 

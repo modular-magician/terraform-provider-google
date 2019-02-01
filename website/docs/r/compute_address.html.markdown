@@ -137,6 +137,8 @@ The following arguments are supported:
   except the last character, which cannot be a dash.
 
 
+The `name` block supports:
+
 - - -
 
 
@@ -177,6 +179,18 @@ The following arguments are supported:
     If it is not provided, the provider project is used.
 
 
+The `address` block supports:
+
+The `address_type` block supports:
+
+The `description` block supports:
+
+The `network_tier` block supports:
+
+The `subnetwork` block supports:
+
+The `region` block supports:
+
 ## Attributes Reference
 
 In addition to the arguments listed above, the following computed attributes are exported:
@@ -189,6 +203,10 @@ In addition to the arguments listed above, the following computed attributes are
   The URLs of the resources that are using this address.
 * `self_link` - The URI of the created resource.
 
+
+The `creation_timestamp` block contains:
+
+The `users` block contains:
 
 * `address` - The IP of the created resource.
 

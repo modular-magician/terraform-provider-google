@@ -68,6 +68,8 @@ The following arguments are supported:
   character, which cannot be a dash.
 
 
+The `name` block supports:
+
 - - -
 
 
@@ -200,6 +202,32 @@ The following arguments are supported:
     If it is not provided, the provider project is used.
 
 
+The `description` block supports:
+
+The `ip_address` block supports:
+
+The `ip_protocol` block supports:
+
+The `backend_service` block supports:
+
+The `ip_version` block supports:
+
+The `load_balancing_scheme` block supports:
+
+The `network` block supports:
+
+The `port_range` block supports:
+
+The `ports` block supports:
+
+The `subnetwork` block supports:
+
+The `target` block supports:
+
+The `network_tier` block supports:
+
+The `region` block supports:
+
 ## Attributes Reference
 
 In addition to the arguments listed above, the following computed attributes are exported:
@@ -209,6 +237,8 @@ In addition to the arguments listed above, the following computed attributes are
   Creation timestamp in RFC3339 text format.
 * `self_link` - The URI of the created resource.
 
+
+The `creation_timestamp` block contains:
 
 ## Timeouts
 

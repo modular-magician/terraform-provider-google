@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/hashicorp/terraform/helper/logging"
 	"github.com/hashicorp/terraform/helper/pathorcontents"
@@ -114,6 +115,10 @@ func (c *Config) loadAndValidate() error {
 
 	client := oauth2.NewClient(context.Background(), tokenSource)
 	client.Transport = logging.NewTransport("Google", client.Transport)
+	// Each individual request should return within 30s - timeouts will be retried.
+	// This is a timeout for, e.g. a single GET request of an operation - not a
+	// timeout for the maximum amount of time a logical request can take.
+	client.Timeout, _ = time.ParseDuration("30s")
 
 	terraformVersion := httpclient.UserAgentString()
 	providerVersion := fmt.Sprintf("terraform-provider-google/%s", version.ProviderVersion)
@@ -348,7 +353,7 @@ func (c *Config) getTokenSource(clientScopes []string) (oauth2.TokenSource, erro
 		}
 
 		log.Printf("[INFO] Authenticating using configured Google JSON 'access_token'...")
-		log.Printf("[INFO]   -- Scopes: %s", clientScopes)
+		log.Printf("[INFO]	 -- Scopes: %s", clientScopes)
 		token := &oauth2.Token{AccessToken: contents}
 		return oauth2.StaticTokenSource(token), nil
 	}
@@ -365,11 +370,11 @@ func (c *Config) getTokenSource(clientScopes []string) (oauth2.TokenSource, erro
 		}
 
 		log.Printf("[INFO] Authenticating using configured Google JSON 'credentials'...")
-		log.Printf("[INFO]   -- Scopes: %s", clientScopes)
+		log.Printf("[INFO]	 -- Scopes: %s", clientScopes)
 		return creds.TokenSource, nil
 	}
 
 	log.Printf("[INFO] Authenticating using DefaultClient...")
-	log.Printf("[INFO]   -- Scopes: %s", clientScopes)
+	log.Printf("[INFO]	 -- Scopes: %s", clientScopes)
 	return googleoauth.DefaultTokenSource(context.Background(), clientScopes...)
 }

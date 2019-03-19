@@ -56,6 +56,10 @@ resource "google_compute_vpn_tunnel" "tunnel1" {
     "google_compute_forwarding_rule.fr_udp500",
     "google_compute_forwarding_rule.fr_udp4500",
   ]
+
+  labels {
+    foo = "bar"
+  }
 }
 
 resource "google_compute_vpn_gateway" "target_gateway" {
@@ -165,10 +169,6 @@ The following arguments are supported:
   for example `192.168.0.0/16`. The ranges should be disjoint.
   Only IPv4 is supported.
 
-* `labels` -
-  (Optional)
-  Labels to apply to this VpnTunnel.
-
 * `region` -
   (Optional)
   The region where the tunnel is located. If unset, is set to the region of `target_vpn_gateway`.
@@ -187,10 +187,6 @@ In addition to the arguments listed above, the following computed attributes are
 * `shared_secret_hash` -
   Hash of the shared secret.
 
-* `label_fingerprint` -
-  The fingerprint used for optimistic locking of this resource.  Used
-  internally during updates.
-
 * `detailed_status` -
   Detailed status message for the VPN tunnel.
 * `self_link` - The URI of the created resource.
@@ -202,7 +198,6 @@ This resource provides the following
 [Timeouts](/docs/configuration/resources.html#timeouts) configuration options:
 
 - `create` - Default is 4 minutes.
-- `update` - Default is 4 minutes.
 - `delete` - Default is 4 minutes.
 
 ## Import

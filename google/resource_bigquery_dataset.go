@@ -68,10 +68,11 @@ func resourceBigQueryDataset() *schema.Resource {
 			// Location: [Experimental] The geographic location where the dataset
 			// should reside.
 			"location": {
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
-				Default:  "US",
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				Default:      "US",
+				ValidateFunc: validation.StringInSlice([]string{"US", "EU", "asia-east1", "asia-northeast1", "asia-southeast1", "australia-southeast1", "europe-north1", "europe-west2", "us-east4"}, false),
 			},
 
 			// defaultPartitionExpirationMs: [Optional] The default partition

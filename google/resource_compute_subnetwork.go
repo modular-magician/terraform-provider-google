@@ -102,6 +102,7 @@ func resourceComputeSubnetwork() *schema.Resource {
 			},
 			"enable_flow_logs": {
 				Type:     schema.TypeBool,
+				Computed: true,
 				Optional: true,
 			},
 			"private_ip_google_access": {

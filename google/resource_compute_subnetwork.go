@@ -102,7 +102,9 @@ func resourceComputeSubnetwork() *schema.Resource {
 			},
 			"enable_flow_logs": {
 				Type:     schema.TypeBool,
+				Computed: true,
 				Optional: true,
+				ForceNew: true,
 			},
 			"private_ip_google_access": {
 				Type:     schema.TypeBool,
@@ -232,7 +234,7 @@ func resourceComputeSubnetworkCreate(d *schema.ResourceData, meta interface{}) e
 	enableFlowLogsProp, err := expandComputeSubnetworkEnableFlowLogs(d.Get("enable_flow_logs"), d, config)
 	if err != nil {
 		return err
-	} else if v, ok := d.GetOkExists("enable_flow_logs"); ok || !reflect.DeepEqual(v, enableFlowLogsProp) {
+	} else if v, ok := d.GetOkExists("enable_flow_logs"); !isEmptyValue(reflect.ValueOf(enableFlowLogsProp)) && (ok || !reflect.DeepEqual(v, enableFlowLogsProp)) {
 		obj["enableFlowLogs"] = enableFlowLogsProp
 	}
 	fingerprintProp, err := expandComputeSubnetworkFingerprint(d.Get("fingerprint"), d, config)
@@ -407,14 +409,8 @@ func resourceComputeSubnetworkUpdate(d *schema.ResourceData, meta interface{}) e
 
 		d.SetPartial("ip_cidr_range")
 	}
-	if d.HasChange("enable_flow_logs") || d.HasChange("fingerprint") || d.HasChange("secondary_ip_range") {
+	if d.HasChange("fingerprint") || d.HasChange("secondary_ip_range") {
 		obj := make(map[string]interface{})
-		enableFlowLogsProp, err := expandComputeSubnetworkEnableFlowLogs(d.Get("enable_flow_logs"), d, config)
-		if err != nil {
-			return err
-		} else if v, ok := d.GetOkExists("enable_flow_logs"); ok || !reflect.DeepEqual(v, enableFlowLogsProp) {
-			obj["enableFlowLogs"] = enableFlowLogsProp
-		}
 		fingerprintProp, err := expandComputeSubnetworkFingerprint(d.Get("fingerprint"), d, config)
 		if err != nil {
 			return err
@@ -455,7 +451,6 @@ func resourceComputeSubnetworkUpdate(d *schema.ResourceData, meta interface{}) e
 			return err
 		}
 
-		d.SetPartial("enable_flow_logs")
 		d.SetPartial("fingerprint")
 		d.SetPartial("secondary_ip_range")
 	}

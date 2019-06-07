@@ -16,6 +16,16 @@ package google
 
 import "github.com/hashicorp/terraform/helper/schema"
 
+var DnsDefaultBasePath = "https://www.googleapis.com/dns/v1/"
+
+var DnsCustomEndpointEntry = &schema.Schema{
+	Type:     schema.TypeString,
+	Optional: true,
+	DefaultFunc: schema.MultiEnvDefaultFunc([]string{
+		"GOOGLE_DNS_CUSTOM_ENDPOINT",
+	}, DnsDefaultBasePath),
+}
+
 var GeneratedDnsResourcesMap = map[string]*schema.Resource{
 	"google_dns_managed_zone": resourceDnsManagedZone(),
 }

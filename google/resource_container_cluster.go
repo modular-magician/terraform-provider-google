@@ -956,6 +956,7 @@ func resourceContainerClusterRead(d *schema.ResourceData, meta interface{}) erro
 	}
 
 	d.Set("resource_labels", cluster.ResourceLabels)
+
 	return nil
 }
 

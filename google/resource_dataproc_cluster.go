@@ -11,8 +11,6 @@ import (
 
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/helper/validation"
-
-	dataproc "google.golang.org/api/dataproc/v1beta2"
 )
 
 func resourceDataprocCluster() *schema.Resource {

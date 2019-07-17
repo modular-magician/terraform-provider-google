@@ -100,7 +100,6 @@ func Provider() terraform.ResourceProvider {
 			// Generated Products
 			AccessContextManagerCustomEndpointEntryKey: AccessContextManagerCustomEndpointEntry,
 			AppEngineCustomEndpointEntryKey:            AppEngineCustomEndpointEntry,
-			BinaryAuthorizationCustomEndpointEntryKey:  BinaryAuthorizationCustomEndpointEntry,
 			ComputeCustomEndpointEntryKey:              ComputeCustomEndpointEntry,
 			CloudBuildCustomEndpointEntryKey:           CloudBuildCustomEndpointEntry,
 			CloudSchedulerCustomEndpointEntryKey:       CloudSchedulerCustomEndpointEntry,
@@ -211,7 +210,6 @@ func ResourceMapWithErrors() (map[string]*schema.Resource, error) {
 	return mergeResourceMaps(
 		GeneratedAccessContextManagerResourcesMap,
 		GeneratedAppEngineResourcesMap,
-		GeneratedBinaryAuthorizationResourcesMap,
 		GeneratedComputeResourcesMap,
 		GeneratedCloudBuildResourcesMap,
 		GeneratedCloudSchedulerResourcesMap,
@@ -384,7 +382,6 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	config.FirestoreBasePath = d.Get(FirestoreCustomEndpointEntryKey).(string)
 
 	config.AppEngineBasePath = d.Get(AppEngineCustomEndpointEntryKey).(string)
-	config.BinaryAuthorizationBasePath = d.Get(BinaryAuthorizationCustomEndpointEntryKey).(string)
 	config.ComputeBasePath = d.Get(ComputeCustomEndpointEntryKey).(string)
 	config.CloudBuildBasePath = d.Get(CloudBuildCustomEndpointEntryKey).(string)
 	config.DnsBasePath = d.Get(DnsCustomEndpointEntryKey).(string)
@@ -437,7 +434,6 @@ func ConfigureBasePaths(c *Config) {
 	// Generated Products
 	c.AccessContextManagerBasePath = AccessContextManagerDefaultBasePath
 	c.AppEngineBasePath = AppEngineDefaultBasePath
-	c.BinaryAuthorizationBasePath = BinaryAuthorizationDefaultBasePath
 	c.ComputeBasePath = ComputeDefaultBasePath
 	c.CloudBuildBasePath = CloudBuildDefaultBasePath
 	c.CloudSchedulerBasePath = CloudSchedulerDefaultBasePath

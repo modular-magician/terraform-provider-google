@@ -108,6 +108,7 @@ func Provider() terraform.ResourceProvider {
 			FilestoreCustomEndpointEntryKey:            FilestoreCustomEndpointEntry,
 			FirestoreCustomEndpointEntryKey:            FirestoreCustomEndpointEntry,
 			KmsCustomEndpointEntryKey:                  KmsCustomEndpointEntry,
+			MLEngineCustomEndpointEntryKey:             MLEngineCustomEndpointEntry,
 			MonitoringCustomEndpointEntryKey:           MonitoringCustomEndpointEntry,
 			PubsubCustomEndpointEntryKey:               PubsubCustomEndpointEntry,
 			RedisCustomEndpointEntryKey:                RedisCustomEndpointEntry,
@@ -219,6 +220,7 @@ func ResourceMapWithErrors() (map[string]*schema.Resource, error) {
 		GeneratedFilestoreResourcesMap,
 		GeneratedFirestoreResourcesMap,
 		GeneratedKmsResourcesMap,
+		GeneratedMLEngineResourcesMap,
 		GeneratedPubsubResourcesMap,
 		GeneratedRedisResourcesMap,
 		GeneratedResourceManagerResourcesMap,
@@ -390,6 +392,7 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	config.DnsBasePath = d.Get(DnsCustomEndpointEntryKey).(string)
 	config.FilestoreBasePath = d.Get(FilestoreCustomEndpointEntryKey).(string)
 	config.KmsBasePath = d.Get(KmsCustomEndpointEntryKey).(string)
+	config.MLEngineBasePath = d.Get(MLEngineCustomEndpointEntryKey).(string)
 	config.MonitoringBasePath = d.Get(MonitoringCustomEndpointEntryKey).(string)
 	config.PubsubBasePath = d.Get(PubsubCustomEndpointEntryKey).(string)
 	config.RedisBasePath = d.Get(RedisCustomEndpointEntryKey).(string)
@@ -445,6 +448,7 @@ func ConfigureBasePaths(c *Config) {
 	c.FilestoreBasePath = FilestoreDefaultBasePath
 	c.FirestoreBasePath = FirestoreDefaultBasePath
 	c.KmsBasePath = KmsDefaultBasePath
+	c.MLEngineBasePath = MLEngineDefaultBasePath
 	c.MonitoringBasePath = MonitoringDefaultBasePath
 	c.PubsubBasePath = PubsubDefaultBasePath
 	c.RedisBasePath = RedisDefaultBasePath

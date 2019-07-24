@@ -79,6 +79,7 @@ type Config struct {
 	FirestoreBasePath            string
 	KmsBasePath                  string
 	LoggingBasePath              string
+	MLEngineBasePath             string
 	MonitoringBasePath           string
 	PubsubBasePath               string
 	RedisBasePath                string

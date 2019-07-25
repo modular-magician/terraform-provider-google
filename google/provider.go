@@ -100,6 +100,7 @@ func Provider() terraform.ResourceProvider {
 			// Generated Products
 			AccessContextManagerCustomEndpointEntryKey: AccessContextManagerCustomEndpointEntry,
 			AppEngineCustomEndpointEntryKey:            AppEngineCustomEndpointEntry,
+			BigqueryDataTransferCustomEndpointEntryKey: BigqueryDataTransferCustomEndpointEntry,
 			BinaryAuthorizationCustomEndpointEntryKey:  BinaryAuthorizationCustomEndpointEntry,
 			CloudBuildCustomEndpointEntryKey:           CloudBuildCustomEndpointEntry,
 			CloudSchedulerCustomEndpointEntryKey:       CloudSchedulerCustomEndpointEntry,
@@ -211,6 +212,7 @@ func ResourceMapWithErrors() (map[string]*schema.Resource, error) {
 	return mergeResourceMaps(
 		GeneratedAccessContextManagerResourcesMap,
 		GeneratedAppEngineResourcesMap,
+		GeneratedBigqueryDataTransferResourcesMap,
 		GeneratedBinaryAuthorizationResourcesMap,
 		GeneratedCloudBuildResourcesMap,
 		GeneratedCloudSchedulerResourcesMap,
@@ -382,6 +384,7 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	// Generated products
 	config.AccessContextManagerBasePath = d.Get(AccessContextManagerCustomEndpointEntryKey).(string)
 	config.AppEngineBasePath = d.Get(AppEngineCustomEndpointEntryKey).(string)
+	config.BigqueryDataTransferBasePath = d.Get(BigqueryDataTransferCustomEndpointEntryKey).(string)
 	config.BinaryAuthorizationBasePath = d.Get(BinaryAuthorizationCustomEndpointEntryKey).(string)
 	config.CloudBuildBasePath = d.Get(CloudBuildCustomEndpointEntryKey).(string)
 	config.CloudSchedulerBasePath = d.Get(CloudSchedulerCustomEndpointEntryKey).(string)
@@ -439,6 +442,7 @@ func ConfigureBasePaths(c *Config) {
 	// Generated Products
 	c.AccessContextManagerBasePath = AccessContextManagerDefaultBasePath
 	c.AppEngineBasePath = AppEngineDefaultBasePath
+	c.BigqueryDataTransferBasePath = BigqueryDataTransferDefaultBasePath
 	c.BinaryAuthorizationBasePath = BinaryAuthorizationDefaultBasePath
 	c.CloudBuildBasePath = CloudBuildDefaultBasePath
 	c.CloudSchedulerBasePath = CloudSchedulerDefaultBasePath

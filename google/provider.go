@@ -381,9 +381,9 @@ func Provider() terraform.ResourceProvider {
 	}
 }
 
-// Generated resources: 70
+// Generated resources: 71
 // Generated IAM resources: 6
-// Total generated resources: 76
+// Total generated resources: 77
 func ResourceMap() map[string]*schema.Resource {
 	resourceMap, _ := ResourceMapWithErrors()
 	return resourceMap
@@ -676,59 +676,6 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	}
 
 	return &config, nil
-}
-
-// For a consumer of config.go that isn't a full fledged provider and doesn't
-// have its own endpoint mechanism such as sweepers, init {{service}}BasePath
-// values to a default. After using this, you should call config.LoadAndValidate.
-func ConfigureBasePaths(c *Config) {
-	// Generated Products
-	c.AccessContextManagerBasePath = AccessContextManagerDefaultBasePath
-	c.AppEngineBasePath = AppEngineDefaultBasePath
-	c.BigqueryDataTransferBasePath = BigqueryDataTransferDefaultBasePath
-	c.BigtableBasePath = BigtableDefaultBasePath
-	c.BinaryAuthorizationBasePath = BinaryAuthorizationDefaultBasePath
-	c.CloudBuildBasePath = CloudBuildDefaultBasePath
-	c.CloudSchedulerBasePath = CloudSchedulerDefaultBasePath
-	c.ComputeBasePath = ComputeDefaultBasePath
-	c.DnsBasePath = DnsDefaultBasePath
-	c.FilestoreBasePath = FilestoreDefaultBasePath
-	c.FirestoreBasePath = FirestoreDefaultBasePath
-	c.KmsBasePath = KmsDefaultBasePath
-	c.LoggingBasePath = LoggingDefaultBasePath
-	c.MLEngineBasePath = MLEngineDefaultBasePath
-	c.MonitoringBasePath = MonitoringDefaultBasePath
-	c.PubsubBasePath = PubsubDefaultBasePath
-	c.RedisBasePath = RedisDefaultBasePath
-	c.ResourceManagerBasePath = ResourceManagerDefaultBasePath
-	c.SecurityCenterBasePath = SecurityCenterDefaultBasePath
-	c.SourceRepoBasePath = SourceRepoDefaultBasePath
-	c.SpannerBasePath = SpannerDefaultBasePath
-	c.SqlBasePath = SqlDefaultBasePath
-	c.StorageBasePath = StorageDefaultBasePath
-	c.TpuBasePath = TpuDefaultBasePath
-
-	// Handwritten Products / Versioned / Atypical Entries
-	c.CloudBillingBasePath = CloudBillingDefaultBasePath
-	c.ComposerBasePath = ComposerDefaultBasePath
-	c.ComputeBetaBasePath = ComputeBetaDefaultBasePath
-	c.ContainerBasePath = ContainerDefaultBasePath
-	c.ContainerBetaBasePath = ContainerBetaDefaultBasePath
-	c.DataprocBasePath = DataprocDefaultBasePath
-	c.DataflowBasePath = DataflowDefaultBasePath
-	c.DnsBetaBasePath = DnsBetaDefaultBasePath
-	c.IamCredentialsBasePath = IamCredentialsDefaultBasePath
-	c.ResourceManagerV2Beta1BasePath = ResourceManagerV2Beta1DefaultBasePath
-	c.RuntimeconfigBasePath = RuntimeconfigDefaultBasePath
-	c.IAMBasePath = IAMDefaultBasePath
-	c.ServiceManagementBasePath = ServiceManagementDefaultBasePath
-	c.ServiceNetworkingBasePath = ServiceNetworkingDefaultBasePath
-	c.ServiceUsageBasePath = ServiceUsageDefaultBasePath
-	c.BigQueryBasePath = BigQueryDefaultBasePath
-	c.CloudFunctionsBasePath = CloudFunctionsDefaultBasePath
-	c.CloudIoTBasePath = CloudIoTDefaultBasePath
-	c.StorageTransferBasePath = StorageTransferDefaultBasePath
-	c.BigtableAdminBasePath = BigtableAdminDefaultBasePath
 }
 
 func validateCredentials(v interface{}, k string) (warnings []string, errors []error) {

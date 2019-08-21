@@ -10,7 +10,6 @@ import (
 
 	"github.com/hashicorp/terraform/helper/logging"
 	"github.com/hashicorp/terraform/helper/pathorcontents"
-	"github.com/hashicorp/terraform/httpclient"
 	"github.com/terraform-providers/terraform-provider-google/version"
 
 	"golang.org/x/oauth2"
@@ -25,12 +24,11 @@ import (
 	"google.golang.org/api/cloudkms/v1"
 	"google.golang.org/api/cloudresourcemanager/v1"
 	resourceManagerV2Beta1 "google.golang.org/api/cloudresourcemanager/v2beta1"
-	composer "google.golang.org/api/composer/v1beta1"
+	"google.golang.org/api/composer/v1beta1"
 	computeBeta "google.golang.org/api/compute/v0.beta"
 	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/container/v1"
 	containerBeta "google.golang.org/api/container/v1beta1"
-	dataflow "google.golang.org/api/dataflow/v1b3"
 	"google.golang.org/api/dataproc/v1"
 	dataprocBeta "google.golang.org/api/dataproc/v1beta2"
 	"google.golang.org/api/dns/v1"
@@ -39,15 +37,12 @@ import (
 	"google.golang.org/api/iam/v1"
 	iamcredentials "google.golang.org/api/iamcredentials/v1"
 	cloudlogging "google.golang.org/api/logging/v2"
-	"google.golang.org/api/option"
 	"google.golang.org/api/pubsub/v1"
-	runtimeconfig "google.golang.org/api/runtimeconfig/v1beta1"
 	"google.golang.org/api/servicemanagement/v1"
 	"google.golang.org/api/servicenetworking/v1"
 	"google.golang.org/api/serviceusage/v1"
 	"google.golang.org/api/sourcerepo/v1"
 	"google.golang.org/api/spanner/v1"
-	sqladmin "google.golang.org/api/sqladmin/v1beta4"
 	"google.golang.org/api/storage/v1"
 	"google.golang.org/api/storagetransfer/v1"
 )
@@ -78,6 +73,7 @@ type Config struct {
 	CloudBuildBasePath           string
 	CloudSchedulerBasePath       string
 	ComputeBasePath              string
+	DataprocBasePath             string
 	DnsBasePath                  string
 	FilestoreBasePath            string
 	FirestoreBasePath            string
@@ -114,8 +110,7 @@ type Config struct {
 	ContainerBetaBasePath string
 	clientContainerBeta   *containerBeta.Service
 
-	DataprocBasePath string
-	clientDataproc   *dataproc.Service
+	clientDataproc *dataproc.Service
 
 	DataprocBetaBasePath string
 	clientDataprocBeta   *dataprocBeta.Service
@@ -203,6 +198,7 @@ var BinaryAuthorizationDefaultBasePath = "https://binaryauthorization.googleapis
 var CloudBuildDefaultBasePath = "https://cloudbuild.googleapis.com/v1/"
 var CloudSchedulerDefaultBasePath = "https://cloudscheduler.googleapis.com/v1/"
 var ComputeDefaultBasePath = "https://www.googleapis.com/compute/v1/"
+var DataprocDefaultBasePath = "https://dataproc.googleapis.com/v1/"
 var DnsDefaultBasePath = "https://www.googleapis.com/dns/v1/"
 var FilestoreDefaultBasePath = "https://file.googleapis.com/v1/"
 var FirestoreDefaultBasePath = "https://firestore.googleapis.com/v1/"
@@ -664,6 +660,7 @@ func ConfigureBasePaths(c *Config) {
 	c.CloudBuildBasePath = CloudBuildDefaultBasePath
 	c.CloudSchedulerBasePath = CloudSchedulerDefaultBasePath
 	c.ComputeBasePath = ComputeDefaultBasePath
+	c.DataprocBasePath = DataprocDefaultBasePath
 	c.DnsBasePath = DnsDefaultBasePath
 	c.FilestoreBasePath = FilestoreDefaultBasePath
 	c.FirestoreBasePath = FirestoreDefaultBasePath

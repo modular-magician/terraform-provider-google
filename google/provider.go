@@ -396,9 +396,9 @@ func Provider() terraform.ResourceProvider {
 	}
 }
 
-// Generated resources: 73
+// Generated resources: 75
 // Generated IAM resources: 6
-// Total generated resources: 79
+// Total generated resources: 81
 func ResourceMap() map[string]*schema.Resource {
 	resourceMap, _ := ResourceMapWithErrors()
 	return resourceMap
@@ -426,6 +426,7 @@ func ResourceMapWithErrors() (map[string]*schema.Resource, error) {
 			"google_compute_backend_service":                  resourceComputeBackendService(),
 			"google_compute_region_backend_service":           resourceComputeRegionBackendService(),
 			"google_compute_backend_service_signed_url_key":   resourceComputeBackendServiceSignedUrlKey(),
+			"google_compute_disk_resource_policy_attachment":  resourceComputeDiskResourcePolicyAttachment(),
 			"google_compute_disk":                             resourceComputeDisk(),
 			"google_compute_firewall":                         resourceComputeFirewall(),
 			"google_compute_forwarding_rule":                  resourceComputeForwardingRule(),
@@ -443,6 +444,7 @@ func ResourceMapWithErrors() (map[string]*schema.Resource, error) {
 			"google_compute_node_template":                    resourceComputeNodeTemplate(),
 			"google_compute_region_autoscaler":                resourceComputeRegionAutoscaler(),
 			"google_compute_region_disk":                      resourceComputeRegionDisk(),
+			"google_compute_resource_policy":                  resourceComputeResourcePolicy(),
 			"google_compute_route":                            resourceComputeRoute(),
 			"google_compute_router":                           resourceComputeRouter(),
 			"google_compute_snapshot":                         resourceComputeSnapshot(),

@@ -82,6 +82,7 @@ type Config struct {
 	DnsBasePath                  string
 	FilestoreBasePath            string
 	FirestoreBasePath            string
+	IapBasePath                  string
 	KmsBasePath                  string
 	LoggingBasePath              string
 	MLEngineBasePath             string
@@ -207,6 +208,7 @@ var DataprocDefaultBasePath = "https://dataproc.googleapis.com/v1/"
 var DnsDefaultBasePath = "https://www.googleapis.com/dns/v1/"
 var FilestoreDefaultBasePath = "https://file.googleapis.com/v1/"
 var FirestoreDefaultBasePath = "https://firestore.googleapis.com/v1/"
+var IapDefaultBasePath = "https://iap.googleapis.com/v1/"
 var KmsDefaultBasePath = "https://cloudkms.googleapis.com/v1/"
 var LoggingDefaultBasePath = "https://logging.googleapis.com/v2/"
 var MLEngineDefaultBasePath = "https://ml.googleapis.com/v1/"
@@ -669,6 +671,7 @@ func ConfigureBasePaths(c *Config) {
 	c.DnsBasePath = DnsDefaultBasePath
 	c.FilestoreBasePath = FilestoreDefaultBasePath
 	c.FirestoreBasePath = FirestoreDefaultBasePath
+	c.IapBasePath = IapDefaultBasePath
 	c.KmsBasePath = KmsDefaultBasePath
 	c.LoggingBasePath = LoggingDefaultBasePath
 	c.MLEngineBasePath = MLEngineDefaultBasePath

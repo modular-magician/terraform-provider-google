@@ -421,9 +421,9 @@ func Provider() terraform.ResourceProvider {
 	return provider
 }
 
-// Generated resources: 80
+// Generated resources: 81
 // Generated IAM resources: 21
-// Total generated resources: 101
+// Total generated resources: 102
 func ResourceMap() map[string]*schema.Resource {
 	resourceMap, _ := ResourceMapWithErrors()
 	return resourceMap
@@ -437,6 +437,7 @@ func ResourceMapWithErrors() (map[string]*schema.Resource, error) {
 			"google_access_context_manager_service_perimeter": resourceAccessContextManagerServicePerimeter(),
 			"google_app_engine_domain_mapping":                resourceAppEngineDomainMapping(),
 			"google_app_engine_firewall_rule":                 resourceAppEngineFirewallRule(),
+			"google_app_engine_service_split_traffic":         resourceAppEngineServiceSplitTraffic(),
 			"google_app_engine_standard_app_version":          resourceAppEngineStandardAppVersion(),
 			"google_bigquery_dataset":                         resourceBigQueryDataset(),
 			"google_bigquery_data_transfer_config":            resourceBigqueryDataTransferConfig(),

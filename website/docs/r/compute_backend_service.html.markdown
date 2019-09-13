@@ -57,6 +57,33 @@ resource "google_compute_http_health_check" "default" {
   timeout_sec        = 1
 }
 ```
+<div class = "oics-button" style="float: right; margin: 0 0 -15px">
+  <a href="https://console.cloud.google.com/cloudshell/open?cloudshell_git_repo=https%3A%2F%2Fgithub.com%2Fterraform-google-modules%2Fdocs-examples.git&cloudshell_working_dir=backend_service_log_config&cloudshell_image=gcr.io%2Fgraphite-cloud-shell-images%2Fterraform%3Alatest&open_in_editor=main.tf&cloudshell_print=.%2Fmotd&cloudshell_tutorial=.%2Ftutorial.md" target="_blank">
+    <img alt="Open in Cloud Shell" src="//gstatic.com/cloudssh/images/open-btn.svg" style="max-height: 44px; margin: 32px auto; max-width: 100%;">
+  </a>
+</div>
+## Example Usage - Backend Service Log Config
+
+
+```hcl
+resource "google_compute_backend_service" "default" {
+  provider      = "google-beta"
+  name          = "backend-service"
+  health_checks = ["${google_compute_http_health_check.default.self_link}"]
+  log_config {
+    enable = true
+    sample_rate = ".5"
+  }
+}
+
+resource "google_compute_http_health_check" "default" {
+  provider           = "google-beta"
+  name               = "health-check"
+  request_path       = "/"
+  check_interval_sec = 1
+  timeout_sec        = 1
+}
+```
 
 ## Argument Reference
 

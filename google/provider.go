@@ -429,9 +429,9 @@ func Provider() terraform.ResourceProvider {
 	return provider
 }
 
-// Generated resources: 78
+// Generated resources: 83
 // Generated IAM resources: 24
-// Total generated resources: 102
+// Total generated resources: 107
 func ResourceMap() map[string]*schema.Resource {
 	resourceMap, _ := ResourceMapWithErrors()
 	return resourceMap
@@ -481,17 +481,22 @@ func ResourceMapWithErrors() (map[string]*schema.Resource, error) {
 			"google_compute_node_template":                    resourceComputeNodeTemplate(),
 			"google_compute_region_autoscaler":                resourceComputeRegionAutoscaler(),
 			"google_compute_region_disk":                      resourceComputeRegionDisk(),
+			"google_compute_region_url_map":                   resourceComputeRegionUrlMap(),
+			"google_compute_region_health_check":              resourceComputeRegionHealthCheck(),
 			"google_compute_resource_policy":                  resourceComputeResourcePolicy(),
 			"google_compute_route":                            resourceComputeRoute(),
 			"google_compute_router":                           resourceComputeRouter(),
 			"google_compute_router_nat":                       resourceComputeRouterNat(),
 			"google_compute_snapshot":                         resourceComputeSnapshot(),
 			"google_compute_ssl_certificate":                  resourceComputeSslCertificate(),
+			"google_compute_region_ssl_certificate":           resourceComputeRegionSslCertificate(),
 			"google_compute_reservation":                      resourceComputeReservation(),
 			"google_compute_ssl_policy":                       resourceComputeSslPolicy(),
 			"google_compute_subnetwork":                       resourceComputeSubnetwork(),
 			"google_compute_target_http_proxy":                resourceComputeTargetHttpProxy(),
 			"google_compute_target_https_proxy":               resourceComputeTargetHttpsProxy(),
+			"google_compute_region_target_http_proxy":         resourceComputeRegionTargetHttpProxy(),
+			"google_compute_region_target_https_proxy":        resourceComputeRegionTargetHttpsProxy(),
 			"google_compute_target_instance":                  resourceComputeTargetInstance(),
 			"google_compute_target_ssl_proxy":                 resourceComputeTargetSslProxy(),
 			"google_compute_target_tcp_proxy":                 resourceComputeTargetTcpProxy(),

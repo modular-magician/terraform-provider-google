@@ -68,6 +68,48 @@ resource "google_compute_network" "custom-test" {
 `, context)
 }
 
+func TestAccComputeSubnetwork_subnetworkInternalL7lbExample(t *testing.T) {
+	t.Parallel()
+
+	context := map[string]interface{}{
+		"random_suffix": acctest.RandString(10),
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckComputeSubnetworkDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccComputeSubnetwork_subnetworkInternalL7lbExample(context),
+			},
+			{
+				ResourceName:      "google_compute_subnetwork.network-for-l7lb",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func testAccComputeSubnetwork_subnetworkInternalL7lbExample(context map[string]interface{}) string {
+	return Nprintf(`
+resource "google_compute_subnetwork" "network-for-l7lb" {
+  name          = "l7lb-test-subnetwork%{random_suffix}"
+  ip_cidr_range = "10.0.0.0/22"
+  region        = "us-central1"
+  purpose       = "INTERNAL_HTTPS_LOAD_BALANCER"
+  role          = "ACTIVE"
+  network       = "${google_compute_network.custom-test.self_link}"
+}
+
+resource "google_compute_network" "custom-test" {
+  name                    = "l7lb-test-network%{random_suffix}"
+  auto_create_subnetworks = false
+}
+`, context)
+}
+
 func testAccCheckComputeSubnetworkDestroy(s *terraform.State) error {
 	for name, rs := range s.RootModule().Resources {
 		if rs.Type != "google_compute_subnetwork" {

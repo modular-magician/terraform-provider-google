@@ -2,8 +2,6 @@ package google
 
 import (
 	"fmt"
-	"reflect"
-	"sort"
 	"testing"
 
 	"github.com/hashicorp/terraform/helper/acctest"
@@ -22,13 +20,10 @@ func TestAccServiceAccountIamBinding(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: testAccServiceAccountIamBinding_basic(account),
-				Check: testAccCheckGoogleServiceAccountIam(account, "roles/viewer", []string{
-					fmt.Sprintf("serviceAccount:%s", serviceAccountCanonicalEmail(account)),
-				}),
+				Check:  testAccCheckGoogleServiceAccountIam(account, 1),
 			},
 			{
 				ResourceName:      "google_service_account_iam_binding.foo",
-				ImportStateId:     fmt.Sprintf("%s %s", serviceAccountCanonicalId(account), "roles/viewer"),
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
@@ -48,11 +43,11 @@ func TestAccServiceAccountIamMember(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: testAccServiceAccountIamMember_basic(account),
-				Check:  testAccCheckGoogleServiceAccountIam(account, "roles/editor", []string{identity}),
+				Check:  testAccCheckGoogleServiceAccountIam(account, 1),
 			},
 			{
 				ResourceName:      "google_service_account_iam_member.foo",
-				ImportStateId:     fmt.Sprintf("%s %s %s", serviceAccountCanonicalId(account), "roles/editor", identity),
+				ImportStateId:     fmt.Sprintf("%s %s %s", serviceAccountCanonicalId(account), "roles/iam.serviceAccountUser", identity),
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
@@ -71,9 +66,6 @@ func TestAccServiceAccountIamPolicy(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: testAccServiceAccountIamPolicy_basic(account),
-				Check: testAccCheckGoogleServiceAccountIam(account, "roles/owner", []string{
-					fmt.Sprintf("serviceAccount:%s", serviceAccountCanonicalEmail(account)),
-				}),
 			},
 			{
 				ResourceName:      "google_service_account_iam_policy.foo",
@@ -85,7 +77,9 @@ func TestAccServiceAccountIamPolicy(t *testing.T) {
 	})
 }
 
-func testAccCheckGoogleServiceAccountIam(account, role string, members []string) resource.TestCheckFunc {
+// Ensure that our tests only create the expected number of bindings.
+// The content of the binding is tested in the import tests.
+func testAccCheckGoogleServiceAccountIam(account string, numBindings int) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		config := testAccProvider.Meta().(*Config)
 		p, err := config.clientIAM.Projects.ServiceAccounts.GetIamPolicy(serviceAccountCanonicalId(account)).Do()
@@ -93,20 +87,11 @@ func testAccCheckGoogleServiceAccountIam(account, role string, members []string)
 			return err
 		}
 
-		for _, binding := range p.Bindings {
-			if binding.Role == role {
-				sort.Strings(members)
-				sort.Strings(binding.Members)
-
-				if reflect.DeepEqual(members, binding.Members) {
-					return nil
-				}
-
-				return fmt.Errorf("Binding found but expected members is %v, got %v", members, binding.Members)
-			}
+		if len(p.Bindings) != numBindings {
+			return fmt.Errorf("Expected exactly %d binding(s) for account %q, was %d", numBindings, account, len(p.Bindings))
 		}
 
-		return fmt.Errorf("No binding for role %q", role)
+		return nil
 	}
 }
 
@@ -127,8 +112,8 @@ resource "google_service_account" "test_account" {
 
 resource "google_service_account_iam_binding" "foo" {
   service_account_id = "${google_service_account.test_account.name}"
-  role        = "roles/viewer"
-  members     = ["serviceAccount:${google_service_account.test_account.email}"]
+  role        = "roles/iam.serviceAccountUser"
+  members     = ["user:admin@hashicorptest.com"]
 }
 `, account)
 }
@@ -142,7 +127,7 @@ resource "google_service_account" "test_account" {
 
 resource "google_service_account_iam_member" "foo" {
   service_account_id = "${google_service_account.test_account.name}"
-  role   = "roles/editor"
+  role   = "roles/iam.serviceAccountUser"
   member = "serviceAccount:${google_service_account.test_account.email}"
 }
 `, account)
@@ -156,11 +141,11 @@ resource "google_service_account" "test_account" {
 }
 
 data "google_iam_policy" "foo" {
-	binding {
-		role = "roles/owner"
+  binding {
+    role = "roles/iam.serviceAccountUser"
 
-		members = ["serviceAccount:${google_service_account.test_account.email}"]
-	}
+    members = ["serviceAccount:${google_service_account.test_account.email}"]
+  }
 }
 
 resource "google_service_account_iam_policy" "foo" {

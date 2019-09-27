@@ -326,6 +326,11 @@ func resourceComputeBackendService() *schema.Resource {
 func computeBackendServiceBackendSchema() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
+			"group": {
+				Type:             schema.TypeString,
+				Required:         true,
+				DiffSuppressFunc: compareSelfLinkRelativePaths,
+			},
 			"balancing_mode": {
 				Type:         schema.TypeString,
 				Optional:     true,
@@ -340,11 +345,6 @@ func computeBackendServiceBackendSchema() *schema.Resource {
 			"description": {
 				Type:     schema.TypeString,
 				Optional: true,
-			},
-			"group": {
-				Type:             schema.TypeString,
-				Optional:         true,
-				DiffSuppressFunc: compareSelfLinkRelativePaths,
 			},
 			"max_connections": {
 				Type:     schema.TypeInt,

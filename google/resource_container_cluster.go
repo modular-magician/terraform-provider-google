@@ -633,6 +633,13 @@ func resourceContainerCluster() *schema.Resource {
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
 
+			"default_max_pods_per_node": {
+				Type:     schema.TypeInt,
+				Optional: true,
+				ForceNew: true,
+				Computed: true,
+			},
+
 			"enable_intranode_visibility": {
 				Type:     schema.TypeBool,
 				Optional: true,
@@ -773,6 +780,10 @@ func resourceContainerClusterCreate(d *schema.ResourceData, meta interface{}) er
 		PodSecurityPolicyConfig: expandPodSecurityPolicyConfig(d.Get("pod_security_policy_config")),
 		MasterAuth:              expandMasterAuth(d.Get("master_auth")),
 		ResourceLabels:          expandStringMap(d, "resource_labels"),
+	}
+
+	if v, ok := d.GetOk("default_max_pods_per_node"); ok {
+		cluster.DefaultMaxPodsConstraint = expandDefaultMaxPodsConstraint(v)
 	}
 
 	// Only allow setting node_version on create if it's set to the equivalent master version,
@@ -988,6 +999,9 @@ func resourceContainerClusterRead(d *schema.ResourceData, meta interface{}) erro
 	d.Set("subnetwork", cluster.NetworkConfig.Subnetwork)
 	if err := d.Set("cluster_autoscaling", nil); err != nil {
 		return err
+	}
+	if cluster.DefaultMaxPodsConstraint != nil {
+		d.Set("default_max_pods_per_node", cluster.DefaultMaxPodsConstraint.MaxPodsPerNode)
 	}
 	if err := d.Set("node_config", flattenNodeConfig(cluster.NodeConfig)); err != nil {
 		return err

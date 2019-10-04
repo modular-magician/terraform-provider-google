@@ -24,10 +24,9 @@ func TestAccContainerNodePool_basic(t *testing.T) {
 				Config: testAccContainerNodePool_basic(cluster, np),
 			},
 			{
-				ResourceName:            "google_container_node_pool.np",
-				ImportState:             true,
-				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"max_pods_per_node"},
+				ResourceName:      "google_container_node_pool.np",
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -50,7 +49,7 @@ func TestAccContainerNodePool_namePrefix(t *testing.T) {
 				ResourceName:            "google_container_node_pool.np",
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"name_prefix", "max_pods_per_node"},
+				ImportStateVerifyIgnore: []string{"name_prefix"},
 			},
 		},
 	})
@@ -70,10 +69,9 @@ func TestAccContainerNodePool_noName(t *testing.T) {
 				Config: testAccContainerNodePool_noName(cluster),
 			},
 			{
-				ResourceName:            "google_container_node_pool.np",
-				ImportState:             true,
-				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"max_pods_per_node"},
+				ResourceName:      "google_container_node_pool.np",
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -99,7 +97,7 @@ func TestAccContainerNodePool_withNodeConfig(t *testing.T) {
 				ImportStateVerify: true,
 				// autoscaling.# = 0 is equivalent to no autoscaling at all,
 				// but will still cause an import diff
-				ImportStateVerifyIgnore: []string{"autoscaling.#", "max_pods_per_node"},
+				ImportStateVerifyIgnore: []string{"autoscaling.#"},
 			},
 			{
 				Config: testAccContainerNodePool_withNodeConfigUpdate(cluster, nodePool),
@@ -110,7 +108,7 @@ func TestAccContainerNodePool_withNodeConfig(t *testing.T) {
 				ImportStateVerify: true,
 				// autoscaling.# = 0 is equivalent to no autoscaling at all,
 				// but will still cause an import diff
-				ImportStateVerifyIgnore: []string{"autoscaling.#", "max_pods_per_node"},
+				ImportStateVerifyIgnore: []string{"autoscaling.#"},
 			},
 		},
 	})
@@ -558,6 +556,62 @@ resource "google_container_node_pool" "np" {
 	cluster            = "${google_container_cluster.cluster.name}"
 	initial_node_count = 2
 }`, cluster, np)
+}
+
+func testAccContainerNodePool_maxPodsPerNode(cluster, np string) string {
+	return fmt.Sprintf(`
+resource "google_compute_network" "container_network" {
+	name = "container-net-%s"
+	auto_create_subnetworks = false
+}
+
+resource "google_compute_subnetwork" "container_subnetwork" {
+	name                     = "${google_compute_network.container_network.name}"
+	network                  = "${google_compute_network.container_network.name}"
+	ip_cidr_range            = "10.0.36.0/24"
+	region                   = "us-central1"
+	private_ip_google_access = true
+
+	secondary_ip_range {
+		range_name    = "pod"
+		ip_cidr_range = "10.0.0.0/19"
+	}
+
+	secondary_ip_range {
+		range_name    = "svc"
+		ip_cidr_range = "10.0.32.0/22"
+	}
+}
+
+resource "google_container_cluster" "cluster" {
+	name = "%s"
+	zone = "us-central1-a"
+	initial_node_count = 3
+
+	network = "${google_compute_network.container_network.name}"
+	subnetwork = "${google_compute_subnetwork.container_subnetwork.name}"
+	ip_allocation_policy {
+		cluster_secondary_range_name  = "${google_compute_subnetwork.container_subnetwork.secondary_ip_range.0.range_name}"
+		services_secondary_range_name = "${google_compute_subnetwork.container_subnetwork.secondary_ip_range.1.range_name}"
+	}
+
+	private_cluster_config {
+		enable_private_endpoint = true
+		enable_private_nodes = true
+		master_ipv4_cidr_block = "10.42.0.0/28"
+	}
+
+	master_authorized_networks_config {
+	}
+}
+
+resource "google_container_node_pool" "np" {
+	name = "%s"
+	zone = "us-central1-a"
+	cluster = "${google_container_cluster.cluster.name}"
+	max_pods_per_node = 30
+	initial_node_count = 2
+}`, cluster, cluster, np)
 }
 
 func testAccContainerNodePool_regionalClusters(cluster, np string) string {

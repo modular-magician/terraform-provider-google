@@ -115,7 +115,7 @@ func resourceContainerCluster() *schema.Resource {
 				Optional:      true,
 				Computed:      true,
 				ForceNew:      true,
-				Deprecated:    "Use location instead",
+				Removed:       "Use location instead",
 				ConflictsWith: []string{"zone", "location"},
 			},
 
@@ -124,7 +124,7 @@ func resourceContainerCluster() *schema.Resource {
 				Optional:      true,
 				Computed:      true,
 				ForceNew:      true,
-				Deprecated:    "Use location instead",
+				Removed:       "Use location instead",
 				ConflictsWith: []string{"region", "location"},
 			},
 
@@ -136,11 +136,10 @@ func resourceContainerCluster() *schema.Resource {
 			},
 
 			"additional_zones": {
-				Type:       schema.TypeSet,
-				Optional:   true,
-				Computed:   true,
-				Deprecated: "Use node_locations instead",
-				Elem:       &schema.Schema{Type: schema.TypeString},
+				Type:     schema.TypeSet,
+				Optional: true,
+				Removed:  "Use node_locations instead",
+				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
 
 			"addons_config": {
@@ -633,13 +632,6 @@ func resourceContainerCluster() *schema.Resource {
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
 
-			"default_max_pods_per_node": {
-				Type:     schema.TypeInt,
-				Optional: true,
-				ForceNew: true,
-				Computed: true,
-			},
-
 			"enable_intranode_visibility": {
 				Type:     schema.TypeBool,
 				Optional: true,
@@ -749,14 +741,6 @@ func resourceContainerClusterCreate(d *schema.ResourceData, meta interface{}) er
 		return err
 	}
 
-	// When parsing a subnetwork by name, we expect region or zone to be set.
-	// Users may have set location to either value, so set that value.
-	if isZone(location) {
-		d.Set("zone", location)
-	} else {
-		d.Set("region", location)
-	}
-
 	clusterName := d.Get("name").(string)
 
 	cluster := &containerBeta.Cluster{
@@ -782,10 +766,6 @@ func resourceContainerClusterCreate(d *schema.ResourceData, meta interface{}) er
 		ResourceLabels:          expandStringMap(d, "resource_labels"),
 	}
 
-	if v, ok := d.GetOk("default_max_pods_per_node"); ok {
-		cluster.DefaultMaxPodsConstraint = expandDefaultMaxPodsConstraint(v)
-	}
-
 	// Only allow setting node_version on create if it's set to the equivalent master version,
 	// since `InitialClusterVersion` only accepts valid master-style versions.
 	if v, ok := d.GetOk("node_version"); ok {
@@ -800,20 +780,7 @@ func resourceContainerClusterCreate(d *schema.ResourceData, meta interface{}) er
 	if v, ok := d.GetOk("node_locations"); ok {
 		locationsSet := v.(*schema.Set)
 		if locationsSet.Contains(location) {
-			return fmt.Errorf("when using a multi-zonal cluster, additional_zones should not contain the original 'zone'")
-		}
-
-		// GKE requires a full list of node locations
-		// but when using a multi-zonal cluster our schema only asks for the
-		// additional zones, so append the cluster location if it's a zone
-		if isZone(location) {
-			locationsSet.Add(location)
-		}
-		cluster.Locations = convertStringSet(locationsSet)
-	} else if v, ok := d.GetOk("additional_zones"); ok {
-		locationsSet := v.(*schema.Set)
-		if locationsSet.Contains(location) {
-			return fmt.Errorf("when using a multi-zonal cluster, additional_zones should not contain the original 'zone'")
+			return fmt.Errorf("when using a multi-zonal cluster, node_locations should not contain the original 'zone'")
 		}
 
 		// GKE requires a full list of node locations
@@ -964,16 +931,10 @@ func resourceContainerClusterRead(d *schema.ResourceData, meta interface{}) erro
 	}
 
 	d.Set("location", cluster.Location)
-	if isZone(cluster.Location) {
-		d.Set("zone", cluster.Location)
-	} else {
-		d.Set("region", cluster.Location)
-	}
 
 	locations := schema.NewSet(schema.HashString, convertStringArrToInterface(cluster.Locations))
 	locations.Remove(cluster.Zone) // Remove the original zone since we only store additional zones
 	d.Set("node_locations", locations)
-	d.Set("additional_zones", locations)
 
 	d.Set("endpoint", cluster.Endpoint)
 	if err := d.Set("maintenance_policy", flattenMaintenancePolicy(cluster.MaintenancePolicy)); err != nil {
@@ -999,9 +960,6 @@ func resourceContainerClusterRead(d *schema.ResourceData, meta interface{}) erro
 	d.Set("subnetwork", cluster.NetworkConfig.Subnetwork)
 	if err := d.Set("cluster_autoscaling", nil); err != nil {
 		return err
-	}
-	if cluster.DefaultMaxPodsConstraint != nil {
-		d.Set("default_max_pods_per_node", cluster.DefaultMaxPodsConstraint.MaxPodsPerNode)
 	}
 	if err := d.Set("node_config", flattenNodeConfig(cluster.NodeConfig)); err != nil {
 		return err
@@ -1149,57 +1107,7 @@ func resourceContainerClusterUpdate(d *schema.ResourceData, meta interface{}) er
 		d.SetPartial("maintenance_policy")
 	}
 
-	// we can only ever see a change to one of additional_zones and node_locations; because
-	// thy conflict with each other and are each computed, Terraform will suppress the diff
-	// on one of them even when migrating from one to the other.
-	if d.HasChange("additional_zones") {
-		azSetOldI, azSetNewI := d.GetChange("additional_zones")
-		azSetNew := azSetNewI.(*schema.Set)
-		azSetOld := azSetOldI.(*schema.Set)
-		if azSetNew.Contains(location) {
-			return fmt.Errorf("additional_zones should not contain the original 'zone'")
-		}
-		// Since we can't add & remove zones in the same request, first add all the
-		// zones, then remove the ones we aren't using anymore.
-		azSet := azSetOld.Union(azSetNew)
-
-		if isZone(location) {
-			azSet.Add(location)
-		}
-
-		req := &containerBeta.UpdateClusterRequest{
-			Update: &containerBeta.ClusterUpdate{
-				DesiredLocations: convertStringSet(azSet),
-			},
-		}
-
-		updateF := updateFunc(req, "updating GKE cluster node locations")
-		// Call update serially.
-		if err := lockedCall(lockKey, updateF); err != nil {
-			return err
-		}
-
-		if isZone(location) {
-			azSetNew.Add(location)
-		}
-		if !azSet.Equal(azSetNew) {
-			req = &containerBeta.UpdateClusterRequest{
-				Update: &containerBeta.ClusterUpdate{
-					DesiredLocations: convertStringSet(azSetNew),
-				},
-			}
-
-			updateF := updateFunc(req, "updating GKE cluster node locations")
-			// Call update serially.
-			if err := lockedCall(lockKey, updateF); err != nil {
-				return err
-			}
-		}
-
-		log.Printf("[INFO] GKE cluster %s node locations have been updated to %v", d.Id(), azSet.List())
-
-		d.SetPartial("additional_zones")
-	} else if d.HasChange("node_locations") {
+	if d.HasChange("node_locations") {
 		azSetOldI, azSetNewI := d.GetChange("node_locations")
 		azSetNew := azSetNewI.(*schema.Set)
 		azSetOld := azSetOldI.(*schema.Set)
@@ -1844,16 +1752,6 @@ func expandPodSecurityPolicyConfig(configured interface{}) *containerBeta.PodSec
 	return nil
 }
 
-func expandDefaultMaxPodsConstraint(v interface{}) *containerBeta.MaxPodsConstraint {
-	if v == nil {
-		return nil
-	}
-
-	return &containerBeta.MaxPodsConstraint{
-		MaxPodsPerNode: int64(v.(int)),
-	}
-}
-
 func flattenNetworkPolicy(c *containerBeta.NetworkPolicy) []map[string]interface{} {
 	result := []map[string]interface{}{}
 	if c != nil {
@@ -2058,13 +1956,6 @@ func resourceContainerClusterStateImporter(d *schema.ResourceData, meta interfac
 		}
 	}
 	d.Set("project", project)
-
-	d.Set("location", location)
-	if isZone(location) {
-		d.Set("zone", location)
-	} else {
-		d.Set("region", location)
-	}
 
 	d.Set("name", clusterName)
 	d.SetId(clusterName)

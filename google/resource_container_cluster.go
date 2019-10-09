@@ -10,7 +10,6 @@ import (
 
 	"github.com/hashicorp/errwrap"
 	"github.com/hashicorp/go-version"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
@@ -179,9 +178,10 @@ func resourceContainerCluster() *schema.Resource {
 							},
 						},
 						"kubernetes_dashboard": {
-							Type:     schema.TypeList,
-							Optional: true,
-							Computed: true,
+							Type:       schema.TypeList,
+							Optional:   true,
+							Computed:   true,
+							Deprecated: "The Kubernetes Dashboard addon is deprecated for clusters on GKE."
 							MaxItems: 1,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
@@ -207,7 +207,7 @@ func resourceContainerCluster() *schema.Resource {
 								},
 							},
 						},
-					},
+											},
 				},
 			},
 
@@ -262,9 +262,10 @@ func resourceContainerCluster() *schema.Resource {
 
 			"enable_binary_authorization": {
 				Removed:  "This field is in beta. Use it in the the google-beta provider instead. See https://terraform.io/docs/providers/google/provider_versions.html for more details.",
-				Computed: true,
+				Computed:  true,
 				Type:     schema.TypeBool,
 				Optional: true,
+
 			},
 
 			"enable_kubernetes_alpha": {
@@ -287,6 +288,7 @@ func resourceContainerCluster() *schema.Resource {
 				Optional: true,
 				Default:  false,
 			},
+
 
 			"initial_node_count": {
 				Type:     schema.TypeInt,
@@ -458,10 +460,10 @@ func resourceContainerCluster() *schema.Resource {
 
 			"pod_security_policy_config": {
 				// Remove return nil from expand when this is removed for good.
-				Removed:  "This field is in beta. Use it in the the google-beta provider instead. See https://terraform.io/docs/providers/google/provider_versions.html for more details.",
-				Type:     schema.TypeList,
-				Optional: true,
-				MaxItems: 1,
+				Removed: "This field is in beta. Use it in the the google-beta provider instead. See https://terraform.io/docs/providers/google/provider_versions.html for more details.",
+				Type:       schema.TypeList,
+				Optional:   true,
+				MaxItems:   1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"enabled": {
@@ -532,7 +534,7 @@ func resourceContainerCluster() *schema.Resource {
 							ConflictsWith: ipAllocationRangeFields,
 						},
 
-						"subnetwork_name": {
+   					"subnetwork_name": {
 							Type:          schema.TypeString,
 							Optional:      true,
 							ForceNew:      true,
@@ -557,11 +559,11 @@ func resourceContainerCluster() *schema.Resource {
 							DiffSuppressFunc: cidrOrSizeDiffSuppress,
 						},
 						"node_ipv4_cidr_block": {
-							Type:             schema.TypeString,
-							Optional:         true,
-							Computed:         true,
-							ForceNew:         true,
-							ConflictsWith:    ipAllocationRangeFields,
+							Type:          schema.TypeString,
+							Optional:      true,
+							Computed:      true,
+							ForceNew:      true,
+							ConflictsWith: ipAllocationRangeFields,
 							DiffSuppressFunc: cidrOrSizeDiffSuppress,
 						},
 
@@ -598,15 +600,15 @@ func resourceContainerCluster() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"enable_private_endpoint": {
-							Type:             schema.TypeBool,
-							Optional:         true,
-							ForceNew:         true,
+							Type:     schema.TypeBool,
+							Optional: true,
+							ForceNew: true,
 							DiffSuppressFunc: containerClusterPrivateClusterConfigSuppress,
 						},
 						"enable_private_nodes": {
-							Type:             schema.TypeBool,
-							Optional:         true,
-							ForceNew:         true,
+							Type:     schema.TypeBool,
+							Optional: true,
+							ForceNew: true,
 							DiffSuppressFunc: containerClusterPrivateClusterConfigSuppress,
 						},
 						"master_ipv4_cidr_block": {
@@ -640,10 +642,11 @@ func resourceContainerCluster() *schema.Resource {
 				Computed: true,
 			},
 
+
 			"enable_intranode_visibility": {
 				Type:     schema.TypeBool,
 				Optional: true,
-				Removed:  "This field is in beta. Use it in the the google-beta provider instead. See https://terraform.io/docs/providers/google/provider_versions.html for more details.",
+				Removed: "This field is in beta. Use it in the the google-beta provider instead. See https://terraform.io/docs/providers/google/provider_versions.html for more details.",
 			},
 		},
 	}
@@ -778,8 +781,8 @@ func resourceContainerClusterCreate(d *schema.ResourceData, meta interface{}) er
 		EnableKubernetesAlpha:   d.Get("enable_kubernetes_alpha").(bool),
 		IpAllocationPolicy:      expandIPAllocationPolicy(d.Get("ip_allocation_policy")),
 		PodSecurityPolicyConfig: expandPodSecurityPolicyConfig(d.Get("pod_security_policy_config")),
-		MasterAuth:              expandMasterAuth(d.Get("master_auth")),
-		ResourceLabels:          expandStringMap(d, "resource_labels"),
+		MasterAuth:     expandMasterAuth(d.Get("master_auth")),
+		ResourceLabels: expandStringMap(d, "resource_labels"),
 	}
 
 	if v, ok := d.GetOk("default_max_pods_per_node"); ok {
@@ -863,9 +866,11 @@ func resourceContainerClusterCreate(d *schema.ResourceData, meta interface{}) er
 		cluster.NodeConfig = expandNodeConfig(v)
 	}
 
+
 	if v, ok := d.GetOk("private_cluster_config"); ok {
 		cluster.PrivateClusterConfig = expandPrivateClusterConfig(v)
 	}
+
 
 	req := &containerBeta.CreateClusterRequest{
 		Cluster: cluster,
@@ -1034,9 +1039,10 @@ func resourceContainerClusterRead(d *schema.ResourceData, meta interface{}) erro
 		return err
 	}
 
+
 	d.Set("resource_labels", cluster.ResourceLabels)
 
-	return nil
+		return nil
 }
 
 func resourceContainerClusterUpdate(d *schema.ResourceData, meta interface{}) error {
@@ -1486,6 +1492,7 @@ func resourceContainerClusterUpdate(d *schema.ResourceData, meta interface{}) er
 		d.SetPartial("master_auth")
 	}
 
+
 	if d.HasChange("resource_labels") {
 		resourceLabels := d.Get("resource_labels").(map[string]interface{})
 		req := &containerBeta.SetLabelsRequest{
@@ -1712,6 +1719,7 @@ func expandClusterAddonsConfig(configured interface{}) *containerBeta.AddonsConf
 		}
 	}
 
+
 	return ac
 }
 
@@ -1731,11 +1739,11 @@ func expandIPAllocationPolicy(configured interface{}) *containerBeta.IPAllocatio
 
 		ClusterIpv4CidrBlock:  config["cluster_ipv4_cidr_block"].(string),
 		ServicesIpv4CidrBlock: config["services_ipv4_cidr_block"].(string),
-		NodeIpv4CidrBlock:     config["node_ipv4_cidr_block"].(string),
+		NodeIpv4CidrBlock: config["node_ipv4_cidr_block"].(string),
 
 		ClusterSecondaryRangeName:  config["cluster_secondary_range_name"].(string),
 		ServicesSecondaryRangeName: config["services_secondary_range_name"].(string),
-		ForceSendFields:            []string{"UseIpAliases"},
+		ForceSendFields: []string{"UseIpAliases"},
 	}
 }
 
@@ -1756,6 +1764,8 @@ func expandMaintenancePolicy(configured interface{}) *containerBeta.MaintenanceP
 		},
 	}
 }
+
+
 
 func expandMasterAuth(configured interface{}) *containerBeta.MasterAuth {
 	l := configured.([]interface{})
@@ -1838,6 +1848,7 @@ func expandPrivateClusterConfig(configured interface{}) *containerBeta.PrivateCl
 	}
 }
 
+
 func expandPodSecurityPolicyConfig(configured interface{}) *containerBeta.PodSecurityPolicyConfig {
 	// Removing lists is hard - the element count (#) will have a diff from nil -> computed
 	// If we set this to empty on Read, it will be stable.
@@ -1853,6 +1864,7 @@ func expandDefaultMaxPodsConstraint(v interface{}) *containerBeta.MaxPodsConstra
 		MaxPodsPerNode: int64(v.(int)),
 	}
 }
+
 
 func flattenNetworkPolicy(c *containerBeta.NetworkPolicy) []map[string]interface{} {
 	result := []map[string]interface{}{}
@@ -1922,6 +1934,7 @@ func flattenClusterNodePools(d *schema.ResourceData, config *Config, c []*contai
 	return nodePools, nil
 }
 
+
 func flattenPrivateClusterConfig(c *containerBeta.PrivateClusterConfig) []map[string]interface{} {
 	if c == nil {
 		return nil
@@ -1936,6 +1949,7 @@ func flattenPrivateClusterConfig(c *containerBeta.PrivateClusterConfig) []map[st
 		},
 	}
 }
+
 
 func flattenIPAllocationPolicy(c *containerBeta.Cluster, d *schema.ResourceData, config *Config) []map[string]interface{} {
 	if c == nil || c.IpAllocationPolicy == nil {
@@ -2015,6 +2029,9 @@ func flattenMasterAuth(ma *containerBeta.MasterAuth) []map[string]interface{} {
 	return masterAuth
 }
 
+
+
+
 func flattenMasterAuthorizedNetworksConfig(c *containerBeta.MasterAuthorizedNetworksConfig) []map[string]interface{} {
 	if c == nil || !c.Enabled {
 		return nil
@@ -2032,6 +2049,8 @@ func flattenMasterAuthorizedNetworksConfig(c *containerBeta.MasterAuthorizedNetw
 	}
 	return []map[string]interface{}{result}
 }
+
+
 
 func resourceContainerClusterStateImporter(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)

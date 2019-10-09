@@ -53,18 +53,14 @@ func resourceContainerNodePool() *schema.Resource {
 					ForceNew: true,
 				},
 				"zone": {
-					Type:       schema.TypeString,
-					Optional:   true,
-					Computed:   true,
-					Deprecated: "use location instead",
-					ForceNew:   true,
+					Type:     schema.TypeString,
+					Optional: true,
+					Removed:  "use location instead",
 				},
 				"region": {
-					Type:       schema.TypeString,
-					Optional:   true,
-					Computed:   true,
-					Deprecated: "use location instead",
-					ForceNew:   true,
+					Type:     schema.TypeString,
+					Optional: true,
+					Removed:  "use location instead",
 				},
 				"location": {
 					Type:     schema.TypeString,
@@ -99,6 +95,7 @@ var schemaNodePool = map[string]*schema.Schema{
 	},
 
 	"max_pods_per_node": {
+		Removed:  "This field is in beta. Use it in the the google-beta provider instead. See https://terraform.io/docs/providers/google/provider_versions.html for more details.",
 		Type:     schema.TypeInt,
 		Optional: true,
 		ForceNew: true,
@@ -314,12 +311,6 @@ func resourceContainerNodePoolRead(d *schema.ResourceData, meta interface{}) err
 		d.Set(k, v)
 	}
 
-	if isZone(nodePoolInfo.location) {
-		d.Set("zone", nodePoolInfo.location)
-	} else {
-		d.Set("region", nodePoolInfo.location)
-	}
-
 	d.Set("location", nodePoolInfo.location)
 	d.Set("project", nodePoolInfo.project)
 
@@ -420,11 +411,6 @@ func resourceContainerNodePoolStateImporter(d *schema.ResourceData, meta interfa
 	switch len(parts) {
 	case 3:
 		location := parts[0]
-		if isZone(location) {
-			d.Set("zone", location)
-		} else {
-			d.Set("region", location)
-		}
 
 		d.Set("location", location)
 		d.Set("cluster", parts[1])
@@ -433,11 +419,6 @@ func resourceContainerNodePoolStateImporter(d *schema.ResourceData, meta interfa
 		d.Set("project", parts[0])
 
 		location := parts[1]
-		if isZone(location) {
-			d.Set("zone", location)
-		} else {
-			d.Set("region", location)
-		}
 
 		d.Set("location", location)
 		d.Set("cluster", parts[2])
@@ -490,12 +471,6 @@ func expandNodePool(d *schema.ResourceData, prefix string) (*containerBeta.NodeP
 			MinNodeCount:    int64(autoscaling["min_node_count"].(int)),
 			MaxNodeCount:    int64(autoscaling["max_node_count"].(int)),
 			ForceSendFields: []string{"MinNodeCount"},
-		}
-	}
-
-	if v, ok := d.GetOk(prefix + "max_pods_per_node"); ok {
-		np.MaxPodsConstraint = &containerBeta.MaxPodsConstraint{
-			MaxPodsPerNode: int64(v.(int)),
 		}
 	}
 
@@ -553,10 +528,6 @@ func flattenNodePool(d *schema.ResourceData, config *Config, np *containerBeta.N
 		} else {
 			nodePool["autoscaling"] = []map[string]interface{}{}
 		}
-	}
-
-	if np.MaxPodsConstraint != nil {
-		nodePool["max_pods_per_node"] = np.MaxPodsConstraint.MaxPodsPerNode
 	}
 
 	nodePool["management"] = []map[string]interface{}{

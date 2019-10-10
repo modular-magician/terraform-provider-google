@@ -153,10 +153,9 @@ func resourceComputeRegionInstanceGroupManager() *schema.Resource {
 			},
 
 			"update_strategy": {
-				Type:       schema.TypeString,
-				Deprecated: "This field is removed.",
-				Optional:   true,
-				Computed:   true,
+				Type:     schema.TypeString,
+				Removed:  "This field is removed.",
+				Optional: true,
 			},
 
 			"target_pools": {

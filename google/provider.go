@@ -410,7 +410,6 @@ func Provider() terraform.ResourceProvider {
 			"google_project":                                  dataSourceGoogleProject(),
 			"google_projects":                                 dataSourceGoogleProjects(),
 			"google_project_organization_policy":              dataSourceGoogleProjectOrganizationPolicy(),
-			"google_project_services":                         dataSourceGoogleProjectServices(),
 			"google_service_account":                          dataSourceGoogleServiceAccount(),
 			"google_service_account_access_token":             dataSourceGoogleServiceAccountAccessToken(),
 			"google_service_account_key":                      dataSourceGoogleServiceAccountKey(),
@@ -438,8 +437,8 @@ func Provider() terraform.ResourceProvider {
 }
 
 // Generated resources: 80
-// Generated IAM resources: 33
-// Total generated resources: 113
+// Generated IAM resources: 27
+// Total generated resources: 107
 func ResourceMap() map[string]*schema.Resource {
 	resourceMap, _ := ResourceMapWithErrors()
 	return resourceMap
@@ -522,12 +521,6 @@ func ResourceMapWithErrors() (map[string]*schema.Resource, error) {
 			"google_iap_web_type_app_engine_iam_binding":       ResourceIamBinding(IapWebTypeAppEngineIamSchema, IapWebTypeAppEngineIamUpdaterProducer, IapWebTypeAppEngineIdParseFunc),
 			"google_iap_web_type_app_engine_iam_member":        ResourceIamMember(IapWebTypeAppEngineIamSchema, IapWebTypeAppEngineIamUpdaterProducer, IapWebTypeAppEngineIdParseFunc),
 			"google_iap_web_type_app_engine_iam_policy":        ResourceIamPolicy(IapWebTypeAppEngineIamSchema, IapWebTypeAppEngineIamUpdaterProducer, IapWebTypeAppEngineIdParseFunc),
-			"google_iap_app_engine_version_iam_binding":        ResourceIamBinding(IapAppEngineVersionIamSchema, IapAppEngineVersionIamUpdaterProducer, IapAppEngineVersionIdParseFunc),
-			"google_iap_app_engine_version_iam_member":         ResourceIamMember(IapAppEngineVersionIamSchema, IapAppEngineVersionIamUpdaterProducer, IapAppEngineVersionIdParseFunc),
-			"google_iap_app_engine_version_iam_policy":         ResourceIamPolicy(IapAppEngineVersionIamSchema, IapAppEngineVersionIamUpdaterProducer, IapAppEngineVersionIdParseFunc),
-			"google_iap_app_engine_service_iam_binding":        ResourceIamBinding(IapAppEngineServiceIamSchema, IapAppEngineServiceIamUpdaterProducer, IapAppEngineServiceIdParseFunc),
-			"google_iap_app_engine_service_iam_member":         ResourceIamMember(IapAppEngineServiceIamSchema, IapAppEngineServiceIamUpdaterProducer, IapAppEngineServiceIdParseFunc),
-			"google_iap_app_engine_service_iam_policy":         ResourceIamPolicy(IapAppEngineServiceIamSchema, IapAppEngineServiceIamUpdaterProducer, IapAppEngineServiceIdParseFunc),
 			"google_iap_web_backend_service_iam_binding":       ResourceIamBinding(IapWebBackendServiceIamSchema, IapWebBackendServiceIamUpdaterProducer, IapWebBackendServiceIdParseFunc),
 			"google_iap_web_backend_service_iam_member":        ResourceIamMember(IapWebBackendServiceIamSchema, IapWebBackendServiceIamUpdaterProducer, IapWebBackendServiceIdParseFunc),
 			"google_iap_web_backend_service_iam_policy":        ResourceIamPolicy(IapWebBackendServiceIamSchema, IapWebBackendServiceIamUpdaterProducer, IapWebBackendServiceIdParseFunc),
@@ -655,7 +648,6 @@ func ResourceMapWithErrors() (map[string]*schema.Resource, error) {
 			"google_project_iam_custom_role":               resourceGoogleProjectIamCustomRole(),
 			"google_project_organization_policy":           resourceGoogleProjectOrganizationPolicy(),
 			"google_project_usage_export_bucket":           resourceProjectUsageBucket(),
-			"google_project_services":                      resourceGoogleProjectServices(),
 			"google_pubsub_subscription_iam_binding":       ResourceIamBinding(IamPubsubSubscriptionSchema, NewPubsubSubscriptionIamUpdater, PubsubSubscriptionIdParseFunc),
 			"google_pubsub_subscription_iam_member":        ResourceIamMember(IamPubsubSubscriptionSchema, NewPubsubSubscriptionIamUpdater, PubsubSubscriptionIdParseFunc),
 			"google_pubsub_subscription_iam_policy":        ResourceIamPolicy(IamPubsubSubscriptionSchema, NewPubsubSubscriptionIamUpdater, PubsubSubscriptionIdParseFunc),

@@ -627,6 +627,26 @@ func resourceContainerCluster() *schema.Resource {
 				},
 			},
 
+			"release_channel": {
+				Type:     schema.TypeList,
+				ForceNew: true,
+				Optional: true,
+				Computed: true,
+				MaxItems: 1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"channel": {
+							Type:             schema.TypeString,
+							Default:          "UNSPECIFIED",
+							Optional:         true,
+							ForceNew:         true,
+							ValidateFunc:     validation.StringInSlice([]string{"UNSPECIFIED", "RAPID", "REGULAR", "STABLE"}, false),
+							DiffSuppressFunc: emptyOrDefaultStringSuppress("UNSPECIFIED"),
+						},
+					},
+				},
+			},
+
 			"resource_labels": {
 				Type:     schema.TypeMap,
 				Optional: true,

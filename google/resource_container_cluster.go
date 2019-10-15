@@ -633,6 +633,12 @@ func resourceContainerCluster() *schema.Resource {
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
 
+			"resource_labels": {
+				Type:     schema.TypeMap,
+				Optional: true,
+				Elem:     &schema.Schema{Type: schema.TypeString},
+			},
+
 			"default_max_pods_per_node": {
 				Type:     schema.TypeInt,
 				Optional: true,

@@ -153,10 +153,9 @@ func resourceComputeRegionInstanceGroupManager() *schema.Resource {
 			},
 
 			"update_strategy": {
-				Type:       schema.TypeString,
-				Deprecated: "This field is removed.",
-				Optional:   true,
-				Computed:   true,
+				Type:     schema.TypeString,
+				Removed:  "This field is removed.",
+				Optional: true,
 			},
 
 			"target_pools": {
@@ -362,10 +361,10 @@ func waitForInstancesRefreshFunc(f getInstanceManagerFunc, d *schema.ResourceDat
 			log.Printf("[WARNING] Error in fetching manager while waiting for instances to come up: %s\n", err)
 			return nil, "error", err
 		}
-		if m.Status.IsStable {
-			return true, "created", nil
+		if done := m.CurrentActions.None; done < m.TargetSize {
+			return done, "creating", nil
 		} else {
-			return false, "creating", nil
+			return done, "created", nil
 		}
 	}
 }

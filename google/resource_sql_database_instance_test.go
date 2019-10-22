@@ -843,8 +843,7 @@ resource "google_sql_database_instance" "instance" {
 		availability_type = "REGIONAL"
 
 		backup_configuration {
-			enabled   = true
-            location  = "us"
+			enabled = true
 		}
 	}
 }

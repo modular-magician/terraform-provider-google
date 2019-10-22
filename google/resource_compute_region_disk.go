@@ -284,7 +284,7 @@ func resourceComputeRegionDiskCreate(d *schema.ResourceData, meta interface{}) e
 	}
 
 	// Store the ID now
-	id, err := replaceVars(d, config, "{{name}}")
+	id, err := replaceVars(d, config, "projects/{{project}}/regions/{{region}}/disks/{{name}}")
 	if err != nil {
 		return fmt.Errorf("Error constructing id: %s", err)
 	}
@@ -414,7 +414,6 @@ func resourceComputeRegionDiskUpdate(d *schema.ResourceData, meta interface{}) e
 
 	if d.HasChange("label_fingerprint") || d.HasChange("labels") {
 		obj := make(map[string]interface{})
-
 		labelFingerprintProp, err := expandComputeRegionDiskLabelFingerprint(d.Get("label_fingerprint"), d, config)
 		if err != nil {
 			return err
@@ -456,7 +455,6 @@ func resourceComputeRegionDiskUpdate(d *schema.ResourceData, meta interface{}) e
 	}
 	if d.HasChange("size") {
 		obj := make(map[string]interface{})
-
 		sizeGbProp, err := expandComputeRegionDiskSize(d.Get("size"), d, config)
 		if err != nil {
 			return err
@@ -600,7 +598,7 @@ func resourceComputeRegionDiskImport(d *schema.ResourceData, meta interface{}) (
 	}
 
 	// Replace import id for the resource id
-	id, err := replaceVars(d, config, "{{name}}")
+	id, err := replaceVars(d, config, "projects/{{project}}/regions/{{region}}/disks/{{name}}")
 	if err != nil {
 		return nil, fmt.Errorf("Error constructing id: %s", err)
 	}

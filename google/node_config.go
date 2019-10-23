@@ -171,14 +171,45 @@ var schemaNodeConfig = &schema.Schema{
 				},
 			},
 
+			"initial_taint": {
+				Type:          schema.TypeList,
+				Optional:      true,
+				ForceNew:      true,
+				ConflictsWith: []string{"taint"},
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"key": {
+							Type:     schema.TypeString,
+							Required: true,
+							ForceNew: true,
+						},
+						"value": {
+							Type:     schema.TypeString,
+							Required: true,
+							ForceNew: true,
+						},
+						"effect": {
+							Type:         schema.TypeString,
+							Required:     true,
+							ForceNew:     true,
+							ValidateFunc: validation.StringInSlice([]string{"NO_SCHEDULE", "PREFER_NO_SCHEDULE", "NO_EXECUTE"}, false),
+						},
+					},
+				},
+			},
+
 			"taint": {
-				Removed:  "This field is in beta. Use it in the the google-beta provider instead. See https://terraform.io/docs/providers/google/provider_versions.html for more details.",
-				Type:     schema.TypeList,
-				Optional: true,
-				// Computed=true because GKE Sandbox will automatically add taints to nodes that can/cannot run sandboxed pods.
+				Type: schema.TypeList,
+				// GKE Sandbox and GPUs will add taints out of band so this needs to be O+C
+				Optional:         true,
 				Computed:         true,
 				ForceNew:         true,
 				DiffSuppressFunc: taintDiffSuppress,
+				// TODO(rileykarson): Disable DSF, enable ConfigMode in 3.0.0
+				// Legacy config mode allows setting no taint explicitly.
+				// See https://www.terraform.io/docs/configuration/attr-as-blocks.html
+				// ConfigMode: schema.SchemaConfigModeAttr,
+				ConflictsWith: []string{"initial_taint"},
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"key": {
@@ -341,6 +372,34 @@ func expandNodeConfig(v interface{}) *containerBeta.NodeConfig {
 		nc.MinCpuPlatform = v.(string)
 	}
 
+	if v, ok := nodeConfig["taint"]; ok && len(v.([]interface{})) > 0 {
+		taints := v.([]interface{})
+		nodeTaints := make([]*containerBeta.NodeTaint, 0, len(taints))
+		for _, raw := range taints {
+			data := raw.(map[string]interface{})
+			taint := &containerBeta.NodeTaint{
+				Key:    data["key"].(string),
+				Value:  data["value"].(string),
+				Effect: data["effect"].(string),
+			}
+			nodeTaints = append(nodeTaints, taint)
+		}
+		nc.Taints = nodeTaints
+	} else if v, ok := nodeConfig["initial_taint"]; ok && len(v.([]interface{})) > 0 {
+		taints := v.([]interface{})
+		nodeTaints := make([]*containerBeta.NodeTaint, 0, len(taints))
+		for _, raw := range taints {
+			data := raw.(map[string]interface{})
+			taint := &containerBeta.NodeTaint{
+				Key:    data["key"].(string),
+				Value:  data["value"].(string),
+				Effect: data["effect"].(string),
+			}
+			nodeTaints = append(nodeTaints, taint)
+		}
+		nc.Taints = nodeTaints
+	}
+
 	return nc
 }
 
@@ -365,6 +424,7 @@ func flattenNodeConfig(c *containerBeta.NodeConfig) []map[string]interface{} {
 		"preemptible":              c.Preemptible,
 		"min_cpu_platform":         c.MinCpuPlatform,
 		"shielded_instance_config": flattenShieldedInstanceConfig(c.ShieldedInstanceConfig),
+		"taint":                    flattenTaints(c.Taints),
 	})
 
 	if len(c.OauthScopes) > 0 {
@@ -391,6 +451,18 @@ func flattenShieldedInstanceConfig(c *containerBeta.ShieldedInstanceConfig) []ma
 		result = append(result, map[string]interface{}{
 			"enable_secure_boot":          c.EnableSecureBoot,
 			"enable_integrity_monitoring": c.EnableIntegrityMonitoring,
+		})
+	}
+	return result
+}
+
+func flattenTaints(c []*containerBeta.NodeTaint) []map[string]interface{} {
+	result := []map[string]interface{}{}
+	for _, taint := range c {
+		result = append(result, map[string]interface{}{
+			"key":    taint.Key,
+			"value":  taint.Value,
+			"effect": taint.Effect,
 		})
 	}
 	return result

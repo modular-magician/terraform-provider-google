@@ -2077,6 +2077,30 @@ resource "google_container_cluster" "with_maintenance_window" {
 }`, clusterName, maintenancePolicy)
 }
 
+func testAccContainerCluster_withRecurringMaintenanceWindow(clusterName string, startTime, endTime string) string {
+	maintenancePolicy := ""
+	if len(startTime) > 0 {
+		maintenancePolicy = fmt.Sprintf(`
+	maintenance_policy {
+		recurring_window {
+			start_time = "%s"
+			end_time = "%s"
+			recurrence = "FREQ=DAILY"
+		}
+	}`, startTime, endTime)
+	}
+
+	return fmt.Sprintf(`
+resource "google_container_cluster" "with_recurring_maintenance_window" {
+	name = "cluster-test-%s"
+	zone = "us-central1-a"
+	initial_node_count = 1
+
+	%s
+}`, clusterName, maintenancePolicy)
+
+}
+
 func testAccContainerCluster_withIPAllocationPolicy_existingSecondaryRanges(cluster string) string {
 	return fmt.Sprintf(`
 resource "google_compute_network" "container_network" {
@@ -2331,8 +2355,8 @@ resource "google_container_cluster" "cidr_error_overlap" {
   initial_node_count = 1
 
   ip_allocation_policy {
-    cluster_ipv4_cidr_block = "10.0.0.0/16"
-    services_ipv4_cidr_block = "10.1.0.0/16"
+	cluster_ipv4_cidr_block = "10.0.0.0/16"
+	services_ipv4_cidr_block = "10.1.0.0/16"
   }
 }
 `, initConfig, secondCluster)

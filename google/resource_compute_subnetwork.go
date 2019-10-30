@@ -19,12 +19,12 @@ import (
 	"log"
 	"net"
 	"reflect"
-	"strings"
 	"time"
 
 	"github.com/apparentlymart/go-cidr/cidr"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"google.golang.org/api/compute/v1"
 )
 
@@ -46,13 +46,6 @@ func isShrinkageIpCidr(old, new, _ interface{}) bool {
 	}
 
 	return true
-}
-
-func splitSubnetID(id string) (region string, name string) {
-	parts := strings.Split(id, "/")
-	region = parts[0]
-	name = parts[1]
-	return
 }
 
 func resourceComputeSubnetwork() *schema.Resource {
@@ -100,9 +93,33 @@ func resourceComputeSubnetwork() *schema.Resource {
 				Optional: true,
 				ForceNew: true,
 			},
-			"enable_flow_logs": {
-				Type:     schema.TypeBool,
+			"log_config": {
+				Type:     schema.TypeList,
 				Optional: true,
+				MaxItems: 1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"aggregation_interval": {
+							Type:         schema.TypeString,
+							Optional:     true,
+							ValidateFunc: validation.StringInSlice([]string{"INTERVAL_5_SEC", "INTERVAL_30_SEC", "INTERVAL_1_MIN", "INTERVAL_5_MIN", "INTERVAL_10_MIN", "INTERVAL_15_MIN", ""}, false),
+						},
+						"enable": {
+							Type:     schema.TypeBool,
+							Optional: true,
+							Default:  false,
+						},
+						"flow_sampling": {
+							Type:     schema.TypeFloat,
+							Optional: true,
+						},
+						"metadata": {
+							Type:         schema.TypeString,
+							Optional:     true,
+							ValidateFunc: validation.StringInSlice([]string{"EXCLUDE_ALL_METADATA", "INCLUDE_ALL_METADATA", ""}, false),
+						},
+					},
+				},
 			},
 			"private_ip_google_access": {
 				Type:     schema.TypeBool,
@@ -231,12 +248,6 @@ func resourceComputeSubnetworkCreate(d *schema.ResourceData, meta interface{}) e
 	} else if v, ok := d.GetOkExists("network"); !isEmptyValue(reflect.ValueOf(networkProp)) && (ok || !reflect.DeepEqual(v, networkProp)) {
 		obj["network"] = networkProp
 	}
-	enableFlowLogsProp, err := expandComputeSubnetworkEnableFlowLogs(d.Get("enable_flow_logs"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("enable_flow_logs"); ok || !reflect.DeepEqual(v, enableFlowLogsProp) {
-		obj["enableFlowLogs"] = enableFlowLogsProp
-	}
 	fingerprintProp, err := expandComputeSubnetworkFingerprint(d.Get("fingerprint"), d, config)
 	if err != nil {
 		return err
@@ -261,6 +272,12 @@ func resourceComputeSubnetworkCreate(d *schema.ResourceData, meta interface{}) e
 	} else if v, ok := d.GetOkExists("region"); !isEmptyValue(reflect.ValueOf(regionProp)) && (ok || !reflect.DeepEqual(v, regionProp)) {
 		obj["region"] = regionProp
 	}
+	logConfigProp, err := expandComputeSubnetworkLogConfig(d.Get("log_config"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("log_config"); !isEmptyValue(reflect.ValueOf(logConfigProp)) && (ok || !reflect.DeepEqual(v, logConfigProp)) {
+		obj["logConfig"] = logConfigProp
+	}
 
 	url, err := replaceVars(d, config, "{{ComputeBasePath}}projects/{{project}}/regions/{{region}}/subnetworks")
 	if err != nil {
@@ -278,7 +295,7 @@ func resourceComputeSubnetworkCreate(d *schema.ResourceData, meta interface{}) e
 	}
 
 	// Store the ID now
-	id, err := replaceVars(d, config, "{{region}}/{{name}}")
+	id, err := replaceVars(d, config, "projects/{{project}}/regions/{{region}}/subnetworks/{{name}}")
 	if err != nil {
 		return fmt.Errorf("Error constructing id: %s", err)
 	}
@@ -344,9 +361,6 @@ func resourceComputeSubnetworkRead(d *schema.ResourceData, meta interface{}) err
 	if err := d.Set("network", flattenComputeSubnetworkNetwork(res["network"], d)); err != nil {
 		return fmt.Errorf("Error reading Subnetwork: %s", err)
 	}
-	if err := d.Set("enable_flow_logs", flattenComputeSubnetworkEnableFlowLogs(res["enableFlowLogs"], d)); err != nil {
-		return fmt.Errorf("Error reading Subnetwork: %s", err)
-	}
 	if err := d.Set("fingerprint", flattenComputeSubnetworkFingerprint(res["fingerprint"], d)); err != nil {
 		return fmt.Errorf("Error reading Subnetwork: %s", err)
 	}
@@ -357,6 +371,9 @@ func resourceComputeSubnetworkRead(d *schema.ResourceData, meta interface{}) err
 		return fmt.Errorf("Error reading Subnetwork: %s", err)
 	}
 	if err := d.Set("region", flattenComputeSubnetworkRegion(res["region"], d)); err != nil {
+		return fmt.Errorf("Error reading Subnetwork: %s", err)
+	}
+	if err := d.Set("log_config", flattenComputeSubnetworkLogConfig(res["logConfig"], d)); err != nil {
 		return fmt.Errorf("Error reading Subnetwork: %s", err)
 	}
 	if err := d.Set("self_link", ConvertSelfLinkToV1(res["selfLink"].(string))); err != nil {
@@ -410,57 +427,6 @@ func resourceComputeSubnetworkUpdate(d *schema.ResourceData, meta interface{}) e
 		}
 
 		d.SetPartial("ip_cidr_range")
-	}
-	if d.HasChange("enable_flow_logs") {
-		obj := make(map[string]interface{})
-
-		getUrl, err := replaceVars(d, config, "{{ComputeBasePath}}projects/{{project}}/regions/{{region}}/subnetworks/{{name}}")
-		if err != nil {
-			return err
-		}
-
-		project, err := getProject(d, config)
-		if err != nil {
-			return err
-		}
-		getRes, err := sendRequest(config, "GET", project, getUrl, nil)
-		if err != nil {
-			return handleNotFoundError(err, d, fmt.Sprintf("ComputeSubnetwork %q", d.Id()))
-		}
-
-		obj["fingerprint"] = getRes["fingerprint"]
-
-		enableFlowLogsProp, err := expandComputeSubnetworkEnableFlowLogs(d.Get("enable_flow_logs"), d, config)
-		if err != nil {
-			return err
-		} else if v, ok := d.GetOkExists("enable_flow_logs"); ok || !reflect.DeepEqual(v, enableFlowLogsProp) {
-			obj["enableFlowLogs"] = enableFlowLogsProp
-		}
-
-		url, err := replaceVars(d, config, "{{ComputeBasePath}}projects/{{project}}/regions/{{region}}/subnetworks/{{name}}")
-		if err != nil {
-			return err
-		}
-		res, err := sendRequestWithTimeout(config, "PATCH", project, url, obj, d.Timeout(schema.TimeoutUpdate))
-		if err != nil {
-			return fmt.Errorf("Error updating Subnetwork %q: %s", d.Id(), err)
-		}
-
-		op := &compute.Operation{}
-		err = Convert(res, op)
-		if err != nil {
-			return err
-		}
-
-		err = computeOperationWaitTime(
-			config.clientCompute, op, project, "Updating Subnetwork",
-			int(d.Timeout(schema.TimeoutUpdate).Minutes()))
-
-		if err != nil {
-			return err
-		}
-
-		d.SetPartial("enable_flow_logs")
 	}
 	if d.HasChange("secondary_ip_range") {
 		obj := make(map[string]interface{})
@@ -548,6 +514,57 @@ func resourceComputeSubnetworkUpdate(d *schema.ResourceData, meta interface{}) e
 
 		d.SetPartial("private_ip_google_access")
 	}
+	if d.HasChange("log_config") {
+		obj := make(map[string]interface{})
+
+		getUrl, err := replaceVars(d, config, "{{ComputeBasePath}}projects/{{project}}/regions/{{region}}/subnetworks/{{name}}")
+		if err != nil {
+			return err
+		}
+
+		project, err := getProject(d, config)
+		if err != nil {
+			return err
+		}
+		getRes, err := sendRequest(config, "GET", project, getUrl, nil)
+		if err != nil {
+			return handleNotFoundError(err, d, fmt.Sprintf("ComputeSubnetwork %q", d.Id()))
+		}
+
+		obj["fingerprint"] = getRes["fingerprint"]
+
+		logConfigProp, err := expandComputeSubnetworkLogConfig(d.Get("log_config"), d, config)
+		if err != nil {
+			return err
+		} else if v, ok := d.GetOkExists("log_config"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, logConfigProp)) {
+			obj["logConfig"] = logConfigProp
+		}
+
+		url, err := replaceVars(d, config, "{{ComputeBasePath}}projects/{{project}}/regions/{{region}}/subnetworks/{{name}}")
+		if err != nil {
+			return err
+		}
+		res, err := sendRequestWithTimeout(config, "PATCH", project, url, obj, d.Timeout(schema.TimeoutUpdate))
+		if err != nil {
+			return fmt.Errorf("Error updating Subnetwork %q: %s", d.Id(), err)
+		}
+
+		op := &compute.Operation{}
+		err = Convert(res, op)
+		if err != nil {
+			return err
+		}
+
+		err = computeOperationWaitTime(
+			config.clientCompute, op, project, "Updating Subnetwork",
+			int(d.Timeout(schema.TimeoutUpdate).Minutes()))
+
+		if err != nil {
+			return err
+		}
+
+		d.SetPartial("log_config")
+	}
 
 	d.Partial(false)
 
@@ -605,7 +622,7 @@ func resourceComputeSubnetworkImport(d *schema.ResourceData, meta interface{}) (
 	}
 
 	// Replace import id for the resource id
-	id, err := replaceVars(d, config, "{{region}}/{{name}}")
+	id, err := replaceVars(d, config, "projects/{{project}}/regions/{{region}}/subnetworks/{{name}}")
 	if err != nil {
 		return nil, fmt.Errorf("Error constructing id: %s", err)
 	}
@@ -639,10 +656,6 @@ func flattenComputeSubnetworkNetwork(v interface{}, d *schema.ResourceData) inte
 		return v
 	}
 	return ConvertSelfLinkToV1(v.(string))
-}
-
-func flattenComputeSubnetworkEnableFlowLogs(v interface{}, d *schema.ResourceData) interface{} {
-	return v
 }
 
 func flattenComputeSubnetworkFingerprint(v interface{}, d *schema.ResourceData) interface{} {
@@ -687,6 +700,29 @@ func flattenComputeSubnetworkRegion(v interface{}, d *schema.ResourceData) inter
 	return NameFromSelfLinkStateFunc(v)
 }
 
+func flattenComputeSubnetworkLogConfig(v interface{}, d *schema.ResourceData) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["enable"] = original["enable"]
+	if v, ok := original["enable"]; ok && !v.(bool) {
+		// enable is false, so the rest of the values should be unset
+		// the other values may be set on the response, but if we send them to the
+		// API on subsequent requests it will fail as enable is false
+		return []interface{}{transformed}
+	}
+
+	transformed["flow_sampling"] = original["flowSampling"]
+	transformed["aggregation_interval"] = original["aggregationInterval"]
+	transformed["metadata"] = original["metadata"]
+	return []interface{}{transformed}
+}
+
 func expandComputeSubnetworkDescription(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
 	return v, nil
 }
@@ -705,10 +741,6 @@ func expandComputeSubnetworkNetwork(v interface{}, d TerraformResourceData, conf
 		return nil, fmt.Errorf("Invalid value for network: %s", err)
 	}
 	return f.RelativeLink(), nil
-}
-
-func expandComputeSubnetworkEnableFlowLogs(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
-	return v, nil
 }
 
 func expandComputeSubnetworkFingerprint(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
@@ -762,4 +794,21 @@ func expandComputeSubnetworkRegion(v interface{}, d TerraformResourceData, confi
 		return nil, fmt.Errorf("Invalid value for region: %s", err)
 	}
 	return f.RelativeLink(), nil
+}
+
+func expandComputeSubnetworkLogConfig(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+
+	if !original["enable"].(bool) {
+		transformed := make(map[string]interface{})
+		transformed["enable"] = original["enable"]
+		return transformed, nil
+	}
+
+	return original, nil
 }

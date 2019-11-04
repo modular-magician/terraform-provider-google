@@ -25,7 +25,6 @@ import (
 	"github.com/apparentlymart/go-cidr/cidr"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"google.golang.org/api/compute/v1"
 )
 
@@ -102,37 +101,8 @@ func resourceComputeSubnetwork() *schema.Resource {
 				ForceNew: true,
 			},
 			"enable_flow_logs": {
-				Type:       schema.TypeBool,
-				Computed:   true,
-				Optional:   true,
-				Deprecated: "This field is being removed in favor of log_config. If log_config is present, flow logs are enabled.",
-			},
-			"log_config": {
-				Type:     schema.TypeList,
-				Computed: true,
+				Type:     schema.TypeBool,
 				Optional: true,
-				MaxItems: 1,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"aggregation_interval": {
-							Type:         schema.TypeString,
-							Optional:     true,
-							ValidateFunc: validation.StringInSlice([]string{"INTERVAL_5_SEC", "INTERVAL_30_SEC", "INTERVAL_1_MIN", "INTERVAL_5_MIN", "INTERVAL_10_MIN", "INTERVAL_15_MIN", ""}, false),
-							Default:      "INTERVAL_5_SEC",
-						},
-						"flow_sampling": {
-							Type:     schema.TypeFloat,
-							Optional: true,
-							Default:  0.5,
-						},
-						"metadata": {
-							Type:         schema.TypeString,
-							Optional:     true,
-							ValidateFunc: validation.StringInSlice([]string{"EXCLUDE_ALL_METADATA", "INCLUDE_ALL_METADATA", ""}, false),
-							Default:      "INCLUDE_ALL_METADATA",
-						},
-					},
-				},
 			},
 			"private_ip_google_access": {
 				Type:     schema.TypeBool,
@@ -291,12 +261,6 @@ func resourceComputeSubnetworkCreate(d *schema.ResourceData, meta interface{}) e
 	} else if v, ok := d.GetOkExists("region"); !isEmptyValue(reflect.ValueOf(regionProp)) && (ok || !reflect.DeepEqual(v, regionProp)) {
 		obj["region"] = regionProp
 	}
-	logConfigProp, err := expandComputeSubnetworkLogConfig(d.Get("log_config"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("log_config"); !isEmptyValue(reflect.ValueOf(logConfigProp)) && (ok || !reflect.DeepEqual(v, logConfigProp)) {
-		obj["logConfig"] = logConfigProp
-	}
 
 	url, err := replaceVars(d, config, "{{ComputeBasePath}}projects/{{project}}/regions/{{region}}/subnetworks")
 	if err != nil {
@@ -314,7 +278,7 @@ func resourceComputeSubnetworkCreate(d *schema.ResourceData, meta interface{}) e
 	}
 
 	// Store the ID now
-	id, err := replaceVars(d, config, "{{region}}/{{name}}")
+	id, err := replaceVars(d, config, "projects/{{project}}/regions/{{region}}/subnetworks/{{name}}")
 	if err != nil {
 		return fmt.Errorf("Error constructing id: %s", err)
 	}
@@ -393,9 +357,6 @@ func resourceComputeSubnetworkRead(d *schema.ResourceData, meta interface{}) err
 		return fmt.Errorf("Error reading Subnetwork: %s", err)
 	}
 	if err := d.Set("region", flattenComputeSubnetworkRegion(res["region"], d)); err != nil {
-		return fmt.Errorf("Error reading Subnetwork: %s", err)
-	}
-	if err := d.Set("log_config", flattenComputeSubnetworkLogConfig(res["logConfig"], d)); err != nil {
 		return fmt.Errorf("Error reading Subnetwork: %s", err)
 	}
 	if err := d.Set("self_link", ConvertSelfLinkToV1(res["selfLink"].(string))); err != nil {
@@ -587,57 +548,6 @@ func resourceComputeSubnetworkUpdate(d *schema.ResourceData, meta interface{}) e
 
 		d.SetPartial("private_ip_google_access")
 	}
-	if d.HasChange("log_config") {
-		obj := make(map[string]interface{})
-
-		getUrl, err := replaceVars(d, config, "{{ComputeBasePath}}projects/{{project}}/regions/{{region}}/subnetworks/{{name}}")
-		if err != nil {
-			return err
-		}
-
-		project, err := getProject(d, config)
-		if err != nil {
-			return err
-		}
-		getRes, err := sendRequest(config, "GET", project, getUrl, nil)
-		if err != nil {
-			return handleNotFoundError(err, d, fmt.Sprintf("ComputeSubnetwork %q", d.Id()))
-		}
-
-		obj["fingerprint"] = getRes["fingerprint"]
-
-		logConfigProp, err := expandComputeSubnetworkLogConfig(d.Get("log_config"), d, config)
-		if err != nil {
-			return err
-		} else if v, ok := d.GetOkExists("log_config"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, logConfigProp)) {
-			obj["logConfig"] = logConfigProp
-		}
-
-		url, err := replaceVars(d, config, "{{ComputeBasePath}}projects/{{project}}/regions/{{region}}/subnetworks/{{name}}")
-		if err != nil {
-			return err
-		}
-		res, err := sendRequestWithTimeout(config, "PATCH", project, url, obj, d.Timeout(schema.TimeoutUpdate))
-		if err != nil {
-			return fmt.Errorf("Error updating Subnetwork %q: %s", d.Id(), err)
-		}
-
-		op := &compute.Operation{}
-		err = Convert(res, op)
-		if err != nil {
-			return err
-		}
-
-		err = computeOperationWaitTime(
-			config.clientCompute, op, project, "Updating Subnetwork",
-			int(d.Timeout(schema.TimeoutUpdate).Minutes()))
-
-		if err != nil {
-			return err
-		}
-
-		d.SetPartial("log_config")
-	}
 
 	d.Partial(false)
 
@@ -695,7 +605,7 @@ func resourceComputeSubnetworkImport(d *schema.ResourceData, meta interface{}) (
 	}
 
 	// Replace import id for the resource id
-	id, err := replaceVars(d, config, "{{region}}/{{name}}")
+	id, err := replaceVars(d, config, "projects/{{project}}/regions/{{region}}/subnetworks/{{name}}")
 	if err != nil {
 		return nil, fmt.Errorf("Error constructing id: %s", err)
 	}
@@ -777,27 +687,6 @@ func flattenComputeSubnetworkRegion(v interface{}, d *schema.ResourceData) inter
 	return NameFromSelfLinkStateFunc(v)
 }
 
-func flattenComputeSubnetworkLogConfig(v interface{}, d *schema.ResourceData) interface{} {
-	if v == nil {
-		return nil
-	}
-	original := v.(map[string]interface{})
-	if len(original) == 0 {
-		return nil
-	}
-
-	v, ok := original["enable"]
-	if ok && !v.(bool) {
-		return nil
-	}
-
-	transformed := make(map[string]interface{})
-	transformed["flow_sampling"] = original["flowSampling"]
-	transformed["aggregation_interval"] = original["aggregationInterval"]
-	transformed["metadata"] = original["metadata"]
-	return []interface{}{transformed}
-}
-
 func expandComputeSubnetworkDescription(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
 	return v, nil
 }
@@ -873,25 +762,4 @@ func expandComputeSubnetworkRegion(v interface{}, d TerraformResourceData, confi
 		return nil, fmt.Errorf("Invalid value for region: %s", err)
 	}
 	return f.RelativeLink(), nil
-}
-
-func expandComputeSubnetworkLogConfig(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
-	l := v.([]interface{})
-	if len(l) == 0 || l[0] == nil {
-		return nil, nil
-	}
-	raw := l[0]
-	original := raw.(map[string]interface{})
-
-	v, ok := d.GetOkExists("enable_flow_logs")
-
-	transformed := make(map[string]interface{})
-	if !ok || v.(bool) {
-		transformed["enable"] = true
-		transformed["aggregationInterval"] = original["aggregation_interval"]
-		transformed["flowSampling"] = original["flow_sampling"]
-		transformed["metadata"] = original["metadata"]
-	}
-
-	return transformed, nil
 }

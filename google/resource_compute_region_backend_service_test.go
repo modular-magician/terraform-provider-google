@@ -6,6 +6,8 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"google.golang.org/api/compute/v1"
 )
 
 func TestAccComputeRegionBackendService_basic(t *testing.T) {
@@ -129,6 +131,35 @@ func TestAccComputeRegionBackendService_withConnectionDrainingAndUpdate(t *testi
 			},
 		},
 	})
+}
+
+func testAccCheckComputeRegionBackendServiceExists(n string, svc *compute.BackendService) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[n]
+		if !ok {
+			return fmt.Errorf("Not found: %s", n)
+		}
+
+		if rs.Primary.ID == "" {
+			return fmt.Errorf("No ID is set")
+		}
+
+		config := testAccProvider.Meta().(*Config)
+
+		found, err := config.clientCompute.RegionBackendServices.Get(
+			config.Project, config.Region, rs.Primary.ID).Do()
+		if err != nil {
+			return err
+		}
+
+		if found.Name != rs.Primary.ID {
+			return fmt.Errorf("Backend service not found")
+		}
+
+		*svc = *found
+
+		return nil
+	}
 }
 
 func testAccComputeRegionBackendService_basic(serviceName, checkName string) string {

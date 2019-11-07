@@ -3,11 +3,10 @@ package google
 import (
 	"encoding/json"
 	"fmt"
-	"log"
-
 	"github.com/hashicorp/errwrap"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"google.golang.org/api/cloudresourcemanager/v1"
+	"log"
 )
 
 func resourceGoogleProjectIamPolicy() *schema.Resource {
@@ -34,21 +33,6 @@ func resourceGoogleProjectIamPolicy() *schema.Resource {
 			"etag": {
 				Type:     schema.TypeString,
 				Computed: true,
-			},
-			"authoritative": {
-				Removed:  "The authoritative field was removed. To ignore changes not managed by Terraform, use google_project_iam_binding and google_project_iam_member instead. See https://www.terraform.io/docs/providers/google/r/google_project_iam.html for more information.",
-				Type:     schema.TypeBool,
-				Optional: true,
-			},
-			"restore_policy": {
-				Removed:  "This field was removed alongside the authoritative field. To ignore changes not managed by Terraform, use google_project_iam_binding and google_project_iam_member instead. See https://www.terraform.io/docs/providers/google/r/google_project_iam.html for more information.",
-				Type:     schema.TypeString,
-				Computed: true,
-			},
-			"disable_project": {
-				Removed:  "This field was removed alongside the authoritative field. Use lifecycle.prevent_destroy instead.",
-				Type:     schema.TypeBool,
-				Optional: true,
 			},
 		},
 	}

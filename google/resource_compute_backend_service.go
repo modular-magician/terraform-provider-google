@@ -201,16 +201,19 @@ func resourceComputeBackendService() *schema.Resource {
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"include_host": {
-										Type:     schema.TypeBool,
-										Optional: true,
+										Type:         schema.TypeBool,
+										Optional:     true,
+										AtLeastOneOf: []string{"cdn_policy.0.cache_key_policy.0.include_host", "cdn_policy.0.cache_key_policy.0.include_protocol", "cdn_policy.0.cache_key_policy.0.include_query_string", "cdn_policy.0.cache_key_policy.0.query_string_blacklist", "cdn_policy.0.cache_key_policy.0.query_string_whitelist"},
 									},
 									"include_protocol": {
-										Type:     schema.TypeBool,
-										Optional: true,
+										Type:         schema.TypeBool,
+										Optional:     true,
+										AtLeastOneOf: []string{"cdn_policy.0.cache_key_policy.0.include_host", "cdn_policy.0.cache_key_policy.0.include_protocol", "cdn_policy.0.cache_key_policy.0.include_query_string", "cdn_policy.0.cache_key_policy.0.query_string_blacklist", "cdn_policy.0.cache_key_policy.0.query_string_whitelist"},
 									},
 									"include_query_string": {
-										Type:     schema.TypeBool,
-										Optional: true,
+										Type:         schema.TypeBool,
+										Optional:     true,
+										AtLeastOneOf: []string{"cdn_policy.0.cache_key_policy.0.include_host", "cdn_policy.0.cache_key_policy.0.include_protocol", "cdn_policy.0.cache_key_policy.0.include_query_string", "cdn_policy.0.cache_key_policy.0.query_string_blacklist", "cdn_policy.0.cache_key_policy.0.query_string_whitelist"},
 									},
 									"query_string_blacklist": {
 										Type:     schema.TypeSet,
@@ -218,7 +221,8 @@ func resourceComputeBackendService() *schema.Resource {
 										Elem: &schema.Schema{
 											Type: schema.TypeString,
 										},
-										Set: schema.HashString,
+										Set:          schema.HashString,
+										AtLeastOneOf: []string{"cdn_policy.0.cache_key_policy.0.include_host", "cdn_policy.0.cache_key_policy.0.include_protocol", "cdn_policy.0.cache_key_policy.0.include_query_string", "cdn_policy.0.cache_key_policy.0.query_string_blacklist", "cdn_policy.0.cache_key_policy.0.query_string_whitelist"},
 									},
 									"query_string_whitelist": {
 										Type:     schema.TypeSet,
@@ -226,15 +230,18 @@ func resourceComputeBackendService() *schema.Resource {
 										Elem: &schema.Schema{
 											Type: schema.TypeString,
 										},
-										Set: schema.HashString,
+										Set:          schema.HashString,
+										AtLeastOneOf: []string{"cdn_policy.0.cache_key_policy.0.include_host", "cdn_policy.0.cache_key_policy.0.include_protocol", "cdn_policy.0.cache_key_policy.0.include_query_string", "cdn_policy.0.cache_key_policy.0.query_string_blacklist", "cdn_policy.0.cache_key_policy.0.query_string_whitelist"},
 									},
 								},
 							},
+							AtLeastOneOf: []string{"cdn_policy.0.cache_key_policy", "cdn_policy.0.signed_url_cache_max_age_sec"},
 						},
 						"signed_url_cache_max_age_sec": {
-							Type:     schema.TypeInt,
-							Optional: true,
-							Default:  3600,
+							Type:         schema.TypeInt,
+							Optional:     true,
+							Default:      3600,
+							AtLeastOneOf: []string{"cdn_policy.0.cache_key_policy", "cdn_policy.0.signed_url_cache_max_age_sec"},
 						},
 					},
 				},
@@ -335,6 +342,11 @@ func resourceComputeBackendService() *schema.Resource {
 func computeBackendServiceBackendSchema() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
+			"group": {
+				Type:             schema.TypeString,
+				Required:         true,
+				DiffSuppressFunc: compareSelfLinkRelativePaths,
+			},
 			"balancing_mode": {
 				Type:         schema.TypeString,
 				Optional:     true,
@@ -349,11 +361,6 @@ func computeBackendServiceBackendSchema() *schema.Resource {
 			"description": {
 				Type:     schema.TypeString,
 				Optional: true,
-			},
-			"group": {
-				Type:             schema.TypeString,
-				Optional:         true,
-				DiffSuppressFunc: compareSelfLinkRelativePaths,
 			},
 			"max_connections": {
 				Type:     schema.TypeInt,
@@ -510,7 +517,7 @@ func resourceComputeBackendServiceCreate(d *schema.ResourceData, meta interface{
 	}
 
 	// Store the ID now
-	id, err := replaceVars(d, config, "{{name}}")
+	id, err := replaceVars(d, config, "projects/{{project}}/global/backendServices/{{name}}")
 	if err != nil {
 		return fmt.Errorf("Error constructing id: %s", err)
 	}
@@ -862,7 +869,7 @@ func resourceComputeBackendServiceImport(d *schema.ResourceData, meta interface{
 	}
 
 	// Replace import id for the resource id
-	id, err := replaceVars(d, config, "{{name}}")
+	id, err := replaceVars(d, config, "projects/{{project}}/global/backendServices/{{name}}")
 	if err != nil {
 		return nil, fmt.Errorf("Error constructing id: %s", err)
 	}

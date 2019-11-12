@@ -59,7 +59,7 @@ func resourceMonitoringUptimeCheckConfig() *schema.Resource {
 					Schema: map[string]*schema.Schema{
 						"content": {
 							Type:     schema.TypeString,
-							Optional: true,
+							Required: true,
 						},
 					},
 				},
@@ -78,12 +78,12 @@ func resourceMonitoringUptimeCheckConfig() *schema.Resource {
 								Schema: map[string]*schema.Schema{
 									"password": {
 										Type:      schema.TypeString,
-										Optional:  true,
+										Required:  true,
 										Sensitive: true,
 									},
 									"username": {
 										Type:     schema.TypeString,
-										Optional: true,
+										Required: true,
 									},
 								},
 							},
@@ -108,10 +108,6 @@ func resourceMonitoringUptimeCheckConfig() *schema.Resource {
 							Optional: true,
 						},
 						"use_ssl": {
-							Type:     schema.TypeBool,
-							Optional: true,
-						},
-						"validate_ssl": {
 							Type:     schema.TypeBool,
 							Optional: true,
 						},
@@ -159,12 +155,14 @@ func resourceMonitoringUptimeCheckConfig() *schema.Resource {
 							Optional:         true,
 							ForceNew:         true,
 							DiffSuppressFunc: compareSelfLinkOrResourceName,
+							AtLeastOneOf:     []string{"resource_group.0.resource_type", "resource_group.0.group_id"},
 						},
 						"resource_type": {
 							Type:         schema.TypeString,
 							Optional:     true,
 							ForceNew:     true,
 							ValidateFunc: validation.StringInSlice([]string{"RESOURCE_TYPE_UNSPECIFIED", "INSTANCE", "AWS_ELB_LOAD_BALANCER", ""}, false),
+							AtLeastOneOf: []string{"resource_group.0.resource_type", "resource_group.0.group_id"},
 						},
 					},
 				},
@@ -200,42 +198,40 @@ func resourceMonitoringUptimeCheckConfig() *schema.Resource {
 				Computed: true,
 			},
 			"is_internal": {
-				Type:       schema.TypeBool,
-				Optional:   true,
-				Computed:   true,
-				Deprecated: "This field never worked, and will be removed in 3.0.0.",
+				Type:     schema.TypeBool,
+				Optional: true,
+				Removed:  "This field never worked, and will be removed in 3.0.0.",
 			},
 			"internal_checkers": {
-				Type:       schema.TypeList,
-				Optional:   true,
-				Computed:   true,
-				Deprecated: "This field never worked, and will be removed in 3.0.0.",
+				Type:     schema.TypeList,
+				Optional: true,
+				Removed:  "This field never worked, and will be removed in 3.0.0.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"display_name": {
-							Type:       schema.TypeString,
-							Optional:   true,
-							Deprecated: "This field never worked, and will be removed in 3.0.0.",
+							Type:     schema.TypeString,
+							Optional: true,
+							Removed:  "This field never worked, and will be removed in 3.0.0.",
 						},
 						"gcp_zone": {
-							Type:       schema.TypeString,
-							Optional:   true,
-							Deprecated: "This field never worked, and will be removed in 3.0.0.",
+							Type:     schema.TypeString,
+							Optional: true,
+							Removed:  "This field never worked, and will be removed in 3.0.0.",
 						},
 						"name": {
-							Type:       schema.TypeString,
-							Optional:   true,
-							Deprecated: "This field never worked, and will be removed in 3.0.0.",
+							Type:     schema.TypeString,
+							Optional: true,
+							Removed:  "This field never worked, and will be removed in 3.0.0.",
 						},
 						"network": {
-							Type:       schema.TypeString,
-							Optional:   true,
-							Deprecated: "This field never worked, and will be removed in 3.0.0.",
+							Type:     schema.TypeString,
+							Optional: true,
+							Removed:  "This field never worked, and will be removed in 3.0.0.",
 						},
 						"peer_project_id": {
-							Type:       schema.TypeString,
-							Optional:   true,
-							Deprecated: "This field never worked, and will be removed in 3.0.0.",
+							Type:     schema.TypeString,
+							Optional: true,
+							Removed:  "This field never worked, and will be removed in 3.0.0.",
 						},
 					},
 				},
@@ -359,18 +355,6 @@ func resourceMonitoringUptimeCheckConfigRead(d *schema.ResourceData, meta interf
 	res, err := sendRequest(config, "GET", project, url, nil)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("MonitoringUptimeCheckConfig %q", d.Id()))
-	}
-
-	res, err = resourceMonitoringUptimeCheckConfigDecoder(d, meta, res)
-	if err != nil {
-		return err
-	}
-
-	if res == nil {
-		// Decoding the object has resulted in it being gone. It may be marked deleted
-		log.Printf("[DEBUG] Removing MonitoringUptimeCheckConfig because it no longer exists.")
-		d.SetId("")
-		return nil
 	}
 
 	if err := d.Set("project", project); err != nil {
@@ -609,8 +593,6 @@ func flattenMonitoringUptimeCheckConfigHttpCheck(v interface{}, d *schema.Resour
 		flattenMonitoringUptimeCheckConfigHttpCheckPath(original["path"], d)
 	transformed["use_ssl"] =
 		flattenMonitoringUptimeCheckConfigHttpCheckUseSsl(original["useSsl"], d)
-	transformed["validate_ssl"] =
-		flattenMonitoringUptimeCheckConfigHttpCheckValidateSsl(original["validateSsl"], d)
 	transformed["mask_headers"] =
 		flattenMonitoringUptimeCheckConfigHttpCheckMaskHeaders(original["maskHeaders"], d)
 	return []interface{}{transformed}
@@ -657,10 +639,6 @@ func flattenMonitoringUptimeCheckConfigHttpCheckPath(v interface{}, d *schema.Re
 }
 
 func flattenMonitoringUptimeCheckConfigHttpCheckUseSsl(v interface{}, d *schema.ResourceData) interface{} {
-	return v
-}
-
-func flattenMonitoringUptimeCheckConfigHttpCheckValidateSsl(v interface{}, d *schema.ResourceData) interface{} {
 	return v
 }
 
@@ -824,13 +802,6 @@ func expandMonitoringUptimeCheckConfigHttpCheck(v interface{}, d TerraformResour
 		transformed["useSsl"] = transformedUseSsl
 	}
 
-	transformedValidateSsl, err := expandMonitoringUptimeCheckConfigHttpCheckValidateSsl(original["validate_ssl"], d, config)
-	if err != nil {
-		return nil, err
-	} else if val := reflect.ValueOf(transformedValidateSsl); val.IsValid() && !isEmptyValue(val) {
-		transformed["validateSsl"] = transformedValidateSsl
-	}
-
 	transformedMaskHeaders, err := expandMonitoringUptimeCheckConfigHttpCheckMaskHeaders(original["mask_headers"], d, config)
 	if err != nil {
 		return nil, err
@@ -895,10 +866,6 @@ func expandMonitoringUptimeCheckConfigHttpCheckPath(v interface{}, d TerraformRe
 }
 
 func expandMonitoringUptimeCheckConfigHttpCheckUseSsl(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
-	return v, nil
-}
-
-func expandMonitoringUptimeCheckConfigHttpCheckValidateSsl(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
 	return v, nil
 }
 
@@ -1002,9 +969,4 @@ func expandMonitoringUptimeCheckConfigMonitoredResourceLabels(v interface{}, d T
 		m[k] = val.(string)
 	}
 	return m, nil
-}
-
-func resourceMonitoringUptimeCheckConfigDecoder(d *schema.ResourceData, meta interface{}, res map[string]interface{}) (map[string]interface{}, error) {
-	d.Set("internal_checkers", nil)
-	return res, nil
 }

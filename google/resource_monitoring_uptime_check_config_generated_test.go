@@ -53,7 +53,7 @@ func testAccMonitoringUptimeCheckConfig_uptimeCheckConfigHttpExample(context map
 	return Nprintf(`
 resource "google_monitoring_uptime_check_config" "http" {
   display_name = "http-uptime-check%{random_suffix}"
-  timeout = "60s"
+  timeout      = "60s"
 
   http_check {
     path = "/some-path"
@@ -64,60 +64,7 @@ resource "google_monitoring_uptime_check_config" "http" {
     type = "uptime_url"
     labels = {
       project_id = "%{project_id}"
-      host = "192.168.1.1"
-    }
-  }
-
-  content_matchers {
-    content = "example"
-  }
-}
-`, context)
-}
-
-func TestAccMonitoringUptimeCheckConfig_uptimeCheckConfigHttpsExample(t *testing.T) {
-	t.Parallel()
-
-	context := map[string]interface{}{
-		"project_id":    getTestProjectFromEnv(),
-		"random_suffix": acctest.RandString(10),
-	}
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckMonitoringUptimeCheckConfigDestroy,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccMonitoringUptimeCheckConfig_uptimeCheckConfigHttpsExample(context),
-			},
-			{
-				ResourceName:      "google_monitoring_uptime_check_config.https",
-				ImportState:       true,
-				ImportStateVerify: true,
-			},
-		},
-	})
-}
-
-func testAccMonitoringUptimeCheckConfig_uptimeCheckConfigHttpsExample(context map[string]interface{}) string {
-	return Nprintf(`
-resource "google_monitoring_uptime_check_config" "https" {
-  display_name = "https-uptime-check%{random_suffix}"
-  timeout = "60s"
-
-  http_check {
-    path = "/some-path"
-    port = "443"
-    use_ssl = true
-    validate_ssl = true
-  }
-
-  monitored_resource {
-    type = "uptime_url"
-    labels = {
-      project_id = "%{project_id}"
-      host = "192.168.1.1"
+      host       = "192.168.1.1"
     }
   }
 
@@ -156,7 +103,7 @@ func testAccMonitoringUptimeCheckConfig_uptimeCheckTcpExample(context map[string
 	return Nprintf(`
 resource "google_monitoring_uptime_check_config" "tcp_group" {
   display_name = "tcp-uptime-check%{random_suffix}"
-  timeout = "60s"
+  timeout      = "60s"
 
   tcp_check {
     port = 888
@@ -164,14 +111,13 @@ resource "google_monitoring_uptime_check_config" "tcp_group" {
 
   resource_group {
     resource_type = "INSTANCE"
-    group_id = "${google_monitoring_group.check.name}"
+    group_id      = google_monitoring_group.check.name
   }
 }
 
-
 resource "google_monitoring_group" "check" {
   display_name = "uptime-check-group%{random_suffix}"
-  filter = "resource.metadata.name=has_substring(\"foo\")"
+  filter       = "resource.metadata.name=has_substring(\"foo\")"
 }
 `, context)
 }

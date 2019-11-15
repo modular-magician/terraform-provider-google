@@ -479,6 +479,19 @@ func expandNodePool(d *schema.ResourceData, prefix string) (*containerBeta.NodeP
 		}
 	}
 
+	if v, ok := d.GetOk(prefix + "upgrade_settings"); ok {
+		upgradeSettingsConfig := v.([]interface{})[0].(map[string]interface{})
+		np.UpgradeSettings = &containerBeta.UpgradeSettings{}
+
+		if v, ok := upgradeSettingsConfig["max_surge"]; ok {
+			np.UpgradeSettings.MaxSurge = int64(v.(int))
+		}
+
+		if v, ok := upgradeSettingsConfig["max_unavailable"]; ok {
+			np.UpgradeSettings.MaxUnavailable = int64(v.(int))
+		}
+	}
+
 	return np, nil
 }
 
@@ -531,6 +544,15 @@ func flattenNodePool(d *schema.ResourceData, config *Config, np *containerBeta.N
 			"auto_repair":  np.Management.AutoRepair,
 			"auto_upgrade": np.Management.AutoUpgrade,
 		},
+	}
+
+	if np.UpgradeSettings != nil {
+		nodePool["upgrade_settings"] = []map[string]interface{}{
+			{
+				"max_surge":       np.UpgradeSettings.MaxSurge,
+				"max_unavailable": np.UpgradeSettings.MaxUnavailable,
+			},
+		}
 	}
 
 	return nodePool, nil

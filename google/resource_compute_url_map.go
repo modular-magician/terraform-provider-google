@@ -42,29 +42,28 @@ func resourceComputeUrlMap() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-			"default_service": {
-				Type:             schema.TypeString,
-				Required:         true,
-				DiffSuppressFunc: compareSelfLinkOrResourceName,
-				Description:      `The backend service or backend bucket to use when none of the given rules match.`,
-			},
 			"name": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
-				Description: `Name of the resource. Provided by the client when the resource is
-created. The name must be 1-63 characters long, and comply with
-RFC1035. Specifically, the name must be 1-63 characters long and match
-the regular expression '[a-z]([-a-z0-9]*[a-z0-9])?' which means the
-first character must be a lowercase letter, and all following
-characters must be a dash, lowercase letter, or digit, except the last
-character, which cannot be a dash.`,
+				Description: `Name of the resource. Provided by the client when the resource is created. The
+name must be 1-63 characters long, and comply with RFC1035. Specifically, the
+name must be 1-63 characters long and match the regular expression
+'[a-z]([-a-z0-9]*[a-z0-9])?' which means the first character must be a lowercase
+letter, and all following characters must be a dash, lowercase letter, or digit,
+except the last character, which cannot be a dash.`,
+			},
+			"default_service": {
+				Type:             schema.TypeString,
+				Optional:         true,
+				DiffSuppressFunc: compareSelfLinkOrResourceName,
+				Description:      `The backend service or backend bucket to use when none of the given rules match.`,
 			},
 			"description": {
 				Type:     schema.TypeString,
 				Optional: true,
-				Description: `An optional description of this resource. Provide this property when
-you create the resource.`,
+				Description: `An optional description of this resource. Provide this property when you create
+the resource.`,
 			},
 			"host_rule": {
 				Type:        schema.TypeSet,
@@ -79,21 +78,22 @@ you create the resource.`,
 				Description: `The list of named PathMatchers to use against the URL.`,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"default_service": {
-							Type:             schema.TypeString,
-							Required:         true,
-							DiffSuppressFunc: compareSelfLinkOrResourceName,
-							Description:      `The backend service or backend bucket to use when none of the given paths match.`,
-						},
 						"name": {
 							Type:        schema.TypeString,
 							Required:    true,
 							Description: `The name to which this PathMatcher is referred by the HostRule.`,
 						},
+						"default_service": {
+							Type:             schema.TypeString,
+							Optional:         true,
+							DiffSuppressFunc: compareSelfLinkOrResourceName,
+							Description:      `The backend service or backend bucket to use when none of the given paths match.`,
+						},
 						"description": {
-							Type:        schema.TypeString,
-							Optional:    true,
-							Description: `An optional description of this resource.`,
+							Type:     schema.TypeString,
+							Optional: true,
+							Description: `An optional description of this resource. Provide this property when you create
+the resource.`,
 						},
 						"path_rule": {
 							Type:        schema.TypeList,
@@ -129,8 +129,9 @@ allowed here.`,
 			"test": {
 				Type:     schema.TypeList,
 				Optional: true,
-				Description: `The list of expected URL mappings. Requests to update this UrlMap will
-succeed only if all of the test cases pass.`,
+				Description: `The list of expected URL mapping tests. Request to update this UrlMap will
+succeed only if all of the test cases pass. You can specify a maximum of 100
+tests per UrlMap.`,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"host": {
@@ -165,8 +166,8 @@ succeed only if all of the test cases pass.`,
 			"fingerprint": {
 				Type:     schema.TypeString,
 				Computed: true,
-				Description: `Fingerprint of this resource. This field is used internally during
-updates of this resource.`,
+				Description: `Fingerprint of this resource. A hash of the contents stored in this object. This
+field is used in optimistic locking.`,
 			},
 			"map_id": {
 				Type:        schema.TypeInt,
@@ -193,10 +194,9 @@ func computeUrlMapHostRuleSchema() *schema.Resource {
 			"hosts": {
 				Type:     schema.TypeSet,
 				Required: true,
-				Description: `The list of host patterns to match. They must be valid
-hostnames, except * will match any string of ([a-z0-9-.]*). In
-that case, * must be the first character and must be followed in
-the pattern by either - or ..`,
+				Description: `The list of host patterns to match. They must be valid hostnames, except * will
+match any string of ([a-z0-9-.]*). In that case, * must be the first character
+and must be followed in the pattern by either - or ..`,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
@@ -205,14 +205,14 @@ the pattern by either - or ..`,
 			"path_matcher": {
 				Type:     schema.TypeString,
 				Required: true,
-				Description: `The name of the PathMatcher to use to match the path portion of
-the URL if the hostRule matches the URL's host portion.`,
+				Description: `The name of the PathMatcher to use to match the path portion of the URL if the
+hostRule matches the URL's host portion.`,
 			},
 			"description": {
 				Type:     schema.TypeString,
 				Optional: true,
-				Description: `An optional description of this HostRule. Provide this property
-when you create the resource.`,
+				Description: `An optional description of this resource. Provide this property when you create
+the resource.`,
 			},
 		},
 	}
@@ -234,17 +234,17 @@ func resourceComputeUrlMapCreate(d *schema.ResourceData, meta interface{}) error
 	} else if v, ok := d.GetOkExists("description"); !isEmptyValue(reflect.ValueOf(descriptionProp)) && (ok || !reflect.DeepEqual(v, descriptionProp)) {
 		obj["description"] = descriptionProp
 	}
-	hostRulesProp, err := expandComputeUrlMapHostRule(d.Get("host_rule"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("host_rule"); !isEmptyValue(reflect.ValueOf(hostRulesProp)) && (ok || !reflect.DeepEqual(v, hostRulesProp)) {
-		obj["hostRules"] = hostRulesProp
-	}
 	fingerprintProp, err := expandComputeUrlMapFingerprint(d.Get("fingerprint"), d, config)
 	if err != nil {
 		return err
 	} else if v, ok := d.GetOkExists("fingerprint"); !isEmptyValue(reflect.ValueOf(fingerprintProp)) && (ok || !reflect.DeepEqual(v, fingerprintProp)) {
 		obj["fingerprint"] = fingerprintProp
+	}
+	hostRulesProp, err := expandComputeUrlMapHostRule(d.Get("host_rule"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("host_rule"); !isEmptyValue(reflect.ValueOf(hostRulesProp)) && (ok || !reflect.DeepEqual(v, hostRulesProp)) {
+		obj["hostRules"] = hostRulesProp
 	}
 	nameProp, err := expandComputeUrlMapName(d.Get("name"), d, config)
 	if err != nil {
@@ -323,6 +323,9 @@ func resourceComputeUrlMapRead(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("Error reading UrlMap: %s", err)
 	}
 
+	if err := d.Set("map_id", flattenComputeUrlMapMapId(res["id"], d)); err != nil {
+		return fmt.Errorf("Error reading UrlMap: %s", err)
+	}
 	if err := d.Set("creation_timestamp", flattenComputeUrlMapCreationTimestamp(res["creationTimestamp"], d)); err != nil {
 		return fmt.Errorf("Error reading UrlMap: %s", err)
 	}
@@ -332,13 +335,10 @@ func resourceComputeUrlMapRead(d *schema.ResourceData, meta interface{}) error {
 	if err := d.Set("description", flattenComputeUrlMapDescription(res["description"], d)); err != nil {
 		return fmt.Errorf("Error reading UrlMap: %s", err)
 	}
-	if err := d.Set("host_rule", flattenComputeUrlMapHostRule(res["hostRules"], d)); err != nil {
-		return fmt.Errorf("Error reading UrlMap: %s", err)
-	}
-	if err := d.Set("map_id", flattenComputeUrlMapMapId(res["id"], d)); err != nil {
-		return fmt.Errorf("Error reading UrlMap: %s", err)
-	}
 	if err := d.Set("fingerprint", flattenComputeUrlMapFingerprint(res["fingerprint"], d)); err != nil {
+		return fmt.Errorf("Error reading UrlMap: %s", err)
+	}
+	if err := d.Set("host_rule", flattenComputeUrlMapHostRule(res["hostRules"], d)); err != nil {
 		return fmt.Errorf("Error reading UrlMap: %s", err)
 	}
 	if err := d.Set("name", flattenComputeUrlMapName(res["name"], d)); err != nil {
@@ -378,17 +378,17 @@ func resourceComputeUrlMapUpdate(d *schema.ResourceData, meta interface{}) error
 	} else if v, ok := d.GetOkExists("description"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, descriptionProp)) {
 		obj["description"] = descriptionProp
 	}
-	hostRulesProp, err := expandComputeUrlMapHostRule(d.Get("host_rule"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("host_rule"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, hostRulesProp)) {
-		obj["hostRules"] = hostRulesProp
-	}
 	fingerprintProp, err := expandComputeUrlMapFingerprint(d.Get("fingerprint"), d, config)
 	if err != nil {
 		return err
 	} else if v, ok := d.GetOkExists("fingerprint"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, fingerprintProp)) {
 		obj["fingerprint"] = fingerprintProp
+	}
+	hostRulesProp, err := expandComputeUrlMapHostRule(d.Get("host_rule"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("host_rule"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, hostRulesProp)) {
+		obj["hostRules"] = hostRulesProp
 	}
 	nameProp, err := expandComputeUrlMapName(d.Get("name"), d, config)
 	if err != nil {
@@ -485,6 +485,16 @@ func resourceComputeUrlMapImport(d *schema.ResourceData, meta interface{}) ([]*s
 	return []*schema.ResourceData{d}, nil
 }
 
+func flattenComputeUrlMapMapId(v interface{}, d *schema.ResourceData) interface{} {
+	// Handles the string fixed64 format
+	if strVal, ok := v.(string); ok {
+		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+			return intVal
+		} // let terraform core handle it if we can't convert the string to an int.
+	}
+	return v
+}
+
 func flattenComputeUrlMapCreationTimestamp(v interface{}, d *schema.ResourceData) interface{} {
 	return v
 }
@@ -497,6 +507,10 @@ func flattenComputeUrlMapDefaultService(v interface{}, d *schema.ResourceData) i
 }
 
 func flattenComputeUrlMapDescription(v interface{}, d *schema.ResourceData) interface{} {
+	return v
+}
+
+func flattenComputeUrlMapFingerprint(v interface{}, d *schema.ResourceData) interface{} {
 	return v
 }
 
@@ -535,20 +549,6 @@ func flattenComputeUrlMapHostRulePathMatcher(v interface{}, d *schema.ResourceDa
 	return v
 }
 
-func flattenComputeUrlMapMapId(v interface{}, d *schema.ResourceData) interface{} {
-	// Handles the string fixed64 format
-	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
-			return intVal
-		} // let terraform core handle it if we can't convert the string to an int.
-	}
-	return v
-}
-
-func flattenComputeUrlMapFingerprint(v interface{}, d *schema.ResourceData) interface{} {
-	return v
-}
-
 func flattenComputeUrlMapName(v interface{}, d *schema.ResourceData) interface{} {
 	return v
 }
@@ -568,8 +568,8 @@ func flattenComputeUrlMapPathMatcher(v interface{}, d *schema.ResourceData) inte
 		transformed = append(transformed, map[string]interface{}{
 			"default_service": flattenComputeUrlMapPathMatcherDefaultService(original["defaultService"], d),
 			"description":     flattenComputeUrlMapPathMatcherDescription(original["description"], d),
-			"name":            flattenComputeUrlMapPathMatcherName(original["name"], d),
 			"path_rule":       flattenComputeUrlMapPathMatcherPathRule(original["pathRules"], d),
+			"name":            flattenComputeUrlMapPathMatcherName(original["name"], d),
 		})
 	}
 	return transformed
@@ -582,10 +582,6 @@ func flattenComputeUrlMapPathMatcherDefaultService(v interface{}, d *schema.Reso
 }
 
 func flattenComputeUrlMapPathMatcherDescription(v interface{}, d *schema.ResourceData) interface{} {
-	return v
-}
-
-func flattenComputeUrlMapPathMatcherName(v interface{}, d *schema.ResourceData) interface{} {
 	return v
 }
 
@@ -620,6 +616,10 @@ func flattenComputeUrlMapPathMatcherPathRuleService(v interface{}, d *schema.Res
 		return v
 	}
 	return ConvertSelfLinkToV1(v.(string))
+}
+
+func flattenComputeUrlMapPathMatcherName(v interface{}, d *schema.ResourceData) interface{} {
+	return v
 }
 
 func flattenComputeUrlMapTest(v interface{}, d *schema.ResourceData) interface{} {
@@ -667,6 +667,10 @@ func expandComputeUrlMapDefaultService(v interface{}, d TerraformResourceData, c
 }
 
 func expandComputeUrlMapDescription(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandComputeUrlMapFingerprint(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
 	return v, nil
 }
 
@@ -720,10 +724,6 @@ func expandComputeUrlMapHostRulePathMatcher(v interface{}, d TerraformResourceDa
 	return v, nil
 }
 
-func expandComputeUrlMapFingerprint(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
-	return v, nil
-}
-
 func expandComputeUrlMapName(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
 	return v, nil
 }
@@ -752,18 +752,18 @@ func expandComputeUrlMapPathMatcher(v interface{}, d TerraformResourceData, conf
 			transformed["description"] = transformedDescription
 		}
 
-		transformedName, err := expandComputeUrlMapPathMatcherName(original["name"], d, config)
-		if err != nil {
-			return nil, err
-		} else if val := reflect.ValueOf(transformedName); val.IsValid() && !isEmptyValue(val) {
-			transformed["name"] = transformedName
-		}
-
 		transformedPathRule, err := expandComputeUrlMapPathMatcherPathRule(original["path_rule"], d, config)
 		if err != nil {
 			return nil, err
 		} else if val := reflect.ValueOf(transformedPathRule); val.IsValid() && !isEmptyValue(val) {
 			transformed["pathRules"] = transformedPathRule
+		}
+
+		transformedName, err := expandComputeUrlMapPathMatcherName(original["name"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedName); val.IsValid() && !isEmptyValue(val) {
+			transformed["name"] = transformedName
 		}
 
 		req = append(req, transformed)
@@ -776,10 +776,6 @@ func expandComputeUrlMapPathMatcherDefaultService(v interface{}, d TerraformReso
 }
 
 func expandComputeUrlMapPathMatcherDescription(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
-	return v, nil
-}
-
-func expandComputeUrlMapPathMatcherName(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
 	return v, nil
 }
 
@@ -818,6 +814,10 @@ func expandComputeUrlMapPathMatcherPathRulePaths(v interface{}, d TerraformResou
 }
 
 func expandComputeUrlMapPathMatcherPathRuleService(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandComputeUrlMapPathMatcherName(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
 	return v, nil
 }
 

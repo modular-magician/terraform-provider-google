@@ -111,34 +111,128 @@ resource "google_storage_bucket" "static" {
   location = "US"
 }
 ```
+<div class = "oics-button" style="float: right; margin: 0 0 -15px">
+  <a href="https://console.cloud.google.com/cloudshell/open?cloudshell_git_repo=https%3A%2F%2Fgithub.com%2Fterraform-google-modules%2Fdocs-examples.git&cloudshell_working_dir=url_map_traffic_director_route&cloudshell_image=gcr.io%2Fgraphite-cloud-shell-images%2Fterraform%3Alatest&open_in_editor=main.tf&cloudshell_print=.%2Fmotd&cloudshell_tutorial=.%2Ftutorial.md" target="_blank">
+    <img alt="Open in Cloud Shell" src="//gstatic.com/cloudssh/images/open-btn.svg" style="max-height: 44px; margin: 32px auto; max-width: 100%;">
+  </a>
+</div>
+## Example Usage - Url Map Traffic Director Route
+
+
+```hcl
+resource "google_compute_url_map" "urlmap" {
+  provider = "google-beta"
+  name        = "urlmap"
+  description = "a description"
+  default_service = "${google_compute_backend_service.home.self_link}"
+
+  host_rule {
+    hosts        = ["mysite.com"]
+    path_matcher = "allpaths"
+  }
+
+  path_matcher {
+    name = "allpaths"
+    default_service = "${google_compute_backend_service.home.self_link}"
+
+    route_rules {
+      priority = 1
+      header_action {
+        request_headers_to_remove = ["RemoveMe2"]
+        request_headers_to_add {
+          header_name = "AddSomethingElse"
+          header_value = "MyOtherValue"
+          replace = true
+        }
+        response_headers_to_remove = ["RemoveMe3"]
+        response_headers_to_add {
+          header_name = "AddMe"
+          header_value = "MyValue"
+        }
+      }
+      match_rules {
+        full_path_match = "a full path"
+        header_matches {
+          header_name = "someheader"
+          exact_match = "match this exactly"
+          invert_match = true
+        }
+        ignore_case = true
+        metadata_filters {
+          filter_match_criteria = "MATCH_ANY"
+          filter_labels {
+            name = "PLANET"
+            value = "MARS"
+          }
+        }
+        query_parameter_matches {
+          name = "a query parameter"
+          present_match = true
+        }
+      }
+      url_redirect {
+        host_redirect = "A host"
+        https_redirect = false
+        path_redirect = "some/path"
+        redirect_response_code = "TEMPORARY_REDIRECT"
+        strip_query = true
+      }
+    }
+  }
+
+  test {
+    service = "${google_compute_backend_service.home.self_link}"
+    host    = "hi.com"
+    path    = "/home"
+  }
+}
+
+resource "google_compute_backend_service" "home" {
+  provider = "google-beta"
+  name        = "home"
+  port_name   = "http"
+  protocol    = "HTTP"
+  timeout_sec = 10
+
+  health_checks = ["${google_compute_health_check.default.self_link}"]
+  load_balancing_scheme = "INTERNAL_SELF_MANAGED"
+}
+
+resource "google_compute_health_check" "default" {
+  provider = "google-beta"
+  name               = "health-check"
+  http_health_check {
+    port = 80
+  }
+}
+```
 
 ## Argument Reference
 
 The following arguments are supported:
 
 
-* `default_service` -
-  (Required)
-  The backend service or backend bucket to use when none of the given rules match.
-
 * `name` -
   (Required)
-  Name of the resource. Provided by the client when the resource is
-  created. The name must be 1-63 characters long, and comply with
-  RFC1035. Specifically, the name must be 1-63 characters long and match
-  the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?` which means the
-  first character must be a lowercase letter, and all following
-  characters must be a dash, lowercase letter, or digit, except the last
-  character, which cannot be a dash.
+  Name of the resource. Provided by the client when the resource is created. The
+  name must be 1-63 characters long, and comply with RFC1035. Specifically, the
+  name must be 1-63 characters long and match the regular expression
+  `[a-z]([-a-z0-9]*[a-z0-9])?` which means the first character must be a lowercase
+  letter, and all following characters must be a dash, lowercase letter, or digit,
+  except the last character, which cannot be a dash.
 
 
 - - -
 
 
+* `default_service` -
+  (Optional)
+  The backend service or backend bucket to use when none of the given rules match.
+
 * `description` -
   (Optional)
-  An optional description of this resource. Provide this property when
-  you create the resource.
+  An optional description of this resource. Provide this property when you create
+  the resource.
 
 * `host_rule` -
   (Optional)
@@ -150,8 +244,9 @@ The following arguments are supported:
 
 * `test` -
   (Optional)
-  The list of expected URL mappings. Requests to update this UrlMap will
-  succeed only if all of the test cases pass.  Structure is documented below.
+  The list of expected URL mapping tests. Request to update this UrlMap will
+  succeed only if all of the test cases pass. You can specify a maximum of 100
+  tests per UrlMap.  Structure is documented below.
 
 * `project` - (Optional) The ID of the project in which the resource belongs.
     If it is not provided, the provider project is used.
@@ -161,38 +256,38 @@ The `host_rule` block supports:
 
 * `description` -
   (Optional)
-  An optional description of this HostRule. Provide this property
-  when you create the resource.
+  An optional description of this resource. Provide this property when you create
+  the resource.
 
 * `hosts` -
   (Required)
-  The list of host patterns to match. They must be valid
-  hostnames, except * will match any string of ([a-z0-9-.]*). In
-  that case, * must be the first character and must be followed in
-  the pattern by either - or ..
+  The list of host patterns to match. They must be valid hostnames, except * will
+  match any string of ([a-z0-9-.]*). In that case, * must be the first character
+  and must be followed in the pattern by either - or ..
 
 * `path_matcher` -
   (Required)
-  The name of the PathMatcher to use to match the path portion of
-  the URL if the hostRule matches the URL's host portion.
+  The name of the PathMatcher to use to match the path portion of the URL if the
+  hostRule matches the URL's host portion.
 
 The `path_matcher` block supports:
 
 * `default_service` -
-  (Required)
+  (Optional)
   The backend service or backend bucket to use when none of the given paths match.
 
 * `description` -
   (Optional)
-  An optional description of this resource.
-
-* `name` -
-  (Required)
-  The name to which this PathMatcher is referred by the HostRule.
+  An optional description of this resource. Provide this property when you create
+  the resource.
 
 * `path_rule` -
   (Optional)
   The list of path rules.  Structure is documented below.
+
+* `name` -
+  (Required)
+  The name to which this PathMatcher is referred by the HostRule.
 
 
 The `path_rule` block supports:
@@ -232,15 +327,15 @@ The `test` block supports:
 In addition to the arguments listed above, the following computed attributes are exported:
 
 
-* `creation_timestamp` -
-  Creation timestamp in RFC3339 text format.
-
 * `map_id` -
   The unique identifier for the resource.
 
+* `creation_timestamp` -
+  Creation timestamp in RFC3339 text format.
+
 * `fingerprint` -
-  Fingerprint of this resource. This field is used internally during
-  updates of this resource.
+  Fingerprint of this resource. A hash of the contents stored in this object. This
+  field is used in optimistic locking.
 * `self_link` - The URI of the created resource.
 
 

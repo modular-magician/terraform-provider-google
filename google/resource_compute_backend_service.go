@@ -928,7 +928,6 @@ func resourceComputeBackendServiceUpdate(d *schema.ResourceData, meta interface{
 	err = computeOperationWaitTime(
 		config, res, project, "Updating BackendService",
 		int(d.Timeout(schema.TimeoutUpdate).Minutes()))
-
 	if err != nil {
 		return err
 	}

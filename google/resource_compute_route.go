@@ -517,7 +517,7 @@ func expandComputeRouteNextHopVpnTunnel(v interface{}, d TerraformResourceData, 
 	return f.RelativeLink(), nil
 }
 
-func resourceComputeRouteDecoder(d *schema.ResourceData, meta interface{}, res map[string]interface{}) (map[string]interface{}, error) {
+func resourceComputeRouteDecoder(d *schema.ResourceData, meta interface{}) {
 	if v, ok := res["nextHopInstance"]; ok {
 		val, err := parseZonalFieldValue("instances", v.(string), "project", "next_hop_instance_zone", d, meta.(*Config), true)
 		if err != nil {

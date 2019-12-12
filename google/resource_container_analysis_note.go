@@ -373,7 +373,7 @@ func resourceContainerAnalysisNoteEncoder(d *schema.ResourceData, meta interface
 	return obj, nil
 }
 
-func resourceContainerAnalysisNoteDecoder(d *schema.ResourceData, meta interface{}, res map[string]interface{}) (map[string]interface{}, error) {
+func resourceContainerAnalysisNoteDecoder(d *schema.ResourceData, meta interface{}) {
 	// Field was renamed in GA API
 	res["attestationAuthority"] = res["attestation"]
 	delete(res, "attestation")

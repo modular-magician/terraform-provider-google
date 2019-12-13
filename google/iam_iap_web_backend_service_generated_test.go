@@ -111,12 +111,12 @@ func TestAccIapWebBackendServiceIamPolicyGenerated(t *testing.T) {
 func testAccIapWebBackendServiceIamMember_basicGenerated(context map[string]interface{}) string {
 	return Nprintf(`
 resource "google_compute_backend_service" "default" {
-  name          = "backend-service%{random_suffix}"
+  name          = "backend-service%<random_suffix>s"
   health_checks = [google_compute_http_health_check.default.self_link]
 }
 
 resource "google_compute_http_health_check" "default" {
-  name               = "health-check%{random_suffix}"
+  name               = "health-check%<random_suffix>s"
   request_path       = "/"
   check_interval_sec = 1
   timeout_sec        = 1
@@ -134,12 +134,12 @@ resource "google_iap_web_backend_service_iam_member" "foo" {
 func testAccIapWebBackendServiceIamPolicy_basicGenerated(context map[string]interface{}) string {
 	return Nprintf(`
 resource "google_compute_backend_service" "default" {
-  name          = "backend-service%{random_suffix}"
+  name          = "backend-service%<random_suffix>s"
   health_checks = [google_compute_http_health_check.default.self_link]
 }
 
 resource "google_compute_http_health_check" "default" {
-  name               = "health-check%{random_suffix}"
+  name               = "health-check%<random_suffix>s"
   request_path       = "/"
   check_interval_sec = 1
   timeout_sec        = 1
@@ -163,12 +163,12 @@ resource "google_iap_web_backend_service_iam_policy" "foo" {
 func testAccIapWebBackendServiceIamBinding_basicGenerated(context map[string]interface{}) string {
 	return Nprintf(`
 resource "google_compute_backend_service" "default" {
-  name          = "backend-service%{random_suffix}"
+  name          = "backend-service%<random_suffix>s"
   health_checks = [google_compute_http_health_check.default.self_link]
 }
 
 resource "google_compute_http_health_check" "default" {
-  name               = "health-check%{random_suffix}"
+  name               = "health-check%<random_suffix>s"
   request_path       = "/"
   check_interval_sec = 1
   timeout_sec        = 1
@@ -186,12 +186,12 @@ resource "google_iap_web_backend_service_iam_binding" "foo" {
 func testAccIapWebBackendServiceIamBinding_updateGenerated(context map[string]interface{}) string {
 	return Nprintf(`
 resource "google_compute_backend_service" "default" {
-  name          = "backend-service%{random_suffix}"
+  name          = "backend-service%<random_suffix>s"
   health_checks = [google_compute_http_health_check.default.self_link]
 }
 
 resource "google_compute_http_health_check" "default" {
-  name               = "health-check%{random_suffix}"
+  name               = "health-check%<random_suffix>s"
   request_path       = "/"
   check_interval_sec = 1
   timeout_sec        = 1

@@ -111,7 +111,7 @@ func TestAccComputeInstanceIamPolicyGenerated(t *testing.T) {
 func testAccComputeInstanceIamMember_basicGenerated(context map[string]interface{}) string {
 	return Nprintf(`
 resource "google_compute_instance" "default" {
-  name         = "my-instance%{random_suffix}"
+  name         = "my-instance%<random_suffix>s"
   zone         = ""
   machine_type = "n1-standard-1"
 
@@ -139,7 +139,7 @@ resource "google_compute_instance_iam_member" "foo" {
 func testAccComputeInstanceIamPolicy_basicGenerated(context map[string]interface{}) string {
 	return Nprintf(`
 resource "google_compute_instance" "default" {
-  name         = "my-instance%{random_suffix}"
+  name         = "my-instance%<random_suffix>s"
   zone         = ""
   machine_type = "n1-standard-1"
 
@@ -173,7 +173,7 @@ resource "google_compute_instance_iam_policy" "foo" {
 func testAccComputeInstanceIamBinding_basicGenerated(context map[string]interface{}) string {
 	return Nprintf(`
 resource "google_compute_instance" "default" {
-  name         = "my-instance%{random_suffix}"
+  name         = "my-instance%<random_suffix>s"
   zone         = ""
   machine_type = "n1-standard-1"
 
@@ -201,7 +201,7 @@ resource "google_compute_instance_iam_binding" "foo" {
 func testAccComputeInstanceIamBinding_updateGenerated(context map[string]interface{}) string {
 	return Nprintf(`
 resource "google_compute_instance" "default" {
-  name         = "my-instance%{random_suffix}"
+  name         = "my-instance%<random_suffix>s"
   zone         = ""
   machine_type = "n1-standard-1"
 

@@ -1,13 +1,12 @@
+
 package google
 
 import (
 	"bytes"
 	"fmt"
-	"log"
+	"testing"
 	"regexp"
 	"strconv"
-	"strings"
-	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
@@ -31,7 +30,7 @@ func testSweepContainerClusters(region string) error {
 	if err != nil {
 		log.Fatalf("error loading: %s", err)
 	}
-
+	
 	// List clusters for all zones by using "-" as the zone name
 	found, err := config.clientContainer.Projects.Zones.Clusters.List(config.Project, "-").Do()
 	if err != nil {
@@ -44,7 +43,7 @@ func testSweepContainerClusters(region string) error {
 	}
 
 	for _, cluster := range found.Clusters {
-		if strings.HasPrefix(cluster.Name, "tf-test") {
+		if strings.HasPrefix(cluster.Name, "tf-test") {	
 			log.Printf("Sweeping Container Cluster: %s", cluster.Name)
 			clusterURL := fmt.Sprintf("projects/%s/locations/%s/clusters/%s", config.Project, cluster.Location, cluster.Name)
 			_, err := config.clientContainer.Projects.Locations.Clusters.Delete(clusterURL).Do()
@@ -63,8 +62,8 @@ func TestAccContainerCluster_basic(t *testing.T) {
 
 	clusterName := fmt.Sprintf("tf-test-cluster-%s", acctest.RandString(10))
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
+		PreCheck:	  func() { testAccPreCheck(t) },
+		Providers:	  testAccProviders,
 		CheckDestroy: testAccCheckContainerClusterDestroy,
 		Steps: []resource.TestStep{
 			{
@@ -80,13 +79,13 @@ func TestAccContainerCluster_basic(t *testing.T) {
 				ImportStateVerify: true,
 			},
 			{
-				ResourceName:      "google_container_cluster.primary",
+				ResourceName:	     "google_container_cluster.primary",
 				ImportStateId:     fmt.Sprintf("%s/us-central1-a/%s", getTestProjectFromEnv(), clusterName),
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
 			{
-				ResourceName:      "google_container_cluster.primary",
+				ResourceName:	     "google_container_cluster.primary",
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
@@ -99,8 +98,8 @@ func TestAccContainerCluster_misc(t *testing.T) {
 
 	clusterName := fmt.Sprintf("tf-test-cluster-%s", acctest.RandString(10))
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
+		PreCheck:	  func() { testAccPreCheck(t) },
+		Providers:	  testAccProviders,
 		CheckDestroy: testAccCheckContainerClusterDestroy,
 		Steps: []resource.TestStep{
 			{
@@ -135,25 +134,25 @@ func TestAccContainerCluster_withAddons(t *testing.T) {
 	clusterName := fmt.Sprintf("tf-test-cluster-%s", acctest.RandString(10))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
+		PreCheck:	  func() { testAccPreCheck(t) },
+		Providers:	  testAccProviders,
 		CheckDestroy: testAccCheckContainerClusterDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccContainerCluster_withAddons(clusterName),
 			},
 			{
-				ResourceName:      "google_container_cluster.primary",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:		 "google_container_cluster.primary",
+				ImportState:		 true,
+				ImportStateVerify:	 true,
 			},
 			{
 				Config: testAccContainerCluster_updateAddons(clusterName),
 			},
 			{
-				ResourceName:      "google_container_cluster.primary",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:		 "google_container_cluster.primary",
+				ImportState:		 true,
+				ImportStateVerify:	 true,
 			},
 		},
 	})
@@ -165,17 +164,17 @@ func TestAccContainerCluster_withMasterAuthConfig(t *testing.T) {
 	clusterName := fmt.Sprintf("tf-test-cluster-%s", acctest.RandString(10))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
+		PreCheck:	  func() { testAccPreCheck(t) },
+		Providers:	  testAccProviders,
 		CheckDestroy: testAccCheckContainerClusterDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccContainerCluster_withMasterAuth(clusterName),
 			},
 			{
-				ResourceName:      "google_container_cluster.with_master_auth",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:		 "google_container_cluster.with_master_auth",
+				ImportState:		 true,
+				ImportStateVerify:	 true,
 			},
 			{
 				Config: testAccContainerCluster_updateMasterAuth(clusterName),
@@ -185,9 +184,9 @@ func TestAccContainerCluster_withMasterAuthConfig(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      "google_container_cluster.with_master_auth",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:		 "google_container_cluster.with_master_auth",
+				ImportState:		 true,
+				ImportStateVerify:	 true,
 			},
 			{
 				Config: testAccContainerCluster_disableMasterAuth(clusterName),
@@ -197,9 +196,9 @@ func TestAccContainerCluster_withMasterAuthConfig(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      "google_container_cluster.with_master_auth",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:		 "google_container_cluster.with_master_auth",
+				ImportState:		 true,
+				ImportStateVerify:	 true,
 			},
 			{
 				Config: testAccContainerCluster_updateMasterAuth(clusterName),
@@ -209,9 +208,9 @@ func TestAccContainerCluster_withMasterAuthConfig(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      "google_container_cluster.with_master_auth",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:		 "google_container_cluster.with_master_auth",
+				ImportState:		 true,
+				ImportStateVerify:	 true,
 			},
 		},
 	})
@@ -220,21 +219,23 @@ func TestAccContainerCluster_withMasterAuthConfig(t *testing.T) {
 func TestAccContainerCluster_withMasterAuthConfig_NoCert(t *testing.T) {
 	t.Parallel()
 
+	clusterName := fmt.Sprintf("tf-test-cluster-%s", acctest.RandString(10))
+
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
+		PreCheck:	  func() { testAccPreCheck(t) },
+		Providers:	  testAccProviders,
 		CheckDestroy: testAccCheckContainerClusterDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccContainerCluster_withMasterAuthNoCert(),
+				Config: testAccContainerCluster_withMasterAuthNoCert(clusterName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("google_container_cluster.with_master_auth_no_cert", "master_auth.0.client_certificate", ""),
 				),
 			},
 			{
-				ResourceName:      "google_container_cluster.with_master_auth_no_cert",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:		 "google_container_cluster.with_master_auth_no_cert",
+				ImportState:		 true,
+				ImportStateVerify:	 true,
 			},
 		},
 	})
@@ -253,9 +254,9 @@ func TestAccContainerCluster_withAuthenticatorGroupsConfig(t *testing.T) {
 				Config: testAccContainerCluster_withAuthenticatorGroupsConfig(containerNetName, clusterName),
 			},
 			{
-				ResourceName:      "google_container_cluster.with_authenticator_groups",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:        "google_container_cluster.with_authenticator_groups",
+				ImportState:         true,
+				ImportStateVerify:   true,
 			},
 		},
 	})
@@ -267,8 +268,8 @@ func TestAccContainerCluster_withNetworkPolicyEnabled(t *testing.T) {
 	clusterName := fmt.Sprintf("tf-test-cluster-%s", acctest.RandString(10))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
+		PreCheck:	  func() { testAccPreCheck(t) },
+		Providers:	  testAccProviders,
 		CheckDestroy: testAccCheckContainerClusterDestroy,
 		Steps: []resource.TestStep{
 			{
@@ -324,13 +325,14 @@ func TestAccContainerCluster_withNetworkPolicyEnabled(t *testing.T) {
 				ImportStateVerifyIgnore: []string{"remove_default_node_pool"},
 			},
 			{
-				Config:             testAccContainerCluster_withNetworkPolicyConfigDisabled(clusterName),
-				PlanOnly:           true,
+				Config:				testAccContainerCluster_withNetworkPolicyConfigDisabled(clusterName),
+				PlanOnly:			true,
 				ExpectNonEmptyPlan: false,
 			},
 		},
 	})
 }
+
 
 func TestAccContainerCluster_withMasterAuthorizedNetworksConfig(t *testing.T) {
 	t.Parallel()
@@ -338,8 +340,8 @@ func TestAccContainerCluster_withMasterAuthorizedNetworksConfig(t *testing.T) {
 	clusterName := fmt.Sprintf("tf-test-cluster-%s", acctest.RandString(10))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
+		PreCheck:	  func() { testAccPreCheck(t) },
+		Providers:	  testAccProviders,
 		CheckDestroy: testAccCheckContainerClusterDestroy,
 		Steps: []resource.TestStep{
 			{
@@ -359,17 +361,17 @@ func TestAccContainerCluster_withMasterAuthorizedNetworksConfig(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      "google_container_cluster.with_master_authorized_networks",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:		 "google_container_cluster.with_master_authorized_networks",
+				ImportState:		 true,
+				ImportStateVerify:	 true,
 			},
 			{
 				Config: testAccContainerCluster_withMasterAuthorizedNetworksConfig(clusterName, []string{"10.0.0.0/8", "8.8.8.8/32"}, ""),
 			},
 			{
-				ResourceName:      "google_container_cluster.with_master_authorized_networks",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:		 "google_container_cluster.with_master_authorized_networks",
+				ImportState:		 true,
+				ImportStateVerify:	 true,
 			},
 			{
 				Config: testAccContainerCluster_withMasterAuthorizedNetworksConfig(clusterName, []string{}, ""),
@@ -379,17 +381,17 @@ func TestAccContainerCluster_withMasterAuthorizedNetworksConfig(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      "google_container_cluster.with_master_authorized_networks",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:		 "google_container_cluster.with_master_authorized_networks",
+				ImportState:		 true,
+				ImportStateVerify:	 true,
 			},
 			{
 				Config: testAccContainerCluster_removeMasterAuthorizedNetworksConfig(clusterName),
 			},
 			{
-				ResourceName:      "google_container_cluster.with_master_authorized_networks",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:        "google_container_cluster.with_master_authorized_networks",
+				ImportState:         true,
+				ImportStateVerify:   true,
 			},
 		},
 	})
@@ -401,17 +403,17 @@ func TestAccContainerCluster_regional(t *testing.T) {
 	clusterName := fmt.Sprintf("tf-test-cluster-regional-%s", acctest.RandString(10))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
+		PreCheck:	  func() { testAccPreCheck(t) },
+		Providers:	  testAccProviders,
 		CheckDestroy: testAccCheckContainerClusterDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccContainerCluster_regional(clusterName),
 			},
 			{
-				ResourceName:      "google_container_cluster.regional",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:		 "google_container_cluster.regional",
+				ImportState:		 true,
+				ImportStateVerify:	 true,
 			},
 		},
 	})
@@ -424,17 +426,17 @@ func TestAccContainerCluster_regionalWithNodePool(t *testing.T) {
 	npName := fmt.Sprintf("tf-test-cluster-nodepool-%s", acctest.RandString(10))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
+		PreCheck:	  func() { testAccPreCheck(t) },
+		Providers:	  testAccProviders,
 		CheckDestroy: testAccCheckContainerClusterDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccContainerCluster_regionalWithNodePool(clusterName, npName),
 			},
 			{
-				ResourceName:      "google_container_cluster.regional",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:		 "google_container_cluster.regional",
+				ImportState:		 true,
+				ImportStateVerify:	 true,
 			},
 		},
 	})
@@ -446,29 +448,30 @@ func TestAccContainerCluster_regionalWithNodeLocations(t *testing.T) {
 	clusterName := fmt.Sprintf("tf-test-cluster-%s", acctest.RandString(10))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
+		PreCheck:	  func() { testAccPreCheck(t) },
+		Providers:	  testAccProviders,
 		CheckDestroy: testAccCheckContainerClusterDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccContainerCluster_regionalNodeLocations(clusterName),
 			},
 			{
-				ResourceName:      "google_container_cluster.with_node_locations",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:		 "google_container_cluster.with_node_locations",
+				ImportState:		 true,
+				ImportStateVerify:	 true,
 			},
 			{
 				Config: testAccContainerCluster_regionalUpdateNodeLocations(clusterName),
 			},
 			{
-				ResourceName:      "google_container_cluster.with_node_locations",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:		 "google_container_cluster.with_node_locations",
+				ImportState:		 true,
+				ImportStateVerify:	 true,
 			},
 		},
 	})
 }
+
 
 func TestAccContainerCluster_withPrivateClusterConfig(t *testing.T) {
 	t.Parallel()
@@ -477,17 +480,17 @@ func TestAccContainerCluster_withPrivateClusterConfig(t *testing.T) {
 	containerNetName := fmt.Sprintf("tf-test-container-net-%s", acctest.RandString(10))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
+		PreCheck:	  func() { testAccPreCheck(t) },
+		Providers:	  testAccProviders,
 		CheckDestroy: testAccCheckContainerClusterDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccContainerCluster_withPrivateClusterConfig(containerNetName, clusterName),
 			},
 			{
-				ResourceName:      "google_container_cluster.with_private_cluster",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:		 "google_container_cluster.with_private_cluster",
+				ImportState:		 true,
+				ImportStateVerify:	 true,
 			},
 		},
 	})
@@ -500,17 +503,18 @@ func TestAccContainerCluster_withPrivateClusterConfigMissingCidrBlock(t *testing
 	containerNetName := fmt.Sprintf("tf-test-container-net-%s", acctest.RandString(10))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
+		PreCheck:	  func() { testAccPreCheck(t) },
+		Providers:	  testAccProviders,
 		CheckDestroy: testAccCheckContainerClusterDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccContainerCluster_withPrivateClusterConfigMissingCidrBlock(containerNetName, clusterName),
+				Config:	testAccContainerCluster_withPrivateClusterConfigMissingCidrBlock(containerNetName, clusterName),
 				ExpectError: regexp.MustCompile("master_ipv4_cidr_block must be set if enable_private_nodes == true"),
 			},
 		},
 	})
 }
+
 
 func TestAccContainerCluster_withVersion(t *testing.T) {
 	t.Parallel()
@@ -518,17 +522,17 @@ func TestAccContainerCluster_withVersion(t *testing.T) {
 	clusterName := fmt.Sprintf("tf-test-cluster-%s", acctest.RandString(10))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
+		PreCheck:	  func() { testAccPreCheck(t) },
+		Providers:	  testAccProviders,
 		CheckDestroy: testAccCheckContainerClusterDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccContainerCluster_withVersion(clusterName),
 			},
 			{
-				ResourceName:            "google_container_cluster.with_version",
-				ImportState:             true,
-				ImportStateVerify:       true,
+				ResourceName:			 "google_container_cluster.with_version",
+				ImportState:			 true,
+				ImportStateVerify:		 true,
 				ImportStateVerifyIgnore: []string{"min_master_version"},
 			},
 		},
@@ -541,26 +545,26 @@ func TestAccContainerCluster_updateVersion(t *testing.T) {
 	clusterName := fmt.Sprintf("tf-test-cluster-%s", acctest.RandString(10))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
+		PreCheck:	  func() { testAccPreCheck(t) },
+		Providers:	  testAccProviders,
 		CheckDestroy: testAccCheckContainerClusterDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccContainerCluster_withLowerVersion(clusterName),
 			},
 			{
-				ResourceName:            "google_container_cluster.with_version",
-				ImportState:             true,
-				ImportStateVerify:       true,
+				ResourceName:			 "google_container_cluster.with_version",
+				ImportState:			 true,
+				ImportStateVerify:		 true,
 				ImportStateVerifyIgnore: []string{"min_master_version"},
 			},
 			{
 				Config: testAccContainerCluster_updateVersion(clusterName),
 			},
 			{
-				ResourceName:            "google_container_cluster.with_version",
-				ImportState:             true,
-				ImportStateVerify:       true,
+				ResourceName:			 "google_container_cluster.with_version",
+				ImportState:			 true,
+				ImportStateVerify:		 true,
 				ImportStateVerifyIgnore: []string{"min_master_version"},
 			},
 		},
@@ -573,25 +577,25 @@ func TestAccContainerCluster_withNodeConfig(t *testing.T) {
 	clusterName := fmt.Sprintf("tf-test-cluster-%s", acctest.RandString(10))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
+		PreCheck:	  func() { testAccPreCheck(t) },
+		Providers:	  testAccProviders,
 		CheckDestroy: testAccCheckContainerClusterDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccContainerCluster_withNodeConfig(clusterName),
 			},
 			{
-				ResourceName:      "google_container_cluster.with_node_config",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:		 "google_container_cluster.with_node_config",
+				ImportState:		 true,
+				ImportStateVerify:	 true,
 			},
 			{
 				Config: testAccContainerCluster_withNodeConfigUpdate(clusterName),
 			},
 			{
-				ResourceName:      "google_container_cluster.with_node_config",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:		 "google_container_cluster.with_node_config",
+				ImportState:		 true,
+				ImportStateVerify:	 true,
 			},
 		},
 	})
@@ -600,18 +604,20 @@ func TestAccContainerCluster_withNodeConfig(t *testing.T) {
 func TestAccContainerCluster_withNodeConfigScopeAlias(t *testing.T) {
 	t.Parallel()
 
+	clusterName := fmt.Sprintf("tf-test-cluster-%s", acctest.RandString(10))
+
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
+		PreCheck:	  func() { testAccPreCheck(t) },
+		Providers:	  testAccProviders,
 		CheckDestroy: testAccCheckContainerClusterDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccContainerCluster_withNodeConfigScopeAlias(),
+				Config: testAccContainerCluster_withNodeConfigScopeAlias(clusterName),
 			},
 			{
-				ResourceName:      "google_container_cluster.with_node_config_scope_alias",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:		 "google_container_cluster.with_node_config_scope_alias",
+				ImportState:		 true,
+				ImportStateVerify:	 true,
 			},
 		},
 	})
@@ -623,42 +629,46 @@ func TestAccContainerCluster_withNodeConfigShieldedInstanceConfig(t *testing.T) 
 	clusterName := fmt.Sprintf("tf-test-cluster-%s", acctest.RandString(10))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
+		PreCheck:	  func() { testAccPreCheck(t) },
+		Providers:	  testAccProviders,
 		CheckDestroy: testAccCheckContainerClusterDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccContainerCluster_withNodeConfigShieldedInstanceConfig(clusterName),
 			},
 			{
-				ResourceName:      "google_container_cluster.with_node_config",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:        "google_container_cluster.with_node_config",
+				ImportState:         true,
+				ImportStateVerify:   true,
 			},
 		},
 	})
 }
 
+
 func TestAccContainerCluster_network(t *testing.T) {
 	t.Parallel()
 
+	clusterName := fmt.Sprintf("tf-test-cluster-%s", acctest.RandString(10))
+	network := fmt.Sprintf("tf-test-net-%s", acctest.RandString(10))
+
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
+		PreCheck:	  func() { testAccPreCheck(t) },
+		Providers:	  testAccProviders,
 		CheckDestroy: testAccCheckContainerClusterDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccContainerCluster_networkRef(),
+				Config: testAccContainerCluster_networkRef(clusterName, network),
 			},
 			{
-				ResourceName:      "google_container_cluster.with_net_ref_by_url",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:		 "google_container_cluster.with_net_ref_by_url",
+				ImportState:		 true,
+				ImportStateVerify:	 true,
 			},
 			{
-				ResourceName:      "google_container_cluster.with_net_ref_by_name",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:		 "google_container_cluster.with_net_ref_by_name",
+				ImportState:		 true,
+				ImportStateVerify:	 true,
 			},
 		},
 	})
@@ -667,18 +677,20 @@ func TestAccContainerCluster_network(t *testing.T) {
 func TestAccContainerCluster_backend(t *testing.T) {
 	t.Parallel()
 
+	clusterName := fmt.Sprintf("tf-test-cluster-%s", acctest.RandString(10))
+
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
+		PreCheck:	  func() { testAccPreCheck(t) },
+		Providers:	  testAccProviders,
 		CheckDestroy: testAccCheckContainerClusterDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccContainerCluster_backendRef(),
+				Config: testAccContainerCluster_backendRef(clusterName),
 			},
 			{
-				ResourceName:      "google_container_cluster.primary",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:		 "google_container_cluster.primary",
+				ImportState:		 true,
+				ImportStateVerify:	 true,
 			},
 		},
 	})
@@ -691,17 +703,17 @@ func TestAccContainerCluster_withNodePoolBasic(t *testing.T) {
 	npName := fmt.Sprintf("tf-test-cluster-nodepool-%s", acctest.RandString(10))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
+		PreCheck:	  func() { testAccPreCheck(t) },
+		Providers:	  testAccProviders,
 		CheckDestroy: testAccCheckContainerClusterDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccContainerCluster_withNodePoolBasic(clusterName, npName),
 			},
 			{
-				ResourceName:      "google_container_cluster.with_node_pool",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:		 "google_container_cluster.with_node_pool",
+				ImportState:		 true,
+				ImportStateVerify:	 true,
 			},
 		},
 	})
@@ -714,26 +726,26 @@ func TestAccContainerCluster_withNodePoolUpdateVersion(t *testing.T) {
 	npName := fmt.Sprintf("tf-test-cluster-nodepool-%s", acctest.RandString(10))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
+		PreCheck:	  func() { testAccPreCheck(t) },
+		Providers:	  testAccProviders,
 		CheckDestroy: testAccCheckContainerClusterDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccContainerCluster_withNodePoolLowerVersion(clusterName, npName),
 			},
 			{
-				ResourceName:            "google_container_cluster.with_node_pool",
-				ImportState:             true,
-				ImportStateVerify:       true,
+				ResourceName:			 "google_container_cluster.with_node_pool",
+				ImportState:			 true,
+				ImportStateVerify:		 true,
 				ImportStateVerifyIgnore: []string{"min_master_version"},
 			},
 			{
 				Config: testAccContainerCluster_withNodePoolUpdateVersion(clusterName, npName),
 			},
 			{
-				ResourceName:            "google_container_cluster.with_node_pool",
-				ImportState:             true,
-				ImportStateVerify:       true,
+				ResourceName:			 "google_container_cluster.with_node_pool",
+				ImportState:			 true,
+				ImportStateVerify:		 true,
 				ImportStateVerifyIgnore: []string{"min_master_version"},
 			},
 		},
@@ -746,8 +758,8 @@ func TestAccContainerCluster_withNodePoolResize(t *testing.T) {
 	clusterName := fmt.Sprintf("tf-test-cluster-nodepool-%s", acctest.RandString(10))
 	npName := fmt.Sprintf("tf-test-cluster-nodepool-%s", acctest.RandString(10))
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
+		PreCheck:	  func() { testAccPreCheck(t) },
+		Providers:	  testAccProviders,
 		CheckDestroy: testAccCheckContainerClusterDestroy,
 		Steps: []resource.TestStep{
 			{
@@ -757,9 +769,9 @@ func TestAccContainerCluster_withNodePoolResize(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      "google_container_cluster.with_node_pool",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:		 "google_container_cluster.with_node_pool",
+				ImportState:		 true,
+				ImportStateVerify:	 true,
 			},
 			{
 				Config: testAccContainerCluster_withNodePoolResize(clusterName, npName),
@@ -768,9 +780,9 @@ func TestAccContainerCluster_withNodePoolResize(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      "google_container_cluster.with_node_pool",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:		 "google_container_cluster.with_node_pool",
+				ImportState:		 true,
+				ImportStateVerify:	 true,
 			},
 		},
 	})
@@ -783,11 +795,11 @@ func TestAccContainerCluster_withNodePoolAutoscaling(t *testing.T) {
 	npName := fmt.Sprintf("tf-test-cluster-nodepool-%s", acctest.RandString(10))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
+		PreCheck:	  func() { testAccPreCheck(t) },
+		Providers:	  testAccProviders,
 		CheckDestroy: testAccCheckContainerNodePoolDestroy,
 		Steps: []resource.TestStep{
-			{
+			resource.TestStep{
 				Config: testAccContainerCluster_withNodePoolAutoscaling(clusterName, npName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("google_container_cluster.with_node_pool", "node_pool.0.autoscaling.0.min_node_count", "1"),
@@ -795,11 +807,11 @@ func TestAccContainerCluster_withNodePoolAutoscaling(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      "google_container_cluster.with_node_pool",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:		 "google_container_cluster.with_node_pool",
+				ImportState:		 true,
+				ImportStateVerify:	 true,
 			},
-			{
+			resource.TestStep{
 				Config: testAccContainerCluster_withNodePoolUpdateAutoscaling(clusterName, npName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("google_container_cluster.with_node_pool", "node_pool.0.autoscaling.0.min_node_count", "1"),
@@ -807,11 +819,11 @@ func TestAccContainerCluster_withNodePoolAutoscaling(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      "google_container_cluster.with_node_pool",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:		 "google_container_cluster.with_node_pool",
+				ImportState:		 true,
+				ImportStateVerify:	 true,
 			},
-			{
+			resource.TestStep{
 				Config: testAccContainerCluster_withNodePoolBasic(clusterName, npName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckNoResourceAttr("google_container_cluster.with_node_pool", "node_pool.0.autoscaling.0.min_node_count"),
@@ -819,9 +831,9 @@ func TestAccContainerCluster_withNodePoolAutoscaling(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      "google_container_cluster.with_node_pool",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:		 "google_container_cluster.with_node_pool",
+				ImportState:		 true,
+				ImportStateVerify:	 true,
 			},
 		},
 	})
@@ -830,18 +842,21 @@ func TestAccContainerCluster_withNodePoolAutoscaling(t *testing.T) {
 func TestAccContainerCluster_withNodePoolNamePrefix(t *testing.T) {
 	t.Parallel()
 
+	clusterName := fmt.Sprintf("tf-test-cluster-%s", acctest.RandString(10))
+	npNamePrefix := "tf-test-np-"
+
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
+		PreCheck:	  func() { testAccPreCheck(t) },
+		Providers:	  testAccProviders,
 		CheckDestroy: testAccCheckContainerClusterDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccContainerCluster_withNodePoolNamePrefix(),
+				Config: testAccContainerCluster_withNodePoolNamePrefix(clusterName, npNamePrefix),
 			},
 			{
-				ResourceName:            "google_container_cluster.with_node_pool_name_prefix",
-				ImportState:             true,
-				ImportStateVerify:       true,
+				ResourceName:			 "google_container_cluster.with_node_pool_name_prefix",
+				ImportState:			 true,
+				ImportStateVerify:		 true,
 				ImportStateVerifyIgnore: []string{"node_pool.0.name_prefix"},
 			},
 		},
@@ -851,18 +866,21 @@ func TestAccContainerCluster_withNodePoolNamePrefix(t *testing.T) {
 func TestAccContainerCluster_withNodePoolMultiple(t *testing.T) {
 	t.Parallel()
 
+	clusterName := fmt.Sprintf("tf-test-cluster-%s", acctest.RandString(10))
+	npNamePrefix := "tf-test-np-"
+
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
+		PreCheck:	  func() { testAccPreCheck(t) },
+		Providers:	  testAccProviders,
 		CheckDestroy: testAccCheckContainerClusterDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccContainerCluster_withNodePoolMultiple(),
+				Config: testAccContainerCluster_withNodePoolMultiple(clusterName, npNamePrefix),
 			},
 			{
-				ResourceName:      "google_container_cluster.with_node_pool_multiple",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:		 "google_container_cluster.with_node_pool_multiple",
+				ImportState:		 true,
+				ImportStateVerify:	 true,
 			},
 		},
 	})
@@ -871,13 +889,16 @@ func TestAccContainerCluster_withNodePoolMultiple(t *testing.T) {
 func TestAccContainerCluster_withNodePoolConflictingNameFields(t *testing.T) {
 	t.Parallel()
 
+	clusterName := fmt.Sprintf("tf-test-cluster-%s", acctest.RandString(10))
+	npPrefix := "tf-test-np"
+
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
+		PreCheck:	  func() { testAccPreCheck(t) },
+		Providers:	  testAccProviders,
 		CheckDestroy: testAccCheckContainerClusterDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccContainerCluster_withNodePoolConflictingNameFields(),
+				Config:		 testAccContainerCluster_withNodePoolConflictingNameFields(clusterName, npPrefix),
 				ExpectError: regexp.MustCompile("Cannot specify both name and name_prefix for a node_pool"),
 			},
 		},
@@ -887,18 +908,21 @@ func TestAccContainerCluster_withNodePoolConflictingNameFields(t *testing.T) {
 func TestAccContainerCluster_withNodePoolNodeConfig(t *testing.T) {
 	t.Parallel()
 
+	cluster := fmt.Sprintf("tf-test-cluster-%s", acctest.RandString(10))
+	np := fmt.Sprintf(""tf-test-np-%s", acctest.RandString(10))
+
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
+		PreCheck:	  func() { testAccPreCheck(t) },
+		Providers:	  testAccProviders,
 		CheckDestroy: testAccCheckContainerClusterDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccContainerCluster_withNodePoolNodeConfig(),
+				Config: testAccContainerCluster_withNodePoolNodeConfig(cluster, np),
 			},
 			{
-				ResourceName:      "google_container_cluster.with_node_pool_node_config",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:		 "google_container_cluster.with_node_pool_node_config",
+				ImportState:		 true,
+				ImportStateVerify:	 true,
 			},
 		},
 	})
@@ -906,21 +930,22 @@ func TestAccContainerCluster_withNodePoolNodeConfig(t *testing.T) {
 
 func TestAccContainerCluster_withMaintenanceWindow(t *testing.T) {
 	t.Parallel()
+
 	clusterName := fmt.Sprintf("tf-test-cluster-%s", acctest.RandString(10))
 	resourceName := "google_container_cluster.with_maintenance_window"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
+		PreCheck:	  func() { testAccPreCheck(t) },
+		Providers:	  testAccProviders,
 		CheckDestroy: testAccCheckContainerClusterDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccContainerCluster_withMaintenanceWindow(clusterName, "03:00"),
 			},
 			{
-				ResourceName:      resourceName,
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:		 resourceName,
+				ImportState:		 true,
+				ImportStateVerify:	 true,
 			},
 			{
 				Config: testAccContainerCluster_withMaintenanceWindow(clusterName, ""),
@@ -930,9 +955,9 @@ func TestAccContainerCluster_withMaintenanceWindow(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      resourceName,
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:		 resourceName,
+				ImportState:		 true,
+				ImportStateVerify:	 true,
 				// maintenance_policy.# = 0 is equivalent to no maintenance policy at all,
 				// but will still cause an import diff
 				ImportStateVerifyIgnore: []string{"maintenance_policy.#"},
@@ -941,23 +966,25 @@ func TestAccContainerCluster_withMaintenanceWindow(t *testing.T) {
 	})
 }
 
+
+
 func TestAccContainerCluster_withIPAllocationPolicy_existingSecondaryRanges(t *testing.T) {
 	t.Parallel()
 
 	clusterName := fmt.Sprintf("tf-test-cluster-%s", acctest.RandString(10))
 	containerNetName := fmt.Sprintf("tf-test-container-net-%s", acctest.RandString(10))
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
+		PreCheck:	  func() { testAccPreCheck(t) },
+		Providers:	  testAccProviders,
 		CheckDestroy: testAccCheckContainerClusterDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccContainerCluster_withIPAllocationPolicy_existingSecondaryRanges(containerNetName, clusterName),
 			},
 			{
-				ResourceName:      "google_container_cluster.with_ip_allocation_policy",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:		 "google_container_cluster.with_ip_allocation_policy",
+				ImportState:		 true,
+				ImportStateVerify:	 true,
 			},
 		},
 	})
@@ -969,17 +996,17 @@ func TestAccContainerCluster_withIPAllocationPolicy_specificIPRanges(t *testing.
 	clusterName := fmt.Sprintf("tf-test-cluster-%s", acctest.RandString(10))
 	containerNetName := fmt.Sprintf("tf-test-container-net-%s", acctest.RandString(10))
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
+		PreCheck:	  func() { testAccPreCheck(t) },
+		Providers:	  testAccProviders,
 		CheckDestroy: testAccCheckContainerClusterDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccContainerCluster_withIPAllocationPolicy_specificIPRanges(containerNetName, clusterName),
 			},
 			{
-				ResourceName:      "google_container_cluster.with_ip_allocation_policy",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:		 "google_container_cluster.with_ip_allocation_policy",
+				ImportState:		 true,
+				ImportStateVerify:	 true,
 			},
 		},
 	})
@@ -991,17 +1018,17 @@ func TestAccContainerCluster_withIPAllocationPolicy_specificSizes(t *testing.T) 
 	clusterName := fmt.Sprintf("tf-test-cluster-%s", acctest.RandString(10))
 	containerNetName := fmt.Sprintf("tf-test-cluster-%s", acctest.RandString(10))
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
+		PreCheck:	  func() { testAccPreCheck(t) },
+		Providers:	  testAccProviders,
 		CheckDestroy: testAccCheckContainerClusterDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccContainerCluster_withIPAllocationPolicy_specificSizes(containerNetName, clusterName),
 			},
 			{
-				ResourceName:      "google_container_cluster.with_ip_allocation_policy",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:		 "google_container_cluster.with_ip_allocation_policy",
+				ImportState:		 true,
+				ImportStateVerify:	 true,
 			},
 		},
 	})
@@ -1013,8 +1040,8 @@ func TestAccContainerCluster_nodeAutoprovisioning(t *testing.T) {
 	clusterName := fmt.Sprintf("tf-test-cluster-%s", acctest.RandString(10))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
+		PreCheck:	  func() { testAccPreCheck(t) },
+		Providers:	  testAccProviders,
 		CheckDestroy: testAccCheckContainerClusterDestroy,
 		Steps: []resource.TestStep{
 			{
@@ -1025,9 +1052,9 @@ func TestAccContainerCluster_nodeAutoprovisioning(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:            "google_container_cluster.with_autoprovisioning",
-				ImportState:             true,
-				ImportStateVerify:       true,
+				ResourceName:		 "google_container_cluster.with_autoprovisioning",
+				ImportState:		 true,
+				ImportStateVerify:	 true,
 				ImportStateVerifyIgnore: []string{"min_master_version"},
 			},
 			{
@@ -1038,9 +1065,9 @@ func TestAccContainerCluster_nodeAutoprovisioning(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:            "google_container_cluster.with_autoprovisioning",
-				ImportState:             true,
-				ImportStateVerify:       true,
+				ResourceName:		 "google_container_cluster.with_autoprovisioning",
+				ImportState:		 true,
+				ImportStateVerify:	 true,
 				ImportStateVerifyIgnore: []string{"min_master_version"},
 			},
 		},
@@ -1053,8 +1080,8 @@ func TestAccContainerCluster_nodeAutoprovisioningDefaults(t *testing.T) {
 	clusterName := fmt.Sprintf("tf-test-cluster-%s", acctest.RandString(10))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
+		PreCheck:	  func() { testAccPreCheck(t) },
+		Providers:	  testAccProviders,
 		CheckDestroy: testAccCheckContainerClusterDestroy,
 		Steps: []resource.TestStep{
 			{
@@ -1065,19 +1092,20 @@ func TestAccContainerCluster_nodeAutoprovisioningDefaults(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:            "google_container_cluster.with_autoprovisioning",
-				ImportState:             true,
-				ImportStateVerify:       true,
+				ResourceName:		 "google_container_cluster.with_autoprovisioning",
+				ImportState:		 true,
+				ImportStateVerify:	 true,
 				ImportStateVerifyIgnore: []string{"min_master_version"},
 			},
 			{
-				Config:             testAccContainerCluster_autoprovisioningDefaults(clusterName, true),
+				Config: testAccContainerCluster_autoprovisioningDefaults(clusterName, true),
 				PlanOnly:           true,
 				ExpectNonEmptyPlan: false,
 			},
 		},
 	})
 }
+
 
 func TestAccContainerCluster_errorCleanDanglingCluster(t *testing.T) {
 	t.Parallel()
@@ -1091,26 +1119,26 @@ func TestAccContainerCluster_errorCleanDanglingCluster(t *testing.T) {
 	overlapConfig := testAccContainerCluster_withCIDROverlap(initConfig, clusterNameError)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
+		PreCheck:	  func() { testAccPreCheck(t) },
+		Providers:	  testAccProviders,
 		CheckDestroy: testAccCheckContainerClusterDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: initConfig,
 			},
 			{
-				ResourceName:      "google_container_cluster.cidr_error_preempt",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:		 "google_container_cluster.cidr_error_preempt",
+				ImportState:		 true,
+				ImportStateVerify:	 true,
 			},
 			{
-				Config:      overlapConfig,
+				Config:		 overlapConfig,
 				ExpectError: regexp.MustCompile("Error waiting for creating GKE cluster"),
 			},
 			// If dangling cluster wasn't deleted, this plan will return an error
 			{
-				Config:             overlapConfig,
-				PlanOnly:           true,
+				Config:				overlapConfig,
+				PlanOnly:			true,
 				ExpectNonEmptyPlan: true,
 			},
 		},
@@ -1121,17 +1149,19 @@ func TestAccContainerCluster_errorNoClusterCreated(t *testing.T) {
 	t.Parallel()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
+		PreCheck:	  func() { testAccPreCheck(t) },
+		Providers:	  testAccProviders,
 		CheckDestroy: testAccCheckContainerClusterDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccContainerCluster_withInvalidLocation("wonderland"),
+				Config:		 testAccContainerCluster_withInvalidLocation("wonderland"),
 				ExpectError: regexp.MustCompile(`Permission denied on 'locations/wonderland' \(or it may not exist\).`),
 			},
 		},
 	})
 }
+
+
 
 func TestAccContainerCluster_withMasterAuthorizedNetworksDisabled(t *testing.T) {
 	t.Parallel()
@@ -1140,8 +1170,8 @@ func TestAccContainerCluster_withMasterAuthorizedNetworksDisabled(t *testing.T) 
 	containerNetName := fmt.Sprintf("tf-test-container-net-%s", acctest.RandString(10))
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
+		PreCheck:	  func() { testAccPreCheck(t) },
+		Providers:	  testAccProviders,
 		CheckDestroy: testAccCheckContainerClusterDestroy,
 		Steps: []resource.TestStep{
 			{
@@ -1151,9 +1181,9 @@ func TestAccContainerCluster_withMasterAuthorizedNetworksDisabled(t *testing.T) 
 				),
 			},
 			{
-				ResourceName:      "google_container_cluster.with_private_cluster",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:		 "google_container_cluster.with_private_cluster",
+				ImportState:		 true,
+				ImportStateVerify:	 true,
 			},
 		},
 	})
@@ -1457,10 +1487,10 @@ resource "google_container_cluster" "with_master_auth" {
 `, clusterName)
 }
 
-func testAccContainerCluster_withMasterAuthNoCert() string {
+func testAccContainerCluster_withMasterAuthNoCert(clusterName string) string {
 	return fmt.Sprintf(`
 resource "google_container_cluster" "with_master_auth_no_cert" {
-  name               = "tf-test-cluster-%s"
+  name               = "%s"
   location           = "us-central1-a"
   initial_node_count = 3
 
@@ -1472,7 +1502,7 @@ resource "google_container_cluster" "with_master_auth_no_cert" {
     }
   }
 }
-`, acctest.RandString(10))
+`, clusterName)
 }
 
 func testAccContainerCluster_withNetworkPolicyEnabled(clusterName string) string {
@@ -1496,6 +1526,7 @@ resource "google_container_cluster" "with_network_policy_enabled" {
 }
 `, clusterName)
 }
+
 
 func testAccContainerCluster_removeNetworkPolicy(clusterName string) string {
 	return fmt.Sprintf(`
@@ -1679,6 +1710,7 @@ resource "google_container_cluster" "with_node_locations" {
 `, clusterName)
 }
 
+
 func testAccContainerCluster_withVersion(clusterName string) string {
 	return fmt.Sprintf(`
 data "google_container_engine_versions" "central1a" {
@@ -1823,10 +1855,10 @@ resource "google_container_cluster" "with_node_config" {
 `, clusterName)
 }
 
-func testAccContainerCluster_withNodeConfigScopeAlias() string {
+func testAccContainerCluster_withNodeConfigScopeAlias(clusterName string) string {
 	return fmt.Sprintf(`
 resource "google_container_cluster" "with_node_config_scope_alias" {
-  name               = "tf-test-cluster-%s"
+  name               = "%s"
   location           = "us-central1-f"
   initial_node_count = 1
 
@@ -1836,7 +1868,7 @@ resource "google_container_cluster" "with_node_config_scope_alias" {
     oauth_scopes = ["compute-rw", "storage-ro", "logging-write", "monitoring"]
   }
 }
-`, acctest.RandString(10))
+`, clusterName)
 }
 
 func testAccContainerCluster_withNodeConfigShieldedInstanceConfig(clusterName string) string {
@@ -1881,15 +1913,16 @@ resource "google_container_cluster" "with_node_config" {
 `, clusterName)
 }
 
-func testAccContainerCluster_networkRef() string {
+
+func testAccContainerCluster_networkRef(cluster, network string) string {
 	return fmt.Sprintf(`
 resource "google_compute_network" "container_network" {
-  name                    = "tf-test-container-net-%s"
+  name                    = "%s"
   auto_create_subnetworks = true
 }
 
 resource "google_container_cluster" "with_net_ref_by_url" {
-  name               = "tf-test-cluster-%s"
+  name               = "%s-url"
   location           = "us-central1-a"
   initial_node_count = 1
 
@@ -1897,19 +1930,19 @@ resource "google_container_cluster" "with_net_ref_by_url" {
 }
 
 resource "google_container_cluster" "with_net_ref_by_name" {
-  name               = "tf-test-cluster-%s"
+  name               = "%s-name"
   location           = "us-central1-a"
   initial_node_count = 1
 
   network = google_compute_network.container_network.name
 }
-`, acctest.RandString(10), acctest.RandString(10), acctest.RandString(10))
+`, network, cluster, cluster)
 }
 
-func testAccContainerCluster_backendRef() string {
+func testAccContainerCluster_backendRef(cluster string) string {
 	return fmt.Sprintf(`
 resource "google_compute_backend_service" "my-backend-service" {
-  name      = "terraform-test-%s"
+  name      = "%s-backend"
   port_name = "http"
   protocol  = "HTTP"
 
@@ -1921,14 +1954,14 @@ resource "google_compute_backend_service" "my-backend-service" {
 }
 
 resource "google_compute_http_health_check" "default" {
-  name               = "terraform-test-%s"
+  name               = "%s-hc"
   request_path       = "/"
   check_interval_sec = 1
   timeout_sec        = 1
 }
 
 resource "google_container_cluster" "primary" {
-  name               = "tf-test-cluster-%s"
+  name               = "%s"
   location           = "us-central1-a"
   initial_node_count = 3
 
@@ -1946,7 +1979,7 @@ resource "google_container_cluster" "primary" {
     ]
   }
 }
-`, acctest.RandString(10), acctest.RandString(10), acctest.RandString(10))
+`, cluster, cluster, cluster)
 }
 
 func testAccContainerCluster_withNodePoolBasic(cluster, nodePool string) string {
@@ -2109,9 +2142,9 @@ resource "google_container_cluster" "with_autoprovisioning" {
       oauth_scopes = [
         "https://www.googleapis.com/auth/pubsub",
         "https://www.googleapis.com/auth/devstorage.read_only",`,
-		cluster)
+cluster)
 
-	if monitoringWrite {
+if monitoringWrite {
 		config += `
         "https://www.googleapis.com/auth/monitoring.write",
 `
@@ -2160,63 +2193,62 @@ resource "google_container_cluster" "with_node_pool" {
 `, cluster, np)
 }
 
-func testAccContainerCluster_withNodePoolNamePrefix() string {
+func testAccContainerCluster_withNodePoolNamePrefix(cluster, npPrefix string) string {
 	return fmt.Sprintf(`
 resource "google_container_cluster" "with_node_pool_name_prefix" {
-  name     = "tf-test-cluster-nodepool-%s"
+  name     = "%s"
   location = "us-central1-a"
 
   node_pool {
-    name_prefix = "tf-np-test"
+    name_prefix = "%s"
     node_count  = 2
   }
 }
-`, acctest.RandString(10))
+`, cluster, npPrefix)
 }
 
-func testAccContainerCluster_withNodePoolMultiple() string {
+func testAccContainerCluster_withNodePoolMultiple(cluster, npPrefix string) string {
 	return fmt.Sprintf(`
 resource "google_container_cluster" "with_node_pool_multiple" {
-  name     = "tf-test-cluster-nodepool-%s"
+  name     = "%s"
   location = "us-central1-a"
 
   node_pool {
-    name       = "tf-test-cluster-nodepool-%s"
+    name       = "%s-one"
     node_count = 2
   }
 
   node_pool {
-    name       = "tf-test-cluster-nodepool-%s"
+    name       = "%s-two"
     node_count = 3
   }
 }
-`, acctest.RandString(10), acctest.RandString(10), acctest.RandString(10))
+`, cluster, npPrefix, npPrefix)
 }
 
-func testAccContainerCluster_withNodePoolConflictingNameFields() string {
+func testAccContainerCluster_withNodePoolConflictingNameFields(cluster, npPrefix string) string {
 	return fmt.Sprintf(`
 resource "google_container_cluster" "with_node_pool_multiple" {
-  name     = "tf-test-cluster-nodepool-%s"
+  name     = "%s"
   location = "us-central1-a"
 
   node_pool {
     # ERROR: name and name_prefix cannot be both specified
-    name        = "tf-test-cluster-nodepool-%s"
-    name_prefix = "tf-test-cluster-nodepool-"
+    name        = "%s-notok"
+    name_prefix = "%s"
     node_count  = 1
   }
 }
-`, acctest.RandString(10), acctest.RandString(10))
+`, cluster, npPrefix, npPrefix)
 }
 
-func testAccContainerCluster_withNodePoolNodeConfig() string {
-	testId := acctest.RandString(10)
+func testAccContainerCluster_withNodePoolNodeConfig(cluster, np string) string {
 	return fmt.Sprintf(`
 resource "google_container_cluster" "with_node_pool_node_config" {
-  name     = "tf-test-cluster-nodepool-%s"
+  name     = "%s"
   location = "us-central1-a"
   node_pool {
-    name       = "tf-test-cluster-nodepool-%s"
+    name       = "%s"
     node_count = 2
     node_config {
       machine_type    = "n1-standard-1"
@@ -2241,7 +2273,7 @@ resource "google_container_cluster" "with_node_pool_node_config" {
     }
   }
 }
-`, testId, testId)
+`, cluster, np)
 }
 
 func testAccContainerCluster_withMaintenanceWindow(clusterName string, startTime string) string {
@@ -2264,6 +2296,9 @@ resource "google_container_cluster" "with_maintenance_window" {
 }
 `, clusterName, maintenancePolicy)
 }
+
+
+
 
 func testAccContainerCluster_withIPAllocationPolicy_existingSecondaryRanges(containerNetName string, clusterName string) string {
 	return fmt.Sprintf(`
@@ -2364,6 +2399,7 @@ resource "google_container_cluster" "with_ip_allocation_policy" {
 }
 `, containerNetName, clusterName)
 }
+
 
 func testAccContainerCluster_withPrivateClusterConfigMissingCidrBlock(containerNetName string, clusterName string) string {
 	return fmt.Sprintf(`
@@ -2520,6 +2556,7 @@ resource "google_container_cluster" "with_resource_labels" {
 }
 `, location)
 }
+
 
 func testAccContainerCluster_withMasterAuthorizedNetworksDisabled(containerNetName string, clusterName string) string {
 	return fmt.Sprintf(`

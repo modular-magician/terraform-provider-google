@@ -453,7 +453,6 @@ func Provider() terraform.ResourceProvider {
 			"google_service_account":                          dataSourceGoogleServiceAccount(),
 			"google_service_account_access_token":             dataSourceGoogleServiceAccountAccessToken(),
 			"google_service_account_key":                      dataSourceGoogleServiceAccountKey(),
-			"google_sql_ca_certs":                             dataSourceGoogleSQLCaCerts(),
 			"google_storage_bucket_object":                    dataSourceGoogleStorageBucketObject(),
 			"google_storage_object_signed_url":                dataSourceGoogleSignedUrl(),
 			"google_storage_project_service_account":          dataSourceGoogleStorageProjectServiceAccount(),
@@ -477,9 +476,9 @@ func Provider() terraform.ResourceProvider {
 	return provider
 }
 
-// Generated resources: 95
+// Generated resources: 96
 // Generated IAM resources: 45
-// Total generated resources: 140
+// Total generated resources: 141
 func ResourceMap() map[string]*schema.Resource {
 	resourceMap, _ := ResourceMapWithErrors()
 	return resourceMap
@@ -597,6 +596,7 @@ func ResourceMapWithErrors() (map[string]*schema.Resource, error) {
 			"google_identity_platform_tenant":                              resourceIdentityPlatformTenant(),
 			"google_kms_key_ring":                                          resourceKMSKeyRing(),
 			"google_kms_crypto_key":                                        resourceKMSCryptoKey(),
+			"google_kms_secret_ciphertext":                                 resourceKMSSecretCiphertext(),
 			"google_logging_metric":                                        resourceLoggingMetric(),
 			"google_ml_engine_model":                                       resourceMLEngineModel(),
 			"google_monitoring_alert_policy":                               resourceMonitoringAlertPolicy(),

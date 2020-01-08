@@ -23,15 +23,15 @@ import (
 )
 
 func init() {
-	resource.AddTestSweepers("BinaryAuthorizationAttestor", &resource.Sweeper{
-		Name: "BinaryAuthorizationAttestor",
-		F:    testSweepBinaryAuthorizationAttestor,
+	resource.AddTestSweepers("ComputeAutoscaler", &resource.Sweeper{
+		Name: "ComputeAutoscaler",
+		F:    testSweepComputeAutoscaler,
 	})
 }
 
 // At the time of writing, the CI only passes us-central1 as the region
-func testSweepBinaryAuthorizationAttestor(region string) error {
-	resourceName := "BinaryAuthorizationAttestor"
+func testSweepComputeAutoscaler(region string) error {
+	resourceName := "ComputeAutoscaler"
 	log.Printf("[INFO] Sweeping %s", resourceName)
 
 	config, err := sharedConfigForRegion(region)
@@ -46,7 +46,7 @@ func testSweepBinaryAuthorizationAttestor(region string) error {
 		return err
 	}
 
-	listTemplate := strings.Split("https://binaryauthorization.googleapis.com/v1/projects/{{project}}/attestors?attestorId={{name}}", "?")[0]
+	listTemplate := strings.Split("https://www.googleapis.com/compute/v1/projects/{{project}}/aggregated/autoscalers", "?")[0]
 
 	d := &ResourceDataMock{
 		FieldsInSchema: map[string]interface{}{
@@ -74,13 +74,26 @@ func testSweepBinaryAuthorizationAttestor(region string) error {
 		return nil
 	}
 
-	resourceList, ok := res["attestors"]
+	resourceList, ok := res["items"]
 	if !ok {
 		log.Printf("[INFO] Nothing found in response.")
 		return nil
 	}
-
-	rl := resourceList.([]map[string]interface{})
+	var rl []map[string]interface{}
+	zones := resourceList.(map[string]interface{})
+	// Loop through every zone in the list response
+	for _, zonesValue := range zones {
+		zone := zonesValue.(map[string]interface{})
+		for k, v := range zone {
+			// Zone map either has resources or a warning stating there were no resources found in the zone
+			if k != "warning" {
+				resourcesInZone := v.([]interface{})
+				for _, resource := range resourcesInZone {
+					rl = append(rl, resource.(map[string]interface{}))
+				}
+			}
+		}
+	}
 
 	log.Printf("[INFO] Found %d items in %s list response.", len(rl), resourceName)
 	// items who don't match the tf-test prefix
@@ -99,7 +112,16 @@ func testSweepBinaryAuthorizationAttestor(region string) error {
 			nonPrefixCount++
 			continue
 		}
-		deleteTemplate := "https://binaryauthorization.googleapis.com/v1/projects/{{project}}/attestors/{{name}}"
+		deleteTemplate := "https://www.googleapis.com/compute/v1/projects/{{project}}/zones/{{zone}}/autoscalers/{{name}}"
+
+		if obj["zone"] == nil {
+			log.Printf("[INFO] %s resource zone was nil", resourceName)
+			return nil
+		}
+		zoneSegs := strings.Split(obj["zone"].(string), "/")
+		zone := zoneSegs[len(zoneSegs)-1]
+		deleteTemplate = strings.ReplaceAll(deleteTemplate, "{{zone}}", zone)
+
 		deleteUrl, err := replaceVars(d, config, deleteTemplate)
 		if err != nil {
 			log.Printf("[INFO] error preparing delete url: %s", err)

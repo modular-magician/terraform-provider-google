@@ -572,3 +572,9 @@ func stringInSlice(arr []string, str string) bool {
 
 	return false
 }
+
+func timestampDiffSuppress(format string) {
+	return func(_, old, new string, _ *schema.ResourceData) bool {
+
+	}
+}

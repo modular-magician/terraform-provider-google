@@ -119,7 +119,6 @@ func ResourceIamPolicyDelete(newUpdaterFunc newResourceIamUpdaterFunc) schema.De
 		if v, ok := d.GetOk("etag"); ok {
 			pol.Etag = v.(string)
 		}
-		pol.Version = iamPolicyVersion
 		err = updater.SetResourceIamPolicy(pol)
 		if err != nil {
 			return err
@@ -134,7 +133,6 @@ func setIamPolicyData(d *schema.ResourceData, updater ResourceIamUpdater) error 
 	if err != nil {
 		return fmt.Errorf("'policy_data' is not valid for %s: %s", updater.DescribeResource(), err)
 	}
-	policy.Version = iamPolicyVersion
 
 	err = updater.SetResourceIamPolicy(policy)
 	if err != nil {

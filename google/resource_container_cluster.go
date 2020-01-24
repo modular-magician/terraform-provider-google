@@ -264,7 +264,6 @@ func resourceContainerCluster() *schema.Resource {
 									"oauth_scopes": {
 										Type:             schema.TypeList,
 										Optional:         true,
-										Computed:         true,
 										Elem:             &schema.Schema{Type: schema.TypeString},
 										DiffSuppressFunc: containerClusterAddedScopesSuppress,
 										ExactlyOneOf: []string{

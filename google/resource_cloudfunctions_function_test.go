@@ -3,9 +3,7 @@ package google
 import (
 	"bytes"
 	"fmt"
-	"log"
 	"os"
-	"strings"
 	"testing"
 
 	"archive/zip"

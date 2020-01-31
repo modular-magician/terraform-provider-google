@@ -2,13 +2,12 @@ package google
 
 import (
 	"fmt"
-	"strings"
-	"testing"
-
 	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	"google.golang.org/api/compute/v1"
+	"strings"
+	"testing"
 )
 
 func TestAccComputeNetworkPeering_basic(t *testing.T) {

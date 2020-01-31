@@ -1,7 +1,6 @@
 package google
 
 import (
-	"context"
 	"fmt"
 	"testing"
 
@@ -13,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"google.golang.org/api/composer/v1beta1"
 	"google.golang.org/api/storage/v1"
 )
 

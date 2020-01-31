@@ -1,7 +1,6 @@
 package google
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"strings"
@@ -10,7 +9,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
-	sqladmin "google.golang.org/api/sqladmin/v1beta4"
+
+	"google.golang.org/api/sqladmin/v1beta4"
 )
 
 // Fields that should be ignored in import tests because they aren't returned

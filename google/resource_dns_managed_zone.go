@@ -231,6 +231,7 @@ This should be formatted like
 }
 
 func resourceDNSManagedZoneCreate(d *schema.ResourceData, meta interface{}) error {
+
 	config := meta.(*Config)
 
 	obj := make(map[string]interface{})

@@ -40,7 +40,7 @@ func TestAccIapWebIamBindingGenerated(t *testing.T) {
 			},
 			{
 				ResourceName:      "google_iap_web_iam_binding.foo",
-				ImportStateId:     fmt.Sprintf("projects/%s/iap_web roles/iap.httpsResourceAccessor", fmt.Sprintf("tf-test%s", context["random_suffix"])),
+				ImportStateId:     fmt.Sprintf("projects/%s/iap_web roles/iap.httpsResourceAccessor", fmt.Sprintf("tf-test-tf-test%s", context["random_suffix"])),
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
@@ -50,7 +50,7 @@ func TestAccIapWebIamBindingGenerated(t *testing.T) {
 			},
 			{
 				ResourceName:      "google_iap_web_iam_binding.foo",
-				ImportStateId:     fmt.Sprintf("projects/%s/iap_web roles/iap.httpsResourceAccessor", fmt.Sprintf("tf-test%s", context["random_suffix"])),
+				ImportStateId:     fmt.Sprintf("projects/%s/iap_web roles/iap.httpsResourceAccessor", fmt.Sprintf("tf-test-tf-test%s", context["random_suffix"])),
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
@@ -77,7 +77,7 @@ func TestAccIapWebIamMemberGenerated(t *testing.T) {
 			},
 			{
 				ResourceName:      "google_iap_web_iam_member.foo",
-				ImportStateId:     fmt.Sprintf("projects/%s/iap_web roles/iap.httpsResourceAccessor user:admin@hashicorptest.com", fmt.Sprintf("tf-test%s", context["random_suffix"])),
+				ImportStateId:     fmt.Sprintf("projects/%s/iap_web roles/iap.httpsResourceAccessor user:admin@hashicorptest.com", fmt.Sprintf("tf-test-tf-test%s", context["random_suffix"])),
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
@@ -103,7 +103,7 @@ func TestAccIapWebIamPolicyGenerated(t *testing.T) {
 			},
 			{
 				ResourceName:      "google_iap_web_iam_policy.foo",
-				ImportStateId:     fmt.Sprintf("projects/%s/iap_web", fmt.Sprintf("tf-test%s", context["random_suffix"])),
+				ImportStateId:     fmt.Sprintf("projects/%s/iap_web", fmt.Sprintf("tf-test-tf-test%s", context["random_suffix"])),
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
@@ -112,7 +112,7 @@ func TestAccIapWebIamPolicyGenerated(t *testing.T) {
 			},
 			{
 				ResourceName:      "google_iap_web_iam_policy.foo",
-				ImportStateId:     fmt.Sprintf("projects/%s/iap_web", fmt.Sprintf("tf-test%s", context["random_suffix"])),
+				ImportStateId:     fmt.Sprintf("projects/%s/iap_web", fmt.Sprintf("tf-test-tf-test%s", context["random_suffix"])),
 				ImportState:       true,
 				ImportStateVerify: true,
 			},

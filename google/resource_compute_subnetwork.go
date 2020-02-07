@@ -614,7 +614,6 @@ func resourceComputeSubnetworkDelete(d *schema.ResourceData, meta interface{}) e
 	log.Printf("[DEBUG] Finished deleting Subnetwork %q: %#v", d.Id(), res)
 	return nil
 }
-
 func resourceComputeSubnetworkImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
 	if err := parseImportId([]string{

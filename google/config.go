@@ -236,7 +236,7 @@ var RuntimeConfigDefaultBasePath = "https://runtimeconfig.googleapis.com/v1beta1
 var SecurityCenterDefaultBasePath = "https://securitycenter.googleapis.com/v1/"
 var SourceRepoDefaultBasePath = "https://sourcerepo.googleapis.com/v1/"
 var SpannerDefaultBasePath = "https://spanner.googleapis.com/v1/"
-var SQLDefaultBasePath = "https://www.googleapis.com/sql/v1beta4/"
+var SQLDefaultBasePath = "https://www.googleapis.com/"
 var StorageDefaultBasePath = "https://www.googleapis.com/storage/v1/"
 var TPUDefaultBasePath = "https://tpu.googleapis.com/v1/"
 

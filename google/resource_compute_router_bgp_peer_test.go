@@ -183,7 +183,8 @@ func testAccCheckComputeRouterPeerExists(n string) resource.TestCheckFunc {
 func testAccComputeRouterPeerBasic(testId string) string {
 	return fmt.Sprintf(`
 resource "google_compute_network" "foobar" {
-  name = "router-peer-test-%s"
+  name                    = "router-peer-test-%s"
+  auto_create_subnetworks = false
 }
 
 resource "google_compute_subnetwork" "foobar" {
@@ -271,7 +272,8 @@ resource "google_compute_router_peer" "foobar" {
 func testAccComputeRouterPeerKeepRouter(testId string) string {
 	return fmt.Sprintf(`
 resource "google_compute_network" "foobar" {
-  name = "router-peer-test-%s"
+  name                    = "router-peer-test-%s"
+  auto_create_subnetworks = false
 }
 
 resource "google_compute_subnetwork" "foobar" {
@@ -349,7 +351,8 @@ resource "google_compute_router_interface" "foobar" {
 func testAccComputeRouterPeerAdvertiseMode(testId string) string {
 	return fmt.Sprintf(`
 resource "google_compute_network" "foobar" {
-  name = "router-peer-test-%s"
+  name                    = "router-peer-test-%s"
+  auto_create_subnetworks = false
 }
 
 resource "google_compute_subnetwork" "foobar" {

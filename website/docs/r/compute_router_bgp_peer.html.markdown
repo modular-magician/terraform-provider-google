@@ -49,6 +49,42 @@ resource "google_compute_router_peer" "peer" {
   interface                 = "interface-1"
 }
 ```
+## Example Usage - Router Peer Disabled
+
+
+```hcl
+resource "google_compute_router_peer" "peer" {
+  name                      = "my-router-peer"
+  router                    = "my-router"
+  region                    = "us-central1"
+  peer_ip_address           = "169.254.1.2"
+  peer_asn                  = 65513
+  advertised_route_priority = 100
+  interface                 = "interface-1"
+  enable                    = false
+}
+```
+## Example Usage - Router Peer Bfd
+
+
+```hcl
+resource "google_compute_router_peer" "peer" {
+  name                      = "my-router-peer"
+  router                    = "my-router"
+  region                    = "us-central1"
+  peer_ip_address           = "169.254.1.2"
+  peer_asn                  = 65513
+  advertised_route_priority = 100
+  interface                 = "interface-1"
+
+  bfd {
+    min_receive_interval        = 100
+    min_transmit_interval       = 100
+    multiplier                  = 2
+    session_initialization_mode = "ACTIVE"
+  }
+}
+```
 
 ## Argument Reference
 

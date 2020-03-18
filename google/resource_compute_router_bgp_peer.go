@@ -142,6 +142,7 @@ CIDR-formatted string.`,
 				Description: `The priority of routes advertised to this BGP peer.
 Where there is more than one matching route of maximum
 length, the routes with the lowest priority value win.`,
+				Default: 100,
 			},
 			"region": {
 				Type:             schema.TypeString,

@@ -513,8 +513,8 @@ func Provider() terraform.ResourceProvider {
 }
 
 // Generated resources: 110
-// Generated IAM resources: 51
-// Total generated resources: 161
+// Generated IAM resources: 48
+// Total generated resources: 158
 func ResourceMap() map[string]*schema.Resource {
 	resourceMap, _ := ResourceMapWithErrors()
 	return resourceMap
@@ -675,9 +675,6 @@ func ResourceMapWithErrors() (map[string]*schema.Resource, error) {
 			"google_spanner_database":                                      resourceSpannerDatabase(),
 			"google_sql_database":                                          resourceSQLDatabase(),
 			"google_sql_source_representation_instance":                    resourceSQLSourceRepresentationInstance(),
-			"google_storage_bucket_iam_binding":                            ResourceIamBinding(StorageBucketIamSchema, StorageBucketIamUpdaterProducer, StorageBucketIdParseFunc),
-			"google_storage_bucket_iam_member":                             ResourceIamMember(StorageBucketIamSchema, StorageBucketIamUpdaterProducer, StorageBucketIdParseFunc),
-			"google_storage_bucket_iam_policy":                             ResourceIamPolicy(StorageBucketIamSchema, StorageBucketIamUpdaterProducer, StorageBucketIdParseFunc),
 			"google_storage_bucket_access_control":                         resourceStorageBucketAccessControl(),
 			"google_storage_object_access_control":                         resourceStorageObjectAccessControl(),
 			"google_storage_default_object_access_control":                 resourceStorageDefaultObjectAccessControl(),
@@ -787,6 +784,9 @@ func ResourceMapWithErrors() (map[string]*schema.Resource, error) {
 			"google_storage_bucket":                        resourceStorageBucket(),
 			"google_storage_bucket_acl":                    resourceStorageBucketAcl(),
 			"google_storage_bucket_object":                 resourceStorageBucketObject(),
+			"google_storage_bucket_iam_binding":            ResourceIamBinding(StorageBucketIamSchema, StorageBucketIamUpdaterProducer, StorageBucketIdParseFunc),
+			"google_storage_bucket_iam_member":             ResourceIamMember(StorageBucketIamSchema, StorageBucketIamUpdaterProducer, StorageBucketIdParseFunc),
+			"google_storage_bucket_iam_policy":             ResourceIamPolicy(StorageBucketIamSchema, StorageBucketIamUpdaterProducer, StorageBucketIdParseFunc),
 			"google_storage_object_acl":                    resourceStorageObjectAcl(),
 			"google_storage_default_object_acl":            resourceStorageDefaultObjectAcl(),
 			"google_storage_notification":                  resourceStorageNotification(),

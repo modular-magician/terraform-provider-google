@@ -121,7 +121,14 @@ The following arguments are supported:
 * `project` - (Optional) The ID of the project in which the resource belongs.
     If it is not provided, the provider project is used.
 
-
+Hm, this should make a mess in the diffs.
+Hm, this should make a mess in the diffs.
+Hm, this should make a mess in the diffs.
+Hm, this should make a mess in the diffs.
+Hm, this should make a mess in the diffs.
+Hm, this should make a mess in the diffs.
+Hm, this should make a mess in the diffs.
+Hm, this should make a mess in the diffs.
 The `trigger_template` block supports:
 
 * `project_id` -
@@ -154,6 +161,13 @@ The `trigger_template` block supports:
   (Optional)
   Explicit commit SHA to build. Exactly one of a branch name, tag, or commit SHA must be provided.
 
+Hm, this should make a mess in the diffs.
+Hm, this should make a mess in the diffs.
+Hm, this should make a mess in the diffs.
+Hm, this should make a mess in the diffs.
+Hm, this should make a mess in the diffs.
+Hm, this should make a mess in the diffs.
+Hm, this should make a mess in the diffs.
 The `build` block supports:
 
 * `tags` -
@@ -179,7 +193,10 @@ The `build` block supports:
   (Required)
   The operations to be performed on the workspace.  Structure is documented below.
 
-
+Hm, this should make a mess in the diffs.
+Hm, this should make a mess in the diffs.
+Hm, this should make a mess in the diffs.
+Hm, this should make a mess in the diffs.
 The `step` block supports:
 
 * `name` -
@@ -271,7 +288,16 @@ The `step` block supports:
   will start when all previous build steps in the `Build.Steps` list
   have completed successfully.
 
-
+Hm, this should make a mess in the diffs.
+Hm, this should make a mess in the diffs.
+Hm, this should make a mess in the diffs.
+Hm, this should make a mess in the diffs.
+Hm, this should make a mess in the diffs.
+Hm, this should make a mess in the diffs.
+Hm, this should make a mess in the diffs.
+Hm, this should make a mess in the diffs.
+Hm, this should make a mess in the diffs.
+Hm, this should make a mess in the diffs.
 The `volumes` block supports:
 
 * `name` -
@@ -286,6 +312,10 @@ The `volumes` block supports:
   Paths must be absolute and cannot conflict with other volume paths on
   the same build step or with certain reserved volume paths.
 
+Hm, this should make a mess in the diffs.
+Hm, this should make a mess in the diffs.
+Hm, this should make a mess in the diffs.
+
 ## Attributes Reference
 
 In addition to the arguments listed above, the following computed attributes are exported:
@@ -298,6 +328,8 @@ In addition to the arguments listed above, the following computed attributes are
 * `create_time` -
   Time when the trigger was created.
 
+Hm, this should make a mess in the diffs.
+Hm, this should make a mess in the diffs.
 
 ## Timeouts
 

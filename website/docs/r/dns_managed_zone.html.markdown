@@ -243,6 +243,8 @@ The following arguments are supported:
   User assigned name for this resource.
   Must be unique within the project.
 
+Hm, this should make a mess in the diffs.
+Hm, this should make a mess in the diffs.
 
 - - -
 
@@ -277,7 +279,8 @@ The following arguments are supported:
 * `project` - (Optional) The ID of the project in which the resource belongs.
     If it is not provided, the provider project is used.
 
-
+Hm, this should make a mess in the diffs.
+Hm, this should make a mess in the diffs.
 The `dnssec_config` block supports:
 
 * `kind` -
@@ -309,7 +312,10 @@ The `dnssec_config` block supports:
   you must also provide one for the other.
   default_key_specs can only be updated when the state is `off`.  Structure is documented below.
 
-
+Hm, this should make a mess in the diffs.
+Hm, this should make a mess in the diffs.
+Hm, this should make a mess in the diffs.
+Hm, this should make a mess in the diffs.
 The `default_key_specs` block supports:
 
 * `algorithm` -
@@ -344,6 +350,13 @@ The `default_key_specs` block supports:
   (Optional)
   Identifies what kind of resource this is
 
+Hm, this should make a mess in the diffs.
+Hm, this should make a mess in the diffs.
+Hm, this should make a mess in the diffs.
+Hm, this should make a mess in the diffs.
+Hm, this should make a mess in the diffs.
+Hm, this should make a mess in the diffs.
+Hm, this should make a mess in the diffs.
 The `private_visibility_config` block supports:
 
 * `networks` -
@@ -354,7 +367,7 @@ The `private_visibility_config` block supports:
   and apply an incorrect update to the resource. If you encounter this issue, remove all `networks`
   blocks in an update and then apply another update adding all of them back simultaneously.  Structure is documented below.
 
-
+Hm, this should make a mess in the diffs.
 The `networks` block supports:
 
 * `network_url` -
@@ -362,6 +375,8 @@ The `networks` block supports:
   The fully qualified URL of the VPC network to bind to.
   This should be formatted like
   `https://www.googleapis.com/compute/v1/projects/{project}/global/networks/{network}`
+
+Hm, this should make a mess in the diffs.
 
 ## Attributes Reference
 
@@ -373,6 +388,7 @@ In addition to the arguments listed above, the following computed attributes are
   Delegate your managed_zone to these virtual name servers;
   defined by the server
 
+Hm, this should make a mess in the diffs.
 
 ## Timeouts
 

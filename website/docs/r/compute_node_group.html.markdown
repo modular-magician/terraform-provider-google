@@ -114,6 +114,8 @@ The following arguments are supported:
   (Required)
   The total number of nodes in the node group.
 
+Hm, this should make a mess in the diffs.
+Hm, this should make a mess in the diffs.
 
 - - -
 
@@ -133,6 +135,9 @@ The following arguments are supported:
 * `project` - (Optional) The ID of the project in which the resource belongs.
     If it is not provided, the provider project is used.
 
+Hm, this should make a mess in the diffs.
+Hm, this should make a mess in the diffs.
+Hm, this should make a mess in the diffs.
 
 ## Attributes Reference
 
@@ -144,6 +149,7 @@ In addition to the arguments listed above, the following computed attributes are
   Creation timestamp in RFC3339 text format.
 * `self_link` - The URI of the created resource.
 
+Hm, this should make a mess in the diffs.
 
 ## Timeouts
 

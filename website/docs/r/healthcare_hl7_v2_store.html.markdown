@@ -185,6 +185,8 @@ The following arguments are supported:
   Identifies the dataset addressed by this request. Must be in the format
   'projects/{project}/locations/{location}/datasets/{dataset}'
 
+Hm, this should make a mess in the diffs.
+Hm, this should make a mess in the diffs.
 
 - - -
 
@@ -210,7 +212,7 @@ The following arguments are supported:
   message (both Ingest & Create) on the corresponding notification destination. Only the message name
   is sent as part of the notification. Supplied by the client.  Structure is documented below.
 
-
+Hm, this should make a mess in the diffs.
 The `parser_config` block supports:
 
 * `allow_null_header` -
@@ -227,6 +229,11 @@ The `parser_config` block supports:
   JSON encoded string for schemas used to parse messages in this
   store if schematized parsing is desired.
 
+Hm, this should make a mess in the diffs.
+Hm, this should make a mess in the diffs.
+Hm, this should make a mess in the diffs.
+Hm, this should make a mess in the diffs.
+Hm, this should make a mess in the diffs.
 The `notification_configs` block supports:
 
 * `pubsub_topic` -
@@ -251,6 +258,9 @@ The `notification_configs` block supports:
   * PatientId(value, type), which matches if the message lists a patient having an ID of the given value and type in the PID-2, PID-3, or PID-4 segments. For example, PatientId("123456", "MRN").
   * labels.x, a string value of the label with key x as set using the Message.labels map. For example, labels."priority"="high". The operator :* can be used to assert the existence of a label. For example, labels."priority":*.
 
+Hm, this should make a mess in the diffs.
+Hm, this should make a mess in the diffs.
+
 ## Attributes Reference
 
 In addition to the arguments listed above, the following computed attributes are exported:
@@ -260,6 +270,7 @@ In addition to the arguments listed above, the following computed attributes are
 * `self_link` -
   The fully qualified name of this dataset
 
+Hm, this should make a mess in the diffs.
 
 ## Timeouts
 

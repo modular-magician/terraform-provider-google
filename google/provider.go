@@ -582,9 +582,9 @@ func Provider() terraform.ResourceProvider {
 	return provider
 }
 
-// Generated resources: 139
+// Generated resources: 140
 // Generated IAM resources: 57
-// Total generated resources: 196
+// Total generated resources: 197
 func ResourceMap() map[string]*schema.Resource {
 	resourceMap, _ := ResourceMapWithErrors()
 	return resourceMap
@@ -750,6 +750,7 @@ func ResourceMapWithErrors() (map[string]*schema.Resource, error) {
 			"google_monitoring_custom_service":                             resourceMonitoringService(),
 			"google_monitoring_slo":                                        resourceMonitoringSlo(),
 			"google_monitoring_uptime_check_config":                        resourceMonitoringUptimeCheckConfig(),
+			"google_monitoring_metric_descriptor":                          resourceMonitoringMetricDescriptor(),
 			"google_network_management_connectivity_test":                  resourceNetworkManagementConnectivityTest(),
 			"google_os_config_patch_deployment":                            resourceOSConfigPatchDeployment(),
 			"google_os_login_ssh_public_key":                               resourceOSLoginSSHPublicKey(),

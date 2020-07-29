@@ -31,7 +31,7 @@ gcloud authentication will work fine.
 Next, create a Terraform config file named `"main.tf"`. Inside, you'll
 want to include the following configuration:
 
-```hcl
+```terraform
 provider "google" {
   project = "{{YOUR GCP PROJECT}}"
   region  = "us-central1"
@@ -75,7 +75,7 @@ be used. If omitted, the provider defaults will be used instead.
 
 Add the following to your config file:
 
-```hcl
+```terraform
 resource "google_compute_instance" "vm_instance" {
   name         = "terraform-instance"
   machine_type = "f1-micro"
@@ -127,7 +127,7 @@ demonstrate.
 
 Add this block to your config:
 
-```hcl
+```terraform
 resource "google_compute_network" "vpc_network" {
   name                    = "terraform-network"
   auto_create_subnetworks = "true"
@@ -187,7 +187,7 @@ quota or billing issues which don't seem to apply to you, you may want to set
 ## Provisioning your resources
 By now, your config will look something like:
 
-```hcl
+```terraform
 provider "google" {
   project = "{{YOUR GCP PROJECT}}"
   region  = "us-central1"
@@ -221,7 +221,7 @@ resource "google_compute_network" "vpc_network" {
 With a Terraform config and with your credentials configured, it's time to
 provision your resources:
 
-```hcl
+```bash
 terraform apply
 ```
 

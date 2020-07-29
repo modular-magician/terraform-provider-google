@@ -8,14 +8,14 @@ description: |-
 
 # Google Cloud Platform Provider
 
--> Try out Terraform 0.12 with the Google provider! `google` and `google-beta` are 0.12-compatible from `2.5.0` onwards.
+-> Try out Terraform 0.12 with the Google provider! `google` is 0.12-compatible from `2.5.0` onwards.
 
 The Google provider is used to configure your [Google Cloud Platform](https://cloud.google.com/) infrastructure.
 See the [Getting Started](/docs/providers/google/guides/getting_started.html) page for an introduction to using the provider.
 
 A typical provider configuration will look something like:
 
-```hcl
+```terraform
 provider "google" {
   credentials = file("account.json")
   project     = "my-project-id"
@@ -55,7 +55,7 @@ provider releases are either minor or major releases.
 
 ### Minor Releases
 
-The Google provider currently aims to publish a minor release every 2 weeks,
+The Google provider currently aims to publish a minor release every week,
 although the timing of individual releases may differ if required by the
 provider team.
 

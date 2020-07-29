@@ -35,7 +35,7 @@ Three different resources help you manage your IAM policy for Identity-Aware Pro
 
 ## google\_iap\_app\_engine\_version\_iam\_policy
 
-```hcl
+```terraform
 data "google_iam_policy" "admin" {
   binding {
     role = "roles/iap.httpsResourceAccessor"
@@ -56,7 +56,7 @@ resource "google_iap_app_engine_version_iam_policy" "policy" {
 
 ## google\_iap\_app\_engine\_version\_iam\_binding
 
-```hcl
+```terraform
 resource "google_iap_app_engine_version_iam_binding" "binding" {
   project = "${google_app_engine_standard_app_version.version.project}"
   app_id = "${google_app_engine_standard_app_version.version.project}"
@@ -71,7 +71,7 @@ resource "google_iap_app_engine_version_iam_binding" "binding" {
 
 ## google\_iap\_app\_engine\_version\_iam\_member
 
-```hcl
+```terraform
 resource "google_iap_app_engine_version_iam_member" "member" {
   project = "${google_app_engine_standard_app_version.version.project}"
   app_id = "${google_app_engine_standard_app_version.version.project}"

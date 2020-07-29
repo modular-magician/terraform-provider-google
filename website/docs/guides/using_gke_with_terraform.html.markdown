@@ -42,9 +42,10 @@ When using the `kubernetes` and `helm` providers,
 can allow you to connect to clusters defined in the same config or in a remote
 state. You can configure either using configuration such as the following:
 
-```hcl
+```terraform
 # Retrieve an access token as the Terraform runner
-data "google_client_config" "provider" {}
+data "google_client_config" "provider" {
+}
 
 data "google_container_cluster" "my_cluster" {
   name     = "my-cluster"
@@ -66,7 +67,7 @@ Alternatively, you can authenticate as another service account on which your
 Terraform runner has been granted the `roles/iam.serviceAccountTokenCreator`
 role:
 
-```hcl
+```terraform
 data "google_service_account_access_token" "my_kubernetes_sa" {
   target_service_account = "{{service_account}}"
   scopes                 = ["userinfo-email", "cloud-platform"]
@@ -122,7 +123,7 @@ behaviour is to create a routes-based cluster for backwards compatibility.
 It's recommended that you create a VPC-native cluster, done by specifying the
 `ip_allocation_policy` block. Configuration will look like the following:
 
-```hcl
+```terraform
 resource "google_container_cluster" "my_vpc_native_cluster" {
   name               = "my-vpc-native-cluster"
   location           = "us-central1"
@@ -153,7 +154,7 @@ to delete a cluster based on changes to inline node pools.
 However, the GKE API doesn't allow creating a cluster without nodes. It's common
 for Terraform users to define a block such as the following:
 
-```hcl
+```terraform
 resource "google_container_cluster" "my-gke-cluster" {
   name     = "my-gke-cluster"
   location = "us-central1"
@@ -183,7 +184,7 @@ If you've disabled that service account, or want to use a
 for the temporary  node pool, you can add the following configuration to your
 `google_container_cluster` block:
 
-```hcl
+```terraform
 resource "google_container_cluster" "my-gke-cluster" {
   # other settings...
 

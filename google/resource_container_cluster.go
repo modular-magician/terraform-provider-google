@@ -2464,6 +2464,9 @@ func expandDatabaseEncryption(configured interface{}) *containerBeta.DatabaseEnc
 }
 
 func expandReleaseChannel(configured interface{}) *containerBeta.ReleaseChannel {
+	if configured == nil {
+		return nil
+	}
 	l := configured.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil

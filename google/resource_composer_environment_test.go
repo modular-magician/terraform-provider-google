@@ -390,7 +390,6 @@ resource "google_composer_environment" "test" {
     }
 
     software_config {
-      image_version = data.google_composer_image_versions.all.image_versions[0].image_version_id
 
       airflow_config_overrides = {
         core-load_example = "True"

@@ -9,10 +9,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/go-cleanhttp"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/logging"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/pathorcontents"
-	"github.com/hashicorp/terraform-plugin-sdk/httpclient"
-	"github.com/hashicorp/terraform-provider-google/version"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/logging"
 	"google.golang.org/api/option"
 
 	"golang.org/x/oauth2"
@@ -75,7 +72,6 @@ type Config struct {
 	wrappedBigQueryClient *http.Client
 	wrappedPubsubClient   *http.Client
 	context               context.Context
-	terraformVersion      string
 	userAgent             string
 
 	tokenSource oauth2.TokenSource
@@ -322,12 +318,8 @@ func (c *Config) LoadAndValidate(ctx context.Context) error {
 	// This timeout is a timeout per HTTP request, not per logical operation.
 	client.Timeout = c.synchronousTimeout()
 
-	tfUserAgent := httpclient.TerraformUserAgent(c.terraformVersion)
-	providerVersion := fmt.Sprintf("terraform-provider-google/%s", version.ProviderVersion)
-	userAgent := fmt.Sprintf("%s %s", tfUserAgent, providerVersion)
-
 	c.client = client
-	c.userAgent = userAgent
+	c.context = ctx
 
 	// This base path and some others below need the version and possibly more of the path
 	// set on them. The client libraries are inconsistent about which values they need;
@@ -340,7 +332,7 @@ func (c *Config) LoadAndValidate(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	c.clientCompute.UserAgent = userAgent
+	c.clientCompute.UserAgent = c.userAgent
 	c.clientCompute.BasePath = computeClientBasePath
 
 	computeBetaClientBasePath := c.ComputeBetaBasePath + "projects/"
@@ -349,7 +341,7 @@ func (c *Config) LoadAndValidate(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	c.clientComputeBeta.UserAgent = userAgent
+	c.clientComputeBeta.UserAgent = c.userAgent
 	c.clientComputeBeta.BasePath = computeBetaClientBasePath
 
 	containerClientBasePath := removeBasePathVersion(c.ContainerBasePath)
@@ -358,7 +350,7 @@ func (c *Config) LoadAndValidate(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	c.clientContainer.UserAgent = userAgent
+	c.clientContainer.UserAgent = c.userAgent
 	c.clientContainer.BasePath = containerClientBasePath
 
 	containerBetaClientBasePath := removeBasePathVersion(c.ContainerBetaBasePath)
@@ -367,7 +359,7 @@ func (c *Config) LoadAndValidate(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	c.clientContainerBeta.UserAgent = userAgent
+	c.clientContainerBeta.UserAgent = c.userAgent
 	c.clientContainerBeta.BasePath = containerBetaClientBasePath
 
 	dnsClientBasePath := c.DNSBasePath + "projects/"
@@ -376,7 +368,7 @@ func (c *Config) LoadAndValidate(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	c.clientDns.UserAgent = userAgent
+	c.clientDns.UserAgent = c.userAgent
 	c.clientDns.BasePath = dnsClientBasePath
 
 	dnsBetaClientBasePath := c.DnsBetaBasePath + "projects/"
@@ -385,7 +377,7 @@ func (c *Config) LoadAndValidate(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	c.clientDnsBeta.UserAgent = userAgent
+	c.clientDnsBeta.UserAgent = c.userAgent
 	c.clientDnsBeta.BasePath = dnsBetaClientBasePath
 
 	kmsClientBasePath := removeBasePathVersion(c.KMSBasePath)
@@ -394,7 +386,7 @@ func (c *Config) LoadAndValidate(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	c.clientKms.UserAgent = userAgent
+	c.clientKms.UserAgent = c.userAgent
 	c.clientKms.BasePath = kmsClientBasePath
 
 	loggingClientBasePath := removeBasePathVersion(c.LoggingBasePath)
@@ -403,7 +395,7 @@ func (c *Config) LoadAndValidate(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	c.clientLogging.UserAgent = userAgent
+	c.clientLogging.UserAgent = c.userAgent
 	c.clientLogging.BasePath = loggingClientBasePath
 
 	storageClientBasePath := c.StorageBasePath
@@ -412,7 +404,7 @@ func (c *Config) LoadAndValidate(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	c.clientStorage.UserAgent = userAgent
+	c.clientStorage.UserAgent = c.userAgent
 	c.clientStorage.BasePath = storageClientBasePath
 
 	sqlClientBasePath := removeBasePathVersion(removeBasePathVersion(c.SQLBasePath))
@@ -421,7 +413,7 @@ func (c *Config) LoadAndValidate(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	c.clientSqlAdmin.UserAgent = userAgent
+	c.clientSqlAdmin.UserAgent = c.userAgent
 	c.clientSqlAdmin.BasePath = sqlClientBasePath
 
 	pubsubClientBasePath := removeBasePathVersion(c.PubsubBasePath)
@@ -432,7 +424,7 @@ func (c *Config) LoadAndValidate(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	c.clientPubsub.UserAgent = userAgent
+	c.clientPubsub.UserAgent = c.userAgent
 	c.clientPubsub.BasePath = pubsubClientBasePath
 
 	dataflowClientBasePath := removeBasePathVersion(c.DataflowBasePath)
@@ -441,7 +433,7 @@ func (c *Config) LoadAndValidate(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	c.clientDataflow.UserAgent = userAgent
+	c.clientDataflow.UserAgent = c.userAgent
 	c.clientDataflow.BasePath = dataflowClientBasePath
 
 	resourceManagerBasePath := removeBasePathVersion(c.ResourceManagerBasePath)
@@ -450,7 +442,7 @@ func (c *Config) LoadAndValidate(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	c.clientResourceManager.UserAgent = userAgent
+	c.clientResourceManager.UserAgent = c.userAgent
 	c.clientResourceManager.BasePath = resourceManagerBasePath
 
 	resourceManagerV2Beta1BasePath := removeBasePathVersion(c.ResourceManagerV2Beta1BasePath)
@@ -459,7 +451,7 @@ func (c *Config) LoadAndValidate(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	c.clientResourceManagerV2Beta1.UserAgent = userAgent
+	c.clientResourceManagerV2Beta1.UserAgent = c.userAgent
 	c.clientResourceManagerV2Beta1.BasePath = resourceManagerV2Beta1BasePath
 
 	runtimeConfigClientBasePath := removeBasePathVersion(c.RuntimeConfigBasePath)
@@ -468,7 +460,7 @@ func (c *Config) LoadAndValidate(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	c.clientRuntimeconfig.UserAgent = userAgent
+	c.clientRuntimeconfig.UserAgent = c.userAgent
 	c.clientRuntimeconfig.BasePath = runtimeConfigClientBasePath
 
 	iamClientBasePath := removeBasePathVersion(c.IAMBasePath)
@@ -477,7 +469,7 @@ func (c *Config) LoadAndValidate(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	c.clientIAM.UserAgent = userAgent
+	c.clientIAM.UserAgent = c.userAgent
 	c.clientIAM.BasePath = iamClientBasePath
 
 	iamCredentialsClientBasePath := removeBasePathVersion(c.IamCredentialsBasePath)
@@ -486,7 +478,7 @@ func (c *Config) LoadAndValidate(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	c.clientIamCredentials.UserAgent = userAgent
+	c.clientIamCredentials.UserAgent = c.userAgent
 	c.clientIamCredentials.BasePath = iamCredentialsClientBasePath
 
 	serviceManagementClientBasePath := removeBasePathVersion(c.ServiceManagementBasePath)
@@ -495,7 +487,7 @@ func (c *Config) LoadAndValidate(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	c.clientServiceMan.UserAgent = userAgent
+	c.clientServiceMan.UserAgent = c.userAgent
 	c.clientServiceMan.BasePath = serviceManagementClientBasePath
 
 	serviceUsageClientBasePath := removeBasePathVersion(c.ServiceUsageBasePath)
@@ -504,7 +496,7 @@ func (c *Config) LoadAndValidate(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	c.clientServiceUsage.UserAgent = userAgent
+	c.clientServiceUsage.UserAgent = c.userAgent
 	c.clientServiceUsage.BasePath = serviceUsageClientBasePath
 
 	cloudBillingClientBasePath := removeBasePathVersion(c.CloudBillingBasePath)
@@ -513,7 +505,7 @@ func (c *Config) LoadAndValidate(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	c.clientBilling.UserAgent = userAgent
+	c.clientBilling.UserAgent = c.userAgent
 	c.clientBilling.BasePath = cloudBillingClientBasePath
 
 	cloudBuildClientBasePath := removeBasePathVersion(c.CloudBuildBasePath)
@@ -522,7 +514,7 @@ func (c *Config) LoadAndValidate(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	c.clientBuild.UserAgent = userAgent
+	c.clientBuild.UserAgent = c.userAgent
 	c.clientBuild.BasePath = cloudBuildClientBasePath
 
 	bigQueryClientBasePath := c.BigQueryBasePath
@@ -533,7 +525,7 @@ func (c *Config) LoadAndValidate(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	c.clientBigQuery.UserAgent = userAgent
+	c.clientBigQuery.UserAgent = c.userAgent
 	c.clientBigQuery.BasePath = bigQueryClientBasePath
 
 	cloudFunctionsClientBasePath := removeBasePathVersion(c.CloudFunctionsBasePath)
@@ -542,11 +534,11 @@ func (c *Config) LoadAndValidate(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	c.clientCloudFunctions.UserAgent = userAgent
+	c.clientCloudFunctions.UserAgent = c.userAgent
 	c.clientCloudFunctions.BasePath = cloudFunctionsClientBasePath
 
 	c.bigtableClientFactory = &BigtableClientFactory{
-		UserAgent:   userAgent,
+		UserAgent:   c.userAgent,
 		TokenSource: tokenSource,
 	}
 
@@ -557,7 +549,7 @@ func (c *Config) LoadAndValidate(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	clientBigtable.UserAgent = userAgent
+	clientBigtable.UserAgent = c.userAgent
 	clientBigtable.BasePath = bigtableAdminBasePath
 	c.clientBigtableProjectsInstances = bigtableadmin.NewProjectsInstancesService(clientBigtable)
 
@@ -567,7 +559,7 @@ func (c *Config) LoadAndValidate(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	c.clientSourceRepo.UserAgent = userAgent
+	c.clientSourceRepo.UserAgent = c.userAgent
 	c.clientSourceRepo.BasePath = sourceRepoClientBasePath
 
 	spannerClientBasePath := removeBasePathVersion(c.SpannerBasePath)
@@ -576,7 +568,7 @@ func (c *Config) LoadAndValidate(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	c.clientSpanner.UserAgent = userAgent
+	c.clientSpanner.UserAgent = c.userAgent
 	c.clientSpanner.BasePath = spannerClientBasePath
 
 	dataprocClientBasePath := removeBasePathVersion(c.DataprocBasePath)
@@ -585,7 +577,7 @@ func (c *Config) LoadAndValidate(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	c.clientDataproc.UserAgent = userAgent
+	c.clientDataproc.UserAgent = c.userAgent
 	c.clientDataproc.BasePath = dataprocClientBasePath
 
 	dataprocBetaClientBasePath := removeBasePathVersion(c.DataprocBetaBasePath)
@@ -594,7 +586,7 @@ func (c *Config) LoadAndValidate(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	c.clientDataprocBeta.UserAgent = userAgent
+	c.clientDataprocBeta.UserAgent = c.userAgent
 	c.clientDataprocBeta.BasePath = dataprocClientBasePath
 
 	filestoreClientBasePath := removeBasePathVersion(c.FilestoreBasePath)
@@ -603,7 +595,7 @@ func (c *Config) LoadAndValidate(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	c.clientFilestore.UserAgent = userAgent
+	c.clientFilestore.UserAgent = c.userAgent
 	c.clientFilestore.BasePath = filestoreClientBasePath
 
 	cloudIoTClientBasePath := removeBasePathVersion(c.CloudIoTBasePath)
@@ -612,7 +604,7 @@ func (c *Config) LoadAndValidate(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	c.clientCloudIoT.UserAgent = userAgent
+	c.clientCloudIoT.UserAgent = c.userAgent
 	c.clientCloudIoT.BasePath = cloudIoTClientBasePath
 
 	appEngineClientBasePath := removeBasePathVersion(c.AppEngineBasePath)
@@ -621,7 +613,7 @@ func (c *Config) LoadAndValidate(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	c.clientAppEngine.UserAgent = userAgent
+	c.clientAppEngine.UserAgent = c.userAgent
 	c.clientAppEngine.BasePath = appEngineClientBasePath
 
 	composerClientBasePath := removeBasePathVersion(c.ComposerBasePath)
@@ -630,7 +622,7 @@ func (c *Config) LoadAndValidate(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	c.clientComposer.UserAgent = userAgent
+	c.clientComposer.UserAgent = c.userAgent
 	c.clientComposer.BasePath = composerClientBasePath
 
 	serviceNetworkingClientBasePath := removeBasePathVersion(c.ServiceNetworkingBasePath)
@@ -639,7 +631,7 @@ func (c *Config) LoadAndValidate(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	c.clientServiceNetworking.UserAgent = userAgent
+	c.clientServiceNetworking.UserAgent = c.userAgent
 	c.clientServiceNetworking.BasePath = serviceNetworkingClientBasePath
 
 	storageTransferClientBasePath := removeBasePathVersion(c.StorageTransferBasePath)
@@ -648,7 +640,7 @@ func (c *Config) LoadAndValidate(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	c.clientStorageTransfer.UserAgent = userAgent
+	c.clientStorageTransfer.UserAgent = c.userAgent
 	c.clientStorageTransfer.BasePath = storageTransferClientBasePath
 
 	healthcareClientBasePath := removeBasePathVersion(c.HealthcareBasePath)
@@ -658,7 +650,7 @@ func (c *Config) LoadAndValidate(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	c.clientHealthcare.UserAgent = userAgent
+	c.clientHealthcare.UserAgent = c.userAgent
 	c.clientHealthcare.BasePath = healthcareClientBasePath
 
 	c.Region = GetRegionFromRegionSelfLink(c.Region)
@@ -723,7 +715,7 @@ type staticTokenSource struct {
 
 func (c *Config) GetCredentials(clientScopes []string) (googleoauth.Credentials, error) {
 	if c.AccessToken != "" {
-		contents, _, err := pathorcontents.Read(c.AccessToken)
+		contents, _, err := pathOrContents(c.AccessToken)
 		if err != nil {
 			return googleoauth.Credentials{}, fmt.Errorf("Error loading access token: %s", err)
 		}
@@ -738,7 +730,7 @@ func (c *Config) GetCredentials(clientScopes []string) (googleoauth.Credentials,
 	}
 
 	if c.Credentials != "" {
-		contents, _, err := pathorcontents.Read(c.Credentials)
+		contents, _, err := pathOrContents(c.Credentials)
 		if err != nil {
 			return googleoauth.Credentials{}, fmt.Errorf("error loading credentials: %s", err)
 		}

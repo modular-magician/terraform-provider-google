@@ -455,8 +455,6 @@ func resourceComputeGlobalForwardingRuleUpdate(d *schema.ResourceData, meta inte
 		if err != nil {
 			return err
 		}
-
-		d.SetPartial("target")
 	}
 
 	d.Partial(false)

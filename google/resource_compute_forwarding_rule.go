@@ -267,12 +267,6 @@ object.`,
 				Description: `The internal fully qualified service name for this Forwarding Rule.
 This field is only used for INTERNAL load balancing.`,
 			},
-			"ip_version": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Removed:  "ipVersion is not used for regional forwarding rules. Please remove this field if you are using it.",
-				Computed: true,
-			},
 			"project": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -571,8 +565,6 @@ func resourceComputeForwardingRuleUpdate(d *schema.ResourceData, meta interface{
 		if err != nil {
 			return err
 		}
-
-		d.SetPartial("target")
 	}
 	if d.HasChange("allow_global_access") {
 		obj := make(map[string]interface{})
@@ -607,8 +599,6 @@ func resourceComputeForwardingRuleUpdate(d *schema.ResourceData, meta interface{
 		if err != nil {
 			return err
 		}
-
-		d.SetPartial("allow_global_access")
 	}
 
 	d.Partial(false)

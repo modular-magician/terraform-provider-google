@@ -275,8 +275,6 @@ func resourceComputeNodeGroupUpdate(d *schema.ResourceData, meta interface{}) er
 		if err != nil {
 			return err
 		}
-
-		d.SetPartial("node_template")
 	}
 
 	d.Partial(false)

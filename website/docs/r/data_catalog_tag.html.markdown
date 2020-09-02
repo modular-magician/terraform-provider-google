@@ -331,6 +331,80 @@ resource "google_data_catalog_tag" "second-tag" {
   column = "first_name"
 }
 ```
+<div class = "oics-button" style="float: right; margin: 0 0 -15px">
+  <a href="https://console.cloud.google.com/cloudshell/open?cloudshell_git_repo=https%3A%2F%2Fgithub.com%2Fterraform-google-modules%2Fdocs-examples.git&cloudshell_working_dir=data_catalog_entry_tag_false&cloudshell_image=gcr.io%2Fgraphite-cloud-shell-images%2Fterraform%3Alatest&open_in_editor=main.tf&cloudshell_print=.%2Fmotd&cloudshell_tutorial=.%2Ftutorial.md" target="_blank">
+    <img alt="Open in Cloud Shell" src="//gstatic.com/cloudssh/images/open-btn.svg" style="max-height: 44px; margin: 32px auto; max-width: 100%;">
+  </a>
+</div>
+## Example Usage - Data Catalog Entry Tag False
+
+
+```hcl
+resource "google_data_catalog_entry" "entry" {
+  entry_group = google_data_catalog_entry_group.entry_group.id
+  entry_id = "my_entry"
+
+  user_specified_type = "my_custom_type"
+  user_specified_system = "SomethingExternal"
+}
+
+resource "google_data_catalog_entry_group" "entry_group" {
+  entry_group_id = "my_entry_group"
+}
+
+resource "google_data_catalog_tag_template" "tag_template" {
+  tag_template_id = "my_template"
+  region = "us-central1"
+  display_name = "Demo Tag Template"
+
+  fields {
+    field_id = "source"
+    display_name = "test boolean value"
+    type {
+      primitive_type = "BOOL"
+    }
+    is_required = true
+  }
+
+  fields {
+    field_id = "num_rows"
+    display_name = "Number of rows in the data asset"
+    type {
+      primitive_type = "DOUBLE"
+    }
+  }
+
+  fields {
+    field_id = "pii_type"
+    display_name = "PII type"
+    type {
+      enum_type {
+        allowed_values {
+          display_name = "EMAIL"
+        }
+        allowed_values {
+          display_name = "SOCIAL SECURITY NUMBER"
+        }
+        allowed_values {
+          display_name = "NONE"
+        }
+      }
+    }
+  }
+
+  force_delete = "false"
+}
+
+resource "google_data_catalog_tag" "basic_tag" {
+  parent   = google_data_catalog_entry.entry.id
+  template = google_data_catalog_tag_template.tag_template.id
+
+  fields {
+    field_name   = "source"
+    bool_value = false
+  }
+}
+```
 
 ## Argument Reference
 

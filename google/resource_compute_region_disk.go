@@ -537,9 +537,6 @@ func resourceComputeRegionDiskUpdate(d *schema.ResourceData, meta interface{}) e
 		if err != nil {
 			return err
 		}
-
-		d.SetPartial("label_fingerprint")
-		d.SetPartial("labels")
 	}
 	if d.HasChange("size") {
 		obj := make(map[string]interface{})
@@ -574,8 +571,6 @@ func resourceComputeRegionDiskUpdate(d *schema.ResourceData, meta interface{}) e
 		if err != nil {
 			return err
 		}
-
-		d.SetPartial("size")
 	}
 
 	d.Partial(false)

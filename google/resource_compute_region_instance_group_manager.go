@@ -382,7 +382,14 @@ func waitForInstancesRefreshFunc(f getInstanceManagerFunc, d *schema.ResourceDat
 }
 
 func resourceComputeRegionInstanceGroupManagerRead(d *schema.ResourceData, meta interface{}) error {
+	var m providerMeta
+
+	err := d.GetProviderMeta(&m)
+	if err != nil {
+		return err
+	}
 	config := meta.(*Config)
+	config.clientComputeBeta.UserAgent = fmt.Sprintf("%s %s", config.clientComputeBeta.UserAgent, m.ModuleName)
 	manager, err := getRegionalManager(d, meta)
 	if err != nil {
 		return err
@@ -461,7 +468,14 @@ func resourceComputeRegionInstanceGroupManagerRead(d *schema.ResourceData, meta 
 }
 
 func resourceComputeRegionInstanceGroupManagerUpdate(d *schema.ResourceData, meta interface{}) error {
+	var m providerMeta
+
+	err := d.GetProviderMeta(&m)
+	if err != nil {
+		return err
+	}
 	config := meta.(*Config)
+	config.clientComputeBeta.UserAgent = fmt.Sprintf("%s %s", config.clientComputeBeta.UserAgent, m.ModuleName)
 
 	project, err := getProject(d, config)
 	if err != nil {
@@ -557,7 +571,14 @@ func resourceComputeRegionInstanceGroupManagerUpdate(d *schema.ResourceData, met
 }
 
 func resourceComputeRegionInstanceGroupManagerDelete(d *schema.ResourceData, meta interface{}) error {
+	var m providerMeta
+
+	err := d.GetProviderMeta(&m)
+	if err != nil {
+		return err
+	}
 	config := meta.(*Config)
+	config.clientComputeBeta.UserAgent = fmt.Sprintf("%s %s", config.clientComputeBeta.UserAgent, m.ModuleName)
 
 	project, err := getProject(d, config)
 	if err != nil {

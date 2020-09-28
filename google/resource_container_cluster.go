@@ -980,14 +980,12 @@ func resourceNodeConfigEmptyGuestAccelerator(_ context.Context, diff *schema.Res
 }
 
 func resourceContainerClusterCreate(d *schema.ResourceData, meta interface{}) error {
-	var m providerMeta
-
-	err := d.GetProviderMeta(&m)
+	config := meta.(*Config)
+	userAgent, err := generateUserAgentString(d, config.userAgent)
 	if err != nil {
 		return err
 	}
-	config := meta.(*Config)
-	config.clientContainerBeta.UserAgent = fmt.Sprintf("%s %s", config.clientContainerBeta.UserAgent, m.ModuleName)
+	config.clientContainerBeta.UserAgent = userAgent
 
 	project, err := getProject(d, config)
 	if err != nil {
@@ -1232,6 +1230,11 @@ func resourceContainerClusterCreate(d *schema.ResourceData, meta interface{}) er
 
 func resourceContainerClusterRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
+	userAgent, err := generateUserAgentString(d, config.userAgent)
+	if err != nil {
+		return err
+	}
+	config.clientContainerBeta.UserAgent = userAgent
 
 	project, err := getProject(d, config)
 	if err != nil {
@@ -1389,7 +1392,7 @@ func resourceContainerClusterRead(d *schema.ResourceData, meta interface{}) erro
 		return err
 	}
 
-	igUrls, err := getInstanceGroupUrlsFromManagerUrls(config, cluster.InstanceGroupUrls)
+	igUrls, err := getInstanceGroupUrlsFromManagerUrls(config, userAgent, cluster.InstanceGroupUrls)
 	if err != nil {
 		return err
 	}
@@ -1425,6 +1428,11 @@ func resourceContainerClusterRead(d *schema.ResourceData, meta interface{}) erro
 
 func resourceContainerClusterUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
+	userAgent, err := generateUserAgentString(d, config.userAgent)
+	if err != nil {
+		return err
+	}
+	config.clientContainerBeta.UserAgent = userAgent
 
 	project, err := getProject(d, config)
 	if err != nil {
@@ -2066,6 +2074,11 @@ func resourceContainerClusterUpdate(d *schema.ResourceData, meta interface{}) er
 
 func resourceContainerClusterDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
+	userAgent, err := generateUserAgentString(d, config.userAgent)
+	if err != nil {
+		return err
+	}
+	config.clientContainerBeta.UserAgent = userAgent
 
 	project, err := getProject(d, config)
 	if err != nil {
@@ -2207,7 +2220,7 @@ func containerClusterAwaitRestingState(config *Config, project, location, cluste
 // container engine's API returns the instance group manager's URL instead of the instance
 // group's URL in its responses, while the field is named as if it should have been the group
 // and not the manager. This shim should be supported for backwards compatibility reasons.
-func getInstanceGroupUrlsFromManagerUrls(config *Config, igmUrls []string) ([]string, error) {
+func getInstanceGroupUrlsFromManagerUrls(config *Config, userAgent string, igmUrls []string) ([]string, error) {
 	instanceGroupURLs := make([]string, 0, len(igmUrls))
 	for _, u := range igmUrls {
 		if !instanceGroupManagerURL.MatchString(u) {
@@ -2215,7 +2228,7 @@ func getInstanceGroupUrlsFromManagerUrls(config *Config, igmUrls []string) ([]st
 			continue
 		}
 		matches := instanceGroupManagerURL.FindStringSubmatch(u)
-		instanceGroupManager, err := config.clientCompute.InstanceGroupManagers.Get(matches[1], matches[2], matches[3]).Do()
+		instanceGroupManager, err := config.NewComputeClient(userAgent).InstanceGroupManagers.Get(matches[1], matches[2], matches[3]).Do()
 		if isGoogleApiErrorWithCode(err, 404) {
 			// The IGM URL is stale; don't include it
 			continue

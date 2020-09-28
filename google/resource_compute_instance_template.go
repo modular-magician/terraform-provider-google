@@ -595,7 +595,7 @@ func resourceComputeInstanceTemplateSourceImageCustomizeDiff(_ context.Context, 
 			if err != nil {
 				return err
 			}
-			oldResolved, err := resolveImage(config, project, old.(string))
+			oldResolved, err := resolveImage(config, project, old.(string), config.userAgent)
 			if err != nil {
 				return err
 			}
@@ -603,7 +603,7 @@ func resourceComputeInstanceTemplateSourceImageCustomizeDiff(_ context.Context, 
 			if err != nil {
 				return err
 			}
-			newResolved, err := resolveImage(config, project, new.(string))
+			newResolved, err := resolveImage(config, project, new.(string), config.userAgent)
 			if err != nil {
 				return err
 			}
@@ -671,6 +671,11 @@ func buildDisks(d *schema.ResourceData, config *Config) ([]*computeBeta.Attached
 		return nil, err
 	}
 
+	userAgent, err := generateUserAgentString(d, config.userAgent)
+	if err != nil {
+		return nil, err
+	}
+
 	disksCount := d.Get("disk.#").(int)
 
 	disks := make([]*computeBeta.AttachedDisk, 0, disksCount)
@@ -724,7 +729,7 @@ func buildDisks(d *schema.ResourceData, config *Config) ([]*computeBeta.Attached
 
 			if v, ok := d.GetOk(prefix + ".source_image"); ok {
 				imageName := v.(string)
-				imageUrl, err := resolveImage(config, project, imageName)
+				imageUrl, err := resolveImage(config, project, imageName, userAgent)
 				if err != nil {
 					return nil, fmt.Errorf(
 						"Error resolving image name '%s': %s",
@@ -787,14 +792,11 @@ func expandInstanceTemplateGuestAccelerators(d TerraformResourceData, config *Co
 }
 
 func resourceComputeInstanceTemplateCreate(d *schema.ResourceData, meta interface{}) error {
-	var m providerMeta
-
-	err := d.GetProviderMeta(&m)
+	config := meta.(*Config)
+	userAgent, err := generateUserAgentString(d, config.userAgent)
 	if err != nil {
 		return err
 	}
-	config := meta.(*Config)
-	config.clientComputeBeta.UserAgent = fmt.Sprintf("%s %s", config.clientComputeBeta.UserAgent, m.ModuleName)
 
 	project, err := getProject(d, config)
 	if err != nil {
@@ -863,7 +865,7 @@ func resourceComputeInstanceTemplateCreate(d *schema.ResourceData, meta interfac
 	// Store the ID now
 	d.SetId(fmt.Sprintf("projects/%s/global/instanceTemplates/%s", project, instanceTemplate.Name))
 
-	err = computeOperationWaitTime(config, op, project, "Creating Instance Template", d.Timeout(schema.TimeoutCreate))
+	err = computeOperationWaitTime(config, op, project, "Creating Instance Template", userAgent, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return err
 	}
@@ -1084,6 +1086,11 @@ func flattenDisks(disks []*computeBeta.AttachedDisk, d *schema.ResourceData, def
 
 func resourceComputeInstanceTemplateRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
+	userAgent, err := generateUserAgentString(d, config.userAgent)
+	if err != nil {
+		return err
+	}
+	config.clientComputeBeta.UserAgent = userAgent
 	project, err := getProject(d, config)
 	if err != nil {
 		return err
@@ -1222,6 +1229,10 @@ func resourceComputeInstanceTemplateRead(d *schema.ResourceData, meta interface{
 
 func resourceComputeInstanceTemplateDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
+	userAgent, err := generateUserAgentString(d, config.userAgent)
+	if err != nil {
+		return err
+	}
 
 	project, err := getProject(d, config)
 	if err != nil {
@@ -1229,13 +1240,13 @@ func resourceComputeInstanceTemplateDelete(d *schema.ResourceData, meta interfac
 	}
 
 	splits := strings.Split(d.Id(), "/")
-	op, err := config.clientCompute.InstanceTemplates.Delete(
+	op, err := config.NewComputeClient(userAgent).InstanceTemplates.Delete(
 		project, splits[len(splits)-1]).Do()
 	if err != nil {
 		return fmt.Errorf("Error deleting instance template: %s", err)
 	}
 
-	err = computeOperationWaitTime(config, op, project, "Deleting Instance Template", d.Timeout(schema.TimeoutDelete))
+	err = computeOperationWaitTime(config, op, project, "Deleting Instance Template", userAgent, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return err
 	}

@@ -19,7 +19,7 @@ var CloudBillingCustomEndpointEntry = &schema.Schema{
 	}, CloudBillingDefaultBasePath),
 }
 
-var ComposerDefaultBasePath = "https://composer.googleapis.com/v1beta1/"
+var ComposerDefaultBasePath = "https://composer.googleapis.com/v1/"
 var ComposerCustomEndpointEntryKey = "composer_custom_endpoint"
 var ComposerCustomEndpointEntry = &schema.Schema{
 	Type:         schema.TypeString,

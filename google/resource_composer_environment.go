@@ -10,7 +10,8 @@ import (
 	"github.com/hashicorp/go-version"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	composer "google.golang.org/api/composer/v1beta1"
+	"google.golang.org/api/composer/v1"
+	composer "google.golang.org/api/composer/v1"
 )
 
 const (
@@ -578,19 +579,6 @@ func resourceComposerEnvironmentUpdate(d *schema.ResourceData, meta interface{})
 				patchObj.Config.NodeCount = config.NodeCount
 			}
 			err = resourceComposerEnvironmentPatchField("config.nodeCount", userAgent, patchObj, d, tfConfig)
-			if err != nil {
-				return err
-			}
-		}
-
-		// If web_server_network_access_control has more fields added it may require changes here.
-		// This is scoped specifically to allowed_ip_range due to https://github.com/hashicorp/terraform-plugin-sdk/issues/98
-		if d.HasChange("config.0.web_server_network_access_control.0.allowed_ip_range") {
-			patchObj := &composer.Environment{Config: &composer.EnvironmentConfig{}}
-			if config != nil {
-				patchObj.Config.WebServerNetworkAccessControl = config.WebServerNetworkAccessControl
-			}
-			err = resourceComposerEnvironmentPatchField("config.webServerNetworkAccessControl", userAgent, patchObj, d, tfConfig)
 			if err != nil {
 				return err
 			}

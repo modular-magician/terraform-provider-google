@@ -847,11 +847,11 @@ func TestAccComputeInstance_soleTenantNodeAffinities(t *testing.T) {
 			{
 				Config: testAccComputeInstance_soleTenantNodeAffinities(instanceName, templateName, groupName),
 			},
-			computeInstanceImportStep("us-central1-a", instanceName, []string{}),
+			computeInstanceImportStep("us-central1-a", instanceName, []string{"allow_stopping_for_update"}),
 			{
 				Config: testAccComputeInstance_soleTenantNodeAffinitiesUpdated(instanceName, templateName, groupName),
 			},
-			computeInstanceImportStep("us-central1-a", instanceName, []string{}),
+			computeInstanceImportStep("us-central1-a", instanceName, []string{"allow_stopping_for_update"}),
 		},
 	})
 }
@@ -4472,6 +4472,7 @@ resource "google_compute_instance" "foobar" {
   name         = "%s"
   machine_type = "n1-standard-8"   // can't be e2 because of sole tenancy
   zone         = "us-central1-a"
+  allow_stopping_for_update = true
 
   boot_disk {
     initialize_params {
@@ -4481,27 +4482,6 @@ resource "google_compute_instance" "foobar" {
 
   network_interface {
     network = "default"
-  }
-
-  scheduling {
-    node_affinities {
-      key      = "tfacc"
-      operator = "IN"
-      values   = ["test"]
-    }
-
-    node_affinities {
-      key      = "tfacc"
-      operator = "NOT_IN"
-      values   = ["not_here"]
-    }
-
-    node_affinities {
-      key      = "compute.googleapis.com/node-group-name"
-      operator = "IN"
-      values   = [google_compute_node_group.nodes.name]
-    }
-
   }
 }
 
@@ -4538,6 +4518,7 @@ resource "google_compute_instance" "foobar" {
   name         = "%s"
   machine_type = "n1-standard-8"   // can't be e2 because of sole tenancy
   zone         = "us-central1-a"
+  allow_stopping_for_update = true
 
   boot_disk {
     initialize_params {

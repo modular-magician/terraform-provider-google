@@ -138,6 +138,10 @@ The following arguments are supported:
   URL of the disk type resource describing which disk type to use to
   create the disk. Provide this when creating the disk.
 
+* `provisioned_iops` -
+  (Optional, [Beta](https://terraform.io/docs/providers/google/guides/provider_versions.html))
+  Indicates how many IOPS must be provisioned for the disk.
+
 * `region` -
   (Optional)
   A reference to the region where the disk resides.

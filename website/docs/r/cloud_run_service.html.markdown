@@ -100,6 +100,9 @@ resource "google_cloud_run_service" "default" {
     }
   }
   autogenerate_revision_name = true
+  lifecycle{
+	  ignore_changes = [template.0.metadata.0.annotations]
+  }
 }
 
 resource "google_sql_database_instance" "instance" {

@@ -1384,6 +1384,48 @@ func TestAccContainerCluster_withShieldedNodes(t *testing.T) {
 	})
 }
 
+func TestAccContainerCluster_withAutopilot(t *testing.T) {
+	t.Parallel()
+
+	containerNetName := fmt.Sprintf("tf-test-container-net-%s", randString(t, 10))
+	clusterName := fmt.Sprintf("tf-test-cluster-%s", randString(t, 10))
+
+	vcrTest(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckContainerClusterDestroyProducer(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccContainerCluster_withAutopilot(containerNetName, clusterName, true),
+			},
+			{
+				ResourceName:            "google_container_cluster.with_autopilot",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"min_master_version"},
+			},
+		},
+	})
+}
+
+func TestAccContainerCluster_errorAutopilotLocation(t *testing.T) {
+	t.Parallel()
+
+	clusterName := fmt.Sprintf("tf-test-cluster-%s", randString(t, 10))
+
+	vcrTest(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckContainerClusterDestroyProducer(t),
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccContainerCluster_withInvalidAutopilotLocation(clusterName, "us-central1-a"),
+				ExpectError: regexp.MustCompile(`Autopilot clusters must be regional clusters.`),
+			},
+		},
+	})
+}
+
 func TestAccContainerCluster_withWorkloadIdentityConfig(t *testing.T) {
 	t.Parallel()
 
@@ -2167,6 +2209,7 @@ resource "google_container_cluster" "with_authenticator_groups" {
     security_group = "gke-security-groups-test@%s"
   }
 
+  networking_mode = "VPC_NATIVE"
   ip_allocation_policy {
     cluster_secondary_range_name  = google_compute_subnetwork.container_subnetwork.secondary_ip_range[0].range_name
     services_secondary_range_name = google_compute_subnetwork.container_subnetwork.secondary_ip_range[1].range_name
@@ -3004,6 +3047,7 @@ resource "google_container_cluster" "with_ip_allocation_policy" {
   network    = google_compute_network.container_network.name
   subnetwork = google_compute_subnetwork.container_subnetwork.name
 
+  networking_mode = "VPC_NATIVE"
   initial_node_count = 1
   ip_allocation_policy {
     cluster_secondary_range_name  = "pods"
@@ -3036,6 +3080,7 @@ resource "google_container_cluster" "with_ip_allocation_policy" {
 
   initial_node_count = 1
 
+  networking_mode = "VPC_NATIVE"
   ip_allocation_policy {
     cluster_ipv4_cidr_block  = "10.0.0.0/16"
     services_ipv4_cidr_block = "10.1.0.0/16"
@@ -3067,6 +3112,7 @@ resource "google_container_cluster" "with_ip_allocation_policy" {
 
   initial_node_count = 1
 
+  networking_mode = "VPC_NATIVE"
   ip_allocation_policy {
     cluster_ipv4_cidr_block  = "/16"
     services_ipv4_cidr_block = "/22"
@@ -3147,6 +3193,7 @@ resource "google_container_cluster" "with_private_cluster" {
   location           = "us-central1-a"
   initial_node_count = 1
 
+  networking_mode = "VPC_NATIVE"
   network    = google_compute_network.container_network.name
   subnetwork = google_compute_subnetwork.container_subnetwork.name
 
@@ -3195,6 +3242,7 @@ resource "google_container_cluster" "with_private_cluster" {
   location           = "us-central1-a"
   initial_node_count = 1
 
+  networking_mode = "VPC_NATIVE"
   default_snat_status {
     disabled = true
   }
@@ -3296,6 +3344,7 @@ resource "google_container_cluster" "cidr_error_preempt" {
   name     = "%s"
   location = "us-central1-a"
 
+  networking_mode = "VPC_NATIVE"
   network    = google_compute_network.container_network.name
   subnetwork = google_compute_subnetwork.container_subnetwork.name
 
@@ -3322,6 +3371,7 @@ resource "google_container_cluster" "cidr_error_overlap" {
 
   initial_node_count = 1
 
+  networking_mode = "VPC_NATIVE"
   ip_allocation_policy {
     cluster_ipv4_cidr_block  = "10.0.0.0/16"
     services_ipv4_cidr_block = "10.1.0.0/16"
@@ -3421,6 +3471,7 @@ resource "google_container_cluster" "with_private_cluster" {
   location           = "us-central1-a"
   initial_node_count = 1
 
+  networking_mode = "VPC_NATIVE"
   network    = google_compute_network.container_network.name
   subnetwork = google_compute_subnetwork.container_subnetwork.name
 
@@ -3470,4 +3521,69 @@ resource "google_container_cluster" "primary" {
   }
 }
 `, name)
+}
+
+func testAccContainerCluster_withAutopilot(containerNetName string, clusterName string, enabled bool) string {
+	return fmt.Sprintf(`
+resource "google_compute_network" "container_network" {
+	name                    = "%s"
+	auto_create_subnetworks = false
+}
+
+resource "google_compute_subnetwork" "container_subnetwork" {
+	name                     = google_compute_network.container_network.name
+	network                  = google_compute_network.container_network.name
+	ip_cidr_range            = "10.0.36.0/24"
+	region                   = "us-central1"
+	private_ip_google_access = true
+  
+	secondary_ip_range {
+	  range_name    = "pod"
+	  ip_cidr_range = "10.0.0.0/19"
+	}
+  
+	secondary_ip_range {
+	  range_name    = "svc"
+	  ip_cidr_range = "10.0.32.0/22"
+	}
+}
+	
+data "google_container_engine_versions" "central1a" {
+	location = "us-central1-a"
+}
+	
+resource "google_container_cluster" "with_autopilot" {
+	name               = "%s"
+	location           = "us-central1"
+	enable_autopilot   = %v
+	min_master_version = "latest"
+	release_channel {
+		channel = "RAPID"
+	}
+	network       = google_compute_network.container_network.name
+	subnetwork    = google_compute_subnetwork.container_subnetwork.name
+	ip_allocation_policy {
+		cluster_secondary_range_name  = google_compute_subnetwork.container_subnetwork.secondary_ip_range[0].range_name
+		services_secondary_range_name = google_compute_subnetwork.container_subnetwork.secondary_ip_range[1].range_name
+	}
+	addons_config {
+		horizontal_pod_autoscaling {
+			disabled = false
+		}
+	}
+	vertical_pod_autoscaling {
+		enabled = true
+	}
+}
+`, containerNetName, clusterName, enabled)
+}
+
+func testAccContainerCluster_withInvalidAutopilotLocation(clusterName string, location string) string {
+	return fmt.Sprintf(`
+resource "google_container_cluster" "with_invalid_location" {
+  name               = "%s"
+  location           = "%s"
+  enable_autopilot	 = true
+}
+`, clusterName, location)
 }

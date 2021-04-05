@@ -6,9 +6,8 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/hashicorp/terraform/helper/acctest"
-	"github.com/hashicorp/terraform/helper/resource"
-	"github.com/hashicorp/terraform/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 const DEFAULT_KMS_TEST_LOCATION = "us-central1"
@@ -17,11 +16,11 @@ func TestAccKmsKeyRingIamBinding(t *testing.T) {
 	t.Parallel()
 
 	orgId := getTestOrgFromEnv(t)
-	projectId := acctest.RandomWithPrefix("tf-test")
+	projectId := fmt.Sprintf("tf-test-%d", randInt(t))
 	billingAccount := getTestBillingAccountFromEnv(t)
-	account := acctest.RandomWithPrefix("tf-test")
+	account := fmt.Sprintf("tf-test-%d", randInt(t))
 	roleId := "roles/cloudkms.cryptoKeyDecrypter"
-	keyRingName := fmt.Sprintf("tf-test-%s", acctest.RandString(10))
+	keyRingName := fmt.Sprintf("tf-test-%s", randString(t, 10))
 
 	keyRingId := &kmsKeyRingId{
 		Project:  projectId,
@@ -29,24 +28,36 @@ func TestAccKmsKeyRingIamBinding(t *testing.T) {
 		Name:     keyRingName,
 	}
 
-	resource.Test(t, resource.TestCase{
+	vcrTest(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
 				// Test Iam Binding creation
 				Config: testAccKmsKeyRingIamBinding_basic(projectId, orgId, billingAccount, account, keyRingName, roleId),
-				Check: testAccCheckGoogleKmsKeyRingIam(keyRingId.keyRingId(), roleId, []string{
+				Check: testAccCheckGoogleKmsKeyRingIam(t, keyRingId.keyRingId(), roleId, []string{
 					fmt.Sprintf("serviceAccount:%s@%s.iam.gserviceaccount.com", account, projectId),
 				}),
 			},
 			{
+				ResourceName:      "google_kms_key_ring_iam_binding.foo",
+				ImportStateId:     fmt.Sprintf("%s %s", keyRingId.terraformId(), roleId),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			{
 				// Test Iam Binding update
 				Config: testAccKmsKeyRingIamBinding_update(projectId, orgId, billingAccount, account, keyRingName, roleId),
-				Check: testAccCheckGoogleKmsKeyRingIam(keyRingId.keyRingId(), roleId, []string{
+				Check: testAccCheckGoogleKmsKeyRingIam(t, keyRingId.keyRingId(), roleId, []string{
 					fmt.Sprintf("serviceAccount:%s@%s.iam.gserviceaccount.com", account, projectId),
 					fmt.Sprintf("serviceAccount:%s-2@%s.iam.gserviceaccount.com", account, projectId),
 				}),
+			},
+			{
+				ResourceName:      "google_kms_key_ring_iam_binding.foo",
+				ImportStateId:     fmt.Sprintf("%s %s", keyRingId.terraformId(), roleId),
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -56,11 +67,11 @@ func TestAccKmsKeyRingIamMember(t *testing.T) {
 	t.Parallel()
 
 	orgId := getTestOrgFromEnv(t)
-	projectId := acctest.RandomWithPrefix("tf-test")
+	projectId := fmt.Sprintf("tf-test-%d", randInt(t))
 	billingAccount := getTestBillingAccountFromEnv(t)
-	account := acctest.RandomWithPrefix("tf-test")
+	account := fmt.Sprintf("tf-test-%d", randInt(t))
 	roleId := "roles/cloudkms.cryptoKeyEncrypter"
-	keyRingName := fmt.Sprintf("tf-test-%s", acctest.RandString(10))
+	keyRingName := fmt.Sprintf("tf-test-%s", randString(t, 10))
 
 	keyRingId := &kmsKeyRingId{
 		Project:  projectId,
@@ -68,16 +79,22 @@ func TestAccKmsKeyRingIamMember(t *testing.T) {
 		Name:     keyRingName,
 	}
 
-	resource.Test(t, resource.TestCase{
+	vcrTest(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
 				// Test Iam Member creation (no update for member, no need to test)
 				Config: testAccKmsKeyRingIamMember_basic(projectId, orgId, billingAccount, account, keyRingName, roleId),
-				Check: testAccCheckGoogleKmsKeyRingIam(keyRingId.keyRingId(), roleId, []string{
+				Check: testAccCheckGoogleKmsKeyRingIam(t, keyRingId.keyRingId(), roleId, []string{
 					fmt.Sprintf("serviceAccount:%s@%s.iam.gserviceaccount.com", account, projectId),
 				}),
+			},
+			{
+				ResourceName:      "google_kms_key_ring_iam_member.foo",
+				ImportStateId:     fmt.Sprintf("%s %s serviceAccount:%s@%s.iam.gserviceaccount.com", keyRingId.terraformId(), roleId, account, projectId),
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -87,11 +104,11 @@ func TestAccKmsKeyRingIamPolicy(t *testing.T) {
 	t.Parallel()
 
 	orgId := getTestOrgFromEnv(t)
-	projectId := acctest.RandomWithPrefix("tf-test")
+	projectId := fmt.Sprintf("tf-test-%d", randInt(t))
 	billingAccount := getTestBillingAccountFromEnv(t)
-	account := acctest.RandomWithPrefix("tf-test")
+	account := fmt.Sprintf("tf-test-%d", randInt(t))
 	roleId := "roles/cloudkms.cryptoKeyEncrypter"
-	keyRingName := fmt.Sprintf("tf-test-%s", acctest.RandString(10))
+	keyRingName := fmt.Sprintf("tf-test-%s", randString(t, 10))
 
 	keyRingId := &kmsKeyRingId{
 		Project:  projectId,
@@ -99,24 +116,30 @@ func TestAccKmsKeyRingIamPolicy(t *testing.T) {
 		Name:     keyRingName,
 	}
 
-	resource.Test(t, resource.TestCase{
+	vcrTest(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccKmsKeyRingIamPolicy_basic(projectId, orgId, billingAccount, account, keyRingName, roleId),
-				Check: testAccCheckGoogleKmsKeyRingIam(keyRingId.keyRingId(), roleId, []string{
+				Check: testAccCheckGoogleKmsKeyRingIam(t, keyRingId.keyRingId(), roleId, []string{
 					fmt.Sprintf("serviceAccount:%s@%s.iam.gserviceaccount.com", account, projectId),
 				}),
+			},
+			{
+				ResourceName:      "google_kms_key_ring_iam_policy.foo",
+				ImportStateId:     keyRingId.terraformId(),
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
 }
 
-func testAccCheckGoogleKmsKeyRingIam(keyRingId, role string, members []string) resource.TestCheckFunc {
+func testAccCheckGoogleKmsKeyRingIam(t *testing.T, keyRingId, role string, members []string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		config := testAccProvider.Meta().(*Config)
-		p, err := config.clientKms.Projects.Locations.KeyRings.GetIamPolicy(keyRingId).Do()
+		config := googleProviderConfig(t)
+		p, err := config.NewKmsClient(config.userAgent).Projects.Locations.KeyRings.GetIamPolicy(keyRingId).Do()
 		if err != nil {
 			return err
 		}
@@ -149,29 +172,30 @@ resource "google_project" "test_project" {
   billing_account = "%s"
 }
 
-resource "google_project_services" "test_project" {
-  project = "${google_project.test_project.project_id}"
+resource "google_project_service" "kms" {
+  project = google_project.test_project.project_id
+  service = "cloudkms.googleapis.com"
+}
 
-  services = [
-     "cloudkms.googleapis.com",
-     "iam.googleapis.com",
-  ]
+resource "google_project_service" "iam" {
+  project = google_project_service.kms.project
+  service = "iam.googleapis.com"
 }
 
 resource "google_service_account" "test_account" {
-  project      = "${google_project_services.test_project.project}"
+  project      = google_project_service.iam.project
   account_id   = "%s"
-  display_name = "Iam Testing Account"
+  display_name = "Kms Key Ring Iam Testing Account"
 }
 
 resource "google_kms_key_ring" "key_ring" {
-  project      = "${google_project_services.test_project.project}"
+  project  = google_project_service.iam.project
   location = "us-central1"
   name     = "%s"
 }
 
 resource "google_kms_key_ring_iam_binding" "foo" {
-  key_ring_id = "${google_kms_key_ring.key_ring.id}"
+  key_ring_id = google_kms_key_ring.key_ring.id
   role        = "%s"
   members     = ["serviceAccount:${google_service_account.test_account.email}"]
 }
@@ -187,39 +211,40 @@ resource "google_project" "test_project" {
   billing_account = "%s"
 }
 
-resource "google_project_services" "test_project" {
-  project = "${google_project.test_project.project_id}"
+resource "google_project_service" "kms" {
+  project = google_project.test_project.project_id
+  service = "cloudkms.googleapis.com"
+}
 
-  services = [
-     "cloudkms.googleapis.com",
-     "iam.googleapis.com",
-  ]
+resource "google_project_service" "iam" {
+  project = google_project_service.kms.project
+  service = "iam.googleapis.com"
 }
 
 resource "google_service_account" "test_account" {
-  project      = "${google_project_services.test_project.project}"
+  project      = google_project_service.iam.project
   account_id   = "%s"
-  display_name = "Iam Testing Account"
+  display_name = "Kms Key Ring Iam Testing Account"
 }
 
 resource "google_service_account" "test_account_2" {
-  project      = "${google_project_services.test_project.project}"
+  project      = google_project_service.iam.project
   account_id   = "%s-2"
-  display_name = "Iam Testing Account"
+  display_name = "Kms Key Ring Iam Testing Account"
 }
 
 resource "google_kms_key_ring" "key_ring" {
-  project  = "${google_project_services.test_project.project}"
+  project  = google_project_service.iam.project
   location = "%s"
   name     = "%s"
 }
 
 resource "google_kms_key_ring_iam_binding" "foo" {
-  key_ring_id  = "${google_kms_key_ring.key_ring.id}"
-  role         = "%s"
-  members      = [
+  key_ring_id = google_kms_key_ring.key_ring.id
+  role        = "%s"
+  members = [
     "serviceAccount:${google_service_account.test_account.email}",
-    "serviceAccount:${google_service_account.test_account_2.email}"
+    "serviceAccount:${google_service_account.test_account_2.email}",
   ]
 }
 `, projectId, orgId, billingAccount, account, account, DEFAULT_KMS_TEST_LOCATION, keyRingName, roleId)
@@ -234,29 +259,30 @@ resource "google_project" "test_project" {
   billing_account = "%s"
 }
 
-resource "google_project_services" "test_project" {
-  project = "${google_project.test_project.project_id}"
+resource "google_project_service" "kms" {
+  project = google_project.test_project.project_id
+  service = "cloudkms.googleapis.com"
+}
 
-  services = [
-     "cloudkms.googleapis.com",
-     "iam.googleapis.com",
-  ]
+resource "google_project_service" "iam" {
+  project = google_project_service.kms.project
+  service = "iam.googleapis.com"
 }
 
 resource "google_service_account" "test_account" {
-  project      = "${google_project_services.test_project.project}"
+  project      = google_project_service.iam.project
   account_id   = "%s"
-  display_name = "Iam Testing Account"
+  display_name = "Kms Key Ring Iam Testing Account"
 }
 
 resource "google_kms_key_ring" "key_ring" {
-  project  = "${google_project_services.test_project.project}"
+  project  = google_project_service.iam.project
   location = "%s"
   name     = "%s"
 }
 
 resource "google_kms_key_ring_iam_member" "foo" {
-  key_ring_id = "${google_kms_key_ring.key_ring.id}"
+  key_ring_id = google_kms_key_ring.key_ring.id
   role        = "%s"
   member      = "serviceAccount:${google_service_account.test_account.email}"
 }
@@ -272,38 +298,39 @@ resource "google_project" "test_project" {
   billing_account = "%s"
 }
 
-resource "google_project_services" "test_project" {
-  project = "${google_project.test_project.project_id}"
+resource "google_project_service" "kms" {
+  project = google_project.test_project.project_id
+  service = "cloudkms.googleapis.com"
+}
 
-  services = [
-     "cloudkms.googleapis.com",
-     "iam.googleapis.com",
-  ]
+resource "google_project_service" "iam" {
+  project = google_project_service.kms.project
+  service = "iam.googleapis.com"
 }
 
 resource "google_service_account" "test_account" {
-  project      = "${google_project_services.test_project.project}"
+  project      = google_project_service.iam.project
   account_id   = "%s"
-  display_name = "Iam Testing Account"
+  display_name = "Kms Key Ring Iam Testing Account"
 }
 
 resource "google_kms_key_ring" "key_ring" {
-  project  = "${google_project_services.test_project.project}"
+  project  = google_project_service.iam.project
   location = "%s"
   name     = "%s"
 }
 
 data "google_iam_policy" "foo" {
-	binding {
-		role = "%s"
+  binding {
+    role = "%s"
 
-		members = ["serviceAccount:${google_service_account.test_account.email}"]
-	}
+    members = ["serviceAccount:${google_service_account.test_account.email}"]
+  }
 }
 
 resource "google_kms_key_ring_iam_policy" "foo" {
-  key_ring_id = "${google_kms_key_ring.key_ring.id}"
-  policy_data = "${data.google_iam_policy.foo.policy_data}"
+  key_ring_id = google_kms_key_ring.key_ring.id
+  policy_data = data.google_iam_policy.foo.policy_data
 }
 `, projectId, orgId, billingAccount, account, DEFAULT_KMS_TEST_LOCATION, keyRingName, roleId)
 }

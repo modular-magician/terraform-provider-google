@@ -3,10 +3,13 @@ package google
 import (
 	"errors"
 	"fmt"
-	"github.com/hashicorp/terraform/helper/schema"
-	"google.golang.org/api/cloudresourcemanager/v1"
 	"log"
+	"regexp"
 	"strings"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"google.golang.org/api/cloudresourcemanager/v1"
 )
 
 var IamMemberBaseSchema = map[string]*schema.Schema{
@@ -16,9 +19,36 @@ var IamMemberBaseSchema = map[string]*schema.Schema{
 		ForceNew: true,
 	},
 	"member": {
-		Type:     schema.TypeString,
-		Required: true,
+		Type:             schema.TypeString,
+		Required:         true,
+		ForceNew:         true,
+		DiffSuppressFunc: caseDiffSuppress,
+		ValidateFunc:     validation.StringDoesNotMatch(regexp.MustCompile("^deleted:"), "Terraform does not support IAM members for deleted principals"),
+	},
+	"condition": {
+		Type:     schema.TypeList,
+		Optional: true,
+		MaxItems: 1,
 		ForceNew: true,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"expression": {
+					Type:     schema.TypeString,
+					Required: true,
+					ForceNew: true,
+				},
+				"title": {
+					Type:     schema.TypeString,
+					Required: true,
+					ForceNew: true,
+				},
+				"description": {
+					Type:     schema.TypeString,
+					Optional: true,
+					ForceNew: true,
+				},
+			},
+		},
 	},
 	"etag": {
 		Type:     schema.TypeString,
@@ -26,72 +56,145 @@ var IamMemberBaseSchema = map[string]*schema.Schema{
 	},
 }
 
-func iamMemberImport(resourceIdParser resourceIdParserFunc) schema.StateFunc {
+func iamMemberImport(newUpdaterFunc newResourceIamUpdaterFunc, resourceIdParser resourceIdParserFunc) schema.StateFunc {
 	return func(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 		if resourceIdParser == nil {
 			return nil, errors.New("Import not supported for this IAM resource.")
 		}
 		config := m.(*Config)
-		s := strings.Split(d.Id(), " ")
-		if len(s) != 3 {
+		s := strings.Fields(d.Id())
+		var id, role, member string
+		if len(s) < 3 {
 			d.SetId("")
-			return nil, fmt.Errorf("Wrong number of parts to Member id %s; expected 'resource_name role username'.", s)
+			return nil, fmt.Errorf("Wrong number of parts to Member id %s; expected 'resource_name role member [condition_title]'.", s)
 		}
-		id, role, member := s[0], s[1], s[2]
+
+		var conditionTitle string
+		if len(s) == 3 {
+			id, role, member = s[0], s[1], s[2]
+		} else {
+			// condition titles can have any characters in them, so re-join the split string
+			id, role, member, conditionTitle = s[0], s[1], s[2], strings.Join(s[3:], " ")
+		}
+
+		// Set the ID only to the first part so all IAM types can share the same resourceIdParserFunc.
 		d.SetId(id)
-		d.Set("role", role)
-		d.Set("member", member)
+		if err := d.Set("role", role); err != nil {
+			return nil, fmt.Errorf("Error setting role: %s", err)
+		}
+		if err := d.Set("member", strings.ToLower(member)); err != nil {
+			return nil, fmt.Errorf("Error setting member: %s", err)
+		}
+
 		err := resourceIdParser(d, config)
 		if err != nil {
 			return nil, err
 		}
+
+		// Set the ID again so that the ID matches the ID it would have if it had been created via TF.
+		// Use the current ID in case it changed in the resourceIdParserFunc.
+		d.SetId(d.Id() + "/" + role + "/" + strings.ToLower(member))
+
+		// Read the upstream policy so we can set the full condition.
+		updater, err := newUpdaterFunc(d, config)
+		if err != nil {
+			return nil, err
+		}
+		p, err := iamPolicyReadWithRetry(updater)
+		if err != nil {
+			return nil, err
+		}
+		var binding *cloudresourcemanager.Binding
+		for _, b := range p.Bindings {
+			if b.Role == role && conditionKeyFromCondition(b.Condition).Title == conditionTitle {
+				containsMember := false
+				for _, m := range b.Members {
+					if strings.ToLower(m) == strings.ToLower(member) {
+						containsMember = true
+					}
+				}
+				if !containsMember {
+					continue
+				}
+
+				if binding != nil {
+					return nil, fmt.Errorf("Cannot import IAM member with condition title %q, it matches multiple conditions", conditionTitle)
+				}
+				binding = b
+			}
+		}
+		if binding == nil {
+			return nil, fmt.Errorf("Cannot find binding for %q with role %q, member %q, and condition title %q", updater.DescribeResource(), role, member, conditionTitle)
+		}
+
+		if err := d.Set("condition", flattenIamCondition(binding.Condition)); err != nil {
+			return nil, fmt.Errorf("Error setting condition: %s", err)
+		}
+		if k := conditionKeyFromCondition(binding.Condition); !k.Empty() {
+			d.SetId(d.Id() + "/" + k.String())
+		}
+
 		return []*schema.ResourceData{d}, nil
 	}
 }
 
-func ResourceIamMember(parentSpecificSchema map[string]*schema.Schema, newUpdaterFunc newResourceIamUpdaterFunc) *schema.Resource {
-	return &schema.Resource{
-		Create: resourceIamMemberCreate(newUpdaterFunc),
-		Read:   resourceIamMemberRead(newUpdaterFunc),
-		Delete: resourceIamMemberDelete(newUpdaterFunc),
-
-		Schema: mergeSchemas(IamMemberBaseSchema, parentSpecificSchema),
-	}
+func ResourceIamMember(parentSpecificSchema map[string]*schema.Schema, newUpdaterFunc newResourceIamUpdaterFunc, resourceIdParser resourceIdParserFunc) *schema.Resource {
+	return ResourceIamMemberWithBatching(parentSpecificSchema, newUpdaterFunc, resourceIdParser, IamBatchingDisabled)
 }
 
-func ResourceIamMemberWithImport(parentSpecificSchema map[string]*schema.Schema, newUpdaterFunc newResourceIamUpdaterFunc, resourceIdParser resourceIdParserFunc) *schema.Resource {
-	r := ResourceIamMember(parentSpecificSchema, newUpdaterFunc)
-	r.Importer = &schema.ResourceImporter{
-		State: iamMemberImport(resourceIdParser),
+func ResourceIamMemberWithBatching(parentSpecificSchema map[string]*schema.Schema, newUpdaterFunc newResourceIamUpdaterFunc, resourceIdParser resourceIdParserFunc, enableBatching bool) *schema.Resource {
+	return &schema.Resource{
+		Create: resourceIamMemberCreate(newUpdaterFunc, enableBatching),
+		Read:   resourceIamMemberRead(newUpdaterFunc),
+		Delete: resourceIamMemberDelete(newUpdaterFunc, enableBatching),
+		Schema: mergeSchemas(IamMemberBaseSchema, parentSpecificSchema),
+		Importer: &schema.ResourceImporter{
+			State: iamMemberImport(newUpdaterFunc, resourceIdParser),
+		},
+		UseJSONNumber: true,
 	}
-	return r
 }
 
 func getResourceIamMember(d *schema.ResourceData) *cloudresourcemanager.Binding {
-	return &cloudresourcemanager.Binding{
+	b := &cloudresourcemanager.Binding{
 		Members: []string{d.Get("member").(string)},
 		Role:    d.Get("role").(string),
 	}
+	if c := expandIamCondition(d.Get("condition")); c != nil {
+		b.Condition = c
+	}
+	return b
 }
 
-func resourceIamMemberCreate(newUpdaterFunc newResourceIamUpdaterFunc) schema.CreateFunc {
+func resourceIamMemberCreate(newUpdaterFunc newResourceIamUpdaterFunc, enableBatching bool) schema.CreateFunc {
 	return func(d *schema.ResourceData, meta interface{}) error {
 		config := meta.(*Config)
+
 		updater, err := newUpdaterFunc(d, config)
 		if err != nil {
 			return err
 		}
 
-		p := getResourceIamMember(d)
-		err = iamPolicyReadModifyWrite(updater, func(ep *cloudresourcemanager.Policy) error {
+		memberBind := getResourceIamMember(d)
+		modifyF := func(ep *cloudresourcemanager.Policy) error {
 			// Merge the bindings together
-			ep.Bindings = mergeBindings(append(ep.Bindings, p))
+			ep.Bindings = mergeBindings(append(ep.Bindings, memberBind))
+			ep.Version = iamPolicyVersion
 			return nil
-		})
+		}
+		if enableBatching {
+			err = BatchRequestModifyIamPolicy(updater, modifyF, config,
+				fmt.Sprintf("Create IAM Members %s %+v for %q", memberBind.Role, memberBind.Members[0], updater.DescribeResource()))
+		} else {
+			err = iamPolicyReadModifyWrite(updater, modifyF)
+		}
 		if err != nil {
 			return err
 		}
-		d.SetId(updater.GetResourceId() + "/" + p.Role + "/" + p.Members[0])
+		d.SetId(updater.GetResourceId() + "/" + memberBind.Role + "/" + strings.ToLower(memberBind.Members[0]))
+		if k := conditionKeyFromCondition(memberBind.Condition); !k.Empty() {
+			d.SetId(d.Id() + "/" + k.String())
+		}
 		return resourceIamMemberRead(newUpdaterFunc)(d, meta)
 	}
 }
@@ -99,98 +202,89 @@ func resourceIamMemberCreate(newUpdaterFunc newResourceIamUpdaterFunc) schema.Cr
 func resourceIamMemberRead(newUpdaterFunc newResourceIamUpdaterFunc) schema.ReadFunc {
 	return func(d *schema.ResourceData, meta interface{}) error {
 		config := meta.(*Config)
+
 		updater, err := newUpdaterFunc(d, config)
 		if err != nil {
 			return err
 		}
 
 		eMember := getResourceIamMember(d)
-		p, err := updater.GetResourceIamPolicy()
+		eCondition := conditionKeyFromCondition(eMember.Condition)
+		p, err := iamPolicyReadWithRetry(updater)
 		if err != nil {
-			return err
+			return handleNotFoundError(err, d, fmt.Sprintf("Resource %q with IAM Member: Role %q Member %q", updater.DescribeResource(), eMember.Role, eMember.Members[0]))
 		}
 		log.Printf("[DEBUG]: Retrieved policy for %s: %+v\n", updater.DescribeResource(), p)
+		log.Printf("[DEBUG]: Looking for binding with role %q and condition %+v", eMember.Role, eCondition)
 
 		var binding *cloudresourcemanager.Binding
 		for _, b := range p.Bindings {
-			if b.Role != eMember.Role {
-				continue
+			if b.Role == eMember.Role && conditionKeyFromCondition(b.Condition) == eCondition {
+				binding = b
+				break
 			}
-			binding = b
-			break
 		}
+
 		if binding == nil {
-			log.Printf("[DEBUG]: Binding for role %q does not exist in policy of %s, removing member %q from state.", eMember.Role, updater.DescribeResource(), eMember.Members[0])
+			log.Printf("[DEBUG]: Binding for role %q with condition %+v does not exist in policy of %s, removing member %q from state.", eMember.Role, eCondition, updater.DescribeResource(), eMember.Members[0])
 			d.SetId("")
 			return nil
 		}
+
+		log.Printf("[DEBUG]: Looking for member %q in found binding", eMember.Members[0])
 		var member string
 		for _, m := range binding.Members {
-			if m == eMember.Members[0] {
+			if strings.ToLower(m) == strings.ToLower(eMember.Members[0]) {
 				member = m
 			}
 		}
+
 		if member == "" {
-			log.Printf("[DEBUG]: Member %q for binding for role %q does not exist in policy of %s, removing from state.", eMember.Members[0], eMember.Role, updater.DescribeResource())
+			log.Printf("[DEBUG]: Member %q for binding for role %q with condition %+v does not exist in policy of %s, removing from state.", eMember.Members[0], eMember.Role, eCondition, updater.DescribeResource())
 			d.SetId("")
 			return nil
 		}
-		d.Set("etag", p.Etag)
-		d.Set("member", member)
-		d.Set("role", binding.Role)
+
+		if err := d.Set("etag", p.Etag); err != nil {
+			return fmt.Errorf("Error setting etag: %s", err)
+		}
+		if err := d.Set("member", member); err != nil {
+			return fmt.Errorf("Error setting member: %s", err)
+		}
+		if err := d.Set("role", binding.Role); err != nil {
+			return fmt.Errorf("Error setting role: %s", err)
+		}
+		if err := d.Set("condition", flattenIamCondition(binding.Condition)); err != nil {
+			return fmt.Errorf("Error setting condition: %s", err)
+		}
 		return nil
 	}
 }
 
-func resourceIamMemberDelete(newUpdaterFunc newResourceIamUpdaterFunc) schema.DeleteFunc {
+func resourceIamMemberDelete(newUpdaterFunc newResourceIamUpdaterFunc, enableBatching bool) schema.DeleteFunc {
 	return func(d *schema.ResourceData, meta interface{}) error {
 		config := meta.(*Config)
+
 		updater, err := newUpdaterFunc(d, config)
 		if err != nil {
 			return err
 		}
 
-		member := getResourceIamMember(d)
-		err = iamPolicyReadModifyWrite(updater, func(p *cloudresourcemanager.Policy) error {
-			bindingToRemove := -1
-			for pos, b := range p.Bindings {
-				if b.Role != member.Role {
-					continue
-				}
-				bindingToRemove = pos
-				break
-			}
-			if bindingToRemove < 0 {
-				log.Printf("[DEBUG]: Binding for role %q does not exist in policy of project %q, so member %q can't be on it.", member.Role, updater.GetResourceId(), member.Members[0])
-				return nil
-			}
-			binding := p.Bindings[bindingToRemove]
-			memberToRemove := -1
-			for pos, m := range binding.Members {
-				if m != member.Members[0] {
-					continue
-				}
-				memberToRemove = pos
-				break
-			}
-			if memberToRemove < 0 {
-				log.Printf("[DEBUG]: Member %q for binding for role %q does not exist in policy of project %q.", member.Members[0], member.Role, updater.GetResourceId())
-				return nil
-			}
-			binding.Members = append(binding.Members[:memberToRemove], binding.Members[memberToRemove+1:]...)
-			if len(binding.Members) == 0 {
-				// If there is no member left for the role, remove the binding altogether
-				p.Bindings = append(p.Bindings[:bindingToRemove], p.Bindings[bindingToRemove+1:]...)
-			} else {
-				p.Bindings[bindingToRemove] = binding
-			}
-
+		memberBind := getResourceIamMember(d)
+		modifyF := func(ep *cloudresourcemanager.Policy) error {
+			// Merge the bindings together
+			ep.Bindings = subtractFromBindings(ep.Bindings, memberBind)
 			return nil
-		})
-		if err != nil {
-			return err
 		}
-
+		if enableBatching {
+			err = BatchRequestModifyIamPolicy(updater, modifyF, config,
+				fmt.Sprintf("Delete IAM Members %s %s for %q", memberBind.Role, memberBind.Members[0], updater.DescribeResource()))
+		} else {
+			err = iamPolicyReadModifyWrite(updater, modifyF)
+		}
+		if err != nil {
+			return handleNotFoundError(err, d, fmt.Sprintf("Resource %s for IAM Member (role %q, %q)", updater.GetResourceId(), memberBind.Members[0], memberBind.Role))
+		}
 		return resourceIamMemberRead(newUpdaterFunc)(d, meta)
 	}
 }

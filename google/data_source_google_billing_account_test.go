@@ -5,16 +5,14 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform/helper/acctest"
-
-	"github.com/hashicorp/terraform/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
 func TestAccDataSourceGoogleBillingAccount_byFullName(t *testing.T) {
 	billingId := getTestBillingAccountFromEnv(t)
 	name := "billingAccounts/" + billingId
 
-	resource.Test(t, resource.TestCase{
+	vcrTest(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
@@ -34,7 +32,7 @@ func TestAccDataSourceGoogleBillingAccount_byShortName(t *testing.T) {
 	billingId := getTestBillingAccountFromEnv(t)
 	name := "billingAccounts/" + billingId
 
-	resource.Test(t, resource.TestCase{
+	vcrTest(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
@@ -54,7 +52,7 @@ func TestAccDataSourceGoogleBillingAccount_byFullNameClosed(t *testing.T) {
 	billingId := getTestBillingAccountFromEnv(t)
 	name := "billingAccounts/" + billingId
 
-	resource.Test(t, resource.TestCase{
+	vcrTest(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
@@ -67,9 +65,9 @@ func TestAccDataSourceGoogleBillingAccount_byFullNameClosed(t *testing.T) {
 }
 
 func TestAccDataSourceGoogleBillingAccount_byDisplayName(t *testing.T) {
-	name := acctest.RandString(16)
+	name := randString(t, 16)
 
-	resource.Test(t, resource.TestCase{
+	vcrTest(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
@@ -85,20 +83,23 @@ func testAccCheckGoogleBillingAccount_byName(name string) string {
 	return fmt.Sprintf(`
 data "google_billing_account" "acct" {
   billing_account = "%s"
-}`, name)
+}
+`, name)
 }
 
 func testAccCheckGoogleBillingAccount_byNameClosed(name string) string {
 	return fmt.Sprintf(`
 data "google_billing_account" "acct" {
   billing_account = "%s"
-  open = false
-}`, name)
+  open            = false
+}
+`, name)
 }
 
 func testAccCheckGoogleBillingAccount_byDisplayName(name string) string {
 	return fmt.Sprintf(`
 data "google_billing_account" "acct" {
   display_name = "%s"
-}`, name)
+}
+`, name)
 }

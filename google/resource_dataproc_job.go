@@ -3,10 +3,11 @@ package google
 import (
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
-	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/hashicorp/terraform/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"google.golang.org/api/dataproc/v1"
 )
 
@@ -24,34 +25,38 @@ func resourceDataprocJob() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"project": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				ForceNew:    true,
+				Description: `The project in which the cluster can be found and jobs subsequently run against. If it is not provided, the provider project is used.`,
 			},
 
 			// Ref: https://cloud.google.com/dataproc/docs/reference/rest/v1/projects.regions.jobs#JobReference
 			"region": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Default:  "global",
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Default:     "global",
+				ForceNew:    true,
+				Description: `The Cloud Dataproc region. This essentially determines which clusters are available for this job to be submitted to. If not specified, defaults to global.`,
 			},
 
 			// If a job is still running, trying to delete a job will fail. Setting
 			// this flag to true however will force the deletion by first cancelling
 			// the job and then deleting it
 			"force_delete": {
-				Type:     schema.TypeBool,
-				Default:  false,
-				Optional: true,
+				Type:        schema.TypeBool,
+				Default:     false,
+				Optional:    true,
+				Description: `By default, you can only delete inactive jobs within Dataproc. Setting this to true, and calling destroy, will ensure that the job is first cancelled before issuing the delete.`,
 			},
 
 			"reference": {
-				Type:     schema.TypeList,
-				Optional: true,
-				Computed: true,
-				MaxItems: 1,
+				Type:        schema.TypeList,
+				Optional:    true,
+				Computed:    true,
+				MaxItems:    1,
+				Description: `The reference of the job`,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"job_id": {
@@ -67,9 +72,10 @@ func resourceDataprocJob() *schema.Resource {
 			},
 
 			"placement": {
-				Type:     schema.TypeList,
-				Required: true,
-				MaxItems: 1,
+				Type:        schema.TypeList,
+				Required:    true,
+				MaxItems:    1,
+				Description: `The config of job placement.`,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"cluster_name": {
@@ -88,9 +94,9 @@ func resourceDataprocJob() *schema.Resource {
 			},
 
 			"status": {
-				Type:     schema.TypeList,
-				Computed: true,
-				MaxItems: 1,
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: `The status of the job.`,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"state": {
@@ -147,10 +153,17 @@ func resourceDataprocJob() *schema.Resource {
 					Schema: map[string]*schema.Schema{
 						"max_failures_per_hour": {
 							Type:         schema.TypeInt,
-							Description:  "Maximum number of times per hour a driver may be restarted as a result of driver terminating with non-zero code before job is reported failed.",
-							Optional:     true,
+							Description:  "Maximum number of times per hour a driver may be restarted as a result of driver exiting with non-zero code before job is reported failed.",
+							Required:     true,
 							ForceNew:     true,
 							ValidateFunc: validation.IntAtMost(10),
+						},
+						"max_failures_total": {
+							Type:         schema.TypeInt,
+							Description:  "Maximum number of times in total a driver may be restarted as a result of driver exiting with non-zero code before job is reported failed.",
+							Required:     true,
+							ForceNew:     true,
+							ValidateFunc: validation.IntAtMost(240),
 						},
 					},
 				},
@@ -163,6 +176,7 @@ func resourceDataprocJob() *schema.Resource {
 			"pig_config":      pigSchema,
 			"sparksql_config": sparkSqlSchema,
 		},
+		UseJSONNumber: true,
 	}
 }
 
@@ -175,13 +189,16 @@ func resourceDataprocJobUpdate(d *schema.ResourceData, meta interface{}) error {
 
 func resourceDataprocJobCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
+	userAgent, err := generateUserAgentString(d, config.userAgent)
+	if err != nil {
+		return err
+	}
 
 	project, err := getProject(d, config)
 	if err != nil {
 		return err
 	}
 
-	jobConfCount := 0
 	clusterName := d.Get("placement.0.cluster_name").(string)
 	region := d.Get("region").(string)
 
@@ -199,57 +216,59 @@ func resourceDataprocJobCreate(d *schema.ResourceData, meta interface{}) error {
 	if v, ok := d.GetOk("reference.0.job_id"); ok {
 		submitReq.Job.Reference.JobId = v.(string)
 	}
+
+	if v, ok := d.GetOk("scheduling"); ok {
+		config := extractFirstMapConfig(v.([]interface{}))
+		submitReq.Job.Scheduling = expandJobScheduling(config)
+	}
+
 	if _, ok := d.GetOk("labels"); ok {
 		submitReq.Job.Labels = expandLabels(d)
 	}
 
 	if v, ok := d.GetOk("pyspark_config"); ok {
-		jobConfCount++
 		config := extractFirstMapConfig(v.([]interface{}))
 		submitReq.Job.PysparkJob = expandPySparkJob(config)
 	}
 
 	if v, ok := d.GetOk("spark_config"); ok {
-		jobConfCount++
 		config := extractFirstMapConfig(v.([]interface{}))
 		submitReq.Job.SparkJob = expandSparkJob(config)
 	}
 
 	if v, ok := d.GetOk("hadoop_config"); ok {
-		jobConfCount++
 		config := extractFirstMapConfig(v.([]interface{}))
 		submitReq.Job.HadoopJob = expandHadoopJob(config)
 	}
 
 	if v, ok := d.GetOk("hive_config"); ok {
-		jobConfCount++
 		config := extractFirstMapConfig(v.([]interface{}))
 		submitReq.Job.HiveJob = expandHiveJob(config)
 	}
 
 	if v, ok := d.GetOk("pig_config"); ok {
-		jobConfCount++
 		config := extractFirstMapConfig(v.([]interface{}))
 		submitReq.Job.PigJob = expandPigJob(config)
 	}
 
 	if v, ok := d.GetOk("sparksql_config"); ok {
-		jobConfCount++
 		config := extractFirstMapConfig(v.([]interface{}))
 		submitReq.Job.SparkSqlJob = expandSparkSqlJob(config)
 	}
 
-	if jobConfCount != 1 {
-		return fmt.Errorf("You must define and configure exactly one xxx_config block")
-	}
-
 	// Submit the job
-	job, err := config.clientDataproc.Projects.Regions.Jobs.Submit(
+	job, err := config.NewDataprocClient(userAgent).Projects.Regions.Jobs.Submit(
 		project, region, submitReq).Do()
 	if err != nil {
 		return err
 	}
-	d.SetId(job.Reference.JobId)
+	d.SetId(fmt.Sprintf("projects/%s/regions/%s/jobs/%s", project, region, job.Reference.JobId))
+
+	waitErr := dataprocJobOperationWait(config, region, project, job.Reference.JobId,
+		"Creating Dataproc job", userAgent, d.Timeout(schema.TimeoutCreate))
+	if waitErr != nil {
+		return waitErr
+	}
 
 	log.Printf("[INFO] Dataproc job %s has been submitted", job.Reference.JobId)
 	return resourceDataprocJobRead(d, meta)
@@ -257,6 +276,10 @@ func resourceDataprocJobCreate(d *schema.ResourceData, meta interface{}) error {
 
 func resourceDataprocJobRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
+	userAgent, err := generateUserAgentString(d, config.userAgent)
+	if err != nil {
+		return err
+	}
 	region := d.Get("region").(string)
 
 	project, err := getProject(d, config)
@@ -264,45 +287,82 @@ func resourceDataprocJobRead(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
-	job, err := config.clientDataproc.Projects.Regions.Jobs.Get(
-		project, region, d.Id()).Do()
+	parts := strings.Split(d.Id(), "/")
+	jobId := parts[len(parts)-1]
+	job, err := config.NewDataprocClient(userAgent).Projects.Regions.Jobs.Get(
+		project, region, jobId).Do()
 	if err != nil {
-		return handleNotFoundError(err, d, fmt.Sprintf("Dataproc Job %q", d.Id()))
+		return handleNotFoundError(err, d, fmt.Sprintf("Dataproc Job %q", jobId))
 	}
 
-	d.Set("force_delete", d.Get("force_delete"))
-	d.Set("labels", job.Labels)
-	d.Set("driver_output_resource_uri", job.DriverOutputResourceUri)
-	d.Set("driver_controls_files_uri", job.DriverControlFilesUri)
+	if err := d.Set("force_delete", d.Get("force_delete")); err != nil {
+		return fmt.Errorf("Error setting force_delete: %s", err)
+	}
+	if err := d.Set("labels", job.Labels); err != nil {
+		return fmt.Errorf("Error setting labels: %s", err)
+	}
+	if err := d.Set("driver_output_resource_uri", job.DriverOutputResourceUri); err != nil {
+		return fmt.Errorf("Error setting driver_output_resource_uri: %s", err)
+	}
+	if err := d.Set("driver_controls_files_uri", job.DriverControlFilesUri); err != nil {
+		return fmt.Errorf("Error setting driver_controls_files_uri: %s", err)
+	}
 
-	d.Set("placement", flattenJobPlacement(job.Placement))
-	d.Set("status", flattenJobStatus(job.Status))
-	d.Set("reference", flattenJobReference(job.Reference))
-	d.Set("project", project)
+	if err := d.Set("placement", flattenJobPlacement(job.Placement)); err != nil {
+		return fmt.Errorf("Error setting placement: %s", err)
+	}
+	if err := d.Set("status", flattenJobStatus(job.Status)); err != nil {
+		return fmt.Errorf("Error setting status: %s", err)
+	}
+	if err := d.Set("reference", flattenJobReference(job.Reference)); err != nil {
+		return fmt.Errorf("Error setting reference: %s", err)
+	}
+	if err := d.Set("scheduling", flattenJobScheduling(job.Scheduling)); err != nil {
+		return fmt.Errorf("Error setting reference: %s", err)
+	}
+	if err := d.Set("project", project); err != nil {
+		return fmt.Errorf("Error setting project: %s", err)
+	}
 
 	if job.PysparkJob != nil {
-		d.Set("pyspark_config", flattenPySparkJob(job.PysparkJob))
+		if err := d.Set("pyspark_config", flattenPySparkJob(job.PysparkJob)); err != nil {
+			return fmt.Errorf("Error setting pyspark_config: %s", err)
+		}
 	}
 	if job.SparkJob != nil {
-		d.Set("spark_config", flattenSparkJob(job.SparkJob))
+		if err := d.Set("spark_config", flattenSparkJob(job.SparkJob)); err != nil {
+			return fmt.Errorf("Error setting spark_config: %s", err)
+		}
 	}
 	if job.HadoopJob != nil {
-		d.Set("hadoop_config", flattenHadoopJob(job.HadoopJob))
+		if err := d.Set("hadoop_config", flattenHadoopJob(job.HadoopJob)); err != nil {
+			return fmt.Errorf("Error setting hadoop_config: %s", err)
+		}
 	}
 	if job.HiveJob != nil {
-		d.Set("hive_config", flattenHiveJob(job.HiveJob))
+		if err := d.Set("hive_config", flattenHiveJob(job.HiveJob)); err != nil {
+			return fmt.Errorf("Error setting hive_config: %s", err)
+		}
 	}
 	if job.PigJob != nil {
-		d.Set("pig_config", flattenPigJob(job.PigJob))
+		if err := d.Set("pig_config", flattenPigJob(job.PigJob)); err != nil {
+			return fmt.Errorf("Error setting pig_config: %s", err)
+		}
 	}
 	if job.SparkSqlJob != nil {
-		d.Set("sparksql_config", flattenSparkSqlJob(job.SparkSqlJob))
+		if err := d.Set("sparksql_config", flattenSparkSqlJob(job.SparkSqlJob)); err != nil {
+			return fmt.Errorf("Error setting sparksql_config: %s", err)
+		}
 	}
 	return nil
 }
 
 func resourceDataprocJobDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
+	userAgent, err := generateUserAgentString(d, config.userAgent)
+	if err != nil {
+		return err
+	}
 
 	project, err := getProject(d, config)
 	if err != nil {
@@ -311,18 +371,19 @@ func resourceDataprocJobDelete(d *schema.ResourceData, meta interface{}) error {
 
 	region := d.Get("region").(string)
 	forceDelete := d.Get("force_delete").(bool)
-	timeoutInMinutes := int(d.Timeout(schema.TimeoutDelete).Minutes())
 
+	parts := strings.Split(d.Id(), "/")
+	jobId := parts[len(parts)-1]
 	if forceDelete {
 		log.Printf("[DEBUG] Attempting to first cancel Dataproc job %s if it's still running ...", d.Id())
 
-		config.clientDataproc.Projects.Regions.Jobs.Cancel(
-			project, region, d.Id(), &dataproc.CancelJobRequest{}).Do()
 		// ignore error if we get one - job may be finished already and not need to
 		// be cancelled. We do however wait for the state to be one that is
 		// at least not active
-		waitErr := dataprocJobOperationWait(config, region, project, d.Id(),
-			"Cancelling Dataproc job", timeoutInMinutes, 1)
+		_, _ = config.NewDataprocClient(userAgent).Projects.Regions.Jobs.Cancel(project, region, jobId, &dataproc.CancelJobRequest{}).Do()
+
+		waitErr := dataprocJobOperationWait(config, region, project, jobId,
+			"Cancelling Dataproc job", userAgent, d.Timeout(schema.TimeoutDelete))
 		if waitErr != nil {
 			return waitErr
 		}
@@ -330,14 +391,14 @@ func resourceDataprocJobDelete(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	log.Printf("[DEBUG] Deleting Dataproc job %s", d.Id())
-	_, err = config.clientDataproc.Projects.Regions.Jobs.Delete(
-		project, region, d.Id()).Do()
+	_, err = config.NewDataprocClient(userAgent).Projects.Regions.Jobs.Delete(
+		project, region, jobId).Do()
 	if err != nil {
 		return err
 	}
 
-	waitErr := dataprocDeleteOperationWait(config, region, project, d.Id(),
-		"Deleting Dataproc job", timeoutInMinutes, 1)
+	waitErr := dataprocDeleteOperationWait(config, region, project, jobId,
+		"Deleting Dataproc job", userAgent, d.Timeout(schema.TimeoutDelete))
 	if waitErr != nil {
 		return waitErr
 	}
@@ -361,7 +422,7 @@ var loggingConfig = &schema.Schema{
 			"driver_log_levels": {
 				Type:        schema.TypeMap,
 				Description: "Optional. The per-package log levels for the driver. This may include 'root' package name to configure rootLogger. Examples: 'com.google = FATAL', 'root = INFO', 'org.apache = DEBUG'.",
-				Optional:    true,
+				Required:    true,
 				ForceNew:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
@@ -370,11 +431,12 @@ var loggingConfig = &schema.Schema{
 }
 
 var pySparkSchema = &schema.Schema{
-	Type:          schema.TypeList,
-	Optional:      true,
-	ForceNew:      true,
-	MaxItems:      1,
-	ConflictsWith: []string{"spark_config", "hadoop_config", "hive_config", "pig_config", "sparksql_config"},
+	Type:         schema.TypeList,
+	Optional:     true,
+	ForceNew:     true,
+	MaxItems:     1,
+	Description:  `The config of pySpark job.`,
+	ExactlyOneOf: []string{"pyspark_config", "spark_config", "hadoop_config", "hive_config", "pig_config", "sparksql_config"},
 	Elem: &schema.Resource{
 		Schema: map[string]*schema.Schema{
 			"main_python_file_uri": {
@@ -484,64 +546,83 @@ func expandPySparkJob(config map[string]interface{}) *dataproc.PySparkJob {
 
 }
 
+func expandJobScheduling(config map[string]interface{}) *dataproc.JobScheduling {
+	jobScheduling := &dataproc.JobScheduling{}
+	if v, ok := config["max_failures_per_hour"]; ok {
+		jobScheduling.MaxFailuresPerHour = int64(v.(int))
+	}
+	if v, ok := config["max_failures_total"]; ok {
+		jobScheduling.MaxFailuresTotal = int64(v.(int))
+	}
+	return jobScheduling
+}
+
 // ---- Spark Job ----
 
 var sparkSchema = &schema.Schema{
-	Type:          schema.TypeList,
-	Optional:      true,
-	ForceNew:      true,
-	MaxItems:      1,
-	ConflictsWith: []string{"pyspark_config", "hadoop_config", "hive_config", "pig_config", "sparksql_config"},
+	Type:         schema.TypeList,
+	Optional:     true,
+	ForceNew:     true,
+	MaxItems:     1,
+	Description:  `The config of the Spark job.`,
+	ExactlyOneOf: []string{"pyspark_config", "spark_config", "hadoop_config", "hive_config", "pig_config", "sparksql_config"},
 	Elem: &schema.Resource{
 		Schema: map[string]*schema.Schema{
 			// main driver: can be only one of the class | jar_file
 			"main_class": {
-				Type:          schema.TypeString,
-				Optional:      true,
-				ForceNew:      true,
-				ConflictsWith: []string{"spark_config.0.main_jar_file_uri"},
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				Description:  `The class containing the main method of the driver. Must be in a provided jar or jar that is already on the classpath. Conflicts with main_jar_file_uri`,
+				ExactlyOneOf: []string{"spark_config.0.main_class", "spark_config.0.main_jar_file_uri"},
 			},
 
 			"main_jar_file_uri": {
-				Type:          schema.TypeString,
-				Optional:      true,
-				ForceNew:      true,
-				ConflictsWith: []string{"spark_config.0.main_class"},
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				Description:  `The HCFS URI of jar file containing the driver jar. Conflicts with main_class`,
+				ExactlyOneOf: []string{"spark_config.0.main_jar_file_uri", "spark_config.0.main_class"},
 			},
 
 			"args": {
-				Type:     schema.TypeList,
-				Optional: true,
-				ForceNew: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeList,
+				Optional:    true,
+				ForceNew:    true,
+				Description: `The arguments to pass to the driver.`,
+				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 
 			"jar_file_uris": {
-				Type:     schema.TypeList,
-				Optional: true,
-				ForceNew: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeList,
+				Optional:    true,
+				ForceNew:    true,
+				Description: `HCFS URIs of jar files to add to the CLASSPATHs of the Spark driver and tasks.`,
+				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 
 			"file_uris": {
-				Type:     schema.TypeList,
-				Optional: true,
-				ForceNew: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeList,
+				Optional:    true,
+				ForceNew:    true,
+				Description: `HCFS URIs of files to be copied to the working directory of Spark drivers and distributed tasks. Useful for naively parallel tasks.`,
+				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 
 			"archive_uris": {
-				Type:     schema.TypeList,
-				Optional: true,
-				ForceNew: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeList,
+				Optional:    true,
+				ForceNew:    true,
+				Description: `HCFS URIs of archives to be extracted in the working directory of .jar, .tar, .tar.gz, .tgz, and .zip.`,
+				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 
 			"properties": {
-				Type:     schema.TypeMap,
-				Optional: true,
-				ForceNew: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeMap,
+				Optional:    true,
+				ForceNew:    true,
+				Description: `A mapping of property names to values, used to configure Spark. Properties that conflict with values set by the Cloud Dataproc API may be overwritten. Can include properties set in /etc/spark/conf/spark-defaults.conf and classes in user code.`,
+				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 
 			"logging_config": loggingConfig,
@@ -600,61 +681,69 @@ func expandSparkJob(config map[string]interface{}) *dataproc.SparkJob {
 // ---- Hadoop Job ----
 
 var hadoopSchema = &schema.Schema{
-	Type:          schema.TypeList,
-	Optional:      true,
-	ForceNew:      true,
-	MaxItems:      1,
-	ConflictsWith: []string{"spark_config", "pyspark_config", "hive_config", "pig_config", "sparksql_config"},
+	Type:         schema.TypeList,
+	Optional:     true,
+	ForceNew:     true,
+	MaxItems:     1,
+	Description:  `The config of Hadoop job`,
+	ExactlyOneOf: []string{"spark_config", "pyspark_config", "hadoop_config", "hive_config", "pig_config", "sparksql_config"},
 	Elem: &schema.Resource{
 		Schema: map[string]*schema.Schema{
 			// main driver: can be only one of the main_class | main_jar_file_uri
 			"main_class": {
-				Type:          schema.TypeString,
-				Optional:      true,
-				ForceNew:      true,
-				ConflictsWith: []string{"hadoop_config.0.main_jar_file_uri"},
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				Description:  `The class containing the main method of the driver. Must be in a provided jar or jar that is already on the classpath. Conflicts with main_jar_file_uri`,
+				ExactlyOneOf: []string{"hadoop_config.0.main_jar_file_uri", "hadoop_config.0.main_class"},
 			},
 
 			"main_jar_file_uri": {
-				Type:          schema.TypeString,
-				Optional:      true,
-				ForceNew:      true,
-				ConflictsWith: []string{"hadoop_config.0.main_class"},
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				Description:  `The HCFS URI of jar file containing the driver jar. Conflicts with main_class`,
+				ExactlyOneOf: []string{"hadoop_config.0.main_jar_file_uri", "hadoop_config.0.main_class"},
 			},
 
 			"args": {
-				Type:     schema.TypeList,
-				Optional: true,
-				ForceNew: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeList,
+				Optional:    true,
+				ForceNew:    true,
+				Description: `The arguments to pass to the driver.`,
+				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 
 			"jar_file_uris": {
-				Type:     schema.TypeList,
-				Optional: true,
-				ForceNew: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeList,
+				Optional:    true,
+				ForceNew:    true,
+				Description: `HCFS URIs of jar files to add to the CLASSPATHs of the Spark driver and tasks.`,
+				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 
 			"file_uris": {
-				Type:     schema.TypeList,
-				Optional: true,
-				ForceNew: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeList,
+				Optional:    true,
+				ForceNew:    true,
+				Description: `HCFS URIs of files to be copied to the working directory of Spark drivers and distributed tasks. Useful for naively parallel tasks.`,
+				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 
 			"archive_uris": {
-				Type:     schema.TypeList,
-				Optional: true,
-				ForceNew: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeList,
+				Optional:    true,
+				ForceNew:    true,
+				Description: `HCFS URIs of archives to be extracted in the working directory of .jar, .tar, .tar.gz, .tgz, and .zip.`,
+				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 
 			"properties": {
-				Type:     schema.TypeMap,
-				Optional: true,
-				ForceNew: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeMap,
+				Optional:    true,
+				ForceNew:    true,
+				Description: `A mapping of property names to values, used to configure Spark. Properties that conflict with values set by the Cloud Dataproc API may be overwritten. Can include properties set in /etc/spark/conf/spark-defaults.conf and classes in user code.`,
+				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 
 			"logging_config": loggingConfig,
@@ -713,54 +802,61 @@ func expandHadoopJob(config map[string]interface{}) *dataproc.HadoopJob {
 // ---- Hive Job ----
 
 var hiveSchema = &schema.Schema{
-	Type:          schema.TypeList,
-	Optional:      true,
-	ForceNew:      true,
-	MaxItems:      1,
-	ConflictsWith: []string{"spark_config", "pyspark_config", "hadoop_config", "pig_config", "sparksql_config"},
+	Type:         schema.TypeList,
+	Optional:     true,
+	ForceNew:     true,
+	MaxItems:     1,
+	Description:  `The config of hive job`,
+	ExactlyOneOf: []string{"spark_config", "pyspark_config", "hadoop_config", "hive_config", "pig_config", "sparksql_config"},
 	Elem: &schema.Resource{
 		Schema: map[string]*schema.Schema{
 			// main query: can be only one of query_list | query_file_uri
 			"query_list": {
-				Type:          schema.TypeList,
-				Optional:      true,
-				ForceNew:      true,
-				Elem:          &schema.Schema{Type: schema.TypeString},
-				ConflictsWith: []string{"hive_config.0.query_file_uri"},
+				Type:         schema.TypeList,
+				Optional:     true,
+				ForceNew:     true,
+				Description:  `The list of Hive queries or statements to execute as part of the job. Conflicts with query_file_uri`,
+				Elem:         &schema.Schema{Type: schema.TypeString},
+				ExactlyOneOf: []string{"hive_config.0.query_file_uri", "hive_config.0.query_list"},
 			},
 
 			"query_file_uri": {
-				Type:          schema.TypeString,
-				Optional:      true,
-				ForceNew:      true,
-				ConflictsWith: []string{"hive_config.0.query_list"},
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				Description:  `HCFS URI of file containing Hive script to execute as the job. Conflicts with query_list`,
+				ExactlyOneOf: []string{"hive_config.0.query_file_uri", "hive_config.0.query_list"},
 			},
 
 			"continue_on_failure": {
-				Type:     schema.TypeBool,
-				Optional: true,
-				ForceNew: true,
+				Type:        schema.TypeBool,
+				Optional:    true,
+				ForceNew:    true,
+				Description: `Whether to continue executing queries if a query fails. The default value is false. Setting to true can be useful when executing independent parallel queries. Defaults to false.`,
 			},
 
 			"script_variables": {
-				Type:     schema.TypeMap,
-				Optional: true,
-				ForceNew: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeMap,
+				Optional:    true,
+				ForceNew:    true,
+				Description: `Mapping of query variable names to values (equivalent to the Hive command: SET name="value";).`,
+				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 
 			"properties": {
-				Type:     schema.TypeMap,
-				Optional: true,
-				ForceNew: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeMap,
+				Optional:    true,
+				ForceNew:    true,
+				Description: `A mapping of property names and values, used to configure Hive. Properties that conflict with values set by the Cloud Dataproc API may be overwritten. Can include properties set in /etc/hadoop/conf/*-site.xml, /etc/hive/conf/hive-site.xml, and classes in user code.`,
+				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 
 			"jar_file_uris": {
-				Type:     schema.TypeList,
-				Optional: true,
-				ForceNew: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeList,
+				Optional:    true,
+				ForceNew:    true,
+				Description: `HCFS URIs of jar files to add to the CLASSPATH of the Hive server and Hadoop MapReduce (MR) tasks. Can contain Hive SerDes and UDFs.`,
+				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 		},
 	},
@@ -812,54 +908,61 @@ func expandHiveJob(config map[string]interface{}) *dataproc.HiveJob {
 // ---- Pig Job ----
 
 var pigSchema = &schema.Schema{
-	Type:          schema.TypeList,
-	Optional:      true,
-	ForceNew:      true,
-	MaxItems:      1,
-	ConflictsWith: []string{"spark_config", "pyspark_config", "hadoop_config", "hive_config", "sparksql_config"},
+	Type:         schema.TypeList,
+	Optional:     true,
+	ForceNew:     true,
+	MaxItems:     1,
+	Description:  `The config of pag job.`,
+	ExactlyOneOf: []string{"spark_config", "pyspark_config", "hadoop_config", "hive_config", "pig_config", "sparksql_config"},
 	Elem: &schema.Resource{
 		Schema: map[string]*schema.Schema{
 			// main query: can be only one of query_list | query_file_uri
 			"query_list": {
-				Type:          schema.TypeList,
-				Optional:      true,
-				ForceNew:      true,
-				Elem:          &schema.Schema{Type: schema.TypeString},
-				ConflictsWith: []string{"pig_config.0.query_file_uri"},
+				Type:         schema.TypeList,
+				Optional:     true,
+				ForceNew:     true,
+				Description:  `The list of Hive queries or statements to execute as part of the job. Conflicts with query_file_uri`,
+				Elem:         &schema.Schema{Type: schema.TypeString},
+				ExactlyOneOf: []string{"pig_config.0.query_file_uri", "pig_config.0.query_list"},
 			},
 
 			"query_file_uri": {
-				Type:          schema.TypeString,
-				Optional:      true,
-				ForceNew:      true,
-				ConflictsWith: []string{"pig_config.0.query_list"},
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				Description:  `HCFS URI of file containing Hive script to execute as the job. Conflicts with query_list`,
+				ExactlyOneOf: []string{"pig_config.0.query_file_uri", "pig_config.0.query_list"},
 			},
 
 			"continue_on_failure": {
-				Type:     schema.TypeBool,
-				Optional: true,
-				ForceNew: true,
+				Type:        schema.TypeBool,
+				Optional:    true,
+				ForceNew:    true,
+				Description: `Whether to continue executing queries if a query fails. The default value is false. Setting to true can be useful when executing independent parallel queries. Defaults to false.`,
 			},
 
 			"script_variables": {
-				Type:     schema.TypeMap,
-				Optional: true,
-				ForceNew: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeMap,
+				Optional:    true,
+				ForceNew:    true,
+				Description: `Mapping of query variable names to values (equivalent to the Pig command: name=[value]).`,
+				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 
 			"properties": {
-				Type:     schema.TypeMap,
-				Optional: true,
-				ForceNew: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeMap,
+				Optional:    true,
+				ForceNew:    true,
+				Description: `A mapping of property names to values, used to configure Pig. Properties that conflict with values set by the Cloud Dataproc API may be overwritten. Can include properties set in /etc/hadoop/conf/*-site.xml, /etc/pig/conf/pig.properties, and classes in user code.`,
+				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 
 			"jar_file_uris": {
-				Type:     schema.TypeList,
-				Optional: true,
-				ForceNew: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeList,
+				Optional:    true,
+				ForceNew:    true,
+				Description: `HCFS URIs of jar files to add to the CLASSPATH of the Pig Client and Hadoop MapReduce (MR) tasks. Can contain Pig UDFs.`,
+				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 
 			"logging_config": loggingConfig,
@@ -914,48 +1017,54 @@ func expandPigJob(config map[string]interface{}) *dataproc.PigJob {
 // ---- Spark SQL Job ----
 
 var sparkSqlSchema = &schema.Schema{
-	Type:          schema.TypeList,
-	Optional:      true,
-	ForceNew:      true,
-	MaxItems:      1,
-	ConflictsWith: []string{"spark_config", "pyspark_config", "hadoop_config", "hive_config", "pig_config"},
+	Type:         schema.TypeList,
+	Optional:     true,
+	ForceNew:     true,
+	MaxItems:     1,
+	Description:  `The config of SparkSql job`,
+	ExactlyOneOf: []string{"spark_config", "pyspark_config", "hadoop_config", "hive_config", "pig_config", "sparksql_config"},
 	Elem: &schema.Resource{
 		Schema: map[string]*schema.Schema{
 			// main query: can be only one of query_list | query_file_uri
 			"query_list": {
-				Type:          schema.TypeList,
-				Optional:      true,
-				ForceNew:      true,
-				Elem:          &schema.Schema{Type: schema.TypeString},
-				ConflictsWith: []string{"pig_config.0.query_file_uri"},
+				Type:         schema.TypeList,
+				Optional:     true,
+				ForceNew:     true,
+				Description:  `The list of SQL queries or statements to execute as part of the job. Conflicts with query_file_uri`,
+				Elem:         &schema.Schema{Type: schema.TypeString},
+				ExactlyOneOf: []string{"sparksql_config.0.query_file_uri", "sparksql_config.0.query_list"},
 			},
 
 			"query_file_uri": {
-				Type:          schema.TypeString,
-				Optional:      true,
-				ForceNew:      true,
-				ConflictsWith: []string{"pig_config.0.query_list"},
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				Description:  `The HCFS URI of the script that contains SQL queries. Conflicts with query_list`,
+				ExactlyOneOf: []string{"sparksql_config.0.query_file_uri", "sparksql_config.0.query_list"},
 			},
 
 			"script_variables": {
-				Type:     schema.TypeMap,
-				Optional: true,
-				ForceNew: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeMap,
+				Optional:    true,
+				ForceNew:    true,
+				Description: `Mapping of query variable names to values (equivalent to the Spark SQL command: SET name="value";).`,
+				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 
 			"properties": {
-				Type:     schema.TypeMap,
-				Optional: true,
-				ForceNew: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeMap,
+				Optional:    true,
+				ForceNew:    true,
+				Description: `A mapping of property names to values, used to configure Spark SQL's SparkConf. Properties that conflict with values set by the Cloud Dataproc API may be overwritten.`,
+				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 
 			"jar_file_uris": {
-				Type:     schema.TypeList,
-				Optional: true,
-				ForceNew: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeList,
+				Optional:    true,
+				ForceNew:    true,
+				Description: `HCFS URIs of jar files to be added to the Spark CLASSPATH.`,
+				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 
 			"logging_config": loggingConfig,
@@ -1027,6 +1136,19 @@ func flattenJobReference(r *dataproc.JobReference) []map[string]interface{} {
 			"job_id": r.JobId,
 		},
 	}
+}
+
+func flattenJobScheduling(r *dataproc.JobScheduling) []map[string]interface{} {
+	jobScheduling := []map[string]interface{}{}
+
+	if r != nil {
+		jobScheduling = append(jobScheduling,
+			map[string]interface{}{
+				"max_failures_per_hour": r.MaxFailuresPerHour,
+				"max_failures_total":    r.MaxFailuresTotal,
+			})
+	}
+	return jobScheduling
 }
 
 func flattenJobStatus(s *dataproc.JobStatus) []map[string]interface{} {

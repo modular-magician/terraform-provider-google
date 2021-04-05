@@ -6,32 +6,31 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/hashicorp/terraform/helper/acctest"
-	"github.com/hashicorp/terraform/helper/resource"
-	"github.com/hashicorp/terraform/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"google.golang.org/api/cloudresourcemanager/v1"
 )
 
 func TestAccFolderOrganizationPolicy_boolean(t *testing.T) {
 	t.Parallel()
 
-	folder := acctest.RandomWithPrefix("tf-test")
+	folder := fmt.Sprintf("tf-test-%d", randInt(t))
 
 	org := getTestOrgFromEnv(t)
-	resource.Test(t, resource.TestCase{
+	vcrTest(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckGoogleFolderOrganizationPolicyDestroy,
+		CheckDestroy: testAccCheckGoogleFolderOrganizationPolicyDestroyProducer(t),
 		Steps: []resource.TestStep{
 			{
 				// Test creation of an enforced boolean policy
 				Config: testAccFolderOrganizationPolicy_boolean(org, folder, true),
-				Check:  testAccCheckGoogleFolderOrganizationBooleanPolicy("bool", true),
+				Check:  testAccCheckGoogleFolderOrganizationBooleanPolicy(t, "bool", true),
 			},
 			{
 				// Test update from enforced to not
 				Config: testAccFolderOrganizationPolicy_boolean(org, folder, false),
-				Check:  testAccCheckGoogleFolderOrganizationBooleanPolicy("bool", false),
+				Check:  testAccCheckGoogleFolderOrganizationBooleanPolicy(t, "bool", false),
 			},
 			{
 				Config:  " ",
@@ -40,12 +39,12 @@ func TestAccFolderOrganizationPolicy_boolean(t *testing.T) {
 			{
 				// Test creation of a not enforced boolean policy
 				Config: testAccFolderOrganizationPolicy_boolean(org, folder, false),
-				Check:  testAccCheckGoogleFolderOrganizationBooleanPolicy("bool", false),
+				Check:  testAccCheckGoogleFolderOrganizationBooleanPolicy(t, "bool", false),
 			},
 			{
 				// Test update from not enforced to enforced
 				Config: testAccFolderOrganizationPolicy_boolean(org, folder, true),
-				Check:  testAccCheckGoogleFolderOrganizationBooleanPolicy("bool", true),
+				Check:  testAccCheckGoogleFolderOrganizationBooleanPolicy(t, "bool", true),
 			},
 		},
 	})
@@ -54,17 +53,22 @@ func TestAccFolderOrganizationPolicy_boolean(t *testing.T) {
 func TestAccFolderOrganizationPolicy_list_allowAll(t *testing.T) {
 	t.Parallel()
 
-	folder := acctest.RandomWithPrefix("tf-test")
+	folder := fmt.Sprintf("tf-test-%d", randInt(t))
 
 	org := getTestOrgFromEnv(t)
-	resource.Test(t, resource.TestCase{
+	vcrTest(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckGoogleFolderOrganizationPolicyDestroy,
+		CheckDestroy: testAccCheckGoogleFolderOrganizationPolicyDestroyProducer(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccFolderOrganizationPolicy_list_allowAll(org, folder),
-				Check:  testAccCheckGoogleFolderOrganizationListPolicyAll("list", "ALLOW"),
+				Check:  testAccCheckGoogleFolderOrganizationListPolicyAll(t, "list", "ALLOW"),
+			},
+			{
+				ResourceName:      "google_folder_organization_policy.list",
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -73,17 +77,22 @@ func TestAccFolderOrganizationPolicy_list_allowAll(t *testing.T) {
 func TestAccFolderOrganizationPolicy_list_allowSome(t *testing.T) {
 	t.Parallel()
 
-	folder := acctest.RandomWithPrefix("tf-test")
+	folder := fmt.Sprintf("tf-test-%d", randInt(t))
 	org := getTestOrgFromEnv(t)
 	project := getTestProjectFromEnv()
-	resource.Test(t, resource.TestCase{
+	vcrTest(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckGoogleFolderOrganizationPolicyDestroy,
+		CheckDestroy: testAccCheckGoogleFolderOrganizationPolicyDestroyProducer(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccFolderOrganizationPolicy_list_allowSome(org, folder, project),
-				Check:  testAccCheckGoogleFolderOrganizationListPolicyAllowedValues("list", []string{"projects/" + project}),
+				Check:  testAccCheckGoogleFolderOrganizationListPolicyAllowedValues(t, "list", []string{"projects/" + project}),
+			},
+			{
+				ResourceName:      "google_folder_organization_policy.list",
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -92,16 +101,21 @@ func TestAccFolderOrganizationPolicy_list_allowSome(t *testing.T) {
 func TestAccFolderOrganizationPolicy_list_denySome(t *testing.T) {
 	t.Parallel()
 
-	folder := acctest.RandomWithPrefix("tf-test")
+	folder := fmt.Sprintf("tf-test-%d", randInt(t))
 	org := getTestOrgFromEnv(t)
-	resource.Test(t, resource.TestCase{
+	vcrTest(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckGoogleFolderOrganizationPolicyDestroy,
+		CheckDestroy: testAccCheckGoogleFolderOrganizationPolicyDestroyProducer(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccFolderOrganizationPolicy_list_denySome(org, folder),
-				Check:  testAccCheckGoogleFolderOrganizationListPolicyDeniedValues("list", DENIED_ORG_POLICIES),
+				Check:  testAccCheckGoogleFolderOrganizationListPolicyDeniedValues(t, "list", DENIED_ORG_POLICIES),
+			},
+			{
+				ResourceName:      "google_folder_organization_policy.list",
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -110,53 +124,83 @@ func TestAccFolderOrganizationPolicy_list_denySome(t *testing.T) {
 func TestAccFolderOrganizationPolicy_list_update(t *testing.T) {
 	t.Parallel()
 
-	folder := acctest.RandomWithPrefix("tf-test")
+	folder := fmt.Sprintf("tf-test-%d", randInt(t))
 	org := getTestOrgFromEnv(t)
-	resource.Test(t, resource.TestCase{
+	vcrTest(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckGoogleFolderOrganizationPolicyDestroy,
+		CheckDestroy: testAccCheckGoogleFolderOrganizationPolicyDestroyProducer(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccFolderOrganizationPolicy_list_allowAll(org, folder),
-				Check:  testAccCheckGoogleFolderOrganizationListPolicyAll("list", "ALLOW"),
+				Check:  testAccCheckGoogleFolderOrganizationListPolicyAll(t, "list", "ALLOW"),
 			},
 			{
 				Config: testAccFolderOrganizationPolicy_list_denySome(org, folder),
-				Check:  testAccCheckGoogleFolderOrganizationListPolicyDeniedValues("list", DENIED_ORG_POLICIES),
+				Check:  testAccCheckGoogleFolderOrganizationListPolicyDeniedValues(t, "list", DENIED_ORG_POLICIES),
+			},
+			{
+				ResourceName:      "google_folder_organization_policy.list",
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
 }
 
-func testAccCheckGoogleFolderOrganizationPolicyDestroy(s *terraform.State) error {
-	config := testAccProvider.Meta().(*Config)
+func TestAccFolderOrganizationPolicy_restore_defaultTrue(t *testing.T) {
+	t.Parallel()
 
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "google_folder_organization_policy" {
-			continue
-		}
-
-		folder := canonicalFolderId(rs.Primary.Attributes["folder"])
-		constraint := canonicalOrgPolicyConstraint(rs.Primary.Attributes["constraint"])
-		policy, err := config.clientResourceManager.Folders.GetOrgPolicy(folder, &cloudresourcemanager.GetOrgPolicyRequest{
-			Constraint: constraint,
-		}).Do()
-
-		if err != nil {
-			return err
-		}
-
-		if policy.ListPolicy != nil || policy.BooleanPolicy != nil {
-			return fmt.Errorf("Org policy with constraint '%s' hasn't been cleared", constraint)
-		}
-	}
-	return nil
+	folder := fmt.Sprintf("tf-test-%d", randInt(t))
+	org := getTestOrgFromEnv(t)
+	vcrTest(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckGoogleOrganizationPolicyDestroyProducer(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccFolderOrganizationPolicy_restore_defaultTrue(org, folder),
+				Check:  getGoogleFolderOrganizationRestoreDefaultTrue(t, "restore", &cloudresourcemanager.RestoreDefault{}),
+			},
+			{
+				ResourceName:      "google_folder_organization_policy.restore",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
 }
 
-func testAccCheckGoogleFolderOrganizationBooleanPolicy(n string, enforced bool) resource.TestCheckFunc {
+func testAccCheckGoogleFolderOrganizationPolicyDestroyProducer(t *testing.T) func(s *terraform.State) error {
 	return func(s *terraform.State) error {
-		policy, err := getGoogleFolderOrganizationPolicyTestResource(s, n)
+		config := googleProviderConfig(t)
+
+		for _, rs := range s.RootModule().Resources {
+			if rs.Type != "google_folder_organization_policy" {
+				continue
+			}
+
+			folder := canonicalFolderId(rs.Primary.Attributes["folder"])
+			constraint := canonicalOrgPolicyConstraint(rs.Primary.Attributes["constraint"])
+			policy, err := config.NewResourceManagerClient(config.userAgent).Folders.GetOrgPolicy(folder, &cloudresourcemanager.GetOrgPolicyRequest{
+				Constraint: constraint,
+			}).Do()
+
+			if err != nil {
+				return err
+			}
+
+			if policy.ListPolicy != nil || policy.BooleanPolicy != nil {
+				return fmt.Errorf("Org policy with constraint '%s' hasn't been cleared", constraint)
+			}
+		}
+		return nil
+	}
+}
+
+func testAccCheckGoogleFolderOrganizationBooleanPolicy(t *testing.T, n string, enforced bool) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		policy, err := getGoogleFolderOrganizationPolicyTestResource(t, s, n)
 		if err != nil {
 			return err
 		}
@@ -169,9 +213,9 @@ func testAccCheckGoogleFolderOrganizationBooleanPolicy(n string, enforced bool) 
 	}
 }
 
-func testAccCheckGoogleFolderOrganizationListPolicyAll(n, policyType string) resource.TestCheckFunc {
+func testAccCheckGoogleFolderOrganizationListPolicyAll(t *testing.T, n, policyType string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		policy, err := getGoogleFolderOrganizationPolicyTestResource(s, n)
+		policy, err := getGoogleFolderOrganizationPolicyTestResource(t, s, n)
 		if err != nil {
 			return err
 		}
@@ -188,9 +232,9 @@ func testAccCheckGoogleFolderOrganizationListPolicyAll(n, policyType string) res
 	}
 }
 
-func testAccCheckGoogleFolderOrganizationListPolicyAllowedValues(n string, values []string) resource.TestCheckFunc {
+func testAccCheckGoogleFolderOrganizationListPolicyAllowedValues(t *testing.T, n string, values []string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		policy, err := getGoogleFolderOrganizationPolicyTestResource(s, n)
+		policy, err := getGoogleFolderOrganizationPolicyTestResource(t, s, n)
 		if err != nil {
 			return err
 		}
@@ -205,9 +249,9 @@ func testAccCheckGoogleFolderOrganizationListPolicyAllowedValues(n string, value
 	}
 }
 
-func testAccCheckGoogleFolderOrganizationListPolicyDeniedValues(n string, values []string) resource.TestCheckFunc {
+func testAccCheckGoogleFolderOrganizationListPolicyDeniedValues(t *testing.T, n string, values []string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		policy, err := getGoogleFolderOrganizationPolicyTestResource(s, n)
+		policy, err := getGoogleFolderOrganizationPolicyTestResource(t, s, n)
 		if err != nil {
 			return err
 		}
@@ -222,7 +266,23 @@ func testAccCheckGoogleFolderOrganizationListPolicyDeniedValues(n string, values
 	}
 }
 
-func getGoogleFolderOrganizationPolicyTestResource(s *terraform.State, n string) (*cloudresourcemanager.OrgPolicy, error) {
+func getGoogleFolderOrganizationRestoreDefaultTrue(t *testing.T, n string, policyDefault *cloudresourcemanager.RestoreDefault) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+
+		policy, err := getGoogleFolderOrganizationPolicyTestResource(t, s, n)
+		if err != nil {
+			return err
+		}
+
+		if !reflect.DeepEqual(policy.RestoreDefault, policyDefault) {
+			return fmt.Errorf("Expected the restore default '%s', instead denied, %s", policyDefault, policy.RestoreDefault)
+		}
+
+		return nil
+	}
+}
+
+func getGoogleFolderOrganizationPolicyTestResource(t *testing.T, s *terraform.State, n string) (*cloudresourcemanager.OrgPolicy, error) {
 	rn := "google_folder_organization_policy." + n
 	rs, ok := s.RootModule().Resources[rn]
 	if !ok {
@@ -233,10 +293,10 @@ func getGoogleFolderOrganizationPolicyTestResource(s *terraform.State, n string)
 		return nil, fmt.Errorf("No ID is set")
 	}
 
-	config := testAccProvider.Meta().(*Config)
+	config := googleProviderConfig(t)
 	folder := canonicalFolderId(rs.Primary.Attributes["folder"])
 
-	return config.clientResourceManager.Folders.GetOrgPolicy(folder, &cloudresourcemanager.GetOrgPolicyRequest{
+	return config.NewResourceManagerClient(config.userAgent).Folders.GetOrgPolicy(folder, &cloudresourcemanager.GetOrgPolicyRequest{
 		Constraint: rs.Primary.Attributes["constraint"],
 	}).Do()
 }
@@ -249,8 +309,8 @@ resource "google_folder" "orgpolicy" {
 }
 
 resource "google_folder_organization_policy" "bool" {
-	# Test numeric folder ID.
-  folder     = "${replace(google_folder.orgpolicy.name, "folders/", "")}"
+  # Test numeric folder ID.
+  folder     = replace(google_folder.orgpolicy.name, "folders/", "")
   constraint = "constraints/compute.disableSerialPortAccess"
 
   boolean_policy {
@@ -268,7 +328,7 @@ resource "google_folder" "orgpolicy" {
 }
 
 resource "google_folder_organization_policy" "list" {
-  folder     = "${google_folder.orgpolicy.name}"
+  folder     = google_folder.orgpolicy.name
   constraint = "constraints/serviceuser.services"
 
   list_policy {
@@ -288,7 +348,7 @@ resource "google_folder" "orgpolicy" {
 }
 
 resource "google_folder_organization_policy" "list" {
-  folder     = "${google_folder.orgpolicy.name}"
+  folder     = google_folder.orgpolicy.name
   constraint = "constraints/compute.trustedImageProjects"
 
   list_policy {
@@ -308,7 +368,7 @@ resource "google_folder" "orgpolicy" {
 }
 
 resource "google_folder_organization_policy" "list" {
-  folder     = "${google_folder.orgpolicy.name}"
+  folder     = google_folder.orgpolicy.name
   constraint = "serviceuser.services"
 
   list_policy {
@@ -318,6 +378,24 @@ resource "google_folder_organization_policy" "list" {
         "replicapoolupdater.googleapis.com",
       ]
     }
+  }
+}
+`, folder, "organizations/"+org)
+}
+
+func testAccFolderOrganizationPolicy_restore_defaultTrue(org, folder string) string {
+	return fmt.Sprintf(`
+resource "google_folder" "orgpolicy" {
+  display_name = "%s"
+  parent       = "%s"
+}
+
+resource "google_folder_organization_policy" "restore" {
+  folder     = google_folder.orgpolicy.name
+  constraint = "serviceuser.services"
+
+  restore_policy {
+    default = true
   }
 }
 `, folder, "organizations/"+org)

@@ -6,6 +6,7 @@ terraform.tfvars
 terraform.tfplan
 terraform.tfstate
 bin/
+terraform-provider-google
 modules-dev/
 /pkg/
 website/.vagrant
@@ -24,6 +25,7 @@ website/node_modules
 *.iml
 *.test
 *.iml
+.vscode/
 
 website/vendor
 

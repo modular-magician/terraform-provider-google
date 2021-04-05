@@ -1,4 +1,5 @@
 ---
+subcategory: "Cloud Platform"
 layout: "google"
 page_title: "Google: google_service_account"
 sidebar_current: "docs-google-service-account-x"
@@ -8,17 +9,27 @@ description: |-
 
 # google\_service\_account
 
-Allows management of a [Google Cloud Platform service account](https://cloud.google.com/compute/docs/access/service-accounts)
+Allows management of a Google Cloud service account.
+
+* [API documentation](https://cloud.google.com/iam/reference/rest/v1/projects.serviceAccounts)
+* How-to Guides
+    * [Official Documentation](https://cloud.google.com/compute/docs/access/service-accounts)
+
+-> **Warning:**  If you delete and recreate a service account, you must reapply any IAM roles that it had before.
+
+-> Creation of service accounts is eventually consistent, and that can lead to
+errors when you try to apply ACLs to service accounts immediately after
+creation. If using these resources in the same config, you can add a
+[`sleep` using `local-exec`](https://github.com/hashicorp/terraform/issues/17726#issuecomment-377357866).
 
 ## Example Usage
 
-This snippet creates a service account, then gives it objectViewer
-permission in a project.
+This snippet creates a service account in a project.
 
 ```hcl
-resource "google_service_account" "object_viewer" {
-  account_id   = "object-viewer"
-  display_name = "Object viewer"
+resource "google_service_account" "service_account" {
+  account_id   = "service-account-id"
+  display_name = "Service Account"
 }
 ```
 
@@ -26,28 +37,26 @@ resource "google_service_account" "object_viewer" {
 
 The following arguments are supported:
 
-* `account_id` - (Required) The service account ID.
-    Changing this forces a new service account to be created.
+* `account_id` - (Required) The account id that is used to generate the service
+    account email address and a stable unique id. It is unique within a project,
+    must be 6-30 characters long, and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])`
+    to comply with RFC1035. Changing this forces a new service account to be created.
 
 * `display_name` - (Optional) The display name for the service account.
     Can be updated without creating a new resource.
 
+* `description` - (Optional) A text description of the service account.
+    Must be less than or equal to 256 UTF-8 bytes.
+
 * `project` - (Optional) The ID of the project that the service account will be created in.
     Defaults to the provider project configuration.
-
-* `policy_data` - (DEPRECATED, Optional) The `google_iam_policy` data source that represents
-    the IAM policy that will be applied to the service account. The policy will be
-    merged with any existing policy.
-
-    This attribute has been deprecated. Use the [google_service_account_iam_* resources](google_service_account_iam.html) instead.
-
-    Deleting this removes the policy declared in Terraform. Any policy bindings
-    associated with the project before Terraform was used are not deleted.
 
 ## Attributes Reference
 
 In addition to the arguments listed above, the following computed attributes are
 exported:
+
+* `id` - an identifier for the resource with format `projects/{{project}}/serviceAccounts/{{email}}`
 
 * `email` - The e-mail address of the service account. This value
     should be referenced from any `google_iam_policy` data sources
@@ -56,6 +65,13 @@ exported:
 * `name` - The fully-qualified name of the service account.
 
 * `unique_id` - The unique id of the service account.
+
+## Timeouts
+
+This resource provides the following
+[Timeouts](/docs/configuration/resources.html#timeouts) configuration options:
+
+- `create` - Default is 5 minutes.
 
 ## Import
 

@@ -2,15 +2,13 @@ package google
 
 import (
 	"fmt"
+	"os"
 	"regexp"
-	"strconv"
 	"testing"
 
-	"github.com/hashicorp/terraform/helper/acctest"
-	"github.com/hashicorp/terraform/helper/resource"
-	"github.com/hashicorp/terraform/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"google.golang.org/api/compute/v1"
-	"os"
 )
 
 func TestDiskImageDiffSuppress(t *testing.T) {
@@ -122,6 +120,16 @@ func TestDiskImageDiffSuppress(t *testing.T) {
 			New:                "ubuntu-os-cloud/ubuntu-1404-lts",
 			ExpectDiffSuppress: true,
 		},
+		"matching unconventional image family - minimal": {
+			Old:                "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-minimal-1804-bionic-v20180705",
+			New:                "ubuntu-minimal-1804-lts",
+			ExpectDiffSuppress: true,
+		},
+		"matching unconventional image family - cos": {
+			Old:                "https://www.googleapis.com/compute/v1/projects/cos-cloud/global/images/cos-85-13310-1209-17",
+			New:                "cos-85-lts",
+			ExpectDiffSuppress: true,
+		},
 		"different image family": {
 			Old:                "https://www.googleapis.com/compute/v1/projects/debian-cloud/global/images/debian-8-jessie-v20171213",
 			New:                "family/debian-7",
@@ -175,8 +183,8 @@ func TestDiskImageDiffSuppress(t *testing.T) {
 func TestAccComputeDisk_imageDiffSuppressPublicVendorsFamilyNames(t *testing.T) {
 	t.Parallel()
 
-	if os.Getenv(resource.TestEnvVar) == "" {
-		t.Skip(fmt.Sprintf("Network access not allowed; use %s=1 to enable", resource.TestEnvVar))
+	if os.Getenv(TestEnvVar) == "" {
+		t.Skip(fmt.Sprintf("Network access not allowed; use %s=1 to enable", TestEnvVar))
 	}
 
 	config := getInitializedConfig(t)
@@ -184,7 +192,7 @@ func TestAccComputeDisk_imageDiffSuppressPublicVendorsFamilyNames(t *testing.T) 
 	for _, publicImageProject := range imageMap {
 		token := ""
 		for paginate := true; paginate; {
-			resp, err := config.clientCompute.Images.List(publicImageProject).Filter("deprecated.replacement ne .*images.*").PageToken(token).Do()
+			resp, err := config.NewComputeClient(config.userAgent).Images.List(publicImageProject).Filter("deprecated.replacement ne .*images.*").PageToken(token).Do()
 			if err != nil {
 				t.Fatalf("Can't list public images for project %q", publicImageProject)
 			}
@@ -200,44 +208,18 @@ func TestAccComputeDisk_imageDiffSuppressPublicVendorsFamilyNames(t *testing.T) 
 	}
 }
 
-func TestAccComputeDisk_basic(t *testing.T) {
-	t.Parallel()
-
-	diskName := fmt.Sprintf("tf-test-%s", acctest.RandString(10))
-	var disk compute.Disk
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckComputeDiskDestroy,
-		Steps: []resource.TestStep{
-			resource.TestStep{
-				Config: testAccComputeDisk_basic(diskName),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckComputeDiskExists(
-						"google_compute_disk.foobar", &disk),
-					testAccCheckComputeDiskHasLabel(&disk, "my-label", "my-label-value"),
-					testAccCheckComputeDiskHasLabelFingerprint(&disk, "google_compute_disk.foobar"),
-				),
-			},
-			resource.TestStep{
-				ResourceName:      "google_compute_disk.foobar",
-				ImportState:       true,
-				ImportStateVerify: true,
-			},
-		},
-	})
-}
-
 func TestAccComputeDisk_timeout(t *testing.T) {
+	// Vcr speeds up test, so it doesn't time out
+	skipIfVcr(t)
 	t.Parallel()
 
-	resource.Test(t, resource.TestCase{
+	diskName := fmt.Sprintf("tf-test-disk-%d", randInt(t))
+	vcrTest(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
-				Config:      testAccComputeDisk_timeout(),
+			{
+				Config:      testAccComputeDisk_timeout(diskName),
 				ExpectError: regexp.MustCompile("timeout"),
 			},
 		},
@@ -247,33 +229,27 @@ func TestAccComputeDisk_timeout(t *testing.T) {
 func TestAccComputeDisk_update(t *testing.T) {
 	t.Parallel()
 
-	diskName := fmt.Sprintf("tf-test-%s", acctest.RandString(10))
-	var disk compute.Disk
+	diskName := fmt.Sprintf("tf-test-%s", randString(t, 10))
 
-	resource.Test(t, resource.TestCase{
+	vcrTest(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccComputeDisk_basic(diskName),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckComputeDiskExists(
-						"google_compute_disk.foobar", &disk),
-					resource.TestCheckResourceAttr("google_compute_disk.foobar", "size", "50"),
-					testAccCheckComputeDiskHasLabel(&disk, "my-label", "my-label-value"),
-					testAccCheckComputeDiskHasLabelFingerprint(&disk, "google_compute_disk.foobar"),
-				),
+			},
+			{
+				ResourceName:      "google_compute_disk.foobar",
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 			{
 				Config: testAccComputeDisk_updated(diskName),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckComputeDiskExists(
-						"google_compute_disk.foobar", &disk),
-					resource.TestCheckResourceAttr("google_compute_disk.foobar", "size", "100"),
-					testAccCheckComputeDiskHasLabel(&disk, "my-label", "my-updated-label-value"),
-					testAccCheckComputeDiskHasLabel(&disk, "a-new-label", "a-new-label-value"),
-					testAccCheckComputeDiskHasLabelFingerprint(&disk, "google_compute_disk.foobar"),
-				),
+			},
+			{
+				ResourceName:      "google_compute_disk.foobar",
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -282,31 +258,31 @@ func TestAccComputeDisk_update(t *testing.T) {
 func TestAccComputeDisk_fromSnapshot(t *testing.T) {
 	t.Parallel()
 
-	diskName := fmt.Sprintf("tf-test-%s", acctest.RandString(10))
-	firstDiskName := fmt.Sprintf("tf-test-%s", acctest.RandString(10))
-	snapshotName := fmt.Sprintf("tf-test-%s", acctest.RandString(10))
+	diskName := fmt.Sprintf("tf-test-%s", randString(t, 10))
+	firstDiskName := fmt.Sprintf("tf-test-%s", randString(t, 10))
+	snapshotName := fmt.Sprintf("tf-test-%s", randString(t, 10))
 	projectName := getTestProjectFromEnv()
 
-	var disk compute.Disk
-
-	resource.Test(t, resource.TestCase{
+	vcrTest(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckComputeDiskDestroy,
+		CheckDestroy: testAccCheckComputeDiskDestroyProducer(t),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testAccComputeDisk_fromSnapshot(projectName, firstDiskName, snapshotName, diskName, "self_link"),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckComputeDiskExists(
-						"google_compute_disk.seconddisk", &disk),
-				),
 			},
-			resource.TestStep{
+			{
+				ResourceName:      "google_compute_disk.seconddisk",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			{
 				Config: testAccComputeDisk_fromSnapshot(projectName, firstDiskName, snapshotName, diskName, "name"),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckComputeDiskExists(
-						"google_compute_disk.seconddisk", &disk),
-				),
+			},
+			{
+				ResourceName:      "google_compute_disk.seconddisk",
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -315,22 +291,55 @@ func TestAccComputeDisk_fromSnapshot(t *testing.T) {
 func TestAccComputeDisk_encryption(t *testing.T) {
 	t.Parallel()
 
-	diskName := fmt.Sprintf("tf-test-%s", acctest.RandString(10))
+	diskName := fmt.Sprintf("tf-test-%s", randString(t, 10))
 	var disk compute.Disk
 
-	resource.Test(t, resource.TestCase{
+	vcrTest(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckComputeDiskDestroy,
+		CheckDestroy: testAccCheckComputeDiskDestroyProducer(t),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testAccComputeDisk_encryption(diskName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckComputeDiskExists(
-						"google_compute_disk.foobar", &disk),
+						t, "google_compute_disk.foobar", getTestProjectFromEnv(), &disk),
 					testAccCheckEncryptionKey(
-						"google_compute_disk.foobar", &disk),
+						t, "google_compute_disk.foobar", &disk),
 				),
+			},
+		},
+	})
+}
+
+func TestAccComputeDisk_encryptionKMS(t *testing.T) {
+	t.Parallel()
+
+	kms := BootstrapKMSKey(t)
+	pid := getTestProjectFromEnv()
+	diskName := fmt.Sprintf("tf-test-%s", randString(t, 10))
+	importID := fmt.Sprintf("%s/%s/%s", pid, "us-central1-a", diskName)
+	var disk compute.Disk
+
+	vcrTest(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckComputeDiskDestroyProducer(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccComputeDisk_encryptionKMS(pid, diskName, kms.CryptoKey.Name),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckComputeDiskExists(
+						t, "google_compute_disk.foobar", pid, &disk),
+					testAccCheckEncryptionKey(
+						t, "google_compute_disk.foobar", &disk),
+				),
+			},
+			{
+				ResourceName:      "google_compute_disk.foobar",
+				ImportStateId:     importID,
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -339,92 +348,96 @@ func TestAccComputeDisk_encryption(t *testing.T) {
 func TestAccComputeDisk_deleteDetach(t *testing.T) {
 	t.Parallel()
 
-	diskName := fmt.Sprintf("tf-test-%s", acctest.RandString(10))
-	instanceName := fmt.Sprintf("tf-test-%s", acctest.RandString(10))
-	var disk compute.Disk
+	diskName := fmt.Sprintf("tf-test-%s", randString(t, 10))
+	instanceName := fmt.Sprintf("tf-test-%s", randString(t, 10))
 
-	resource.Test(t, resource.TestCase{
+	vcrTest(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckComputeDiskDestroy,
+		CheckDestroy: testAccCheckComputeDiskDestroyProducer(t),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testAccComputeDisk_deleteDetach(instanceName, diskName),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckComputeDiskExists(
-						"google_compute_disk.foo", &disk),
-				),
+			},
+			{
+				ResourceName:      "google_compute_disk.foo",
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 			// this needs to be a second step so we refresh and see the instance
 			// listed as attached to the disk; the instance is created after the
 			// disk. and the disk's properties aren't refreshed unless there's
 			// another step
-			resource.TestStep{
+			{
 				Config: testAccComputeDisk_deleteDetach(instanceName, diskName),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckComputeDiskExists(
-						"google_compute_disk.foo", &disk),
-					testAccCheckComputeDiskInstances(
-						"google_compute_disk.foo", &disk),
-				),
+			},
+			{
+				ResourceName:      "google_compute_disk.foo",
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
 }
 
-func TestAccComputeDisk_computeDiskUserRegex(t *testing.T) {
+func TestAccComputeDisk_deleteDetachIGM(t *testing.T) {
+	// Randomness in instance template
+	skipIfVcr(t)
+	t.Parallel()
 
-	shouldPass := []string{
+	diskName := fmt.Sprintf("tf-test-%s", randString(t, 10))
+	diskName2 := fmt.Sprintf("tf-test-%s", randString(t, 10))
+	mgrName := fmt.Sprintf("tf-test-%s", randString(t, 10))
 
-		"https://www.googleapis.com/compute/v1/projects/project-id/zones/us-central1/instances/123",
-		"https://www.googleapis.com/compute/v1/projects/123123/zones/us-central1/instances/123",
-		"https://www.googleapis.com/compute/v1/projects/hashicorptest.net:project-123/zones/us-central1/instances/123",
-		"https://www.googleapis.com/compute/v1/projects/123/zones/456/instances/789",
-	}
-
-	shouldFail := []string{
-		"https://www.googleapis.com/compute/v1/projects/project#/zones/us-central1/instances/123",
-		"https://www.googleapis.com/compute/v1/projects/project/zones/us-central#/instances/123",
-		"https://www.googleapis.com/compute/v1/projects/project/zones/us-central1/instances/?",
-		"https://www.googleapis.com/compute/v1/projects/foo.com:bar:baz/zones/us-central1/instances/?",
-		"https://www.googleapis.com/compute/v1/projects/foo.com:/zones/us-central1/instances/?",
-	}
-
-	for _, element := range shouldPass {
-		if !computeDiskUserRegex.MatchString(element) {
-			t.Error("computeDiskUserRegex should match on '" + element + "' but doesn't")
-		}
-	}
-
-	for _, element := range shouldFail {
-		if computeDiskUserRegex.MatchString(element) {
-			t.Error("computeDiskUserRegex shouldn't match on '" + element + "' but does")
-		}
-	}
-
+	vcrTest(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckComputeDiskDestroyProducer(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccComputeDisk_deleteDetachIGM(diskName, mgrName),
+			},
+			{
+				ResourceName:      "google_compute_disk.foo",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			// this needs to be a second step so we refresh and see the instance
+			// listed as attached to the disk; the instance is created after the
+			// disk. and the disk's properties aren't refreshed unless there's
+			// another step
+			{
+				Config: testAccComputeDisk_deleteDetachIGM(diskName, mgrName),
+			},
+			{
+				ResourceName:      "google_compute_disk.foo",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			// Change the disk name to recreate the instances
+			{
+				Config: testAccComputeDisk_deleteDetachIGM(diskName2, mgrName),
+			},
+			{
+				ResourceName:      "google_compute_disk.foo",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			// Add the extra step like before
+			{
+				Config: testAccComputeDisk_deleteDetachIGM(diskName2, mgrName),
+			},
+			{
+				ResourceName:      "google_compute_disk.foo",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
 }
 
-func testAccCheckComputeDiskDestroy(s *terraform.State) error {
-	config := testAccProvider.Meta().(*Config)
-
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "google_compute_disk" {
-			continue
-		}
-
-		_, err := config.clientCompute.Disks.Get(
-			config.Project, rs.Primary.Attributes["zone"], rs.Primary.ID).Do()
-		if err == nil {
-			return fmt.Errorf("Disk still exists")
-		}
-	}
-
-	return nil
-}
-
-func testAccCheckComputeDiskExists(n string, disk *compute.Disk) resource.TestCheckFunc {
+func testAccCheckComputeDiskExists(t *testing.T, n, p string, disk *compute.Disk) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		p := getTestProjectFromEnv()
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
 			return fmt.Errorf("Not found: %s", n)
@@ -434,15 +447,15 @@ func testAccCheckComputeDiskExists(n string, disk *compute.Disk) resource.TestCh
 			return fmt.Errorf("No ID is set")
 		}
 
-		config := testAccProvider.Meta().(*Config)
+		config := googleProviderConfig(t)
 
-		found, err := config.clientCompute.Disks.Get(
-			p, rs.Primary.Attributes["zone"], rs.Primary.ID).Do()
+		found, err := config.NewComputeClient(config.userAgent).Disks.Get(
+			p, rs.Primary.Attributes["zone"], rs.Primary.Attributes["name"]).Do()
 		if err != nil {
 			return err
 		}
 
-		if found.Name != rs.Primary.ID {
+		if found.Name != rs.Primary.Attributes["name"] {
 			return fmt.Errorf("Disk not found")
 		}
 
@@ -452,50 +465,17 @@ func testAccCheckComputeDiskExists(n string, disk *compute.Disk) resource.TestCh
 	}
 }
 
-func testAccCheckComputeDiskHasLabel(disk *compute.Disk, key, value string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		val, ok := disk.Labels[key]
-		if !ok {
-			return fmt.Errorf("Label with key %s not found", key)
-		}
-
-		if val != value {
-			return fmt.Errorf("Label value did not match for key %s: expected %s but found %s", key, value, val)
-		}
-		return nil
-	}
-}
-
-func testAccCheckComputeDiskHasLabelFingerprint(disk *compute.Disk, resourceName string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		state := s.RootModule().Resources[resourceName]
-		if state == nil {
-			return fmt.Errorf("Unable to find resource named %s", resourceName)
-		}
-
-		labelFingerprint := state.Primary.Attributes["label_fingerprint"]
-		if labelFingerprint != disk.LabelFingerprint {
-			return fmt.Errorf("Label fingerprints do not match: api returned %s but state has %s",
-				disk.LabelFingerprint, labelFingerprint)
-		}
-
-		return nil
-	}
-}
-
-func testAccCheckEncryptionKey(n string, disk *compute.Disk) resource.TestCheckFunc {
+func testAccCheckEncryptionKey(t *testing.T, n string, disk *compute.Disk) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
 			return fmt.Errorf("Not found: %s", n)
 		}
 
-		attr := rs.Primary.Attributes["disk_encryption_key_sha256"]
-		if disk.DiskEncryptionKey == nil && attr != "" {
+		attr := rs.Primary.Attributes["disk_encryption_key.0.sha256"]
+		if disk.DiskEncryptionKey == nil {
 			return fmt.Errorf("Disk %s has mismatched encryption key.\nTF State: %+v\nGCP State: <empty>", n, attr)
-		}
-
-		if attr != disk.DiskEncryptionKey.Sha256 {
+		} else if attr != disk.DiskEncryptionKey.Sha256 {
 			return fmt.Errorf("Disk %s has mismatched encryption key.\nTF State: %+v.\nGCP State: %+v",
 				n, attr, disk.DiskEncryptionKey.Sha256)
 		}
@@ -503,137 +483,241 @@ func testAccCheckEncryptionKey(n string, disk *compute.Disk) resource.TestCheckF
 	}
 }
 
-func testAccCheckComputeDiskInstances(n string, disk *compute.Disk) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		rs, ok := s.RootModule().Resources[n]
-		if !ok {
-			return fmt.Errorf("Not found: %s", n)
-		}
-
-		attr := rs.Primary.Attributes["users.#"]
-		if strconv.Itoa(len(disk.Users)) != attr {
-			return fmt.Errorf("Disk %s has mismatched users.\nTF State: %+v\nGCP State: %+v", n, rs.Primary.Attributes["users"], disk.Users)
-		}
-
-		for pos, user := range disk.Users {
-			if rs.Primary.Attributes["users."+strconv.Itoa(pos)] != user {
-				return fmt.Errorf("Disk %s has mismatched users.\nTF State: %+v.\nGCP State: %+v",
-					n, rs.Primary.Attributes["users"], disk.Users)
-			}
-		}
-		return nil
-	}
-}
-
 func testAccComputeDisk_basic(diskName string) string {
 	return fmt.Sprintf(`
-resource "google_compute_disk" "foobar" {
-	name = "%s"
-	image = "debian-8-jessie-v20160803"
-	size = 50
-	type = "pd-ssd"
-	zone = "us-central1-a"
-	labels {
-		my-label = "my-label-value"
-	}
-}`, diskName)
+data "google_compute_image" "my_image" {
+  family  = "debian-9"
+  project = "debian-cloud"
 }
 
-func testAccComputeDisk_timeout() string {
-	return fmt.Sprintf(`
 resource "google_compute_disk" "foobar" {
-	name  = "%s"
-	image = "debian-8-jessie-v20160803"
-	type  = "pd-ssd"
-	zone  = "us-central1-a"
+  name  = "%s"
+  image = data.google_compute_image.my_image.self_link
+  size  = 50
+  type  = "pd-ssd"
+  zone  = "us-central1-a"
+  labels = {
+    my-label = "my-label-value"
+  }
+}
+`, diskName)
+}
 
-	timeouts {
-		Create = "1s"
-	}
-}`, acctest.RandString(10))
+func testAccComputeDisk_timeout(diskName string) string {
+	return fmt.Sprintf(`
+data "google_compute_image" "my_image" {
+  family  = "debian-9"
+  project = "debian-cloud"
+}
+
+resource "google_compute_disk" "foobar" {
+  name  = "%s"
+  image = data.google_compute_image.my_image.self_link
+  type  = "pd-ssd"
+  zone  = "us-central1-a"
+
+  timeouts {
+    create = "1s"
+  }
+}
+`, diskName)
 }
 
 func testAccComputeDisk_updated(diskName string) string {
 	return fmt.Sprintf(`
+data "google_compute_image" "my_image" {
+  family  = "debian-9"
+  project = "debian-cloud"
+}
+
 resource "google_compute_disk" "foobar" {
-	name = "%s"
-	image = "debian-8-jessie-v20160803"
-	size = 100
-	type = "pd-ssd"
-	zone = "us-central1-a"
-	labels {
-		my-label = "my-updated-label-value"
-		a-new-label = "a-new-label-value"
-	}
-}`, diskName)
+  name  = "%s"
+  image = data.google_compute_image.my_image.self_link
+  size  = 100
+  type  = "pd-ssd"
+  zone  = "us-central1-a"
+  labels = {
+    my-label    = "my-updated-label-value"
+    a-new-label = "a-new-label-value"
+  }
+}
+`, diskName)
 }
 
 func testAccComputeDisk_fromSnapshot(projectName, firstDiskName, snapshotName, diskName, ref_selector string) string {
 	return fmt.Sprintf(`
+data "google_compute_image" "my_image" {
+  family  = "debian-9"
+  project = "debian-cloud"
+}
+
 resource "google_compute_disk" "foobar" {
-	name = "d1-%s"
-	image = "debian-8-jessie-v20160803"
-	size = 50
-	type = "pd-ssd"
-	zone = "us-central1-a"
-	project = "%s"
+  name    = "%s-d1"
+  image   = data.google_compute_image.my_image.self_link
+  size    = 50
+  type    = "pd-ssd"
+  zone    = "us-central1-a"
+  project = "%s"
 }
 
 resource "google_compute_snapshot" "snapdisk" {
-	name = "%s"
-	source_disk = "${google_compute_disk.foobar.name}"
-	zone = "us-central1-a"
-	project = "%s"
+  name        = "%s"
+  source_disk = google_compute_disk.foobar.name
+  zone        = "us-central1-a"
+  project     = "%s"
 }
 
 resource "google_compute_disk" "seconddisk" {
-	name = "d2-%s"
-	snapshot = "${google_compute_snapshot.snapdisk.%s}"
-	type = "pd-ssd"
-	zone = "us-central1-a"
-	project = "%s"
-}`, firstDiskName, projectName, snapshotName, projectName, diskName, ref_selector, projectName)
+  name     = "%s-d2"
+  snapshot = google_compute_snapshot.snapdisk.%s
+  type     = "pd-ssd"
+  zone     = "us-central1-a"
+  project  = "%s"
+}
+`, firstDiskName, projectName, snapshotName, projectName, diskName, ref_selector, projectName)
 }
 
 func testAccComputeDisk_encryption(diskName string) string {
 	return fmt.Sprintf(`
+data "google_compute_image" "my_image" {
+  family  = "debian-9"
+  project = "debian-cloud"
+}
+
 resource "google_compute_disk" "foobar" {
-	name = "%s"
-	image = "debian-8-jessie-v20160803"
-	size = 50
-	type = "pd-ssd"
-	zone = "us-central1-a"
-	disk_encryption_key_raw = "SGVsbG8gZnJvbSBHb29nbGUgQ2xvdWQgUGxhdGZvcm0="
-}`, diskName)
+  name  = "%s"
+  image = data.google_compute_image.my_image.self_link
+  size  = 50
+  type  = "pd-ssd"
+  zone  = "us-central1-a"
+  disk_encryption_key {
+    raw_key = "SGVsbG8gZnJvbSBHb29nbGUgQ2xvdWQgUGxhdGZvcm0="
+  }
+}
+`, diskName)
+}
+
+func testAccComputeDisk_encryptionKMS(pid, diskName, kmsKey string) string {
+	return fmt.Sprintf(`
+data "google_project" "project" {
+  project_id = "%s"
+}
+
+data "google_compute_image" "my_image" {
+  family  = "debian-9"
+  project = "debian-cloud"
+}
+
+resource "google_project_iam_member" "kms-project-binding" {
+  project = data.google_project.project.project_id
+  role    = "roles/cloudkms.cryptoKeyEncrypterDecrypter"
+  member  = "serviceAccount:service-${data.google_project.project.number}@compute-system.iam.gserviceaccount.com"
+}
+
+resource "google_compute_disk" "foobar" {
+  depends_on = [google_project_iam_member.kms-project-binding]
+
+  name  = "%s"
+  image = data.google_compute_image.my_image.self_link
+  size  = 10
+  type  = "pd-ssd"
+  zone  = "us-central1-a"
+
+  disk_encryption_key {
+    kms_key_self_link = "%s"
+  }
+}
+`, pid, diskName, kmsKey)
 }
 
 func testAccComputeDisk_deleteDetach(instanceName, diskName string) string {
 	return fmt.Sprintf(`
+data "google_compute_image" "my_image" {
+  family  = "debian-9"
+  project = "debian-cloud"
+}
+
 resource "google_compute_disk" "foo" {
-	name = "%s"
-	image = "debian-8-jessie-v20170523"
-	size = 50
-	type = "pd-ssd"
-	zone = "us-central1-a"
+  name  = "%s"
+  image = data.google_compute_image.my_image.self_link
+  size  = 50
+  type  = "pd-ssd"
+  zone  = "us-central1-a"
 }
 
 resource "google_compute_instance" "bar" {
-	name = "%s"
-	machine_type = "n1-standard-1"
-	zone = "us-central1-a"
+  name         = "%s"
+  machine_type = "e2-medium"
+  zone         = "us-central1-a"
 
-	boot_disk {
-		initialize_params {
-			image = "debian-8-jessie-v20170523"
-		}
-	}
+  boot_disk {
+    initialize_params {
+      image = data.google_compute_image.my_image.self_link
+    }
+  }
 
-	attached_disk {
-		source = "${google_compute_disk.foo.self_link}"
-	}
+  attached_disk {
+    source = google_compute_disk.foo.self_link
+  }
 
-	network_interface {
-		network = "default"
-	}
-}`, diskName, instanceName)
+  network_interface {
+    network = "default"
+  }
+}
+`, diskName, instanceName)
+}
+
+func testAccComputeDisk_deleteDetachIGM(diskName, mgrName string) string {
+	return fmt.Sprintf(`
+data "google_compute_image" "my_image" {
+  family  = "debian-9"
+  project = "debian-cloud"
+}
+
+resource "google_compute_disk" "foo" {
+  name  = "%s"
+  image = data.google_compute_image.my_image.self_link
+  size  = 50
+  type  = "pd-ssd"
+  zone  = "us-central1-a"
+}
+
+resource "google_compute_instance_template" "template" {
+  machine_type = "g1-small"
+
+  disk {
+    boot        = true
+    source      = google_compute_disk.foo.name
+    auto_delete = false
+  }
+
+  network_interface {
+    network = "default"
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+resource "google_compute_instance_group_manager" "manager" {
+  name               = "%s"
+  base_instance_name = "disk-igm"
+  version {
+    instance_template = google_compute_instance_template.template.self_link
+    name              = "primary"
+  }
+  update_policy {
+    minimal_action        = "RESTART"
+    type                  = "PROACTIVE"
+    max_unavailable_fixed = 1
+  }
+  zone        = "us-central1-a"
+  target_size = 1
+
+  // block on instances being ready so that when they get deleted, we don't try
+  // to continue interacting with them in other resources
+  wait_for_instances = true
+}
+`, diskName, mgrName)
 }

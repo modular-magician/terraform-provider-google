@@ -4,62 +4,109 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hashicorp/terraform/helper/acctest"
-	"github.com/hashicorp/terraform/helper/resource"
-	"github.com/hashicorp/terraform/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-func TestAccPubsubTopic_basic(t *testing.T) {
+func TestAccPubsubTopic_update(t *testing.T) {
 	t.Parallel()
 
-	topicName := acctest.RandomWithPrefix("tf-test-topic")
+	topic := fmt.Sprintf("tf-test-topic-%s", randString(t, 10))
 
-	resource.Test(t, resource.TestCase{
+	vcrTest(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPubsubTopicDestroy,
+		CheckDestroy: testAccCheckPubsubTopicDestroyProducer(t),
 		Steps: []resource.TestStep{
-			resource.TestStep{
-				Config: testAccPubsubTopic_basic(topicName),
+			{
+				Config: testAccPubsubTopic_update(topic, "foo", "bar"),
 			},
-			// Check importing with just the topic name
-			resource.TestStep{
-				ResourceName:            "google_pubsub_topic.foo",
-				ImportStateId:           topicName,
-				ImportState:             true,
-				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"force_destroy"},
+			{
+				ResourceName:      "google_pubsub_topic.foo",
+				ImportStateId:     topic,
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
-			// Check importing with the full resource id
-			resource.TestStep{
-				ResourceName:            "google_pubsub_topic.foo",
-				ImportState:             true,
-				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"force_destroy"},
+			{
+				Config: testAccPubsubTopic_updateWithRegion(topic, "wibble", "wobble", "us-central1"),
+			},
+			{
+				ResourceName:      "google_pubsub_topic.foo",
+				ImportStateId:     topic,
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
 }
 
-func testAccCheckPubsubTopicDestroy(s *terraform.State) error {
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "google_pubsub_topic" {
-			continue
-		}
+func TestAccPubsubTopic_cmek(t *testing.T) {
+	t.Parallel()
 
-		config := testAccProvider.Meta().(*Config)
-		topic, _ := config.clientPubsub.Projects.Topics.Get(rs.Primary.ID).Do()
-		if topic != nil {
-			return fmt.Errorf("Topic still present")
-		}
-	}
+	kms := BootstrapKMSKey(t)
+	pid := getTestProjectFromEnv()
+	topicName := fmt.Sprintf("tf-test-%s", randString(t, 10))
 
-	return nil
+	vcrTest(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckPubsubTopicDestroyProducer(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccPubsubTopic_cmek(pid, topicName, kms.CryptoKey.Name),
+			},
+			{
+				ResourceName:      "google_pubsub_topic.topic",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
 }
 
-func testAccPubsubTopic_basic(name string) string {
+func testAccPubsubTopic_update(topic, key, value string) string {
 	return fmt.Sprintf(`
 resource "google_pubsub_topic" "foo" {
-	name = "%s"
-}`, name)
+  name = "%s"
+  labels = {
+    %s = "%s"
+  }
+}
+`, topic, key, value)
+}
+
+func testAccPubsubTopic_updateWithRegion(topic, key, value, region string) string {
+	return fmt.Sprintf(`
+resource "google_pubsub_topic" "foo" {
+  name = "%s"
+  labels = {
+    %s = "%s"
+  }
+
+  message_storage_policy {
+    allowed_persistence_regions = [
+      "%s",
+    ]
+  }
+}
+`, topic, key, value, region)
+}
+
+func testAccPubsubTopic_cmek(pid, topicName, kmsKey string) string {
+	return fmt.Sprintf(`
+data "google_project" "project" {
+  project_id = "%s"
+}
+
+resource "google_project_iam_member" "kms-project-binding" {
+  project = data.google_project.project.project_id
+  role    = "roles/cloudkms.cryptoKeyEncrypterDecrypter"
+  member  = "serviceAccount:service-${data.google_project.project.number}@gcp-sa-pubsub.iam.gserviceaccount.com"
+}
+
+resource "google_pubsub_topic" "topic" {
+  name         = "%s"
+  project      = google_project_iam_member.kms-project-binding.project
+  kms_key_name = "%s"
+}
+`, pid, topicName, kmsKey)
 }

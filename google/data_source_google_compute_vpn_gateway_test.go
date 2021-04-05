@@ -4,20 +4,19 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hashicorp/terraform/helper/acctest"
-	"github.com/hashicorp/terraform/helper/resource"
-	"github.com/hashicorp/terraform/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccDataSourceGoogleVpnGateway(t *testing.T) {
 	t.Parallel()
 
-	vpnGatewayName := fmt.Sprintf("tf-test-%s", acctest.RandString(10))
-	resource.Test(t, resource.TestCase{
+	vpnGatewayName := fmt.Sprintf("tf-test-%s", randString(t, 10))
+	vcrTest(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testAccDataSourceGoogleVpnGatewayConfig(vpnGatewayName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccDataSourceGoogleVpnGatewayCheck("data.google_compute_vpn_gateway.my_vpn_gateway", "google_compute_vpn_gateway.foobar"),
@@ -43,7 +42,6 @@ func testAccDataSourceGoogleVpnGatewayCheck(data_source_name string, resource_na
 		rs_attr := rs.Primary.Attributes
 		vpn_gateway_attrs_to_test := []string{
 			"id",
-			"self_link",
 			"name",
 			"description",
 			"network",
@@ -59,6 +57,11 @@ func testAccDataSourceGoogleVpnGatewayCheck(data_source_name string, resource_na
 				)
 			}
 		}
+
+		if !compareSelfLinkOrResourceName("", ds_attr["self_link"], rs_attr["self_link"], nil) && ds_attr["self_link"] != rs_attr["self_link"] {
+			return fmt.Errorf("self link does not match: %s vs %s", ds_attr["self_link"], rs_attr["self_link"])
+		}
+
 		return nil
 	}
 }
@@ -66,12 +69,13 @@ func testAccDataSourceGoogleVpnGatewayCheck(data_source_name string, resource_na
 func testAccDataSourceGoogleVpnGatewayConfig(name string) string {
 	return fmt.Sprintf(`
 resource "google_compute_vpn_gateway" "foobar" {
-	name = "%s"
-	description = "my-description"
-	network = "default"
+  name        = "%s"
+  description = "my-description"
+  network     = "default"
 }
 
 data "google_compute_vpn_gateway" "my_vpn_gateway" {
-	name = "${google_compute_vpn_gateway.foobar.name}"
-}`, name)
+  name = google_compute_vpn_gateway.foobar.name
+}
+`, name)
 }

@@ -3,8 +3,8 @@ package google
 import (
 	"fmt"
 
-	"github.com/hashicorp/terraform/helper/schema"
-	resourceManagerV2Beta1 "google.golang.org/api/cloudresourcemanager/v2beta1"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	resourceManagerV2 "google.golang.org/api/cloudresourcemanager/v2"
 )
 
 func dataSourceGoogleActiveFolder() *schema.Resource {
@@ -12,15 +12,15 @@ func dataSourceGoogleActiveFolder() *schema.Resource {
 		Read: dataSourceGoogleActiveFolderRead,
 
 		Schema: map[string]*schema.Schema{
-			"parent": &schema.Schema{
+			"parent": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"display_name": &schema.Schema{
+			"display_name": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"name": &schema.Schema{
+			"name": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
@@ -30,25 +30,31 @@ func dataSourceGoogleActiveFolder() *schema.Resource {
 
 func dataSourceGoogleActiveFolderRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
+	userAgent, err := generateUserAgentString(d, config.userAgent)
+	if err != nil {
+		return err
+	}
 
 	parent := d.Get("parent").(string)
 	displayName := d.Get("display_name").(string)
 
-	queryString := fmt.Sprintf("lifecycleState=ACTIVE AND parent=%s AND displayName=%s", parent, displayName)
-	searchRequest := &resourceManagerV2Beta1.SearchFoldersRequest{
+	queryString := fmt.Sprintf("lifecycleState=ACTIVE AND parent=%s AND displayName=\"%s\"", parent, displayName)
+	searchRequest := &resourceManagerV2.SearchFoldersRequest{
 		Query: queryString,
 	}
-	searchResponse, err := config.clientResourceManagerV2Beta1.Folders.Search(searchRequest).Do()
+	searchResponse, err := config.NewResourceManagerV2Client(userAgent).Folders.Search(searchRequest).Do()
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("Folder Not Found : %s", displayName))
 	}
 
-	folders := searchResponse.Folders
-	if len(folders) != 1 {
-		return fmt.Errorf("More than one folder found")
+	for _, folder := range searchResponse.Folders {
+		if folder.DisplayName == displayName {
+			d.SetId(folder.Name)
+			if err := d.Set("name", folder.Name); err != nil {
+				return fmt.Errorf("Error setting folder name: %s", err)
+			}
+			return nil
+		}
 	}
-
-	d.SetId(folders[0].Name)
-	d.Set("name", folders[0].Name)
-	return nil
+	return fmt.Errorf("Folder not found")
 }

@@ -2,13 +2,17 @@ package google
 
 import (
 	"fmt"
+	"io/ioutil"
+	"log"
+	"strings"
 	"testing"
+	"time"
 
-	"regexp"
+	// "regexp"
 
-	"github.com/hashicorp/terraform/helper/acctest"
-	"github.com/hashicorp/terraform/helper/resource"
-	"github.com/hashicorp/terraform/terraform"
+	"github.com/hashicorp/errwrap"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"google.golang.org/api/dataproc/v1"
 	"google.golang.org/api/googleapi"
 )
@@ -18,44 +22,45 @@ type jobTestField struct {
 	gcp_attr interface{}
 }
 
-func TestAccDataprocJob_failForMissingJobConfig(t *testing.T) {
-	t.Parallel()
+// TODO (mbang): Test `ExactlyOneOf` here
+// func TestAccDataprocJob_failForMissingJobConfig(t *testing.T) {
+// 	t.Parallel()
 
-	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckDataprocJobDestroy,
-		Steps: []resource.TestStep{
-			{
-				Config:      testAccDataprocJob_missingJobConf(),
-				ExpectError: regexp.MustCompile("You must define and configure exactly one xxx_config block"),
-			},
-		},
-	})
-}
+// 	vcrTest(t, resource.TestCase{
+// 		PreCheck:     func() { testAccPreCheck(t) },
+// 		Providers:    testAccProviders,
+// 		CheckDestroy: testAccCheckDataprocJobDestroyProducer(t),
+// 		Steps: []resource.TestStep{
+// 			{
+// 				Config:      testAccDataprocJob_missingJobConf(),
+// 				ExpectError: regexp.MustCompile("You must define and configure exactly one xxx_config block"),
+// 			},
+// 		},
+// 	})
+// }
 
 func TestAccDataprocJob_updatable(t *testing.T) {
 	t.Parallel()
 
 	var job dataproc.Job
-	rnd := acctest.RandString(10)
+	rnd := randString(t, 10)
 	jobId := fmt.Sprintf("dproc-update-job-id-%s", rnd)
-	resource.Test(t, resource.TestCase{
+	vcrTest(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckDataprocJobDestroy,
+		CheckDestroy: testAccCheckDataprocJobDestroyProducer(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDataprocJob_updatable(rnd, jobId, "false"),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckDataprocJobExists("google_dataproc_job.updatable", &job),
+					testAccCheckDataprocJobExists(t, "google_dataproc_job.updatable", &job),
 					resource.TestCheckResourceAttr("google_dataproc_job.updatable", "force_delete", "false"),
 				),
 			},
 			{
 				Config: testAccDataprocJob_updatable(rnd, jobId, "true"),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckDataprocJobExists("google_dataproc_job.updatable", &job),
+					testAccCheckDataprocJobExists(t, "google_dataproc_job.updatable", &job),
 					resource.TestCheckResourceAttr("google_dataproc_job.updatable", "force_delete", "true"),
 				),
 			},
@@ -67,18 +72,18 @@ func TestAccDataprocJob_PySpark(t *testing.T) {
 	t.Parallel()
 
 	var job dataproc.Job
-	rnd := acctest.RandString(10)
+	rnd := randString(t, 10)
 	jobId := fmt.Sprintf("dproc-custom-job-id-%s", rnd)
-	resource.Test(t, resource.TestCase{
+	vcrTest(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckDataprocJobDestroy,
+		CheckDestroy: testAccCheckDataprocJobDestroyProducer(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDataprocJob_pySpark(rnd),
 				Check: resource.ComposeTestCheckFunc(
 
-					testAccCheckDataprocJobExists("google_dataproc_job.pyspark", &job),
+					testAccCheckDataprocJobExists(t, "google_dataproc_job.pyspark", &job),
 
 					// Custom supplied job_id
 					resource.TestCheckResourceAttr("google_dataproc_job.pyspark", "reference.0.job_id", jobId),
@@ -87,6 +92,7 @@ func TestAccDataprocJob_PySpark(t *testing.T) {
 					resource.TestCheckResourceAttrSet("google_dataproc_job.pyspark", "status.0.state"),
 					resource.TestCheckResourceAttrSet("google_dataproc_job.pyspark", "status.0.state_start_time"),
 					resource.TestCheckResourceAttr("google_dataproc_job.pyspark", "scheduling.0.max_failures_per_hour", "1"),
+					resource.TestCheckResourceAttr("google_dataproc_job.pyspark", "scheduling.0.max_failures_total", "20"),
 					resource.TestCheckResourceAttr("google_dataproc_job.pyspark", "labels.one", "1"),
 
 					// Unique job config
@@ -94,7 +100,7 @@ func TestAccDataprocJob_PySpark(t *testing.T) {
 						"google_dataproc_job.pyspark", "pyspark_config", &job),
 
 					// Wait until job completes successfully
-					testAccCheckDataprocJobCompletesSuccessfully("google_dataproc_job.pyspark", &job),
+					testAccCheckDataprocJobCompletesSuccessfully(t, "google_dataproc_job.pyspark", &job),
 				),
 			},
 		},
@@ -105,16 +111,16 @@ func TestAccDataprocJob_Spark(t *testing.T) {
 	t.Parallel()
 
 	var job dataproc.Job
-	rnd := acctest.RandString(10)
-	resource.Test(t, resource.TestCase{
+	rnd := randString(t, 10)
+	vcrTest(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckDataprocJobDestroy,
+		CheckDestroy: testAccCheckDataprocJobDestroyProducer(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDataprocJob_spark(rnd),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckDataprocJobExists("google_dataproc_job.spark", &job),
+					testAccCheckDataprocJobExists(t, "google_dataproc_job.spark", &job),
 
 					// Autogenerated / computed values
 					resource.TestCheckResourceAttrSet("google_dataproc_job.spark", "reference.0.job_id"),
@@ -126,7 +132,7 @@ func TestAccDataprocJob_Spark(t *testing.T) {
 						"google_dataproc_job.spark", "spark_config", &job),
 
 					// Wait until job completes successfully
-					testAccCheckDataprocJobCompletesSuccessfully("google_dataproc_job.spark", &job),
+					testAccCheckDataprocJobCompletesSuccessfully(t, "google_dataproc_job.spark", &job),
 				),
 			},
 		},
@@ -137,16 +143,16 @@ func TestAccDataprocJob_Hadoop(t *testing.T) {
 	t.Parallel()
 
 	var job dataproc.Job
-	rnd := acctest.RandString(10)
-	resource.Test(t, resource.TestCase{
+	rnd := randString(t, 10)
+	vcrTest(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckDataprocJobDestroy,
+		CheckDestroy: testAccCheckDataprocJobDestroyProducer(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDataprocJob_hadoop(rnd),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckDataprocJobExists("google_dataproc_job.hadoop", &job),
+					testAccCheckDataprocJobExists(t, "google_dataproc_job.hadoop", &job),
 
 					// Autogenerated / computed values
 					resource.TestCheckResourceAttrSet("google_dataproc_job.hadoop", "reference.0.job_id"),
@@ -158,7 +164,7 @@ func TestAccDataprocJob_Hadoop(t *testing.T) {
 						"google_dataproc_job.hadoop", "hadoop_config", &job),
 
 					// Wait until job completes successfully
-					testAccCheckDataprocJobCompletesSuccessfully("google_dataproc_job.hadoop", &job),
+					testAccCheckDataprocJobCompletesSuccessfully(t, "google_dataproc_job.hadoop", &job),
 				),
 			},
 		},
@@ -169,16 +175,16 @@ func TestAccDataprocJob_Hive(t *testing.T) {
 	t.Parallel()
 
 	var job dataproc.Job
-	rnd := acctest.RandString(10)
-	resource.Test(t, resource.TestCase{
+	rnd := randString(t, 10)
+	vcrTest(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckDataprocJobDestroy,
+		CheckDestroy: testAccCheckDataprocJobDestroyProducer(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDataprocJob_hive(rnd),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckDataprocJobExists("google_dataproc_job.hive", &job),
+					testAccCheckDataprocJobExists(t, "google_dataproc_job.hive", &job),
 
 					// Autogenerated / computed values
 					resource.TestCheckResourceAttrSet("google_dataproc_job.hive", "reference.0.job_id"),
@@ -190,7 +196,7 @@ func TestAccDataprocJob_Hive(t *testing.T) {
 						"google_dataproc_job.hive", "hive_config", &job),
 
 					// Wait until job completes successfully
-					testAccCheckDataprocJobCompletesSuccessfully("google_dataproc_job.hive", &job),
+					testAccCheckDataprocJobCompletesSuccessfully(t, "google_dataproc_job.hive", &job),
 				),
 			},
 		},
@@ -201,16 +207,16 @@ func TestAccDataprocJob_Pig(t *testing.T) {
 	t.Parallel()
 
 	var job dataproc.Job
-	rnd := acctest.RandString(10)
-	resource.Test(t, resource.TestCase{
+	rnd := randString(t, 10)
+	vcrTest(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckDataprocJobDestroy,
+		CheckDestroy: testAccCheckDataprocJobDestroyProducer(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDataprocJob_pig(rnd),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckDataprocJobExists("google_dataproc_job.pig", &job),
+					testAccCheckDataprocJobExists(t, "google_dataproc_job.pig", &job),
 
 					// Autogenerated / computed values
 					resource.TestCheckResourceAttrSet("google_dataproc_job.pig", "reference.0.job_id"),
@@ -222,7 +228,7 @@ func TestAccDataprocJob_Pig(t *testing.T) {
 						"google_dataproc_job.pig", "pig_config", &job),
 
 					// Wait until job completes successfully
-					testAccCheckDataprocJobCompletesSuccessfully("google_dataproc_job.pig", &job),
+					testAccCheckDataprocJobCompletesSuccessfully(t, "google_dataproc_job.pig", &job),
 				),
 			},
 		},
@@ -233,16 +239,16 @@ func TestAccDataprocJob_SparkSql(t *testing.T) {
 	t.Parallel()
 
 	var job dataproc.Job
-	rnd := acctest.RandString(10)
-	resource.Test(t, resource.TestCase{
+	rnd := randString(t, 10)
+	vcrTest(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckDataprocJobDestroy,
+		CheckDestroy: testAccCheckDataprocJobDestroyProducer(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDataprocJob_sparksql(rnd),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckDataprocJobExists("google_dataproc_job.sparksql", &job),
+					testAccCheckDataprocJobExists(t, "google_dataproc_job.sparksql", &job),
 
 					// Autogenerated / computed values
 					resource.TestCheckResourceAttrSet("google_dataproc_job.sparksql", "reference.0.job_id"),
@@ -254,50 +260,54 @@ func TestAccDataprocJob_SparkSql(t *testing.T) {
 						"google_dataproc_job.sparksql", "sparksql_config", &job),
 
 					// Wait until job completes successfully
-					testAccCheckDataprocJobCompletesSuccessfully("google_dataproc_job.sparksql", &job),
+					testAccCheckDataprocJobCompletesSuccessfully(t, "google_dataproc_job.sparksql", &job),
 				),
 			},
 		},
 	})
 }
 
-func testAccCheckDataprocJobDestroy(s *terraform.State) error {
-	config := testAccProvider.Meta().(*Config)
+func testAccCheckDataprocJobDestroyProducer(t *testing.T) func(s *terraform.State) error {
+	return func(s *terraform.State) error {
+		config := googleProviderConfig(t)
 
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "google_dataproc_job" {
-			continue
-		}
-
-		if rs.Primary.ID == "" {
-			return fmt.Errorf("Unable to verify delete of dataproc job ID is empty")
-		}
-		attributes := rs.Primary.Attributes
-
-		project, err := getTestProject(rs.Primary, config)
-		if err != nil {
-			return err
-		}
-
-		_, err = config.clientDataproc.Projects.Regions.Jobs.Get(
-			project, attributes["region"], rs.Primary.ID).Do()
-		if err != nil {
-			if gerr, ok := err.(*googleapi.Error); ok && gerr.Code == 404 {
-				return nil
-			} else if ok {
-				return fmt.Errorf("Error making GCP platform call: http code error : %d, http message error: %s", gerr.Code, gerr.Message)
+		for _, rs := range s.RootModule().Resources {
+			if rs.Type != "google_dataproc_job" {
+				continue
 			}
-			return fmt.Errorf("Error making GCP platform call: %s", err.Error())
-		}
-		return fmt.Errorf("Dataproc job still exists")
-	}
 
-	return nil
+			if rs.Primary.ID == "" {
+				return fmt.Errorf("Unable to verify delete of dataproc job ID is empty")
+			}
+			attributes := rs.Primary.Attributes
+
+			project, err := getTestProject(rs.Primary, config)
+			if err != nil {
+				return err
+			}
+
+			parts := strings.Split(rs.Primary.ID, "/")
+			job_id := parts[len(parts)-1]
+			_, err = config.NewDataprocClient(config.userAgent).Projects.Regions.Jobs.Get(
+				project, attributes["region"], job_id).Do()
+			if err != nil {
+				if gerr, ok := err.(*googleapi.Error); ok && gerr.Code == 404 {
+					return nil
+				} else if ok {
+					return fmt.Errorf("Error making GCP platform call: http code error : %d, http message error: %s", gerr.Code, gerr.Message)
+				}
+				return fmt.Errorf("Error making GCP platform call: %s", err.Error())
+			}
+			return fmt.Errorf("Dataproc job still exists")
+		}
+
+		return nil
+	}
 }
 
-func testAccCheckDataprocJobCompletesSuccessfully(n string, job *dataproc.Job) resource.TestCheckFunc {
+func testAccCheckDataprocJobCompletesSuccessfully(t *testing.T, n string, job *dataproc.Job) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		config := testAccProvider.Meta().(*Config)
+		config := googleProviderConfig(t)
 
 		attributes := s.RootModule().Resources[n].Primary.Attributes
 		region := attributes["region"]
@@ -306,19 +316,44 @@ func testAccCheckDataprocJobCompletesSuccessfully(n string, job *dataproc.Job) r
 			return err
 		}
 
-		jobCompleteTimeoutMins := 5
+		jobCompleteTimeoutMins := 5 * time.Minute
 		waitErr := dataprocJobOperationWait(config, region, project, job.Reference.JobId,
-			"Awaiting Dataproc job completion", jobCompleteTimeoutMins, 1)
+			"Awaiting Dataproc job completion", config.userAgent, jobCompleteTimeoutMins)
 		if waitErr != nil {
 			return waitErr
 		}
 
-		completeJob, err := config.clientDataproc.Projects.Regions.Jobs.Get(
+		completeJob, err := config.NewDataprocClient(config.userAgent).Projects.Regions.Jobs.Get(
 			project, region, job.Reference.JobId).Do()
 		if err != nil {
 			return err
 		}
-		if completeJob.Status.State != "DONE" {
+		if completeJob.Status.State == "ERROR" {
+			if !strings.HasPrefix(completeJob.DriverOutputResourceUri, "gs://") {
+				return fmt.Errorf("Job completed in ERROR state but no valid log URI found")
+			}
+			u := strings.SplitN(strings.TrimPrefix(completeJob.DriverOutputResourceUri, "gs://"), "/", 2)
+			if len(u) != 2 {
+				return fmt.Errorf("Job completed in ERROR state but no valid log URI found")
+			}
+			l, err := config.NewStorageClient(config.userAgent).Objects.List(u[0]).Prefix(u[1]).Do()
+			if err != nil {
+				return errwrap.Wrapf("Job completed in ERROR state, found error when trying to list logs: {{err}}", err)
+			}
+			for _, item := range l.Items {
+				resp, err := config.NewStorageClient(config.userAgent).Objects.Get(item.Bucket, item.Name).Download()
+				if err != nil {
+					return errwrap.Wrapf("Job completed in ERROR state, found error when trying to read logs: {{err}}", err)
+				}
+				defer resp.Body.Close()
+				body, err := ioutil.ReadAll(resp.Body)
+				if err != nil {
+					return errwrap.Wrapf("Job completed in ERROR state, found error when trying to read logs: {{err}}", err)
+				}
+				log.Printf("[ERROR] Job failed, driver logs:\n%s", body)
+			}
+			return fmt.Errorf("Job completed in ERROR state, check logs for details")
+		} else if completeJob.Status.State != "DONE" && completeJob.Status.State != "RUNNING" {
 			return fmt.Errorf("Job did not complete successfully, instead status: %s", completeJob.Status.State)
 		}
 
@@ -326,7 +361,7 @@ func testAccCheckDataprocJobCompletesSuccessfully(n string, job *dataproc.Job) r
 	}
 }
 
-func testAccCheckDataprocJobExists(n string, job *dataproc.Job) resource.TestCheckFunc {
+func testAccCheckDataprocJobExists(t *testing.T, n string, job *dataproc.Job) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -337,14 +372,15 @@ func testAccCheckDataprocJobExists(n string, job *dataproc.Job) resource.TestChe
 			return fmt.Errorf("No ID is set for Dataproc job")
 		}
 
-		config := testAccProvider.Meta().(*Config)
-		jobId := s.RootModule().Resources[n].Primary.ID
+		config := googleProviderConfig(t)
+		parts := strings.Split(s.RootModule().Resources[n].Primary.ID, "/")
+		jobId := parts[len(parts)-1]
 		project, err := getTestProject(s.RootModule().Resources[n].Primary, config)
 		if err != nil {
 			return err
 		}
 
-		found, err := config.clientDataproc.Projects.Regions.Jobs.Get(
+		found, err := config.NewDataprocClient(config.userAgent).Projects.Regions.Jobs.Get(
 			project, rs.Primary.Attributes["region"], jobId).Do()
 		if err != nil {
 			return err
@@ -440,60 +476,59 @@ func testAccCheckDataprocJobAttrMatch(n, jobType string, job *dataproc.Job) reso
 	}
 }
 
-func testAccDataprocJob_missingJobConf() string {
-	return `
-resource "google_dataproc_job" "missing_config" {
-	placement {
-		cluster_name = "na"
-	}
+// TODO (mbang): Test `ExactlyOneOf` here
+// func testAccDataprocJob_missingJobConf() string {
+// 	return `
+// resource "google_dataproc_job" "missing_config" {
+// 	placement {
+// 		cluster_name = "na"
+// 	}
 
-	force_delete = true
-}`
-}
+// 	force_delete = true
+// }`
+// }
 
 var singleNodeClusterConfig = `
 resource "google_dataproc_cluster" "basic" {
-	name                  = "dproc-job-test-%s"
-	region                = "us-central1"
+  name   = "dproc-job-test-%s"
+  region = "us-central1"
 
-	cluster_config {
-		# Keep the costs down with smallest config we can get away with
-		software_config {
-			override_properties = {
-				"dataproc:dataproc.allow.zero.workers" = "true"
-			}
-		}
+  cluster_config {
+    # Keep the costs down with smallest config we can get away with
+    software_config {
+      override_properties = {
+        "dataproc:dataproc.allow.zero.workers" = "true"
+      }
+    }
 
-		master_config {
-			num_instances     = 1
-			machine_type      = "n1-standard-1"
-			disk_config {
-				boot_disk_size_gb = 10
-			}
-		}
-	}
+    master_config {
+      num_instances = 1
+      machine_type  = "e2-standard-2"
+      disk_config {
+        boot_disk_size_gb = 30
+      }
+    }
+  }
 }
 `
 
 func testAccDataprocJob_updatable(rnd, jobId, del string) string {
 	return fmt.Sprintf(
 		singleNodeClusterConfig+`
-
 resource "google_dataproc_job" "updatable" {
+  placement {
+    cluster_name = google_dataproc_cluster.basic.name
+  }
+  reference {
+    job_id = "%s"
+  }
 
-	placement {
-		cluster_name = "${google_dataproc_cluster.basic.name}"
-	}
-	reference {
-		job_id = "%s"
-	}
+  region       = google_dataproc_cluster.basic.region
+  force_delete = %s
 
-	region       = "${google_dataproc_cluster.basic.region}"
-	force_delete = %s
-
-	pyspark_config {
-		main_python_file_uri = "gs://dataproc-examples-2f10d78d114f6aaec76462e3c310f31f/src/pyspark/hello-world/hello-world.py"
-	}
+  pyspark_config {
+    main_python_file_uri = "gs://dataproc-examples-2f10d78d114f6aaec76462e3c310f31f/src/pyspark/hello-world/hello-world.py"
+  }
 }
 `, rnd, jobId, del)
 }
@@ -501,38 +536,37 @@ resource "google_dataproc_job" "updatable" {
 func testAccDataprocJob_pySpark(rnd string) string {
 	return fmt.Sprintf(
 		singleNodeClusterConfig+`
-
 resource "google_dataproc_job" "pyspark" {
+  placement {
+    cluster_name = google_dataproc_cluster.basic.name
+  }
+  reference {
+    job_id = "dproc-custom-job-id-%s"
+  }
 
-	placement {
-		cluster_name = "${google_dataproc_cluster.basic.name}"
-	}
-	reference {
-		job_id = "dproc-custom-job-id-%s"
-	}
+  region       = google_dataproc_cluster.basic.region
+  force_delete = true
 
-	region       = "${google_dataproc_cluster.basic.region}"
-	force_delete = true
+  pyspark_config {
+    main_python_file_uri = "gs://dataproc-examples-2f10d78d114f6aaec76462e3c310f31f/src/pyspark/hello-world/hello-world.py"
+    properties = {
+      "spark.logConf" = "true"
+    }
+    logging_config {
+      driver_log_levels = {
+        "root" = "INFO"
+      }
+    }
+  }
 
-	pyspark_config {
-		main_python_file_uri = "gs://dataproc-examples-2f10d78d114f6aaec76462e3c310f31f/src/pyspark/hello-world/hello-world.py"
-		properties = {
-			"spark.logConf" = "true"
-		}
-		logging_config {
-			driver_log_levels {
-				"root" = "INFO"
-			}
-		}
-	}
+  scheduling {
+	max_failures_per_hour = 1
+	max_failures_total=20
+  }
 
-	scheduling {
-		max_failures_per_hour = 1
-	}
-
-	labels {
-		one = "1"
-	}
+  labels = {
+    one = "1"
+  }
 }
 `, rnd, rnd)
 }
@@ -540,125 +574,113 @@ resource "google_dataproc_job" "pyspark" {
 func testAccDataprocJob_spark(rnd string) string {
 	return fmt.Sprintf(
 		singleNodeClusterConfig+`
+resource "google_dataproc_job" "spark" {
+  region       = google_dataproc_cluster.basic.region
+  force_delete = true
+  placement {
+    cluster_name = google_dataproc_cluster.basic.name
+  }
 
-	resource "google_dataproc_job" "spark" {
-
-		region       = "${google_dataproc_cluster.basic.region}"
-		force_delete = true
-		placement {
-			cluster_name = "${google_dataproc_cluster.basic.name}"
-		}
-
-		spark_config {
-			main_class    = "org.apache.spark.examples.SparkPi"
-			jar_file_uris = ["file:///usr/lib/spark/examples/jars/spark-examples.jar"]
-			args          = ["1000"]
-			properties    = {
-				"spark.logConf" = "true"
-			}
-		}
-	}
-	`, rnd)
+  spark_config {
+    main_class    = "org.apache.spark.examples.SparkPi"
+    jar_file_uris = ["file:///usr/lib/spark/examples/jars/spark-examples.jar"]
+    args          = ["1000"]
+    properties = {
+      "spark.logConf" = "true"
+    }
+  }
+}
+`, rnd)
 
 }
 
 func testAccDataprocJob_hadoop(rnd string) string {
 	return fmt.Sprintf(
 		singleNodeClusterConfig+`
+resource "google_dataproc_job" "hadoop" {
+  region       = google_dataproc_cluster.basic.region
+  force_delete = true
+  placement {
+    cluster_name = google_dataproc_cluster.basic.name
+  }
 
-	resource "google_dataproc_job" "hadoop" {
-
-		region       = "${google_dataproc_cluster.basic.region}"
-		force_delete = true
-		placement {
-			cluster_name = "${google_dataproc_cluster.basic.name}"
-		}
-
-		hadoop_config {
-			main_jar_file_uri =  "file:///usr/lib/hadoop-mapreduce/hadoop-mapreduce-examples.jar"
-			args              = [
-			  "wordcount",
-			  "file:///usr/lib/spark/NOTICE",
-			  "gs://${google_dataproc_cluster.basic.cluster_config.0.bucket}/hadoopjob_output"
-			]
-		}
-
-	}
-	`, rnd)
+  hadoop_config {
+    main_jar_file_uri = "file:///usr/lib/hadoop-mapreduce/hadoop-mapreduce-examples.jar"
+    args = [
+      "wordcount",
+      "file:///usr/lib/spark/NOTICE",
+      "gs://${google_dataproc_cluster.basic.cluster_config[0].bucket}/hadoopjob_output_%s",
+    ]
+  }
+}
+`, rnd, rnd)
 
 }
 
 func testAccDataprocJob_hive(rnd string) string {
 	return fmt.Sprintf(
 		singleNodeClusterConfig+`
+resource "google_dataproc_job" "hive" {
+  region       = google_dataproc_cluster.basic.region
+  force_delete = true
+  placement {
+    cluster_name = google_dataproc_cluster.basic.name
+  }
 
-	resource "google_dataproc_job" "hive" {
-
-		region       = "${google_dataproc_cluster.basic.region}"
-		force_delete = true
-		placement {
-			cluster_name = "${google_dataproc_cluster.basic.name}"
-		}
-
-		hive_config {
-			query_list       = [
-				"DROP TABLE IF EXISTS dprocjob_test",
-				"CREATE EXTERNAL TABLE dprocjob_test(bar int) LOCATION 'gs://${google_dataproc_cluster.basic.cluster_config.0.bucket}/hive_dprocjob_test/'",
-				"SELECT * FROM dprocjob_test WHERE bar > 2",
-			]
-		}
-
-	}
-	`, rnd)
+  hive_config {
+    query_list = [
+      "DROP TABLE IF EXISTS dprocjob_test",
+      "CREATE EXTERNAL TABLE dprocjob_test(bar int) LOCATION 'gs://${google_dataproc_cluster.basic.cluster_config[0].bucket}/hive_dprocjob_test/'",
+      "SELECT * FROM dprocjob_test WHERE bar > 2",
+    ]
+  }
+}
+`, rnd)
 
 }
 
 func testAccDataprocJob_pig(rnd string) string {
 	return fmt.Sprintf(
 		singleNodeClusterConfig+`
+resource "google_dataproc_job" "pig" {
+  region       = google_dataproc_cluster.basic.region
+  force_delete = true
+  placement {
+    cluster_name = google_dataproc_cluster.basic.name
+  }
 
-	resource "google_dataproc_job" "pig" {
-
-		region       = "${google_dataproc_cluster.basic.region}"
-		force_delete = true
-		placement {
-			cluster_name = "${google_dataproc_cluster.basic.name}"
-		}
-
-		pig_config {
-			query_list       = [
-				"LNS = LOAD 'file:///usr/lib/pig/LICENSE.txt ' AS (line)",
-				"WORDS = FOREACH LNS GENERATE FLATTEN(TOKENIZE(line)) AS word",
-				"GROUPS = GROUP WORDS BY word",
-				"WORD_COUNTS = FOREACH GROUPS GENERATE group, COUNT(WORDS)",
-				"DUMP WORD_COUNTS"
-			]
-		}
-	}
-	`, rnd)
+  pig_config {
+    query_list = [
+      "LNS = LOAD 'file:///usr/lib/pig/LICENSE.txt ' AS (line)",
+      "WORDS = FOREACH LNS GENERATE FLATTEN(TOKENIZE(line)) AS word",
+      "GROUPS = GROUP WORDS BY word",
+      "WORD_COUNTS = FOREACH GROUPS GENERATE group, COUNT(WORDS)",
+      "DUMP WORD_COUNTS",
+    ]
+  }
+}
+`, rnd)
 
 }
 
 func testAccDataprocJob_sparksql(rnd string) string {
 	return fmt.Sprintf(
 		singleNodeClusterConfig+`
+resource "google_dataproc_job" "sparksql" {
+  region       = google_dataproc_cluster.basic.region
+  force_delete = true
+  placement {
+    cluster_name = google_dataproc_cluster.basic.name
+  }
 
-	resource "google_dataproc_job" "sparksql" {
-
-		region       = "${google_dataproc_cluster.basic.region}"
-		force_delete = true
-		placement {
-			cluster_name = "${google_dataproc_cluster.basic.name}"
-		}
-
-		sparksql_config {
-			query_list       = [
-				"DROP TABLE IF EXISTS dprocjob_test",
-				"CREATE TABLE dprocjob_test(bar int)",
-				"SELECT * FROM dprocjob_test WHERE bar > 2",
-			]
-		}
-	}
-	`, rnd)
+  sparksql_config {
+    query_list = [
+      "DROP TABLE IF EXISTS dprocjob_test",
+      "CREATE TABLE dprocjob_test(bar int)",
+      "SELECT * FROM dprocjob_test WHERE bar > 2",
+    ]
+  }
+}
+`, rnd)
 
 }

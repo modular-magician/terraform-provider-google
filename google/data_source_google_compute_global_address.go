@@ -2,9 +2,8 @@ package google
 
 import (
 	"fmt"
-	"strconv"
 
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func dataSourceGoogleComputeGlobalAddress() *schema.Resource {
@@ -12,27 +11,27 @@ func dataSourceGoogleComputeGlobalAddress() *schema.Resource {
 		Read: dataSourceGoogleComputeGlobalAddressRead,
 
 		Schema: map[string]*schema.Schema{
-			"name": &schema.Schema{
+			"name": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
 
-			"address": &schema.Schema{
+			"address": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
 
-			"status": &schema.Schema{
+			"status": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
 
-			"self_link": &schema.Schema{
+			"self_link": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
 
-			"project": &schema.Schema{
+			"project": {
 				Type:     schema.TypeString,
 				Computed: true,
 				Optional: true,
@@ -43,22 +42,33 @@ func dataSourceGoogleComputeGlobalAddress() *schema.Resource {
 
 func dataSourceGoogleComputeGlobalAddressRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
+	userAgent, err := generateUserAgentString(d, config.userAgent)
+	if err != nil {
+		return err
+	}
 
 	project, err := getProject(d, config)
 	if err != nil {
 		return err
 	}
 	name := d.Get("name").(string)
-	address, err := config.clientCompute.GlobalAddresses.Get(project, name).Do()
+	address, err := config.NewComputeClient(userAgent).GlobalAddresses.Get(project, name).Do()
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("Global Address Not Found : %s", name))
 	}
 
-	d.Set("address", address.Address)
-	d.Set("status", address.Status)
-	d.Set("self_link", address.SelfLink)
-	d.Set("project", project)
-
-	d.SetId(strconv.FormatUint(uint64(address.Id), 10))
+	if err := d.Set("address", address.Address); err != nil {
+		return fmt.Errorf("Error setting address: %s", err)
+	}
+	if err := d.Set("status", address.Status); err != nil {
+		return fmt.Errorf("Error setting status: %s", err)
+	}
+	if err := d.Set("self_link", address.SelfLink); err != nil {
+		return fmt.Errorf("Error setting self_link: %s", err)
+	}
+	if err := d.Set("project", project); err != nil {
+		return fmt.Errorf("Error setting project: %s", err)
+	}
+	d.SetId(fmt.Sprintf("projects/%s/global/addresses/%s", project, name))
 	return nil
 }

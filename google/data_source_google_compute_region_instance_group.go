@@ -1,15 +1,13 @@
 package google
 
 import (
-	"errors"
 	"fmt"
-	"github.com/hashicorp/terraform/helper/schema"
-	compute "google.golang.org/api/compute/v1"
-	"google.golang.org/api/googleapi"
 	"log"
-	"net/url"
-	"strconv"
-	"strings"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+
+	"google.golang.org/api/compute/v1"
+	"google.golang.org/api/googleapi"
 )
 
 func dataSourceGoogleComputeRegionInstanceGroup() *schema.Resource {
@@ -89,60 +87,53 @@ func dataSourceGoogleComputeRegionInstanceGroup() *schema.Resource {
 
 func dataSourceComputeRegionInstanceGroupRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	var project, region, name string
-	if self_link, ok := d.GetOk("self_link"); ok {
-		parsed, err := url.Parse(self_link.(string))
-		if err != nil {
-			return err
-		}
-		s := strings.Split(parsed.Path, "/")
-		project, region, name = s[4], s[6], s[8]
-		// e.g. https://www.googleapis.com/compute/beta/projects/project_name/regions/region_name/instanceGroups/foobarbaz
-
-	} else {
-		var err error
-		project, err = getProject(d, config)
-		if err != nil {
-			return err
-		}
-
-		region, err = getRegion(d, config)
-		if err != nil {
-			return err
-		}
-		n, ok := d.GetOk("name")
-		name = n.(string)
-		if !ok {
-			return errors.New("Must provide either `self_link` or `name`.")
-		}
+	userAgent, err := generateUserAgentString(d, config.userAgent)
+	if err != nil {
+		return err
 	}
 
-	instanceGroup, err := config.clientCompute.RegionInstanceGroups.Get(
+	project, region, name, err := GetRegionalResourcePropertiesFromSelfLinkOrSchema(d, config)
+	if err != nil {
+		return err
+	}
+
+	instanceGroup, err := config.NewComputeClient(userAgent).RegionInstanceGroups.Get(
 		project, region, name).Do()
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("Region Instance Group %q", name))
 	}
 
-	members, err := config.clientCompute.RegionInstanceGroups.ListInstances(
+	members, err := config.NewComputeClient(userAgent).RegionInstanceGroups.ListInstances(
 		project, region, name, &compute.RegionInstanceGroupsListInstancesRequest{
 			InstanceState: "ALL",
 		}).Do()
 	if err != nil {
 		if gerr, ok := err.(*googleapi.Error); ok && gerr.Code == 404 {
 			// The resource doesn't have any instances, which is okay.
-			d.Set("instances", nil)
+			if err := d.Set("instances", nil); err != nil {
+				return fmt.Errorf("Error setting instances: %s", err)
+			}
 		} else {
 			return fmt.Errorf("Error reading RegionInstanceGroup Members: %s", err)
 		}
 	} else {
-		d.Set("instances", flattenInstancesWithNamedPorts(members.Items))
+		if err := d.Set("instances", flattenInstancesWithNamedPorts(members.Items)); err != nil {
+			return fmt.Errorf("Error setting instances: %s", err)
+		}
 	}
-	d.Set("kind", instanceGroup.Kind)
-	d.SetId(strconv.FormatUint(instanceGroup.Id, 16))
-	d.Set("self_link", instanceGroup.SelfLink)
-	d.Set("name", name)
-	d.Set("project", project)
-	d.Set("region", region)
+	d.SetId(fmt.Sprintf("projects/%s/regions/%s/instanceGroups/%s", project, region, name))
+	if err := d.Set("self_link", instanceGroup.SelfLink); err != nil {
+		return fmt.Errorf("Error setting self_link: %s", err)
+	}
+	if err := d.Set("name", name); err != nil {
+		return fmt.Errorf("Error setting name: %s", err)
+	}
+	if err := d.Set("project", project); err != nil {
+		return fmt.Errorf("Error setting project: %s", err)
+	}
+	if err := d.Set("region", region); err != nil {
+		return fmt.Errorf("Error setting region: %s", err)
+	}
 	return nil
 }
 

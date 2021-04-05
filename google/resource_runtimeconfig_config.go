@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/hashicorp/terraform/helper/schema"
-	"google.golang.org/api/runtimeconfig/v1beta1"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	runtimeconfig "google.golang.org/api/runtimeconfig/v1beta1"
 )
 
 var runtimeConfigFullName *regexp.Regexp = regexp.MustCompile("^projects/([^/]+)/configs/(.+)$")
@@ -17,31 +17,43 @@ func resourceRuntimeconfigConfig() *schema.Resource {
 		Update: resourceRuntimeconfigConfigUpdate,
 		Delete: resourceRuntimeconfigConfigDelete,
 
+		Importer: &schema.ResourceImporter{
+			State: resourceRuntimeconfigConfigImport,
+		},
+
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: validateGCPName,
+				ValidateFunc: validateRegexp("[0-9A-Za-z](?:[_.A-Za-z0-9-]{0,62}[_.A-Za-z0-9])?"),
+				Description:  `The name of the runtime config.`,
 			},
 
 			"description": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: `The description to associate with the runtime config.`,
 			},
 
 			"project": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				ForceNew:    true,
+				Description: `The ID of the project in which the resource belongs. If it is not provided, the provider project is used.`,
 			},
 		},
+		UseJSONNumber: true,
 	}
 }
 
 func resourceRuntimeconfigConfigCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
+	userAgent, err := generateUserAgentString(d, config.userAgent)
+	if err != nil {
+		return err
+	}
 
 	project, err := getProject(d, config)
 	if err != nil {
@@ -58,7 +70,7 @@ func resourceRuntimeconfigConfigCreate(d *schema.ResourceData, meta interface{})
 		runtimeConfig.Description = val.(string)
 	}
 
-	_, err = config.clientRuntimeconfig.Projects.Configs.Create("projects/"+project, &runtimeConfig).Do()
+	_, err = config.NewRuntimeconfigClient(userAgent).Projects.Configs.Create("projects/"+project, &runtimeConfig).Do()
 
 	if err != nil {
 		return err
@@ -70,11 +82,15 @@ func resourceRuntimeconfigConfigCreate(d *schema.ResourceData, meta interface{})
 
 func resourceRuntimeconfigConfigRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-
-	fullName := d.Id()
-	runConfig, err := config.clientRuntimeconfig.Projects.Configs.Get(fullName).Do()
+	userAgent, err := generateUserAgentString(d, config.userAgent)
 	if err != nil {
 		return err
+	}
+
+	fullName := d.Id()
+	runConfig, err := config.NewRuntimeconfigClient(userAgent).Projects.Configs.Get(fullName).Do()
+	if err != nil {
+		return handleNotFoundError(err, d, fmt.Sprintf("RuntimeConfig %q", d.Id()))
 	}
 
 	project, name, err := resourceRuntimeconfigParseFullName(runConfig.Name)
@@ -87,18 +103,30 @@ func resourceRuntimeconfigConfigRead(d *schema.ResourceData, meta interface{}) e
 		return err
 	}
 	if project != curProject {
-		d.Set("project", project)
+		if err := d.Set("project", project); err != nil {
+			return fmt.Errorf("Error setting project: %s", err)
+		}
 	}
 
-	d.Set("name", name)
-	d.Set("description", runConfig.Description)
-	d.Set("project", project)
+	if err := d.Set("name", name); err != nil {
+		return fmt.Errorf("Error setting name: %s", err)
+	}
+	if err := d.Set("description", runConfig.Description); err != nil {
+		return fmt.Errorf("Error setting description: %s", err)
+	}
+	if err := d.Set("project", project); err != nil {
+		return fmt.Errorf("Error setting project: %s", err)
+	}
 
 	return nil
 }
 
 func resourceRuntimeconfigConfigUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
+	userAgent, err := generateUserAgentString(d, config.userAgent)
+	if err != nil {
+		return err
+	}
 
 	// Update works more like an 'overwrite' method - we build a new runtimeconfig.RuntimeConfig struct and it becomes
 	// the new config. This means our Update logic looks an awful lot like Create (and hence, doesn't use
@@ -111,7 +139,7 @@ func resourceRuntimeconfigConfigUpdate(d *schema.ResourceData, meta interface{})
 		runtimeConfig.Description = v.(string)
 	}
 
-	_, err := config.clientRuntimeconfig.Projects.Configs.Update(fullName, &runtimeConfig).Do()
+	_, err = config.NewRuntimeconfigClient(userAgent).Projects.Configs.Update(fullName, &runtimeConfig).Do()
 	if err != nil {
 		return err
 	}
@@ -120,15 +148,35 @@ func resourceRuntimeconfigConfigUpdate(d *schema.ResourceData, meta interface{})
 
 func resourceRuntimeconfigConfigDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
+	userAgent, err := generateUserAgentString(d, config.userAgent)
+	if err != nil {
+		return err
+	}
 
 	fullName := d.Id()
 
-	_, err := config.clientRuntimeconfig.Projects.Configs.Delete(fullName).Do()
+	_, err = config.NewRuntimeconfigClient(userAgent).Projects.Configs.Delete(fullName).Do()
 	if err != nil {
 		return err
 	}
 	d.SetId("")
 	return nil
+}
+
+func resourceRuntimeconfigConfigImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	config := meta.(*Config)
+	if err := parseImportId([]string{"projects/(?P<project>[^/]+)/configs/(?P<name>[^/]+)", "(?P<name>[^/]+)"}, d, config); err != nil {
+		return nil, err
+	}
+
+	// Replace import id for the resource id
+	id, err := replaceVars(d, config, "projects/{{project}}/configs/{{name}}")
+	if err != nil {
+		return nil, fmt.Errorf("Error constructing id: %s", err)
+	}
+	d.SetId(id)
+
+	return []*schema.ResourceData{d}, nil
 }
 
 // resourceRuntimeconfigFullName turns a given project and a 'short name' for a runtime config into a full name

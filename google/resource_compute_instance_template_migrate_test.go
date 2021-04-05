@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/hashicorp/terraform/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestComputeInstanceTemplateMigrateState(t *testing.T) {
@@ -129,7 +129,7 @@ func TestComputeInstanceTemplateMigrateState_empty(t *testing.T) {
 
 	// should handle non-nil but empty
 	is = &terraform.InstanceState{}
-	is, err = resourceComputeInstanceTemplateMigrateState(0, is, meta)
+	_, err = resourceComputeInstanceTemplateMigrateState(0, is, meta)
 
 	if err != nil {
 		t.Fatalf("err: %#v", err)

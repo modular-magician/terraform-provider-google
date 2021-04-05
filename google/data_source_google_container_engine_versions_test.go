@@ -6,21 +6,39 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/hashicorp/terraform/helper/resource"
-	"github.com/hashicorp/terraform/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccContainerEngineVersions_basic(t *testing.T) {
 	t.Parallel()
 
-	resource.Test(t, resource.TestCase{
+	vcrTest(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckGoogleContainerEngineVersionsConfig,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckGoogleContainerEngineVersionsMeta("data.google_container_engine_versions.versions"),
+					testAccCheckGoogleContainerEngineVersionsMeta("data.google_container_engine_versions.location"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccContainerEngineVersions_filtered(t *testing.T) {
+	t.Parallel()
+
+	vcrTest(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckGoogleContainerEngineVersions_filtered,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("data.google_container_engine_versions.versions", "valid_master_versions.#", "0"),
+					resource.TestCheckResourceAttr("data.google_container_engine_versions.versions", "valid_node_versions.#", "0"),
 				),
 			},
 		},
@@ -88,12 +106,24 @@ func testAccCheckGoogleContainerEngineVersionsMeta(n string) resource.TestCheckF
 			}
 		}
 
+		_, ok = rs.Primary.Attributes["default_cluster_version"]
+		if !ok {
+			return errors.New("Didn't get a default cluster version.")
+		}
+
 		return nil
 	}
 }
 
 var testAccCheckGoogleContainerEngineVersionsConfig = `
+data "google_container_engine_versions" "location" {
+  location = "us-central1-b"
+}
+`
+
+var testAccCheckGoogleContainerEngineVersions_filtered = `
 data "google_container_engine_versions" "versions" {
-  zone = "us-central1-b"
+  location       = "us-central1-b"
+  version_prefix = "1.1."
 }
 `

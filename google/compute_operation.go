@@ -2,51 +2,114 @@ package google
 
 import (
 	"bytes"
+	"context"
+	"errors"
 	"fmt"
 	"log"
 	"time"
 
-	"github.com/hashicorp/terraform/helper/resource"
-
-	computeBeta "google.golang.org/api/compute/v0.beta"
 	"google.golang.org/api/compute/v1"
 )
 
 type ComputeOperationWaiter struct {
 	Service *compute.Service
 	Op      *compute.Operation
+	Context context.Context
 	Project string
 }
 
-func (w *ComputeOperationWaiter) RefreshFunc() resource.StateRefreshFunc {
-	return func() (interface{}, string, error) {
-		var op *compute.Operation
-		var err error
-
-		if w.Op.Zone != "" {
-			zone := GetResourceNameFromSelfLink(w.Op.Zone)
-			op, err = w.Service.ZoneOperations.Get(w.Project, zone, w.Op.Name).Do()
-		} else if w.Op.Region != "" {
-			region := GetResourceNameFromSelfLink(w.Op.Region)
-			op, err = w.Service.RegionOperations.Get(w.Project, region, w.Op.Name).Do()
-		} else {
-			op, err = w.Service.GlobalOperations.Get(w.Project, w.Op.Name).Do()
-		}
-		if err != nil {
-			return nil, "", err
-		}
-
-		log.Printf("[DEBUG] Got %q when asking for operation %q", op.Status, w.Op.Name)
-		return op, op.Status, nil
+func (w *ComputeOperationWaiter) State() string {
+	if w == nil || w.Op == nil {
+		return "<nil>"
 	}
+
+	return w.Op.Status
 }
 
-func (w *ComputeOperationWaiter) Conf() *resource.StateChangeConf {
-	return &resource.StateChangeConf{
-		Pending: []string{"PENDING", "RUNNING"},
-		Target:  []string{"DONE"},
-		Refresh: w.RefreshFunc(),
+func (w *ComputeOperationWaiter) Error() error {
+	if w != nil && w.Op != nil && w.Op.Error != nil {
+		return ComputeOperationError(*w.Op.Error)
 	}
+	return nil
+}
+
+func (w *ComputeOperationWaiter) IsRetryable(err error) bool {
+	if oe, ok := err.(ComputeOperationError); ok {
+		for _, e := range oe.Errors {
+			if e.Code == "RESOURCE_NOT_READY" {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func (w *ComputeOperationWaiter) SetOp(op interface{}) error {
+	var ok bool
+	w.Op, ok = op.(*compute.Operation)
+	if !ok {
+		return fmt.Errorf("Unable to set operation. Bad type!")
+	}
+	return nil
+}
+
+func (w *ComputeOperationWaiter) QueryOp() (interface{}, error) {
+	if w == nil || w.Op == nil {
+		return nil, fmt.Errorf("Cannot query operation, it's unset or nil.")
+	}
+	if w.Context != nil {
+		select {
+		case <-w.Context.Done():
+			log.Println("[WARN] request has been cancelled early")
+			return w.Op, errors.New("unable to finish polling, context has been cancelled")
+		default:
+			// default must be here to keep the previous case from blocking
+		}
+	}
+	if w.Op.Zone != "" {
+		zone := GetResourceNameFromSelfLink(w.Op.Zone)
+		return w.Service.ZoneOperations.Get(w.Project, zone, w.Op.Name).Do()
+	} else if w.Op.Region != "" {
+		region := GetResourceNameFromSelfLink(w.Op.Region)
+		return w.Service.RegionOperations.Get(w.Project, region, w.Op.Name).Do()
+	}
+	return w.Service.GlobalOperations.Get(w.Project, w.Op.Name).Do()
+}
+
+func (w *ComputeOperationWaiter) OpName() string {
+	if w == nil || w.Op == nil {
+		return "<nil> Compute Op"
+	}
+
+	return w.Op.Name
+}
+
+func (w *ComputeOperationWaiter) PendingStates() []string {
+	return []string{"PENDING", "RUNNING"}
+}
+
+func (w *ComputeOperationWaiter) TargetStates() []string {
+	return []string{"DONE"}
+}
+
+func computeOperationWaitTime(config *Config, res interface{}, project, activity, userAgent string, timeout time.Duration) error {
+	op := &compute.Operation{}
+	err := Convert(res, op)
+	if err != nil {
+		return err
+	}
+
+	w := &ComputeOperationWaiter{
+		Service: config.NewComputeClient(userAgent),
+		Context: config.context,
+		Op:      op,
+		Project: project,
+	}
+
+	if err := w.SetOp(op); err != nil {
+		return err
+	}
+	return OperationWait(w, activity, timeout, config.PollInterval)
 }
 
 // ComputeOperationError wraps compute.OperationError and implements the
@@ -60,42 +123,4 @@ func (e ComputeOperationError) Error() string {
 	}
 
 	return buf.String()
-}
-
-func computeOperationWait(client *compute.Service, op *compute.Operation, project, activity string) error {
-	return computeOperationWaitTime(client, op, project, activity, 4)
-}
-
-func computeOperationWaitTime(client *compute.Service, op *compute.Operation, project, activity string, timeoutMin int) error {
-	w := &ComputeOperationWaiter{
-		Service: client,
-		Op:      op,
-		Project: project,
-	}
-
-	state := w.Conf()
-	state.Delay = 10 * time.Second
-	state.Timeout = time.Duration(timeoutMin) * time.Minute
-	state.MinTimeout = 2 * time.Second
-	opRaw, err := state.WaitForState()
-	if err != nil {
-		return fmt.Errorf("Error waiting for %s: %s", activity, err)
-	}
-
-	resultOp := opRaw.(*compute.Operation)
-	if resultOp.Error != nil {
-		return ComputeOperationError(*resultOp.Error)
-	}
-
-	return nil
-}
-
-func computeBetaOperationWaitTime(client *compute.Service, op *computeBeta.Operation, project, activity string, timeoutMin int) error {
-	opV1 := &compute.Operation{}
-	err := Convert(op, opV1)
-	if err != nil {
-		return err
-	}
-
-	return computeOperationWaitTime(client, opV1, project, activity, timeoutMin)
 }

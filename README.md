@@ -18,42 +18,58 @@ This provider plugin is maintained by:
 Requirements
 ------------
 
--	[Terraform](https://www.terraform.io/downloads.html) 0.10.x
--	[Go](https://golang.org/doc/install) 1.9 (to build the provider plugin)
+- [Terraform](https://www.terraform.io/downloads.html) 0.12+
 
-Building The Provider
+
+Using the provider
+----------------------
+
+See the [Google Provider documentation](https://www.terraform.io/docs/providers/google/index.html) to get started using the
+Google provider.
+
+We also maintain the 'google-beta' provider for preview features and features at a beta [launch stage](https://cloud.google.com/products#product-launch-stages). See [Provider Versions](https://www.terraform.io/docs/providers/google/provider_versions.html)
+for more details on how to use `google-beta`.
+
+Upgrading the provider
+----------------------
+
+The Google provider doesn't upgrade automatically once you've started using it. After a new release you can run
+
+```bash
+terraform init -upgrade
+```
+
+to upgrade to the latest stable version of the Google provider. See the [Terraform website](https://www.terraform.io/docs/configuration/providers.html#provider-versions)
+for more information on provider upgrades, and how to set version constraints on your provider.
+
+Building the provider
 ---------------------
 
-Clone repository to: `$GOPATH/src/github.com/terraform-providers/terraform-provider-google`
+Clone repository to: `$GOPATH/src/github.com/hashicorp/terraform-provider-google`
 
 ```sh
-$ mkdir -p $GOPATH/src/github.com/terraform-providers; cd $GOPATH/src/github.com/terraform-providers
-$ git clone git@github.com:terraform-providers/terraform-provider-google
+$ mkdir -p $GOPATH/src/github.com/hashicorp; cd $GOPATH/src/github.com/hashicorp
+$ git clone git@github.com:hashicorp/terraform-provider-google
 ```
 
 Enter the provider directory and build the provider
 
 ```sh
-$ cd $GOPATH/src/github.com/terraform-providers/terraform-provider-google
+$ cd $GOPATH/src/github.com/hashicorp/terraform-provider-google
 $ make build
 ```
 
-Using the provider
-----------------------
-
-See the [Google Provider documentation](https://www.terraform.io/docs/providers/google/index.html) to get started using the Google provider.
-
-Upgrading the provider
-----------------------
-
-To upgrade to the latest stable version of the Google provider run `terraform init -upgrade`. See the [Terraform website](https://www.terraform.io/docs/configuration/providers.html#provider-versions) for more information.
-
-Developing the Provider
+Developing the provider
 ---------------------------
 
-If you wish to work on the provider, you'll first need [Go](http://www.golang.org) installed on your machine (version 1.9+ is *required*). You'll also need to correctly setup a [GOPATH](http://golang.org/doc/code.html#GOPATH), as well as adding `$GOPATH/bin` to your `$PATH`.
+If you wish to work on the provider, you'll first need [Go](http://www.golang.org)
+installed on your machine (version 1.16.0+ is *required*). You can use [goenv](https://github.com/syndbg/goenv)
+to manage your Go version. You'll also need to correctly setup a [GOPATH](http://golang.org/doc/code.html#GOPATH),
+as well as adding `$GOPATH/bin` to your `$PATH`.
 
-To compile the provider, run `make build`. This will build the provider and put the provider binary in the `$GOPATH/bin` directory.
+To compile the provider, run `make build`.
+This will build the provider and put the provider binary in the `$GOPATH/bin`
+directory.
 
 ```sh
 $ make build
@@ -62,16 +78,6 @@ $ $GOPATH/bin/terraform-provider-google
 ...
 ```
 
-In order to test the provider, you can simply run `make test`.
-
-```sh
-$ make test
-```
-
-In order to run the full suite of Acceptance tests, run `make testacc`.
-
-*Note:* Acceptance tests create real resources, and often cost money to run.
-
-```sh
-$ make testacc
-```
+For guidance on common development practices such as testing changes or
+vendoring libraries, see the [contribution guidelines](https://github.com/hashicorp/terraform-provider-google/blob/master/.github/CONTRIBUTING.md).
+If you have other development questions we don't cover, please file an issue!

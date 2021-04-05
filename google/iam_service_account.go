@@ -2,14 +2,15 @@ package google
 
 import (
 	"fmt"
+
 	"github.com/hashicorp/errwrap"
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"google.golang.org/api/cloudresourcemanager/v1"
 	"google.golang.org/api/iam/v1"
 )
 
 var IamServiceAccountSchema = map[string]*schema.Schema{
-	"service_account_id": &schema.Schema{
+	"service_account_id": {
 		Type:         schema.TypeString,
 		Required:     true,
 		ForceNew:     true,
@@ -19,26 +20,35 @@ var IamServiceAccountSchema = map[string]*schema.Schema{
 
 type ServiceAccountIamUpdater struct {
 	serviceAccountId string
+	d                TerraformResourceData
 	Config           *Config
 }
 
-func NewServiceAccountIamUpdater(d *schema.ResourceData, config *Config) (ResourceIamUpdater, error) {
+func NewServiceAccountIamUpdater(d TerraformResourceData, config *Config) (ResourceIamUpdater, error) {
 	return &ServiceAccountIamUpdater{
 		serviceAccountId: d.Get("service_account_id").(string),
+		d:                d,
 		Config:           config,
 	}, nil
 }
 
 func ServiceAccountIdParseFunc(d *schema.ResourceData, _ *Config) error {
-	d.Set("service_account_id", d.Id())
+	if err := d.Set("service_account_id", d.Id()); err != nil {
+		return fmt.Errorf("Error setting service_account_id: %s", err)
+	}
 	return nil
 }
 
 func (u *ServiceAccountIamUpdater) GetResourceIamPolicy() (*cloudresourcemanager.Policy, error) {
-	p, err := u.Config.clientIAM.Projects.ServiceAccounts.GetIamPolicy(u.serviceAccountId).Do()
+	userAgent, err := generateUserAgentString(u.d, u.Config.userAgent)
+	if err != nil {
+		return nil, err
+	}
+
+	p, err := u.Config.NewIamClient(userAgent).Projects.ServiceAccounts.GetIamPolicy(u.serviceAccountId).OptionsRequestedPolicyVersion(iamPolicyVersion).Do()
 
 	if err != nil {
-		return nil, fmt.Errorf("Error retrieving IAM policy for %s: %s", u.DescribeResource(), err)
+		return nil, errwrap.Wrapf(fmt.Sprintf("Error retrieving IAM policy for %s: {{err}}", u.DescribeResource()), err)
 	}
 
 	cloudResourcePolicy, err := iamToResourceManagerPolicy(p)
@@ -55,12 +65,17 @@ func (u *ServiceAccountIamUpdater) SetResourceIamPolicy(policy *cloudresourceman
 		return err
 	}
 
-	_, err = u.Config.clientIAM.Projects.ServiceAccounts.SetIamPolicy(u.GetResourceId(), &iam.SetIamPolicyRequest{
+	userAgent, err := generateUserAgentString(u.d, u.Config.userAgent)
+	if err != nil {
+		return err
+	}
+
+	_, err = u.Config.NewIamClient(userAgent).Projects.ServiceAccounts.SetIamPolicy(u.GetResourceId(), &iam.SetIamPolicyRequest{
 		Policy: iamPolicy,
 	}).Do()
 
 	if err != nil {
-		return errwrap.Wrap(fmt.Errorf("Error setting IAM policy for %s.", u.DescribeResource()), err)
+		return errwrap.Wrapf(fmt.Sprintf("Error setting IAM policy for %s: {{err}}", u.DescribeResource()), err)
 	}
 
 	return nil
@@ -82,7 +97,7 @@ func resourceManagerToIamPolicy(p *cloudresourcemanager.Policy) (*iam.Policy, er
 	out := &iam.Policy{}
 	err := Convert(p, out)
 	if err != nil {
-		return nil, fmt.Errorf("Cannot convert a v1 policy to a iam policy: %s", err)
+		return nil, errwrap.Wrapf("Cannot convert a v1 policy to a iam policy: {{err}}", err)
 	}
 	return out, nil
 }
@@ -91,7 +106,7 @@ func iamToResourceManagerPolicy(p *iam.Policy) (*cloudresourcemanager.Policy, er
 	out := &cloudresourcemanager.Policy{}
 	err := Convert(p, out)
 	if err != nil {
-		return nil, fmt.Errorf("Cannot convert a iam policy to a v1 policy: %s", err)
+		return nil, errwrap.Wrapf("Cannot convert a iam policy to a v1 policy: {{err}}", err)
 	}
 	return out, nil
 }

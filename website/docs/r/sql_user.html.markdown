@@ -1,4 +1,5 @@
 ---
+subcategory: "Cloud SQL"
 layout: "google"
 page_title: "Google: google_sql_user"
 sidebar_current: "docs-google-sql-user"
@@ -19,19 +20,51 @@ Creates a new Google SQL User on a Google SQL User Instance. For more informatio
 Example creating a SQL User.
 
 ```hcl
+resource "random_id" "db_name_suffix" {
+  byte_length = 4
+}
+
 resource "google_sql_database_instance" "master" {
-  name = "master-instance"
+  name = "master-instance-${random_id.db_name_suffix.hex}"
 
   settings {
-    tier = "D0"
+    tier = "db-f1-micro"
   }
 }
 
 resource "google_sql_user" "users" {
   name     = "me"
-  instance = "${google_sql_database_instance.master.name}"
+  instance = google_sql_database_instance.master.name
   host     = "me.com"
   password = "changeme"
+}
+```
+
+Example creating a Cloud IAM User.
+
+```hcl
+resource "random_id" "db_name_suffix" {
+  byte_length = 4
+}
+
+resource "google_sql_database_instance" "master" {
+  name             = "master-instance-${random_id.db_name_suffix.hex}"
+  database_version = "POSTGRES_9_6"
+
+  settings {
+    tier = "db-f1-micro"
+
+    database_flags {
+      name  = "cloudsql.iam_authentication"
+      value = "on"
+    }
+  }
+}
+
+resource "google_sql_user" "users" {
+  name     = "me"
+  instance = google_sql_database_instance.master.name
+  type     = "CLOUD_IAM_USER"
 }
 ```
 
@@ -45,13 +78,24 @@ The following arguments are supported:
 * `name` - (Required) The name of the user. Changing this forces a new resource
     to be created.
 
-* `password` - (Optional) The password for the user. Can be updated.
+* `password` - (Optional) The password for the user. Can be updated. For Postgres
+    instances this is a Required field.
+
+* `type` - (Optional) The user type. It determines the method to authenticate the
+    user during login. The default is the database's built-in user type. Flags
+    include "BUILT_IN", "CLOUD_IAM_USER", or "CLOUD_IAM_SERVICE_ACCOUNT".
+
+* `deletion_policy` - (Optional) The deletion policy for the user.
+    Setting `ABANDON` allows the resource to be abandoned rather than deleted. This is useful
+    for Postgres, where users cannot be deleted from the API if they have been granted SQL roles.
+    
+    Possible values are: `ABANDON`.
 
 - - -
 
 * `host` - (Optional) The host the user can connect from. This is only supported
-    for first generation SQL instances. Don't set this field for second generation
-    SQL instances. Can be an IP address. Changing this forces a new resource to be created.
+    for MySQL instances. Don't set this field for PostgreSQL instances.
+    Can be an IP address. Changing this forces a new resource to be created.
 
 * `project` - (Optional) The ID of the project in which the resource belongs. If it
     is not provided, the provider project is used.
@@ -60,16 +104,25 @@ The following arguments are supported:
 
 Only the arguments listed above are exposed as attributes.
 
+## Timeouts
+
+This resource provides the following
+[Timeouts](/docs/configuration/resources.html#timeouts) configuration options:
+
+- `create` - Default is 10 minutes.
+- `update` - Default is 10 minutes.
+- `delete` - Default is 10 minutes.
+
 ## Import
 
-SQL users for 1st generation databases can be imported using the `instance`, `host` and `name`, e.g.
+SQL users for MySQL databases can be imported using the `project`, `instance`, `host` and `name`, e.g.
 
 ```
-$ terraform import google_sql_user.users master-instance/my-domain.com/me
+$ terraform import google_sql_user.users my-project/master-instance/my-domain.com/me
 ```
 
-SQL users for 2nd generation databases can be imported using the `instance` and `name`, e.g.
+SQL users for PostgreSQL databases can be imported using the `project`, `instance` and `name`, e.g.
 
 ```
-$ terraform import google_sql_user.users master-instance/me
+$ terraform import google_sql_user.users my-project/master-instance/me
 ```

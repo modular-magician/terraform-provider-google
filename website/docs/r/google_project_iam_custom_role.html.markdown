@@ -1,4 +1,5 @@
 ---
+subcategory: "Cloud Platform"
 layout: "google"
 page_title: "Google: google_project_iam_custom_role"
 sidebar_current: "docs-google-project-iam-custom-role"
@@ -12,6 +13,13 @@ Allows management of a customized Cloud IAM project role. For more information s
 [the official documentation](https://cloud.google.com/iam/docs/understanding-custom-roles)
 and
 [API](https://cloud.google.com/iam/reference/rest/v1/projects.roles).
+
+~> **Warning:** Note that custom roles in GCP have the concept of a soft-delete. There are two issues that may arise
+ from this and how roles are propagated. 1) creating a role may involve undeleting and then updating a role with the
+ same name, possibly causing confusing behavior between undelete and update. 2) A deleted role is permanently deleted
+ after 7 days, but it can take up to 30 more days (i.e. between 7 and 37 days after deletion) before the role name is
+ made available again. This means a deleted role that has been deleted for more than 7 days cannot be changed at all
+ by Terraform, and new roles cannot share that name.
 
 ## Example Usage
 
@@ -30,7 +38,7 @@ resource "google_project_iam_custom_role" "my-custom-role" {
 
 The following arguments are supported:
 
-* `role_id` - (Required) The role id to use for this role.
+* `role_id` - (Required) The camel case role id to use for this role. Cannot contain `-` characters.
 
 * `title` - (Required) A human-readable title for the role.
 
@@ -45,12 +53,24 @@ The following arguments are supported:
 
 * `description` - (Optional) A human-readable description for the role.
 
-* `deleted` - (Optional) The current deleted state of the role. Defaults to `false`.
+## Attributes Reference
+
+ In addition to the arguments listed above, the following computed attributes are
+exported:
+
+ * `deleted` - (Optional) The current deleted state of the role.
+
+ * `id` - an identifier for the resource with the format `projects/{{project}}/roles/{{role_id}}`
+
+ * `name` - The name of the role in the format `projects/{{project}}/roles/{{role_id}}`. Like `id`, this field can be used as a reference in other resources such as IAM role bindings.
 
 ## Import
 
-Customized IAM project role can be imported using their URI, e.g.
+
+Custom Roles can be imported using any of these accepted formats:
 
 ```
-$ terraform import google_project_iam_custom_role.my-custom-role projects/my-project/roles/myCustomRole
+$ terraform import google_project_iam_custom_role.default projects/{{project}}/roles/{{role_id}}
+$ terraform import google_project_iam_custom_role.default {{project}}/{{role_id}}
+$ terraform import google_project_iam_custom_role.default {{role_id}}
 ```

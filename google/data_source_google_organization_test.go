@@ -5,22 +5,21 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform/helper/acctest"
-	"github.com/hashicorp/terraform/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
 func TestAccDataSourceGoogleOrganization_byFullName(t *testing.T) {
 	orgId := getTestOrgFromEnv(t)
 	name := "organizations/" + orgId
 
-	resource.Test(t, resource.TestCase{
+	vcrTest(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckGoogleOrganization_byName(name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("data.google_organization.org", "id", orgId),
+					resource.TestCheckResourceAttr("data.google_organization.org", "id", name),
 					resource.TestCheckResourceAttr("data.google_organization.org", "name", name),
 				),
 			},
@@ -32,14 +31,14 @@ func TestAccDataSourceGoogleOrganization_byShortName(t *testing.T) {
 	orgId := getTestOrgFromEnv(t)
 	name := "organizations/" + orgId
 
-	resource.Test(t, resource.TestCase{
+	vcrTest(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckGoogleOrganization_byName(orgId),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("data.google_organization.org", "id", orgId),
+					resource.TestCheckResourceAttr("data.google_organization.org", "id", name),
 					resource.TestCheckResourceAttr("data.google_organization.org", "name", name),
 				),
 			},
@@ -48,9 +47,9 @@ func TestAccDataSourceGoogleOrganization_byShortName(t *testing.T) {
 }
 
 func TestAccDataSourceGoogleOrganization_byDomain(t *testing.T) {
-	name := acctest.RandString(16) + ".com"
+	name := randString(t, 16) + ".com"
 
-	resource.Test(t, resource.TestCase{
+	vcrTest(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
@@ -66,12 +65,14 @@ func testAccCheckGoogleOrganization_byName(name string) string {
 	return fmt.Sprintf(`
 data "google_organization" "org" {
   organization = "%s"
-}`, name)
+}
+`, name)
 }
 
 func testAccCheckGoogleOrganization_byDomain(name string) string {
 	return fmt.Sprintf(`
 data "google_organization" "org" {
   domain = "%s"
-}`, name)
+}
+`, name)
 }

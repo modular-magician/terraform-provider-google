@@ -1,9 +1,10 @@
 package google
 
 import (
+	"errors"
 	"fmt"
 
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func dataSourceGoogleComputeInstanceGroup() *schema.Resource {
@@ -11,14 +12,23 @@ func dataSourceGoogleComputeInstanceGroup() *schema.Resource {
 		Read: dataSourceComputeInstanceGroupRead,
 		Schema: map[string]*schema.Schema{
 			"name": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:          schema.TypeString,
+				Optional:      true,
+				ConflictsWith: []string{"self_link"},
+			},
+
+			"self_link": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				Computed:      true,
+				ConflictsWith: []string{"name", "zone"},
 			},
 
 			"zone": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
+				Type:          schema.TypeString,
+				Optional:      true,
+				Computed:      true,
+				ConflictsWith: []string{"self_link"},
 			},
 
 			"project": {
@@ -62,11 +72,6 @@ func dataSourceGoogleComputeInstanceGroup() *schema.Resource {
 				Computed: true,
 			},
 
-			"self_link": {
-				Type:     schema.TypeString,
-				Computed: true,
-			},
-
 			"size": {
 				Type:     schema.TypeInt,
 				Computed: true,
@@ -76,14 +81,35 @@ func dataSourceGoogleComputeInstanceGroup() *schema.Resource {
 }
 
 func dataSourceComputeInstanceGroupRead(d *schema.ResourceData, meta interface{}) error {
-
-	zone, err := getZone(d, meta.(*Config))
-	if err != nil {
-		return err
+	config := meta.(*Config)
+	if name, ok := d.GetOk("name"); ok {
+		zone, err := getZone(d, config)
+		if err != nil {
+			return err
+		}
+		project, err := getProject(d, config)
+		if err != nil {
+			return err
+		}
+		d.SetId(fmt.Sprintf("projects/%s/zones/%s/instanceGroups/%s", project, zone, name.(string)))
+	} else if selfLink, ok := d.GetOk("self_link"); ok {
+		parsed, err := ParseInstanceGroupFieldValue(selfLink.(string), d, config)
+		if err != nil {
+			return err
+		}
+		if err := d.Set("name", parsed.Name); err != nil {
+			return fmt.Errorf("Error setting name: %s", err)
+		}
+		if err := d.Set("zone", parsed.Zone); err != nil {
+			return fmt.Errorf("Error setting zone: %s", err)
+		}
+		if err := d.Set("project", parsed.Project); err != nil {
+			return fmt.Errorf("Error setting project: %s", err)
+		}
+		d.SetId(fmt.Sprintf("projects/%s/zones/%s/instanceGroups/%s", parsed.Project, parsed.Zone, parsed.Name))
+	} else {
+		return errors.New("Must provide either `self_link` or `zone/name`")
 	}
-	name := d.Get("name").(string)
-
-	d.SetId(fmt.Sprintf("%s/%s", zone, name))
 
 	return resourceComputeInstanceGroupRead(d, meta)
 }

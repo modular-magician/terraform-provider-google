@@ -3,8 +3,9 @@ package google
 import (
 	"fmt"
 	"log"
+	"time"
 
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func resourceComputeSharedVpcHostProject() *schema.Resource {
@@ -16,28 +17,39 @@ func resourceComputeSharedVpcHostProject() *schema.Resource {
 			State: schema.ImportStatePassthrough,
 		},
 
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(4 * time.Minute),
+			Delete: schema.DefaultTimeout(4 * time.Minute),
+		},
+
 		Schema: map[string]*schema.Schema{
-			"project": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+			"project": {
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: `The ID of the project that will serve as a Shared VPC host project`,
 			},
 		},
+		UseJSONNumber: true,
 	}
 }
 
 func resourceComputeSharedVpcHostProjectCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
+	userAgent, err := generateUserAgentString(d, config.userAgent)
+	if err != nil {
+		return err
+	}
 
 	hostProject := d.Get("project").(string)
-	op, err := config.clientCompute.Projects.EnableXpnHost(hostProject).Do()
+	op, err := config.NewComputeClient(userAgent).Projects.EnableXpnHost(hostProject).Do()
 	if err != nil {
 		return fmt.Errorf("Error enabling Shared VPC Host %q: %s", hostProject, err)
 	}
 
 	d.SetId(hostProject)
 
-	err = computeOperationWait(config.clientCompute, op, hostProject, "Enabling Shared VPC Host")
+	err = computeOperationWaitTime(config, op, hostProject, "Enabling Shared VPC Host", userAgent, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		d.SetId("")
 		return err
@@ -48,10 +60,14 @@ func resourceComputeSharedVpcHostProjectCreate(d *schema.ResourceData, meta inte
 
 func resourceComputeSharedVpcHostProjectRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
+	userAgent, err := generateUserAgentString(d, config.userAgent)
+	if err != nil {
+		return err
+	}
 
 	hostProject := d.Id()
 
-	project, err := config.clientCompute.Projects.Get(hostProject).Do()
+	project, err := config.NewComputeClient(userAgent).Projects.Get(hostProject).Do()
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("Project data for project %q", hostProject))
 	}
@@ -61,21 +77,28 @@ func resourceComputeSharedVpcHostProjectRead(d *schema.ResourceData, meta interf
 		d.SetId("")
 	}
 
-	d.Set("project", hostProject)
+	if err := d.Set("project", hostProject); err != nil {
+		return fmt.Errorf("Error setting project: %s", err)
+	}
 
 	return nil
 }
 
 func resourceComputeSharedVpcHostProjectDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
+	userAgent, err := generateUserAgentString(d, config.userAgent)
+	if err != nil {
+		return err
+	}
+
 	hostProject := d.Get("project").(string)
 
-	op, err := config.clientCompute.Projects.DisableXpnHost(hostProject).Do()
+	op, err := config.NewComputeClient(userAgent).Projects.DisableXpnHost(hostProject).Do()
 	if err != nil {
 		return fmt.Errorf("Error disabling Shared VPC Host %q: %s", hostProject, err)
 	}
 
-	err = computeOperationWait(config.clientCompute, op, hostProject, "Disabling Shared VPC Host")
+	err = computeOperationWaitTime(config, op, hostProject, "Disabling Shared VPC Host", userAgent, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return err
 	}

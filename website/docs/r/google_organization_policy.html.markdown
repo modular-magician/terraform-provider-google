@@ -1,4 +1,5 @@
 ---
+subcategory: "Cloud Platform"
 layout: "google"
 page_title: "Google: google_organization_policy"
 sidebar_current: "docs-google-organization-policy"
@@ -29,7 +30,7 @@ resource "google_organization_policy" "serial_port_policy" {
 ```
 
 
-To set a policy with a [list contraint](https://cloud.google.com/resource-manager/docs/organization-policy/quickstart-list-constraints):
+To set a policy with a [list constraint](https://cloud.google.com/resource-manager/docs/organization-policy/quickstart-list-constraints):
 
 ```hcl
 resource "google_organization_policy" "services_policy" {
@@ -44,7 +45,6 @@ resource "google_organization_policy" "services_policy" {
 }
 ```
 
-
 Or to deny some services, use the following instead:
 
 ```hcl
@@ -53,11 +53,24 @@ resource "google_organization_policy" "services_policy" {
   constraint = "serviceuser.services"
 
   list_policy {
-    suggested_values = "compute.googleapis.com"
+    suggested_value = "compute.googleapis.com"
 
     deny {
       values = ["cloudresourcemanager.googleapis.com"]
     }
+  }
+}
+```
+
+To restore the default organization policy, use the following instead:
+
+```hcl
+resource "google_organization_policy" "services_policy" {
+  org_id     = "123456789"
+  constraint = "serviceuser.services"
+
+  restore_policy {
+    default = true
   }
 }
 ```
@@ -74,9 +87,14 @@ The following arguments are supported:
 
 * `version` - (Optional) Version of the Policy. Default version is 0.
 
-* `boolean_policy` - (Optional) A boolean policy is a constraint that is either enforced or not. Structure is documented below. 
+* `boolean_policy` - (Optional) A boolean policy is a constraint that is either enforced or not. Structure is documented below.
 
 * `list_policy` - (Optional) A policy that can define specific values that are allowed or denied for the given constraint. It can also be used to allow or deny all values. Structure is documented below.
+
+* `restore_policy` - (Optional) A restore policy is a constraint to restore the default policy. Structure is documented below.
+
+~> **Note:** If none of [`boolean_policy`, `list_policy`, `restore_policy`] are defined the policy for a given constraint will
+effectively be unset. This is represented in the UI as the constraint being 'Inherited'.
 
 - - -
 
@@ -88,7 +106,10 @@ The `list_policy` block supports:
 
 * `allow` or `deny` - (Optional) One or the other must be set.
 
-* `suggested_values` - (Optional) The Google Cloud Console will try to default to a configuration that matches the value specified in this field.
+* `suggested_value` - (Optional) The Google Cloud Console will try to default to a configuration that matches the value specified in this field.
+
+* `inherit_from_parent` - (Optional) If set to true, the values from the effective Policy of the parent resource
+are inherited, meaning the values set in this Policy are added to the values inherited up the hierarchy.
 
 The `allow` or `deny` blocks support:
 
@@ -96,18 +117,25 @@ The `allow` or `deny` blocks support:
 
 * `values` - (Optional) The policy can define specific values that are allowed or denied.
 
+The `restore_policy` block supports:
+
+* `default` - (Required) May only be set to true. If set, then the default Policy is restored.
+
 ## Attributes Reference
 
 In addition to the arguments listed above, the following computed attributes are
 exported:
 
-* `etag` - (Computed) The etag of the organization policy. `etag` is used for optimistic concurrency control as a way to help prevent simultaneous updates of a policy from overwriting each other. 
+* `etag` - (Computed) The etag of the organization policy. `etag` is used for optimistic concurrency control as a way to help prevent simultaneous updates of a policy from overwriting each other.
 
 * `update_time` - (Computed) The timestamp in RFC3339 UTC "Zulu" format, accurate to nanoseconds, representing when the variable was last updated. Example: "2016-10-09T12:33:37.578138407Z".
 
 ## Import
 
-Organization Policies can be imported using the `org_id` and the `contraint`, e.g.
+Organization Policies can be imported using the `org_id` and the `constraint`, e.g.
 
 ```
-$ terraform import google_organization_policy.services_policy 123456789:constraints/serviceuser.services
+$ terraform import google_organization_policy.services_policy 123456789/constraints/serviceuser.services
+```
+
+It is all right if the constraint contains a slash, as in the example above.

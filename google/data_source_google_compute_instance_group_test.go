@@ -3,26 +3,24 @@ package google
 import (
 	"errors"
 	"fmt"
-	"reflect"
 	"sort"
 	"strconv"
 	"strings"
 	"testing"
 
-	"github.com/hashicorp/terraform/helper/acctest"
-	"github.com/hashicorp/terraform/helper/resource"
-	"github.com/hashicorp/terraform/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccDataSourceGoogleComputeInstanceGroup_basic(t *testing.T) {
 	t.Parallel()
 
-	resource.Test(t, resource.TestCase{
+	vcrTest(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckDataSourceGoogleComputeInstanceGroupConfig(),
+				Config: testAccCheckDataSourceGoogleComputeInstanceGroupConfig(randString(t, 10), randString(t, 10)),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckDataSourceGoogleComputeInstanceGroup("data.google_compute_instance_group.test"),
 				),
@@ -34,14 +32,31 @@ func TestAccDataSourceGoogleComputeInstanceGroup_basic(t *testing.T) {
 func TestAccDataSourceGoogleComputeInstanceGroup_withNamedPort(t *testing.T) {
 	t.Parallel()
 
-	resource.Test(t, resource.TestCase{
+	vcrTest(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckDataSourceGoogleComputeInstanceGroupConfigWithNamedPort(),
+				Config: testAccCheckDataSourceGoogleComputeInstanceGroupConfigWithNamedPort(randString(t, 10), randString(t, 10)),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckDataSourceGoogleComputeInstanceGroup("data.google_compute_instance_group.test"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccDataSourceGoogleComputeInstanceGroup_fromIGM(t *testing.T) {
+	t.Parallel()
+
+	vcrTest(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckDataSourceGoogleComputeInstanceGroup_fromIGM(fmt.Sprintf("tf-test-igm-%d", randInt(t)), fmt.Sprintf("tf-test-igm-%d", randInt(t))),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("data.google_compute_instance_group.test", "instances.#", "10"),
 				),
 			},
 		},
@@ -54,12 +69,12 @@ func testAccCheckDataSourceGoogleComputeInstanceGroup(dataSourceName string) res
 		rsFullName := "google_compute_instance_group.test"
 		ds, ok := s.RootModule().Resources[dsFullName]
 		if !ok {
-			return fmt.Errorf("cant' find resource called %s in state", dsFullName)
+			return fmt.Errorf("cant' find data source called %s in state", dsFullName)
 		}
 
 		rs, ok := s.RootModule().Resources[rsFullName]
 		if !ok {
-			return fmt.Errorf("can't find data source called %s in state", rsFullName)
+			return fmt.Errorf("can't find resource called %s in state", rsFullName)
 		}
 
 		dsAttrs := ds.Primary.Attributes
@@ -72,7 +87,6 @@ func testAccCheckDataSourceGoogleComputeInstanceGroup(dataSourceName string) res
 			"project",
 			"description",
 			"network",
-			"self_link",
 			"size",
 		}
 
@@ -80,6 +94,10 @@ func testAccCheckDataSourceGoogleComputeInstanceGroup(dataSourceName string) res
 			if dsAttrs[attrToTest] != rsAttrs[attrToTest] {
 				return fmt.Errorf("%s is %s; want %s", attrToTest, dsAttrs[attrToTest], rsAttrs[attrToTest])
 			}
+		}
+
+		if !compareSelfLinkOrResourceName("", dsAttrs["self_link"], rsAttrs["self_link"], nil) && dsAttrs["self_link"] != rsAttrs["self_link"] {
+			return fmt.Errorf("self link does not match: %s vs %s", dsAttrs["self_link"], rsAttrs["self_link"])
 		}
 
 		dsNamedPortsCount, ok := dsAttrs["named_port.#"]
@@ -166,24 +184,32 @@ func testAccCheckDataSourceGoogleComputeInstanceGroup(dataSourceName string) res
 		sort.Strings(dsInstancesValues)
 		sort.Strings(rsInstancesValues)
 
-		if !reflect.DeepEqual(dsInstancesValues, rsInstancesValues) {
-			return fmt.Errorf("expected %v list of instances, received %v", rsInstancesValues, dsInstancesValues)
+		for k, dsAttr := range dsInstancesValues {
+			rsAttr := rsInstancesValues[k]
+			if !compareSelfLinkOrResourceName("", dsAttr, rsAttr, nil) && dsAttr != rsAttr {
+				return fmt.Errorf("instance expected value %s did not match real value %s. expected list of instances %v, received %v", rsAttr, dsAttr, rsInstancesValues, dsInstancesValues)
+			}
 		}
 
 		return nil
 	}
 }
 
-func testAccCheckDataSourceGoogleComputeInstanceGroupConfig() string {
+func testAccCheckDataSourceGoogleComputeInstanceGroupConfig(instanceName, igName string) string {
 	return fmt.Sprintf(`
+data "google_compute_image" "my_image" {
+  family  = "debian-9"
+  project = "debian-cloud"
+}
+
 resource "google_compute_instance" "test" {
   name         = "tf-test-%s"
-  machine_type = "n1-standard-1"
+  machine_type = "e2-medium"
   zone         = "us-central1-a"
 
   boot_disk {
     initialize_params {
-      image = "debian-cloud/debian-8"
+      image = data.google_compute_image.my_image.self_link
     }
   }
 
@@ -198,30 +224,35 @@ resource "google_compute_instance" "test" {
 
 resource "google_compute_instance_group" "test" {
   name = "tf-test-%s"
-  zone = "${google_compute_instance.test.zone}"
+  zone = google_compute_instance.test.zone
 
   instances = [
-    "${google_compute_instance.test.self_link}",
+    google_compute_instance.test.self_link,
   ]
 }
 
 data "google_compute_instance_group" "test" {
-  name = "${google_compute_instance_group.test.name}"
-  zone = "${google_compute_instance_group.test.zone}"
+  name = google_compute_instance_group.test.name
+  zone = google_compute_instance_group.test.zone
 }
-`, acctest.RandString(10), acctest.RandString(10))
+`, instanceName, igName)
 }
 
-func testAccCheckDataSourceGoogleComputeInstanceGroupConfigWithNamedPort() string {
+func testAccCheckDataSourceGoogleComputeInstanceGroupConfigWithNamedPort(instanceName, igName string) string {
 	return fmt.Sprintf(`
+data "google_compute_image" "my_image" {
+  family  = "debian-9"
+  project = "debian-cloud"
+}
+
 resource "google_compute_instance" "test" {
   name         = "tf-test-%s"
-  machine_type = "n1-standard-1"
+  machine_type = "e2-medium"
   zone         = "us-central1-a"
 
   boot_disk {
     initialize_params {
-      image = "debian-cloud/debian-8"
+      image = data.google_compute_image.my_image.self_link
     }
   }
 
@@ -236,7 +267,7 @@ resource "google_compute_instance" "test" {
 
 resource "google_compute_instance_group" "test" {
   name = "tf-test-%s"
-  zone = "${google_compute_instance.test.zone}"
+  zone = google_compute_instance.test.zone
 
   named_port {
     name = "http"
@@ -249,13 +280,54 @@ resource "google_compute_instance_group" "test" {
   }
 
   instances = [
-    "${google_compute_instance.test.self_link}",
+    google_compute_instance.test.self_link,
   ]
 }
 
 data "google_compute_instance_group" "test" {
-  name = "${google_compute_instance_group.test.name}"
-  zone = "${google_compute_instance_group.test.zone}"
+  name = google_compute_instance_group.test.name
+  zone = google_compute_instance_group.test.zone
 }
-`, acctest.RandString(10), acctest.RandString(10))
+`, instanceName, igName)
+}
+
+func testAccCheckDataSourceGoogleComputeInstanceGroup_fromIGM(igmName, secondIgmName string) string {
+	return fmt.Sprintf(`
+data "google_compute_image" "my_image" {
+  family  = "debian-9"
+  project = "debian-cloud"
+}
+
+resource "google_compute_instance_template" "igm-basic" {
+  name         = "%s"
+  machine_type = "e2-medium"
+
+  disk {
+    source_image = data.google_compute_image.my_image.self_link
+    auto_delete  = true
+    boot         = true
+  }
+
+  network_interface {
+    network = "default"
+  }
+}
+
+resource "google_compute_instance_group_manager" "igm" {
+  name              = "%s"
+  version {
+    instance_template = google_compute_instance_template.igm-basic.self_link
+    name              = "primary"
+  }
+  base_instance_name = "igm"
+  zone               = "us-central1-a"
+  target_size        = 10
+
+  wait_for_instances = true
+}
+
+data "google_compute_instance_group" "test" {
+  self_link = google_compute_instance_group_manager.igm.instance_group
+}
+`, igmName, secondIgmName)
 }

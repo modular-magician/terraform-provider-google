@@ -8,8 +8,7 @@ import (
 
 	"google.golang.org/api/compute/v1"
 
-	"github.com/hashicorp/terraform/helper/hashcode"
-	"github.com/hashicorp/terraform/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func resourceComputeInstanceMigrateState(
@@ -119,7 +118,7 @@ func migrateStateV0toV1(is *terraform.InstanceState) (*terraform.InstanceState, 
 func migrateStateV1toV2(is *terraform.InstanceState) (*terraform.InstanceState, error) {
 	log.Printf("[DEBUG] Attributes before migration: %#v", is.Attributes)
 
-	// Maps service account index to list of scopes for that sccount
+	// Maps service account index to list of scopes for that account
 	newScopesMap := make(map[string][]string)
 
 	for k, v := range is.Attributes {
@@ -162,7 +161,7 @@ func migrateStateV1toV2(is *terraform.InstanceState) (*terraform.InstanceState, 
 
 	for service_acct_index, newScopes := range newScopesMap {
 		for _, newScope := range newScopes {
-			hash := hashcode.String(canonicalizeServiceScope(newScope))
+			hash := hashcode(canonicalizeServiceScope(newScope))
 			newKey := fmt.Sprintf("service_account.%s.scopes.%d", service_acct_index, hash)
 			is.Attributes[newKey] = newScope
 		}
@@ -218,9 +217,12 @@ func migrateStateV3toV4(is *terraform.InstanceState, meta interface{}) (*terrafo
 		}
 	}
 
-	disks, err := strconv.Atoi(is.Attributes["disk.#"])
-	if err != nil {
-		return is, fmt.Errorf("migration error: found disk.# value in unexpected format: %s", err)
+	disks := 0
+	if v := is.Attributes["disk.#"]; v != "" {
+		disks, err = strconv.Atoi(is.Attributes["disk.#"])
+		if err != nil {
+			return is, fmt.Errorf("migration error: found disk.# value in unexpected format: %s", err)
+		}
 	}
 
 	for i := 0; i < disks; i++ {
@@ -283,7 +285,7 @@ func migrateStateV3toV4(is *terraform.InstanceState, meta interface{}) (*terrafo
 		}
 	}
 
-	for k, _ := range is.Attributes {
+	for k := range is.Attributes {
 		if !strings.HasPrefix(k, "disk.") {
 			continue
 		}
@@ -320,10 +322,14 @@ func getInstanceFromInstanceState(config *Config, is *terraform.InstanceState) (
 
 	zone, ok := is.Attributes["zone"]
 	if !ok {
-		return nil, fmt.Errorf("could not determine 'zone'")
+		if config.Zone == "" {
+			return nil, fmt.Errorf("could not determine 'zone'")
+		} else {
+			zone = config.Zone
+		}
 	}
 
-	instance, err := config.clientCompute.Instances.Get(
+	instance, err := config.NewComputeClient(config.userAgent).Instances.Get(
 		project, zone, is.ID).Do()
 	if err != nil {
 		return nil, fmt.Errorf("error reading instance: %s", err)
@@ -344,13 +350,17 @@ func getAllDisksFromInstanceState(config *Config, is *terraform.InstanceState) (
 
 	zone, ok := is.Attributes["zone"]
 	if !ok {
-		return nil, fmt.Errorf("could not determine 'zone'")
+		if config.Zone == "" {
+			return nil, fmt.Errorf("could not determine 'zone'")
+		} else {
+			zone = config.Zone
+		}
 	}
 
 	diskList := []*compute.Disk{}
 	token := ""
 	for {
-		disks, err := config.clientCompute.Disks.List(project, zone).PageToken(token).Do()
+		disks, err := config.NewComputeClient(config.userAgent).Disks.List(project, zone).PageToken(token).Do()
 		if err != nil {
 			return nil, fmt.Errorf("error reading disks: %s", err)
 		}
@@ -394,7 +404,7 @@ func getDiskFromAttributes(config *Config, instance *compute.Instance, allDisks 
 
 func getDiskFromSource(instance *compute.Instance, source string) (*compute.AttachedDisk, error) {
 	for _, disk := range instance.Disks {
-		if disk.Boot == true || disk.Type == "SCRATCH" {
+		if disk.Boot || disk.Type == "SCRATCH" {
 			// Ignore boot/scratch disks since this is just for finding attached disks
 			continue
 		}
@@ -409,7 +419,7 @@ func getDiskFromSource(instance *compute.Instance, source string) (*compute.Atta
 
 func getDiskFromDeviceName(instance *compute.Instance, deviceName string) (*compute.AttachedDisk, error) {
 	for _, disk := range instance.Disks {
-		if disk.Boot == true || disk.Type == "SCRATCH" {
+		if disk.Boot || disk.Type == "SCRATCH" {
 			// Ignore boot/scratch disks since this is just for finding attached disks
 			continue
 		}
@@ -426,7 +436,7 @@ func getDiskFromEncryptionKey(instance *compute.Instance, encryptionKey string) 
 		return nil, err
 	}
 	for _, disk := range instance.Disks {
-		if disk.Boot == true || disk.Type == "SCRATCH" {
+		if disk.Boot || disk.Type == "SCRATCH" {
 			// Ignore boot/scratch disks since this is just for finding attached disks
 			continue
 		}
@@ -438,7 +448,7 @@ func getDiskFromEncryptionKey(instance *compute.Instance, encryptionKey string) 
 }
 
 func getDiskFromAutoDeleteAndImage(config *Config, instance *compute.Instance, allDisks map[string]*compute.Disk, autoDelete bool, image, project, zone string) (*compute.AttachedDisk, error) {
-	img, err := resolveImage(config, project, image)
+	img, err := resolveImage(config, project, image, config.userAgent)
 	if err != nil {
 		return nil, err
 	}
@@ -446,7 +456,7 @@ func getDiskFromAutoDeleteAndImage(config *Config, instance *compute.Instance, a
 	canonicalImage := imgParts[len(imgParts)-1]
 
 	for i, disk := range instance.Disks {
-		if disk.Boot == true || disk.Type == "SCRATCH" {
+		if disk.Boot || disk.Type == "SCRATCH" {
 			// Ignore boot/scratch disks since this is just for finding attached disks
 			continue
 		}
@@ -471,7 +481,7 @@ func getDiskFromAutoDeleteAndImage(config *Config, instance *compute.Instance, a
 	// the image family.
 	canonicalImage = strings.Replace(canonicalImage, "/family/", "/", -1)
 	for i, disk := range instance.Disks {
-		if disk.Boot == true || disk.Type == "SCRATCH" {
+		if disk.Boot || disk.Type == "SCRATCH" {
 			// Ignore boot/scratch disks since this is just for finding attached disks
 			continue
 		}

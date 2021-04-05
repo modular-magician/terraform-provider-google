@@ -1,16 +1,22 @@
 package google
 
 import (
+	"errors"
 	"fmt"
+	"net/url"
 	"regexp"
 	"strings"
 
-	"github.com/hashicorp/terraform/helper/hashcode"
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
+// Compare only the resource name of two self links/paths.
+func compareResourceNames(_, old, new string, _ *schema.ResourceData) bool {
+	return GetResourceNameFromSelfLink(old) == GetResourceNameFromSelfLink(new)
+}
+
 // Compare only the relative path of two self links.
-func compareSelfLinkRelativePaths(k, old, new string, d *schema.ResourceData) bool {
+func compareSelfLinkRelativePaths(_, old, new string, _ *schema.ResourceData) bool {
 	oldStripped, err := getRelativePath(old)
 	if err != nil {
 		return false
@@ -28,9 +34,11 @@ func compareSelfLinkRelativePaths(k, old, new string, d *schema.ResourceData) bo
 	return false
 }
 
+// compareSelfLinkOrResourceName checks if two resources are the same resource
+//
 // Use this method when the field accepts either a name or a self_link referencing a resource.
 // The value we store (i.e. `old` in this method), must be a self_link.
-func compareSelfLinkOrResourceName(k, old, new string, d *schema.ResourceData) bool {
+func compareSelfLinkOrResourceName(_, old, new string, _ *schema.ResourceData) bool {
 	newParts := strings.Split(new, "/")
 
 	if len(newParts) == 1 {
@@ -42,13 +50,13 @@ func compareSelfLinkOrResourceName(k, old, new string, d *schema.ResourceData) b
 	}
 
 	// The `new` string is a self_link
-	return compareSelfLinkRelativePaths(k, old, new, d)
+	return compareSelfLinkRelativePaths("", old, new, nil)
 }
 
 // Hash the relative path of a self link.
 func selfLinkRelativePathHash(selfLink interface{}) int {
 	path, _ := getRelativePath(selfLink.(string))
-	return hashcode.String(path)
+	return hashcode(path)
 }
 
 func getRelativePath(selfLink string) (string, error) {
@@ -58,6 +66,12 @@ func getRelativePath(selfLink string) (string, error) {
 	}
 
 	return "projects/" + stringParts[1], nil
+}
+
+// Hash the name path of a self link.
+func selfLinkNameHash(selfLink interface{}) int {
+	name := GetResourceNameFromSelfLink(selfLink.(string))
+	return hashcode(name)
 }
 
 func ConvertSelfLinkToV1(link string) string {
@@ -70,6 +84,88 @@ func GetResourceNameFromSelfLink(link string) string {
 	return parts[len(parts)-1]
 }
 
+func NameFromSelfLinkStateFunc(v interface{}) string {
+	return GetResourceNameFromSelfLink(v.(string))
+}
+
 func StoreResourceName(resourceLink interface{}) string {
 	return GetResourceNameFromSelfLink(resourceLink.(string))
+}
+
+type LocationType int
+
+const (
+	Zonal LocationType = iota
+	Regional
+	Global
+)
+
+func GetZonalResourcePropertiesFromSelfLinkOrSchema(d *schema.ResourceData, config *Config) (string, string, string, error) {
+	return getResourcePropertiesFromSelfLinkOrSchema(d, config, Zonal)
+}
+
+func GetRegionalResourcePropertiesFromSelfLinkOrSchema(d *schema.ResourceData, config *Config) (string, string, string, error) {
+	return getResourcePropertiesFromSelfLinkOrSchema(d, config, Regional)
+}
+
+func getResourcePropertiesFromSelfLinkOrSchema(d *schema.ResourceData, config *Config, locationType LocationType) (string, string, string, error) {
+	if selfLink, ok := d.GetOk("self_link"); ok {
+		return GetLocationalResourcePropertiesFromSelfLinkString(selfLink.(string))
+	} else {
+		project, err := getProject(d, config)
+		if err != nil {
+			return "", "", "", err
+		}
+
+		location := ""
+		if locationType == Regional {
+			location, err = getRegion(d, config)
+			if err != nil {
+				return "", "", "", err
+			}
+		} else if locationType == Zonal {
+			location, err = getZone(d, config)
+			if err != nil {
+				return "", "", "", err
+			}
+		}
+
+		n, ok := d.GetOk("name")
+		name := n.(string)
+		if !ok {
+			return "", "", "", errors.New("must provide either `self_link` or `name`")
+		}
+		return project, location, name, nil
+	}
+}
+
+// given a full locational (non-global) self link, returns the project + region/zone + name or an error
+func GetLocationalResourcePropertiesFromSelfLinkString(selfLink string) (string, string, string, error) {
+	parsed, err := url.Parse(selfLink)
+	if err != nil {
+		return "", "", "", err
+	}
+
+	s := strings.Split(parsed.Path, "/")
+
+	// This is a pretty bad way to tell if this is a self link, but stops us
+	// from accessing an index out of bounds and causing a panic. generally, we
+	// expect bad values to be partial URIs and names, so this will catch them
+	if len(s) < 9 {
+		return "", "", "", fmt.Errorf("value %s was not a self link", selfLink)
+	}
+
+	return s[4], s[6], s[8], nil
+}
+
+// return the region a selfLink is referring to
+func GetRegionFromRegionSelfLink(selfLink string) string {
+	re := regexp.MustCompile("/compute/[a-zA-Z0-9]*/projects/[a-zA-Z0-9-]*/regions/([a-zA-Z0-9-]*)")
+	switch {
+	case re.MatchString(selfLink):
+		if res := re.FindStringSubmatch(selfLink); len(res) == 2 && res[1] != "" {
+			return res[1]
+		}
+	}
+	return selfLink
 }

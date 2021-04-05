@@ -3,7 +3,7 @@ package google
 import (
 	"testing"
 
-	"github.com/hashicorp/terraform/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestSqlUserMigrateState(t *testing.T) {
@@ -73,7 +73,7 @@ func TestSqlUserMigrateState_empty(t *testing.T) {
 
 	// should handle non-nil but empty
 	is = &terraform.InstanceState{}
-	is, err = resourceSqlUserMigrateState(0, is, meta)
+	_, err = resourceSqlUserMigrateState(0, is, meta)
 
 	if err != nil {
 		t.Fatalf("err: %#v", err)

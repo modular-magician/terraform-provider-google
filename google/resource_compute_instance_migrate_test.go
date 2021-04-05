@@ -1,21 +1,24 @@
 package google
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"testing"
+	"time"
 
 	"google.golang.org/api/compute/v1"
 
-	"github.com/hashicorp/terraform/helper/acctest"
-	"github.com/hashicorp/terraform/helper/resource"
-	"github.com/hashicorp/terraform/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-func TestComputeInstanceMigrateState(t *testing.T) {
-	if os.Getenv(resource.TestEnvVar) == "" {
-		t.Skip(fmt.Sprintf("Network access not allowed; use %s=1 to enable", resource.TestEnvVar))
+func TestAccComputeInstanceMigrateState(t *testing.T) {
+	t.Parallel()
+
+	if os.Getenv(TestEnvVar) == "" {
+		t.Skip(fmt.Sprintf("Network access not allowed; use %s=1 to enable", TestEnvVar))
 	}
 	cases := map[string]struct {
 		StateVersion int
@@ -25,12 +28,14 @@ func TestComputeInstanceMigrateState(t *testing.T) {
 		"v0.4.2 and earlier": {
 			StateVersion: 0,
 			Attributes: map[string]string{
+				"disk.#":               "0",
 				"metadata.#":           "2",
 				"metadata.0.foo":       "bar",
 				"metadata.1.baz":       "qux",
 				"metadata.2.with.dots": "should.work",
 			},
 			Expected: map[string]string{
+				"create_timeout":     "4",
 				"metadata.foo":       "bar",
 				"metadata.baz":       "qux",
 				"metadata.with.dots": "should.work",
@@ -48,6 +53,7 @@ func TestComputeInstanceMigrateState(t *testing.T) {
 				"service_account.0.scopes.3": "https://www.googleapis.com/auth/logging.write",
 			},
 			Expected: map[string]string{
+				"create_timeout":                      "4",
 				"service_account.#":                   "1",
 				"service_account.0.email":             "xxxxxx-compute@developer.gserviceaccount.com",
 				"service_account.0.scopes.#":          "4",
@@ -77,14 +83,46 @@ func TestComputeInstanceMigrateState(t *testing.T) {
 	}
 
 	config := getInitializedConfig(t)
+
+	instanceName := fmt.Sprintf("instance-test-%s", randString(t, 10))
+	instance := &compute.Instance{
+		Name: instanceName,
+		Disks: []*compute.AttachedDisk{
+			{
+				Boot:       true,
+				AutoDelete: true,
+				InitializeParams: &compute.AttachedDiskInitializeParams{
+					SourceImage: "projects/debian-cloud/global/images/family/debian-9",
+				},
+			},
+		},
+		MachineType: "zones/" + config.Zone + "/machineTypes/e2-medium",
+		NetworkInterfaces: []*compute.NetworkInterface{
+			{
+				Network: "global/networks/default",
+			},
+		},
+	}
+	op, err := config.NewComputeClient(config.userAgent).Instances.Insert(config.Project, config.Zone, instance).Do()
+	if err != nil {
+		t.Fatalf("Error creating instance: %s", err)
+	}
+	waitErr := computeOperationWaitTime(config, op, config.Project, "instance to create", config.userAgent, 4*time.Minute)
+	if waitErr != nil {
+		t.Fatal(waitErr)
+	}
+	defer cleanUpInstance(config, instanceName, config.Zone)
+
 	for tn, tc := range cases {
-		runInstanceMigrateTest(t, "i-abc123", tn, tc.StateVersion, tc.Attributes, tc.Expected, config)
+		runInstanceMigrateTest(t, instanceName, tn, tc.StateVersion, tc.Attributes, tc.Expected, config)
 	}
 }
 
-func TestComputeInstanceMigrateState_empty(t *testing.T) {
-	if os.Getenv(resource.TestEnvVar) == "" {
-		t.Skip(fmt.Sprintf("Network access not allowed; use %s=1 to enable", resource.TestEnvVar))
+func TestAccComputeInstanceMigrateState_empty(t *testing.T) {
+	t.Parallel()
+
+	if os.Getenv(TestEnvVar) == "" {
+		t.Skip(fmt.Sprintf("Network access not allowed; use %s=1 to enable", TestEnvVar))
 	}
 	var is *terraform.InstanceState
 	var meta interface{}
@@ -101,7 +139,7 @@ func TestComputeInstanceMigrateState_empty(t *testing.T) {
 
 	// should handle non-nil but empty
 	is = &terraform.InstanceState{}
-	is, err = resourceComputeInstanceMigrateState(0, is, meta)
+	_, err = resourceComputeInstanceMigrateState(0, is, meta)
 
 	if err != nil {
 		t.Fatalf("err: %#v", err)
@@ -111,37 +149,38 @@ func TestComputeInstanceMigrateState_empty(t *testing.T) {
 func TestAccComputeInstanceMigrateState_bootDisk(t *testing.T) {
 	t.Parallel()
 
-	if os.Getenv(resource.TestEnvVar) == "" {
-		t.Skip(fmt.Sprintf("Network access not allowed; use %s=1 to enable", resource.TestEnvVar))
+	if os.Getenv(TestEnvVar) == "" {
+		t.Skip(fmt.Sprintf("Network access not allowed; use %s=1 to enable", TestEnvVar))
 	}
 	config := getInitializedConfig(t)
 	zone := "us-central1-f"
 
 	// Seed test data
-	instanceName := fmt.Sprintf("instance-test-%s", acctest.RandString(10))
+	instanceName := fmt.Sprintf("instance-test-%s", randString(t, 10))
 	instance := &compute.Instance{
 		Name: instanceName,
 		Disks: []*compute.AttachedDisk{
 			{
-				Boot: true,
+				Boot:       true,
+				AutoDelete: true,
 				InitializeParams: &compute.AttachedDiskInitializeParams{
-					SourceImage: "projects/debian-cloud/global/images/family/debian-8",
+					SourceImage: "projects/debian-cloud/global/images/family/debian-9",
 				},
 			},
 		},
-		MachineType: "zones/" + zone + "/machineTypes/n1-standard-1",
+		MachineType: "zones/" + zone + "/machineTypes/e2-medium",
 		NetworkInterfaces: []*compute.NetworkInterface{
 			{
 				Network: "global/networks/default",
 			},
 		},
 	}
-	op, err := config.clientCompute.Instances.Insert(config.Project, zone, instance).Do()
+	op, err := config.NewComputeClient(config.userAgent).Instances.Insert(config.Project, zone, instance).Do()
 
 	if err != nil {
 		t.Fatalf("Error creating instance: %s", err)
 	}
-	waitErr := computeSharedOperationWait(config.clientCompute, op, config.Project, "instance to create")
+	waitErr := computeOperationWaitTime(config, op, config.Project, "instance to create", config.userAgent, 4*time.Minute)
 	if waitErr != nil {
 		t.Fatal(waitErr)
 	}
@@ -151,16 +190,16 @@ func TestAccComputeInstanceMigrateState_bootDisk(t *testing.T) {
 		"disk.#":                            "1",
 		"disk.0.disk":                       "disk-1",
 		"disk.0.type":                       "pd-ssd",
-		"disk.0.auto_delete":                "false",
+		"disk.0.auto_delete":                "true",
 		"disk.0.size":                       "12",
 		"disk.0.device_name":                "persistent-disk-0",
 		"disk.0.disk_encryption_key_raw":    "encrypt-key",
 		"disk.0.disk_encryption_key_sha256": "encrypt-key-sha",
-		"zone": zone,
+		"zone":                              zone,
 	}
 	expected := map[string]string{
 		"boot_disk.#":                            "1",
-		"boot_disk.0.auto_delete":                "false",
+		"boot_disk.0.auto_delete":                "true",
 		"boot_disk.0.device_name":                "persistent-disk-0",
 		"boot_disk.0.disk_encryption_key_raw":    "encrypt-key",
 		"boot_disk.0.disk_encryption_key_sha256": "encrypt-key-sha",
@@ -178,37 +217,38 @@ func TestAccComputeInstanceMigrateState_bootDisk(t *testing.T) {
 func TestAccComputeInstanceMigrateState_v4FixBootDisk(t *testing.T) {
 	t.Parallel()
 
-	if os.Getenv(resource.TestEnvVar) == "" {
-		t.Skip(fmt.Sprintf("Network access not allowed; use %s=1 to enable", resource.TestEnvVar))
+	if os.Getenv(TestEnvVar) == "" {
+		t.Skip(fmt.Sprintf("Network access not allowed; use %s=1 to enable", TestEnvVar))
 	}
 	config := getInitializedConfig(t)
 	zone := "us-central1-f"
 
 	// Seed test data
-	instanceName := fmt.Sprintf("instance-test-%s", acctest.RandString(10))
+	instanceName := fmt.Sprintf("instance-test-%s", randString(t, 10))
 	instance := &compute.Instance{
 		Name: instanceName,
 		Disks: []*compute.AttachedDisk{
 			{
-				Boot: true,
+				Boot:       true,
+				AutoDelete: true,
 				InitializeParams: &compute.AttachedDiskInitializeParams{
-					SourceImage: "projects/debian-cloud/global/images/family/debian-8",
+					SourceImage: "projects/debian-cloud/global/images/family/debian-9",
 				},
 			},
 		},
-		MachineType: "zones/" + zone + "/machineTypes/n1-standard-1",
+		MachineType: "zones/" + zone + "/machineTypes/e2-medium",
 		NetworkInterfaces: []*compute.NetworkInterface{
 			{
 				Network: "global/networks/default",
 			},
 		},
 	}
-	op, err := config.clientCompute.Instances.Insert(config.Project, zone, instance).Do()
+	op, err := config.NewComputeClient(config.userAgent).Instances.Insert(config.Project, zone, instance).Do()
 
 	if err != nil {
 		t.Fatalf("Error creating instance: %s", err)
 	}
-	waitErr := computeSharedOperationWait(config.clientCompute, op, config.Project, "instance to create")
+	waitErr := computeOperationWaitTime(config, op, config.Project, "instance to create", config.userAgent, 4*time.Minute)
 	if waitErr != nil {
 		t.Fatal(waitErr)
 	}
@@ -218,16 +258,16 @@ func TestAccComputeInstanceMigrateState_v4FixBootDisk(t *testing.T) {
 		"disk.#":                            "1",
 		"disk.0.disk":                       "disk-1",
 		"disk.0.type":                       "pd-ssd",
-		"disk.0.auto_delete":                "false",
+		"disk.0.auto_delete":                "true",
 		"disk.0.size":                       "12",
 		"disk.0.device_name":                "persistent-disk-0",
 		"disk.0.disk_encryption_key_raw":    "encrypt-key",
 		"disk.0.disk_encryption_key_sha256": "encrypt-key-sha",
-		"zone": zone,
+		"zone":                              zone,
 	}
 	expected := map[string]string{
 		"boot_disk.#":                            "1",
-		"boot_disk.0.auto_delete":                "false",
+		"boot_disk.0.auto_delete":                "true",
 		"boot_disk.0.device_name":                "persistent-disk-0",
 		"boot_disk.0.disk_encryption_key_raw":    "encrypt-key",
 		"boot_disk.0.disk_encryption_key_sha256": "encrypt-key-sha",
@@ -244,55 +284,56 @@ func TestAccComputeInstanceMigrateState_v4FixBootDisk(t *testing.T) {
 func TestAccComputeInstanceMigrateState_attachedDiskFromSource(t *testing.T) {
 	t.Parallel()
 
-	if os.Getenv(resource.TestEnvVar) == "" {
-		t.Skip(fmt.Sprintf("Network access not allowed; use %s=1 to enable", resource.TestEnvVar))
+	if os.Getenv(TestEnvVar) == "" {
+		t.Skip(fmt.Sprintf("Network access not allowed; use %s=1 to enable", TestEnvVar))
 	}
 	config := getInitializedConfig(t)
 	zone := "us-central1-f"
 
 	// Seed test data
-	diskName := fmt.Sprintf("instance-test-%s", acctest.RandString(10))
+	diskName := fmt.Sprintf("instance-test-%s", randString(t, 10))
 	disk := &compute.Disk{
 		Name:        diskName,
-		SourceImage: "projects/debian-cloud/global/images/family/debian-8",
+		SourceImage: "projects/debian-cloud/global/images/family/debian-9",
 		Zone:        zone,
 	}
-	op, err := config.clientCompute.Disks.Insert(config.Project, zone, disk).Do()
+	op, err := config.NewComputeClient(config.userAgent).Disks.Insert(config.Project, zone, disk).Do()
 	if err != nil {
 		t.Fatalf("Error creating disk: %s", err)
 	}
-	waitErr := computeSharedOperationWait(config.clientCompute, op, config.Project, "disk to create")
+	waitErr := computeOperationWaitTime(config, op, config.Project, "disk to create", config.userAgent, 4*time.Minute)
 	if waitErr != nil {
 		t.Fatal(waitErr)
 	}
 	defer cleanUpDisk(config, diskName, zone)
 
-	instanceName := fmt.Sprintf("instance-test-%s", acctest.RandString(10))
+	instanceName := fmt.Sprintf("instance-test-%s", randString(t, 10))
 	instance := &compute.Instance{
 		Name: instanceName,
 		Disks: []*compute.AttachedDisk{
 			{
-				Boot: true,
+				Boot:       true,
+				AutoDelete: true,
 				InitializeParams: &compute.AttachedDiskInitializeParams{
-					SourceImage: "projects/debian-cloud/global/images/family/debian-8",
+					SourceImage: "projects/debian-cloud/global/images/family/debian-9",
 				},
 			},
 			{
 				Source: "projects/" + config.Project + "/zones/" + zone + "/disks/" + diskName,
 			},
 		},
-		MachineType: "zones/" + zone + "/machineTypes/n1-standard-1",
+		MachineType: "zones/" + zone + "/machineTypes/e2-medium",
 		NetworkInterfaces: []*compute.NetworkInterface{
 			{
 				Network: "global/networks/default",
 			},
 		},
 	}
-	op, err = config.clientCompute.Instances.Insert(config.Project, zone, instance).Do()
+	op, err = config.NewComputeClient(config.userAgent).Instances.Insert(config.Project, zone, instance).Do()
 	if err != nil {
 		t.Fatalf("Error creating instance: %s", err)
 	}
-	waitErr = computeSharedOperationWait(config.clientCompute, op, config.Project, "instance to create")
+	waitErr = computeOperationWaitTime(config, op, config.Project, "instance to create", config.userAgent, 4*time.Minute)
 	if waitErr != nil {
 		t.Fatal(waitErr)
 	}
@@ -305,7 +346,7 @@ func TestAccComputeInstanceMigrateState_attachedDiskFromSource(t *testing.T) {
 		"disk.0.device_name":                "persistent-disk-1",
 		"disk.0.disk_encryption_key_raw":    "encrypt-key",
 		"disk.0.disk_encryption_key_sha256": "encrypt-key-sha",
-		"zone": zone,
+		"zone":                              zone,
 	}
 	expected := map[string]string{
 		"boot_disk.#":                                "1",
@@ -324,55 +365,56 @@ func TestAccComputeInstanceMigrateState_attachedDiskFromSource(t *testing.T) {
 func TestAccComputeInstanceMigrateState_v4FixAttachedDiskFromSource(t *testing.T) {
 	t.Parallel()
 
-	if os.Getenv(resource.TestEnvVar) == "" {
-		t.Skip(fmt.Sprintf("Network access not allowed; use %s=1 to enable", resource.TestEnvVar))
+	if os.Getenv(TestEnvVar) == "" {
+		t.Skip(fmt.Sprintf("Network access not allowed; use %s=1 to enable", TestEnvVar))
 	}
 	config := getInitializedConfig(t)
 	zone := "us-central1-f"
 
 	// Seed test data
-	diskName := fmt.Sprintf("instance-test-%s", acctest.RandString(10))
+	diskName := fmt.Sprintf("instance-test-%s", randString(t, 10))
 	disk := &compute.Disk{
 		Name:        diskName,
-		SourceImage: "projects/debian-cloud/global/images/family/debian-8",
+		SourceImage: "projects/debian-cloud/global/images/family/debian-9",
 		Zone:        zone,
 	}
-	op, err := config.clientCompute.Disks.Insert(config.Project, zone, disk).Do()
+	op, err := config.NewComputeClient(config.userAgent).Disks.Insert(config.Project, zone, disk).Do()
 	if err != nil {
 		t.Fatalf("Error creating disk: %s", err)
 	}
-	waitErr := computeSharedOperationWait(config.clientCompute, op, config.Project, "disk to create")
+	waitErr := computeOperationWaitTime(config, op, config.Project, "disk to create", config.userAgent, 4*time.Minute)
 	if waitErr != nil {
 		t.Fatal(waitErr)
 	}
 	defer cleanUpDisk(config, diskName, zone)
 
-	instanceName := fmt.Sprintf("instance-test-%s", acctest.RandString(10))
+	instanceName := fmt.Sprintf("instance-test-%s", randString(t, 10))
 	instance := &compute.Instance{
 		Name: instanceName,
 		Disks: []*compute.AttachedDisk{
 			{
-				Boot: true,
+				Boot:       true,
+				AutoDelete: true,
 				InitializeParams: &compute.AttachedDiskInitializeParams{
-					SourceImage: "projects/debian-cloud/global/images/family/debian-8",
+					SourceImage: "projects/debian-cloud/global/images/family/debian-9",
 				},
 			},
 			{
 				Source: "projects/" + config.Project + "/zones/" + zone + "/disks/" + diskName,
 			},
 		},
-		MachineType: "zones/" + zone + "/machineTypes/n1-standard-1",
+		MachineType: "zones/" + zone + "/machineTypes/e2-medium",
 		NetworkInterfaces: []*compute.NetworkInterface{
 			{
 				Network: "global/networks/default",
 			},
 		},
 	}
-	op, err = config.clientCompute.Instances.Insert(config.Project, zone, instance).Do()
+	op, err = config.NewComputeClient(config.userAgent).Instances.Insert(config.Project, zone, instance).Do()
 	if err != nil {
 		t.Fatalf("Error creating instance: %s", err)
 	}
-	waitErr = computeSharedOperationWait(config.clientCompute, op, config.Project, "instance to create")
+	waitErr = computeOperationWaitTime(config, op, config.Project, "instance to create", config.userAgent, 4*time.Minute)
 	if waitErr != nil {
 		t.Fatal(waitErr)
 	}
@@ -385,7 +427,7 @@ func TestAccComputeInstanceMigrateState_v4FixAttachedDiskFromSource(t *testing.T
 		"disk.0.device_name":                "persistent-disk-1",
 		"disk.0.disk_encryption_key_raw":    "encrypt-key",
 		"disk.0.disk_encryption_key_sha256": "encrypt-key-sha",
-		"zone": zone,
+		"zone":                              zone,
 	}
 	expected := map[string]string{
 		"boot_disk.#":                                "1",
@@ -403,44 +445,45 @@ func TestAccComputeInstanceMigrateState_v4FixAttachedDiskFromSource(t *testing.T
 func TestAccComputeInstanceMigrateState_attachedDiskFromEncryptionKey(t *testing.T) {
 	t.Parallel()
 
-	if os.Getenv(resource.TestEnvVar) == "" {
-		t.Skip(fmt.Sprintf("Network access not allowed; use %s=1 to enable", resource.TestEnvVar))
+	if os.Getenv(TestEnvVar) == "" {
+		t.Skip(fmt.Sprintf("Network access not allowed; use %s=1 to enable", TestEnvVar))
 	}
 	config := getInitializedConfig(t)
 	zone := "us-central1-f"
 
-	instanceName := fmt.Sprintf("instance-test-%s", acctest.RandString(10))
+	instanceName := fmt.Sprintf("instance-test-%s", randString(t, 10))
 	instance := &compute.Instance{
 		Name: instanceName,
 		Disks: []*compute.AttachedDisk{
 			{
-				Boot: true,
+				Boot:       true,
+				AutoDelete: true,
 				InitializeParams: &compute.AttachedDiskInitializeParams{
-					SourceImage: "projects/debian-cloud/global/images/family/debian-8",
+					SourceImage: "projects/debian-cloud/global/images/family/debian-9",
 				},
 			},
 			{
 				AutoDelete: true,
 				InitializeParams: &compute.AttachedDiskInitializeParams{
-					SourceImage: "projects/debian-cloud/global/images/family/debian-8",
+					SourceImage: "projects/debian-cloud/global/images/family/debian-9",
 				},
 				DiskEncryptionKey: &compute.CustomerEncryptionKey{
 					RawKey: "SGVsbG8gZnJvbSBHb29nbGUgQ2xvdWQgUGxhdGZvcm0=",
 				},
 			},
 		},
-		MachineType: "zones/" + zone + "/machineTypes/n1-standard-1",
+		MachineType: "zones/" + zone + "/machineTypes/e2-medium",
 		NetworkInterfaces: []*compute.NetworkInterface{
 			{
 				Network: "global/networks/default",
 			},
 		},
 	}
-	op, err := config.clientCompute.Instances.Insert(config.Project, zone, instance).Do()
+	op, err := config.NewComputeClient(config.userAgent).Instances.Insert(config.Project, zone, instance).Do()
 	if err != nil {
 		t.Fatalf("Error creating instance: %s", err)
 	}
-	waitErr := computeSharedOperationWait(config.clientCompute, op, config.Project, "instance to create")
+	waitErr := computeOperationWaitTime(config, op, config.Project, "instance to create", config.userAgent, 4*time.Minute)
 	if waitErr != nil {
 		t.Fatal(waitErr)
 	}
@@ -449,10 +492,10 @@ func TestAccComputeInstanceMigrateState_attachedDiskFromEncryptionKey(t *testing
 	attributes := map[string]string{
 		"boot_disk.#":                       "1",
 		"disk.#":                            "1",
-		"disk.0.image":                      "projects/debian-cloud/global/images/family/debian-8",
+		"disk.0.image":                      "projects/debian-cloud/global/images/family/debian-9",
 		"disk.0.disk_encryption_key_raw":    "SGVsbG8gZnJvbSBHb29nbGUgQ2xvdWQgUGxhdGZvcm0=",
 		"disk.0.disk_encryption_key_sha256": "esTuF7d4eatX4cnc4JsiEiaI+Rff78JgPhA/v1zxX9E=",
-		"zone": zone,
+		"zone":                              zone,
 	}
 	expected := map[string]string{
 		"boot_disk.#":                                "1",
@@ -471,44 +514,45 @@ func TestAccComputeInstanceMigrateState_attachedDiskFromEncryptionKey(t *testing
 func TestAccComputeInstanceMigrateState_v4FixAttachedDiskFromEncryptionKey(t *testing.T) {
 	t.Parallel()
 
-	if os.Getenv(resource.TestEnvVar) == "" {
-		t.Skip(fmt.Sprintf("Network access not allowed; use %s=1 to enable", resource.TestEnvVar))
+	if os.Getenv(TestEnvVar) == "" {
+		t.Skip(fmt.Sprintf("Network access not allowed; use %s=1 to enable", TestEnvVar))
 	}
 	config := getInitializedConfig(t)
 	zone := "us-central1-f"
 
-	instanceName := fmt.Sprintf("instance-test-%s", acctest.RandString(10))
+	instanceName := fmt.Sprintf("instance-test-%s", randString(t, 10))
 	instance := &compute.Instance{
 		Name: instanceName,
 		Disks: []*compute.AttachedDisk{
 			{
-				Boot: true,
+				Boot:       true,
+				AutoDelete: true,
 				InitializeParams: &compute.AttachedDiskInitializeParams{
-					SourceImage: "projects/debian-cloud/global/images/family/debian-8",
+					SourceImage: "projects/debian-cloud/global/images/family/debian-9",
 				},
 			},
 			{
 				AutoDelete: true,
 				InitializeParams: &compute.AttachedDiskInitializeParams{
-					SourceImage: "projects/debian-cloud/global/images/family/debian-8",
+					SourceImage: "projects/debian-cloud/global/images/family/debian-9",
 				},
 				DiskEncryptionKey: &compute.CustomerEncryptionKey{
 					RawKey: "SGVsbG8gZnJvbSBHb29nbGUgQ2xvdWQgUGxhdGZvcm0=",
 				},
 			},
 		},
-		MachineType: "zones/" + zone + "/machineTypes/n1-standard-1",
+		MachineType: "zones/" + zone + "/machineTypes/e2-medium",
 		NetworkInterfaces: []*compute.NetworkInterface{
 			{
 				Network: "global/networks/default",
 			},
 		},
 	}
-	op, err := config.clientCompute.Instances.Insert(config.Project, zone, instance).Do()
+	op, err := config.NewComputeClient(config.userAgent).Instances.Insert(config.Project, zone, instance).Do()
 	if err != nil {
 		t.Fatalf("Error creating instance: %s", err)
 	}
-	waitErr := computeSharedOperationWait(config.clientCompute, op, config.Project, "instance to create")
+	waitErr := computeOperationWaitTime(config, op, config.Project, "instance to create", config.userAgent, 4*time.Minute)
 	if waitErr != nil {
 		t.Fatal(waitErr)
 	}
@@ -517,10 +561,10 @@ func TestAccComputeInstanceMigrateState_v4FixAttachedDiskFromEncryptionKey(t *te
 	attributes := map[string]string{
 		"boot_disk.#":                       "1",
 		"disk.#":                            "1",
-		"disk.0.image":                      "projects/debian-cloud/global/images/family/debian-8",
+		"disk.0.image":                      "projects/debian-cloud/global/images/family/debian-9",
 		"disk.0.disk_encryption_key_raw":    "SGVsbG8gZnJvbSBHb29nbGUgQ2xvdWQgUGxhdGZvcm0=",
 		"disk.0.disk_encryption_key_sha256": "esTuF7d4eatX4cnc4JsiEiaI+Rff78JgPhA/v1zxX9E=",
-		"zone": zone,
+		"zone":                              zone,
 	}
 	expected := map[string]string{
 		"boot_disk.#":                                "1",
@@ -538,47 +582,48 @@ func TestAccComputeInstanceMigrateState_v4FixAttachedDiskFromEncryptionKey(t *te
 func TestAccComputeInstanceMigrateState_attachedDiskFromAutoDeleteAndImage(t *testing.T) {
 	t.Parallel()
 
-	if os.Getenv(resource.TestEnvVar) == "" {
-		t.Skip(fmt.Sprintf("Network access not allowed; use %s=1 to enable", resource.TestEnvVar))
+	if os.Getenv(TestEnvVar) == "" {
+		t.Skip(fmt.Sprintf("Network access not allowed; use %s=1 to enable", TestEnvVar))
 	}
 	config := getInitializedConfig(t)
 	zone := "us-central1-f"
 
-	instanceName := fmt.Sprintf("instance-test-%s", acctest.RandString(10))
+	instanceName := fmt.Sprintf("instance-test-%s", randString(t, 10))
 	instance := &compute.Instance{
 		Name: instanceName,
 		Disks: []*compute.AttachedDisk{
 			{
-				Boot: true,
+				Boot:       true,
+				AutoDelete: true,
 				InitializeParams: &compute.AttachedDiskInitializeParams{
-					SourceImage: "projects/debian-cloud/global/images/family/debian-8",
+					SourceImage: "projects/debian-cloud/global/images/family/debian-9",
 				},
 			},
 			{
 				AutoDelete: true,
 				InitializeParams: &compute.AttachedDiskInitializeParams{
-					SourceImage: "projects/debian-cloud/global/images/family/debian-8",
+					SourceImage: "projects/debian-cloud/global/images/family/debian-9",
 				},
 			},
 			{
 				AutoDelete: true,
 				InitializeParams: &compute.AttachedDiskInitializeParams{
-					SourceImage: "projects/debian-cloud/global/images/debian-8-jessie-v20170110",
+					SourceImage: "projects/debian-cloud/global/images/debian-9-stretch-v20180814",
 				},
 			},
 		},
-		MachineType: "zones/" + zone + "/machineTypes/n1-standard-1",
+		MachineType: "zones/" + zone + "/machineTypes/e2-medium",
 		NetworkInterfaces: []*compute.NetworkInterface{
 			{
 				Network: "global/networks/default",
 			},
 		},
 	}
-	op, err := config.clientCompute.Instances.Insert(config.Project, zone, instance).Do()
+	op, err := config.NewComputeClient(config.userAgent).Instances.Insert(config.Project, zone, instance).Do()
 	if err != nil {
 		t.Fatalf("Error creating instance: %s", err)
 	}
-	waitErr := computeSharedOperationWait(config.clientCompute, op, config.Project, "instance to create")
+	waitErr := computeOperationWaitTime(config, op, config.Project, "instance to create", config.userAgent, 4*time.Minute)
 	if waitErr != nil {
 		t.Fatal(waitErr)
 	}
@@ -587,9 +632,9 @@ func TestAccComputeInstanceMigrateState_attachedDiskFromAutoDeleteAndImage(t *te
 	attributes := map[string]string{
 		"boot_disk.#":        "1",
 		"disk.#":             "2",
-		"disk.0.image":       "projects/debian-cloud/global/images/debian-8-jessie-v20170110",
+		"disk.0.image":       "projects/debian-cloud/global/images/debian-9-stretch-v20180814",
 		"disk.0.auto_delete": "true",
-		"disk.1.image":       "global/images/family/debian-8",
+		"disk.1.image":       "global/images/family/debian-9",
 		"disk.1.auto_delete": "true",
 		"zone":               zone,
 	}
@@ -600,8 +645,8 @@ func TestAccComputeInstanceMigrateState_attachedDiskFromAutoDeleteAndImage(t *te
 		"attached_disk.0.device_name": "persistent-disk-2",
 		"attached_disk.1.source":      "https://www.googleapis.com/compute/v1/projects/" + config.Project + "/zones/" + zone + "/disks/" + instanceName + "-1",
 		"attached_disk.1.device_name": "persistent-disk-1",
-		"zone":           zone,
-		"create_timeout": "4",
+		"zone":                        zone,
+		"create_timeout":              "4",
 	}
 
 	runInstanceMigrateTest(t, instanceName, "migrate disk to attached disk", 2 /* state version */, attributes, expected, config)
@@ -610,47 +655,48 @@ func TestAccComputeInstanceMigrateState_attachedDiskFromAutoDeleteAndImage(t *te
 func TestAccComputeInstanceMigrateState_v4FixAttachedDiskFromAutoDeleteAndImage(t *testing.T) {
 	t.Parallel()
 
-	if os.Getenv(resource.TestEnvVar) == "" {
-		t.Skip(fmt.Sprintf("Network access not allowed; use %s=1 to enable", resource.TestEnvVar))
+	if os.Getenv(TestEnvVar) == "" {
+		t.Skip(fmt.Sprintf("Network access not allowed; use %s=1 to enable", TestEnvVar))
 	}
 	config := getInitializedConfig(t)
 	zone := "us-central1-f"
 
-	instanceName := fmt.Sprintf("instance-test-%s", acctest.RandString(10))
+	instanceName := fmt.Sprintf("instance-test-%s", randString(t, 10))
 	instance := &compute.Instance{
 		Name: instanceName,
 		Disks: []*compute.AttachedDisk{
 			{
-				Boot: true,
+				Boot:       true,
+				AutoDelete: true,
 				InitializeParams: &compute.AttachedDiskInitializeParams{
-					SourceImage: "projects/debian-cloud/global/images/family/debian-8",
+					SourceImage: "projects/debian-cloud/global/images/family/debian-9",
 				},
 			},
 			{
 				AutoDelete: true,
 				InitializeParams: &compute.AttachedDiskInitializeParams{
-					SourceImage: "projects/debian-cloud/global/images/family/debian-8",
+					SourceImage: "projects/debian-cloud/global/images/family/debian-9",
 				},
 			},
 			{
 				AutoDelete: true,
 				InitializeParams: &compute.AttachedDiskInitializeParams{
-					SourceImage: "projects/debian-cloud/global/images/debian-8-jessie-v20170110",
+					SourceImage: "projects/debian-cloud/global/images/debian-9-stretch-v20180814",
 				},
 			},
 		},
-		MachineType: "zones/" + zone + "/machineTypes/n1-standard-1",
+		MachineType: "zones/" + zone + "/machineTypes/e2-medium",
 		NetworkInterfaces: []*compute.NetworkInterface{
 			{
 				Network: "global/networks/default",
 			},
 		},
 	}
-	op, err := config.clientCompute.Instances.Insert(config.Project, zone, instance).Do()
+	op, err := config.NewComputeClient(config.userAgent).Instances.Insert(config.Project, zone, instance).Do()
 	if err != nil {
 		t.Fatalf("Error creating instance: %s", err)
 	}
-	waitErr := computeSharedOperationWait(config.clientCompute, op, config.Project, "instance to create")
+	waitErr := computeOperationWaitTime(config, op, config.Project, "instance to create", config.userAgent, 4*time.Minute)
 	if waitErr != nil {
 		t.Fatal(waitErr)
 	}
@@ -659,9 +705,9 @@ func TestAccComputeInstanceMigrateState_v4FixAttachedDiskFromAutoDeleteAndImage(
 	attributes := map[string]string{
 		"boot_disk.#":        "1",
 		"disk.#":             "2",
-		"disk.0.image":       "projects/debian-cloud/global/images/debian-8-jessie-v20170110",
+		"disk.0.image":       "projects/debian-cloud/global/images/debian-9-stretch-v20180814",
 		"disk.0.auto_delete": "true",
-		"disk.1.image":       "global/images/family/debian-8",
+		"disk.1.image":       "global/images/family/debian-9",
 		"disk.1.auto_delete": "true",
 		"zone":               zone,
 	}
@@ -672,7 +718,7 @@ func TestAccComputeInstanceMigrateState_v4FixAttachedDiskFromAutoDeleteAndImage(
 		"attached_disk.0.device_name": "persistent-disk-2",
 		"attached_disk.1.source":      "https://www.googleapis.com/compute/v1/projects/" + config.Project + "/zones/" + zone + "/disks/" + instanceName + "-1",
 		"attached_disk.1.device_name": "persistent-disk-1",
-		"zone": zone,
+		"zone":                        zone,
 	}
 
 	runInstanceMigrateTest(t, instanceName, "migrate disk to attached disk", 4 /* state version */, attributes, expected, config)
@@ -681,21 +727,22 @@ func TestAccComputeInstanceMigrateState_v4FixAttachedDiskFromAutoDeleteAndImage(
 func TestAccComputeInstanceMigrateState_scratchDisk(t *testing.T) {
 	t.Parallel()
 
-	if os.Getenv(resource.TestEnvVar) == "" {
-		t.Skip(fmt.Sprintf("Network access not allowed; use %s=1 to enable", resource.TestEnvVar))
+	if os.Getenv(TestEnvVar) == "" {
+		t.Skip(fmt.Sprintf("Network access not allowed; use %s=1 to enable", TestEnvVar))
 	}
 	config := getInitializedConfig(t)
 	zone := "us-central1-f"
 
 	// Seed test data
-	instanceName := fmt.Sprintf("instance-test-%s", acctest.RandString(10))
+	instanceName := fmt.Sprintf("instance-test-%s", randString(t, 10))
 	instance := &compute.Instance{
 		Name: instanceName,
 		Disks: []*compute.AttachedDisk{
 			{
-				Boot: true,
+				Boot:       true,
+				AutoDelete: true,
 				InitializeParams: &compute.AttachedDiskInitializeParams{
-					SourceImage: "projects/debian-cloud/global/images/family/debian-8",
+					SourceImage: "projects/debian-cloud/global/images/family/debian-9",
 				},
 			},
 			{
@@ -706,6 +753,7 @@ func TestAccComputeInstanceMigrateState_scratchDisk(t *testing.T) {
 				},
 			},
 		},
+		// can't be e2 because of local-ssd
 		MachineType: "zones/" + zone + "/machineTypes/n1-standard-1",
 		NetworkInterfaces: []*compute.NetworkInterface{
 			{
@@ -713,11 +761,11 @@ func TestAccComputeInstanceMigrateState_scratchDisk(t *testing.T) {
 			},
 		},
 	}
-	op, err := config.clientCompute.Instances.Insert(config.Project, zone, instance).Do()
+	op, err := config.NewComputeClient(config.userAgent).Instances.Insert(config.Project, zone, instance).Do()
 	if err != nil {
 		t.Fatalf("Error creating instance: %s", err)
 	}
-	waitErr := computeSharedOperationWait(config.clientCompute, op, config.Project, "instance to create")
+	waitErr := computeOperationWaitTime(config, op, config.Project, "instance to create", config.userAgent, 4*time.Minute)
 	if waitErr != nil {
 		t.Fatal(waitErr)
 	}
@@ -735,8 +783,8 @@ func TestAccComputeInstanceMigrateState_scratchDisk(t *testing.T) {
 		"boot_disk.#":              "1",
 		"scratch_disk.#":           "1",
 		"scratch_disk.0.interface": "SCSI",
-		"zone":           zone,
-		"create_timeout": "4",
+		"zone":                     zone,
+		"create_timeout":           "4",
 	}
 
 	runInstanceMigrateTest(t, instanceName, "migrate disk to scratch disk", 2 /* state version */, attributes, expected, config)
@@ -745,21 +793,22 @@ func TestAccComputeInstanceMigrateState_scratchDisk(t *testing.T) {
 func TestAccComputeInstanceMigrateState_v4FixScratchDisk(t *testing.T) {
 	t.Parallel()
 
-	if os.Getenv(resource.TestEnvVar) == "" {
-		t.Skip(fmt.Sprintf("Network access not allowed; use %s=1 to enable", resource.TestEnvVar))
+	if os.Getenv(TestEnvVar) == "" {
+		t.Skip(fmt.Sprintf("Network access not allowed; use %s=1 to enable", TestEnvVar))
 	}
 	config := getInitializedConfig(t)
 	zone := "us-central1-f"
 
 	// Seed test data
-	instanceName := fmt.Sprintf("instance-test-%s", acctest.RandString(10))
+	instanceName := fmt.Sprintf("instance-test-%s", randString(t, 10))
 	instance := &compute.Instance{
 		Name: instanceName,
 		Disks: []*compute.AttachedDisk{
 			{
-				Boot: true,
+				Boot:       true,
+				AutoDelete: true,
 				InitializeParams: &compute.AttachedDiskInitializeParams{
-					SourceImage: "projects/debian-cloud/global/images/family/debian-8",
+					SourceImage: "projects/debian-cloud/global/images/family/debian-9",
 				},
 			},
 			{
@@ -770,18 +819,18 @@ func TestAccComputeInstanceMigrateState_v4FixScratchDisk(t *testing.T) {
 				},
 			},
 		},
-		MachineType: "zones/" + zone + "/machineTypes/n1-standard-1",
+		MachineType: "zones/" + zone + "/machineTypes/n1-standard-1", // can't be e2 because of local-ssd
 		NetworkInterfaces: []*compute.NetworkInterface{
 			{
 				Network: "global/networks/default",
 			},
 		},
 	}
-	op, err := config.clientCompute.Instances.Insert(config.Project, zone, instance).Do()
+	op, err := config.NewComputeClient(config.userAgent).Instances.Insert(config.Project, zone, instance).Do()
 	if err != nil {
 		t.Fatalf("Error creating instance: %s", err)
 	}
-	waitErr := computeSharedOperationWait(config.clientCompute, op, config.Project, "instance to create")
+	waitErr := computeOperationWaitTime(config, op, config.Project, "instance to create", config.userAgent, 4*time.Minute)
 	if waitErr != nil {
 		t.Fatal(waitErr)
 	}
@@ -799,7 +848,7 @@ func TestAccComputeInstanceMigrateState_v4FixScratchDisk(t *testing.T) {
 		"boot_disk.#":              "1",
 		"scratch_disk.#":           "1",
 		"scratch_disk.0.interface": "SCSI",
-		"zone": zone,
+		"zone":                     zone,
 	}
 
 	runInstanceMigrateTest(t, instanceName, "migrate disk to scratch disk", 4 /* state version */, attributes, expected, config)
@@ -810,57 +859,79 @@ func runInstanceMigrateTest(t *testing.T, id, testName string, version int, attr
 		ID:         id,
 		Attributes: attributes,
 	}
-	is, err := resourceComputeInstanceMigrateState(version, is, meta)
+	_, err := resourceComputeInstanceMigrateState(version, is, meta)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	for k, v := range expected {
-		if attributes[k] != v {
-			t.Fatalf(
-				"bad: %s\n\n expected: %#v -> %#v\n got: %#v -> %#v\n in: %#v",
-				testName, k, expected[k], k, attributes[k], attributes)
+		// source is the only self link, so compare by relpaths if source is being
+		// compared
+		if strings.HasSuffix(k, "source") {
+			if !compareSelfLinkOrResourceName("", attributes[k], v, nil) && attributes[k] != v {
+				t.Fatalf(
+					"bad uri: %s\n\n expected: %#v -> %#v\n got: %#v -> %#v\n in: %#v",
+					testName, k, expected[k], k, attributes[k], attributes)
+			}
+		} else {
+			if attributes[k] != v {
+				t.Fatalf(
+					"bad: %s\n\n expected: %#v -> %#v\n got: %#v -> %#v\n in: %#v",
+					testName, k, expected[k], k, attributes[k], attributes)
+			}
 		}
 	}
 
 	for k, v := range attributes {
-		if expected[k] != v {
-			t.Fatalf(
-				"bad: %s\n\n expected: %#v -> %#v\n got: %#v -> %#v\n in: %#v",
-				testName, k, expected[k], k, attributes[k], attributes)
+		// source is the only self link, so compare by relpaths if source is being
+		// compared
+		if strings.HasSuffix(k, "source") {
+			if !compareSelfLinkOrResourceName("", expected[k], v, nil) && expected[k] != v {
+				t.Fatalf(
+					"bad: %s\n\n expected: %#v -> %#v\n got: %#v -> %#v\n in: %#v",
+					testName, k, expected[k], k, attributes[k], expected)
+			}
+		} else {
+			if expected[k] != v {
+				t.Fatalf(
+					"bad: %s\n\n expected: %#v -> %#v\n got: %#v -> %#v\n in: %#v",
+					testName, k, expected[k], k, attributes[k], expected)
+			}
 		}
 	}
 }
 
 func cleanUpInstance(config *Config, instanceName, zone string) {
-	op, err := config.clientCompute.Instances.Delete(config.Project, zone, instanceName).Do()
+	op, err := config.NewComputeClient(config.userAgent).Instances.Delete(config.Project, zone, instanceName).Do()
 	if err != nil {
 		log.Printf("[WARNING] Error deleting instance %q, dangling resources may exist: %s", instanceName, err)
 		return
 	}
 
 	// Wait for the operation to complete
-	opErr := computeOperationWait(config.clientCompute, op, config.Project, "instance to delete")
+	opErr := computeOperationWaitTime(config, op, config.Project, "instance to delete", config.userAgent, 4*time.Minute)
 	if opErr != nil {
 		log.Printf("[WARNING] Error deleting instance %q, dangling resources may exist: %s", instanceName, opErr)
 	}
 }
 
 func cleanUpDisk(config *Config, diskName, zone string) {
-	op, err := config.clientCompute.Disks.Delete(config.Project, zone, diskName).Do()
+	op, err := config.NewComputeClient(config.userAgent).Disks.Delete(config.Project, zone, diskName).Do()
 	if err != nil {
 		log.Printf("[WARNING] Error deleting disk %q, dangling resources may exist: %s", diskName, err)
 		return
 	}
 
 	// Wait for the operation to complete
-	opErr := computeOperationWait(config.clientCompute, op, config.Project, "disk to delete")
+	opErr := computeOperationWaitTime(config, op, config.Project, "disk to delete", config.userAgent, 4*time.Minute)
 	if opErr != nil {
 		log.Printf("[WARNING] Error deleting disk %q, dangling resources may exist: %s", diskName, opErr)
 	}
 }
 
 func getInitializedConfig(t *testing.T) *Config {
+	// Migrate tests are non standard and handle the config directly
+	skipIfVcr(t)
 	// Check that all required environment variables are set
 	testAccPreCheck(t)
 
@@ -868,8 +939,12 @@ func getInitializedConfig(t *testing.T) *Config {
 		Project:     getTestProjectFromEnv(),
 		Credentials: getTestCredsFromEnv(),
 		Region:      getTestRegionFromEnv(),
+		Zone:        getTestZoneFromEnv(),
 	}
-	err := config.loadAndValidate()
+
+	ConfigureBasePaths(config)
+
+	err := config.LoadAndValidate(context.Background())
 	if err != nil {
 		t.Fatal(err)
 	}

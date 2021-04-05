@@ -3,12 +3,13 @@ package google
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"google.golang.org/api/compute/v1"
 
 	"log"
 
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"google.golang.org/api/googleapi"
 )
 
@@ -21,23 +22,35 @@ func resourceComputeSharedVpcServiceProject() *schema.Resource {
 			State: schema.ImportStatePassthrough,
 		},
 
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(4 * time.Minute),
+			Delete: schema.DefaultTimeout(4 * time.Minute),
+		},
+
 		Schema: map[string]*schema.Schema{
-			"host_project": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+			"host_project": {
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: `The ID of a host project to associate.`,
 			},
-			"service_project": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+			"service_project": {
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: `The ID of the project that will serve as a Shared VPC service project.`,
 			},
 		},
+		UseJSONNumber: true,
 	}
 }
 
 func resourceComputeSharedVpcServiceProjectCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
+	userAgent, err := generateUserAgentString(d, config.userAgent)
+	if err != nil {
+		return err
+	}
 
 	hostProject := d.Get("host_project").(string)
 	serviceProject := d.Get("service_project").(string)
@@ -48,11 +61,12 @@ func resourceComputeSharedVpcServiceProjectCreate(d *schema.ResourceData, meta i
 			Type: "PROJECT",
 		},
 	}
-	op, err := config.clientCompute.Projects.EnableXpnResource(hostProject, req).Do()
+	op, err := config.NewComputeClient(userAgent).Projects.EnableXpnResource(hostProject, req).Do()
 	if err != nil {
 		return err
 	}
-	if err = computeOperationWait(config.clientCompute, op, hostProject, "Enabling Shared VPC Resource"); err != nil {
+	err = computeOperationWaitTime(config, op, hostProject, "Enabling Shared VPC Resource", userAgent, d.Timeout(schema.TimeoutCreate))
+	if err != nil {
 		return err
 	}
 
@@ -63,6 +77,10 @@ func resourceComputeSharedVpcServiceProjectCreate(d *schema.ResourceData, meta i
 
 func resourceComputeSharedVpcServiceProjectRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
+	userAgent, err := generateUserAgentString(d, config.userAgent)
+	if err != nil {
+		return err
+	}
 
 	split := strings.Split(d.Id(), "/")
 	if len(split) != 2 {
@@ -71,7 +89,7 @@ func resourceComputeSharedVpcServiceProjectRead(d *schema.ResourceData, meta int
 	hostProject := split[0]
 	serviceProject := split[1]
 
-	associatedHostProject, err := config.clientCompute.Projects.GetXpnHost(serviceProject).Do()
+	associatedHostProject, err := config.NewComputeClient(userAgent).Projects.GetXpnHost(serviceProject).Do()
 	if err != nil {
 		log.Printf("[WARN] Removing shared VPC service. The service project is not associated with any host")
 
@@ -85,8 +103,12 @@ func resourceComputeSharedVpcServiceProjectRead(d *schema.ResourceData, meta int
 		return nil
 	}
 
-	d.Set("host_project", hostProject)
-	d.Set("service_project", serviceProject)
+	if err := d.Set("host_project", hostProject); err != nil {
+		return fmt.Errorf("Error setting host_project: %s", err)
+	}
+	if err := d.Set("service_project", serviceProject); err != nil {
+		return fmt.Errorf("Error setting service_project: %s", err)
+	}
 
 	return nil
 }
@@ -96,7 +118,7 @@ func resourceComputeSharedVpcServiceProjectDelete(d *schema.ResourceData, meta i
 	hostProject := d.Get("host_project").(string)
 	serviceProject := d.Get("service_project").(string)
 
-	if err := disableXpnResource(config, hostProject, serviceProject); err != nil {
+	if err := disableXpnResource(d, config, hostProject, serviceProject); err != nil {
 		// Don't fail if the service project is already disabled.
 		if !isDisabledXpnResourceError(err) {
 			return fmt.Errorf("Error disabling Shared VPC Resource %q: %s", serviceProject, err)
@@ -106,18 +128,24 @@ func resourceComputeSharedVpcServiceProjectDelete(d *schema.ResourceData, meta i
 	return nil
 }
 
-func disableXpnResource(config *Config, hostProject, project string) error {
+func disableXpnResource(d *schema.ResourceData, config *Config, hostProject, project string) error {
+	userAgent, err := generateUserAgentString(d, config.userAgent)
+	if err != nil {
+		return err
+	}
+
 	req := &compute.ProjectsDisableXpnResourceRequest{
 		XpnResource: &compute.XpnResourceId{
 			Id:   project,
 			Type: "PROJECT",
 		},
 	}
-	op, err := config.clientCompute.Projects.DisableXpnResource(hostProject, req).Do()
+	op, err := config.NewComputeClient(userAgent).Projects.DisableXpnResource(hostProject, req).Do()
 	if err != nil {
 		return err
 	}
-	if err = computeOperationWait(config.clientCompute, op, hostProject, "Disabling Shared VPC Resource"); err != nil {
+	err = computeOperationWaitTime(config, op, hostProject, "Disabling Shared VPC Resource", userAgent, d.Timeout(schema.TimeoutDelete))
+	if err != nil {
 		return err
 	}
 	return nil

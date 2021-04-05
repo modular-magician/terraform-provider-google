@@ -1,4 +1,5 @@
 ---
+subcategory: "Runtime Configurator"
 layout: "google"
 page_title: "Google: google_runtimeconfig_variable"
 sidebar_current: "docs-google-runtimeconfig-variable"
@@ -19,14 +20,14 @@ Example creating a RuntimeConfig variable.
 
 ```hcl
 resource "google_runtimeconfig_config" "my-runtime-config" {
- 	name = "my-service-runtime-config"
- 	description = "Runtime configuration values for my service"
+  name        = "my-service-runtime-config"
+  description = "Runtime configuration values for my service"
 }
 
 resource "google_runtimeconfig_variable" "environment" {
-	parent = "${google_runtimeconfig_config.my-runtime-config.name}"
-	name = "prod-variables/hostname"
-	text = "example.com"
+  parent = google_runtimeconfig_config.my-runtime-config.name
+  name   = "prod-variables/hostname"
+  text   = "example.com"
 }
 ```
 
@@ -37,14 +38,14 @@ Example of using the `value` argument.
 
 ```hcl
 resource "google_runtimeconfig_config" "my-runtime-config" {
- 	name = "my-service-runtime-config"
- 	description = "Runtime configuration values for my service"
+  name        = "my-service-runtime-config"
+  description = "Runtime configuration values for my service"
 }
 
 resource "google_runtimeconfig_variable" "my-secret" {
-	parent = "${google_runtimeconfig_config.my-runtime-config.name}"
-	name = "secret"
-	value = "${base64encode(file("my-encrypted-secret.dat"))}"
+  parent = google_runtimeconfig_config.my-runtime-config.name
+  name   = "secret"
+  value  = base64encode(file("my-encrypted-secret.dat"))
 }
 ```
 
@@ -73,6 +74,20 @@ is specified, it must be base64 encoded and less than 4096 bytes in length.
 In addition to the arguments listed above, the following computed attributes are
 exported:
 
+* `id` - an identifier for the resource with format `projects/{{project}}/configs/{{config}}/variables/{{name}}`
+
 * `update_time` - (Computed) The timestamp in RFC3339 UTC "Zulu" format,
 accurate to nanoseconds, representing when the variable was last updated.
 Example: "2016-10-09T12:33:37.578138407Z".
+
+## Import
+
+Runtime Config Variables can be imported using the `name` or full variable name, e.g.
+
+```
+$ terraform import google_runtimeconfig_variable.myvariable myconfig/myvariable
+```
+```
+$ terraform import google_runtimeconfig_variable.myvariable projects/my-gcp-project/configs/myconfig/variables/myvariable
+```
+When importing using only the name, the provider project must be set.

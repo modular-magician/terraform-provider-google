@@ -11,9 +11,8 @@ import (
 	"net/url"
 
 	"github.com/hashicorp/go-cleanhttp"
-	"github.com/hashicorp/terraform/helper/acctest"
-	"github.com/hashicorp/terraform/helper/resource"
-	"github.com/hashicorp/terraform/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"golang.org/x/oauth2/google"
 )
 
@@ -28,7 +27,8 @@ const fakeCredentials = `{
   "token_uri": "https://accounts.google.com/o/oauth2/token",
   "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
   "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/user%40gcp-project.iam.gserviceaccount.com"
-}`
+}
+`
 
 // The following values are derived from the output of the `gsutil signurl` command.
 // i.e.
@@ -102,14 +102,14 @@ func TestUrlData_SignedUrl(t *testing.T) {
 func TestAccStorageSignedUrl_basic(t *testing.T) {
 	t.Parallel()
 
-	resource.Test(t, resource.TestCase{
+	vcrTest(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testGoogleSignedUrlConfig,
 				Check: resource.ComposeTestCheckFunc(
-					testAccSignedUrlExists("data.google_storage_object_signed_url.blerg"),
+					testAccSignedUrlExists(t, "data.google_storage_object_signed_url.blerg"),
 				),
 			},
 		},
@@ -117,20 +117,22 @@ func TestAccStorageSignedUrl_basic(t *testing.T) {
 }
 
 func TestAccStorageSignedUrl_accTest(t *testing.T) {
+	// URL includes an expires time
+	skipIfVcr(t)
 	t.Parallel()
 
-	bucketName := fmt.Sprintf("tf-test-bucket-%d", acctest.RandInt())
+	bucketName := fmt.Sprintf("tf-test-bucket-%d", randInt(t))
 
 	headers := map[string]string{
 		"x-goog-test":                "foo",
 		"x-goog-if-generation-match": "1",
 	}
 
-	resource.Test(t, resource.TestCase{
+	vcrTest(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testAccTestGoogleStorageObjectSignedURL(bucketName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccSignedUrlRetrieval("data.google_storage_object_signed_url.story_url", nil),
@@ -143,7 +145,7 @@ func TestAccStorageSignedUrl_accTest(t *testing.T) {
 	})
 }
 
-func testAccSignedUrlExists(n string) resource.TestCheckFunc {
+func testAccSignedUrlExists(t *testing.T, n string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
 		r := s.RootModule().Resources[n]
@@ -226,42 +228,42 @@ data "google_storage_object_signed_url" "blerg" {
 func testAccTestGoogleStorageObjectSignedURL(bucketName string) string {
 	return fmt.Sprintf(`
 resource "google_storage_bucket" "bucket" {
-	name = "%s"
+  name = "%s"
 }
 
 resource "google_storage_bucket_object" "story" {
   name   = "path/to/file"
-  bucket = "${google_storage_bucket.bucket.name}"
+  bucket = google_storage_bucket.bucket.name
 
   content = "once upon a time..."
 }
 
 data "google_storage_object_signed_url" "story_url" {
-  bucket = "${google_storage_bucket.bucket.name}"
-  path   = "${google_storage_bucket_object.story.name}"
-
+  bucket = google_storage_bucket.bucket.name
+  path   = google_storage_bucket_object.story.name
 }
 
 data "google_storage_object_signed_url" "story_url_w_headers" {
-  bucket = "${google_storage_bucket.bucket.name}"
-  path   = "${google_storage_bucket_object.story.name}"
-  extension_headers {
-  	x-goog-test = "foo"
-  	x-goog-if-generation-match = 1
+  bucket = google_storage_bucket.bucket.name
+  path   = google_storage_bucket_object.story.name
+  extension_headers = {
+    x-goog-test                = "foo"
+    x-goog-if-generation-match = 1
   }
 }
 
 data "google_storage_object_signed_url" "story_url_w_content_type" {
-  bucket = "${google_storage_bucket.bucket.name}"
-  path   = "${google_storage_bucket_object.story.name}"
+  bucket = google_storage_bucket.bucket.name
+  path   = google_storage_bucket_object.story.name
 
   content_type = "text/plain"
 }
 
 data "google_storage_object_signed_url" "story_url_w_md5" {
-  bucket = "${google_storage_bucket.bucket.name}"
-  path   = "${google_storage_bucket_object.story.name}"
+  bucket = google_storage_bucket.bucket.name
+  path   = google_storage_bucket_object.story.name
 
-  content_md5 = "${google_storage_bucket_object.story.md5hash}"
-}`, bucketName)
+  content_md5 = google_storage_bucket_object.story.md5hash
+}
+`, bucketName)
 }

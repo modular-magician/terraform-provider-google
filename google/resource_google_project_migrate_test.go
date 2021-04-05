@@ -3,7 +3,7 @@ package google
 import (
 	"testing"
 
-	"github.com/hashicorp/terraform/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestGoogleProjectMigrateState(t *testing.T) {
@@ -62,7 +62,7 @@ func TestGoogleProjectMigrateState_empty(t *testing.T) {
 
 	// should handle non-nil but empty
 	is = &terraform.InstanceState{}
-	is, err = resourceGoogleProjectMigrateState(0, is, meta)
+	_, err = resourceGoogleProjectMigrateState(0, is, meta)
 
 	if err != nil {
 		t.Fatalf("err: %#v", err)

@@ -2,21 +2,121 @@ package google
 
 import (
 	"fmt"
-	"net/http"
 	"regexp"
-	"strings"
 	"testing"
 
-	"github.com/hashicorp/terraform/helper/acctest"
-	"github.com/hashicorp/terraform/helper/resource"
-	"github.com/hashicorp/terraform/terraform"
-
-	"google.golang.org/api/googleapi"
-	"google.golang.org/api/spanner/v1"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-// Unit Tests
+func TestAccSpannerDatabase_basic(t *testing.T) {
+	t.Parallel()
 
+	project := getTestProjectFromEnv()
+	rnd := randString(t, 10)
+	instanceName := fmt.Sprintf("tf-test-%s", rnd)
+	databaseName := fmt.Sprintf("tfgen_%s", rnd)
+
+	vcrTest(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckSpannerDatabaseDestroyProducer(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccSpannerDatabase_basic(instanceName, databaseName),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet("google_spanner_database.basic", "state"),
+				),
+			},
+			{
+				// Test import with default Terraform ID
+				ResourceName:            "google_spanner_database.basic",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"ddl", "deletion_protection"},
+			},
+			{
+				Config: testAccSpannerDatabase_basicUpdate(instanceName, databaseName),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet("google_spanner_database.basic", "state"),
+				),
+			},
+			{
+				// Test import with default Terraform ID
+				ResourceName:            "google_spanner_database.basic",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"ddl", "deletion_protection"},
+			},
+			{
+				ResourceName:            "google_spanner_database.basic",
+				ImportStateId:           fmt.Sprintf("projects/%s/instances/%s/databases/%s", project, instanceName, databaseName),
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"ddl", "deletion_protection"},
+			},
+			{
+				ResourceName:            "google_spanner_database.basic",
+				ImportStateId:           fmt.Sprintf("instances/%s/databases/%s", instanceName, databaseName),
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"ddl", "deletion_protection"},
+			},
+			{
+				ResourceName:            "google_spanner_database.basic",
+				ImportStateId:           fmt.Sprintf("%s/%s", instanceName, databaseName),
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"ddl", "deletion_protection"},
+			},
+		},
+	})
+}
+
+func testAccSpannerDatabase_basic(instanceName, databaseName string) string {
+	return fmt.Sprintf(`
+resource "google_spanner_instance" "basic" {
+  name         = "%s"
+  config       = "regional-us-central1"
+  display_name = "%s-display"
+  num_nodes    = 1
+}
+
+resource "google_spanner_database" "basic" {
+  instance = google_spanner_instance.basic.name
+  name     = "%s"
+  ddl = [
+	"CREATE TABLE t1 (t1 INT64 NOT NULL,) PRIMARY KEY(t1)",
+	"CREATE TABLE t2 (t2 INT64 NOT NULL,) PRIMARY KEY(t2)",
+  ]
+  deletion_protection = false
+}
+`, instanceName, instanceName, databaseName)
+}
+
+func testAccSpannerDatabase_basicUpdate(instanceName, databaseName string) string {
+	return fmt.Sprintf(`
+resource "google_spanner_instance" "basic" {
+  name         = "%s"
+  config       = "regional-us-central1"
+  display_name = "%s-display"
+  num_nodes    = 1
+}
+
+resource "google_spanner_database" "basic" {
+  instance = google_spanner_instance.basic.name
+  name     = "%s"
+  ddl = [
+	"CREATE TABLE t1 (t1 INT64 NOT NULL,) PRIMARY KEY(t1)",
+	"CREATE TABLE t2 (t2 INT64 NOT NULL,) PRIMARY KEY(t2)",
+	"CREATE TABLE t3 (t3 INT64 NOT NULL,) PRIMARY KEY(t3)",
+	"CREATE TABLE t4 (t4 INT64 NOT NULL,) PRIMARY KEY(t4)",
+  ]
+  deletion_protection = false
+}
+`, instanceName, instanceName, databaseName)
+}
+
+// Unit Tests for type spannerDatabaseId
 func TestDatabaseNameForApi(t *testing.T) {
 	id := spannerDatabaseId{
 		Project:  "project123",
@@ -28,330 +128,135 @@ func TestDatabaseNameForApi(t *testing.T) {
 	expectEquals(t, expected, actual)
 }
 
-func TestImportSpannerDatabaseId_InstanceDB(t *testing.T) {
-	id, e := importSpannerDatabaseId("instance456/database789")
-	if e != nil {
-		t.Errorf("Error should have been nil")
-	}
-	expectEquals(t, "", id.Project)
-	expectEquals(t, "instance456", id.Instance)
-	expectEquals(t, "database789", id.Database)
-}
-
-func TestImportSpannerDatabaseId_ProjectInstanceDB(t *testing.T) {
-	id, e := importSpannerDatabaseId("project123/instance456/database789")
-	if e != nil {
-		t.Errorf("Error should have been nil")
-	}
-	expectEquals(t, "project123", id.Project)
-	expectEquals(t, "instance456", id.Instance)
-	expectEquals(t, "database789", id.Database)
-}
-
-func TestImportSpannerDatabaseId_projectId(t *testing.T) {
-	shouldPass := []string{
-		"project-id/instance/database",
-		"123123/instance/123",
-		"hashicorptest.net:project-123/instance/123",
-		"123/456/789",
-	}
-
-	shouldFail := []string{
-		"project-id#/instance/database",
-		"project-id/instance#/database",
-		"project-id/instance/database#",
-		"hashicorptest.net:project-123:invalid:project/instance/123",
-		"hashicorptest.net:/instance/123",
-	}
-
-	for _, element := range shouldPass {
-		_, e := importSpannerDatabaseId(element)
-		if e != nil {
-			t.Error("importSpannerDatabaseId should pass on '" + element + "' but doesn't")
-		}
-	}
-
-	for _, element := range shouldFail {
-		_, e := importSpannerDatabaseId(element)
-		if e == nil {
-			t.Error("importSpannerDatabaseId should fail on '" + element + "' but doesn't")
-		}
-	}
-}
-
-func TestImportSpannerDatabaseId_invalidLeadingSlash(t *testing.T) {
-	id, e := importSpannerDatabaseId("/instance456/database789")
-	expectInvalidSpannerDbImportId(t, id, e)
-}
-
-func TestImportSpannerDatabaseId_invalidTrailingSlash(t *testing.T) {
-	id, e := importSpannerDatabaseId("instance456/database789/")
-	expectInvalidSpannerDbImportId(t, id, e)
-}
-
-func TestImportSpannerDatabaseId_invalidSingleSlash(t *testing.T) {
-	id, e := importSpannerDatabaseId("/")
-	expectInvalidSpannerDbImportId(t, id, e)
-}
-
-func TestImportSpannerDatabaseId_invalidMultiSlash(t *testing.T) {
-	id, e := importSpannerDatabaseId("project123/instance456/db789/next")
-	expectInvalidSpannerDbImportId(t, id, e)
-}
-
-func expectInvalidSpannerDbImportId(t *testing.T, id *spannerDatabaseId, e error) {
-	if id != nil {
-		t.Errorf("Expected spannerDatabaseId to be nil")
-		return
-	}
-	if e == nil {
-		t.Errorf("Expected an Error but did not get one")
-		return
-	}
-	if !strings.HasPrefix(e.Error(), "Invalid spanner database specifier") {
-		t.Errorf("Expecting Error starting with 'Invalid spanner database specifier'")
-	}
-}
-
-// Acceptance Tests
-
-func TestAccSpannerDatabase_basic(t *testing.T) {
+// Unit Tests for ForceNew when the change in ddl
+func TestSpannerDatabase_resourceSpannerDBDdlCustomDiffFuncForceNew(t *testing.T) {
 	t.Parallel()
 
-	var db spanner.Database
-	rnd := acctest.RandString(10)
-	resource.Test(t, resource.TestCase{
+	cases := map[string]struct {
+		before   interface{}
+		after    interface{}
+		forcenew bool
+	}{
+		"remove_old_statements": {
+			before: []interface{}{
+				"CREATE TABLE t1 (t1 INT64 NOT NULL,) PRIMARY KEY(t1)"},
+			after: []interface{}{
+				"CREATE TABLE t2 (t2 INT64 NOT NULL,) PRIMARY KEY(t2)"},
+			forcenew: true,
+		},
+		"append_new_statements": {
+			before: []interface{}{
+				"CREATE TABLE t1 (t1 INT64 NOT NULL,) PRIMARY KEY(t1)"},
+			after: []interface{}{
+				"CREATE TABLE t1 (t1 INT64 NOT NULL,) PRIMARY KEY(t1)",
+				"CREATE TABLE t2 (t2 INT64 NOT NULL,) PRIMARY KEY(t2)",
+			},
+			forcenew: false,
+		},
+		"no_change": {
+			before: []interface{}{
+				"CREATE TABLE t1 (t1 INT64 NOT NULL,) PRIMARY KEY(t1)"},
+			after: []interface{}{
+				"CREATE TABLE t1 (t1 INT64 NOT NULL,) PRIMARY KEY(t1)"},
+			forcenew: false,
+		},
+		"order_of_statments_change": {
+			before: []interface{}{
+				"CREATE TABLE t1 (t1 INT64 NOT NULL,) PRIMARY KEY(t1)",
+				"CREATE TABLE t2 (t2 INT64 NOT NULL,) PRIMARY KEY(t2)",
+				"CREATE TABLE t3 (t3 INT64 NOT NULL,) PRIMARY KEY(t3)",
+			},
+			after: []interface{}{
+				"CREATE TABLE t1 (t1 INT64 NOT NULL,) PRIMARY KEY(t1)",
+				"CREATE TABLE t3 (t3 INT64 NOT NULL,) PRIMARY KEY(t3)",
+				"CREATE TABLE t2 (t2 INT64 NOT NULL,) PRIMARY KEY(t2)",
+			},
+			forcenew: true,
+		},
+		"missing_an_old_statement": {
+			before: []interface{}{
+				"CREATE TABLE t1 (t1 INT64 NOT NULL,) PRIMARY KEY(t1)",
+				"CREATE TABLE t2 (t2 INT64 NOT NULL,) PRIMARY KEY(t2)",
+				"CREATE TABLE t3 (t3 INT64 NOT NULL,) PRIMARY KEY(t3)",
+			},
+			after: []interface{}{
+				"CREATE TABLE t1 (t1 INT64 NOT NULL,) PRIMARY KEY(t1)",
+				"CREATE TABLE t2 (t2 INT64 NOT NULL,) PRIMARY KEY(t2)",
+			},
+			forcenew: true,
+		},
+	}
+
+	for tn, tc := range cases {
+		d := &ResourceDiffMock{
+			Before: map[string]interface{}{
+				"ddl": tc.before,
+			},
+			After: map[string]interface{}{
+				"ddl": tc.after,
+			},
+		}
+		err := resourceSpannerDBDdlCustomDiffFunc(d)
+		if err != nil {
+			t.Errorf("failed, expected no error but received - %s for the condition %s", err, tn)
+		}
+		if d.IsForceNew != tc.forcenew {
+			t.Errorf("ForceNew not setup correctly for the condition-'%s', expected:%v;actual:%v", tn, tc.forcenew, d.IsForceNew)
+		}
+	}
+}
+
+func TestAccSpannerDatabase_deletionProtection(t *testing.T) {
+	skipIfVcr(t)
+	t.Parallel()
+
+	context := map[string]interface{}{
+		"random_suffix": randString(t, 10),
+	}
+
+	vcrTest(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
-		CheckDestroy: resource.ComposeTestCheckFunc(
-			testAccCheckSpannerInstanceDestroy,
-			testAccCheckSpannerDatabaseDestroy),
+		ExternalProviders: map[string]resource.ExternalProvider{
+			"random": {},
+		},
+		CheckDestroy: testAccCheckSpannerDatabaseDestroyProducer(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSpannerDatabase_basic(rnd),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckSpannerDatabaseExists("google_spanner_database.basic", &db),
-
-					resource.TestCheckResourceAttr("google_spanner_database.basic", "name", "my-db-"+rnd),
-					resource.TestCheckResourceAttrSet("google_spanner_database.basic", "state"),
-				),
+				Config: testAccSpannerDatabase_deletionProtection(context),
+			},
+			{
+				ResourceName:            "google_spanner_database.database",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"ddl", "instance", "deletion_protection"},
+			},
+			{
+				Config:      testAccSpannerDatabase_deletionProtection(context),
+				Destroy:     true,
+				ExpectError: regexp.MustCompile("deletion_protection"),
+			},
+			{
+				Config: testAccSpannerDatabase_spannerDatabaseBasicExample(context),
 			},
 		},
 	})
 }
 
-func TestAccSpannerDatabase_basicWithInitialDDL(t *testing.T) {
-	t.Parallel()
-
-	var db spanner.Database
-	rnd := acctest.RandString(10)
-	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
-		CheckDestroy: resource.ComposeTestCheckFunc(
-			testAccCheckSpannerInstanceDestroy,
-			testAccCheckSpannerDatabaseDestroy),
-		Steps: []resource.TestStep{
-			{
-				Config: testAccSpannerDatabase_basicWithInitialDDL(rnd),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckSpannerDatabaseExists("google_spanner_database.basic", &db),
-				),
-			},
-		},
-	})
+func testAccSpannerDatabase_deletionProtection(context map[string]interface{}) string {
+	return Nprintf(`
+resource "google_spanner_instance" "main" {
+  config       = "regional-europe-west1"
+  display_name = "main-instance"
 }
 
-func TestAccSpannerDatabase_duplicateNameError(t *testing.T) {
-	t.Parallel()
-
-	var db spanner.Database
-	rnd := acctest.RandString(10)
-	dbName := fmt.Sprintf("spanner-test-%s", rnd)
-	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
-		CheckDestroy: resource.ComposeTestCheckFunc(
-			testAccCheckSpannerInstanceDestroy,
-			testAccCheckSpannerDatabaseDestroy),
-		Steps: []resource.TestStep{
-			{
-				Config: testAccSpannerDatabase_duplicateNameError_part1(rnd, dbName),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckSpannerDatabaseExists("google_spanner_database.basic1", &db),
-				),
-			},
-			{
-				Config: testAccSpannerDatabase_duplicateNameError_part2(rnd, dbName),
-				ExpectError: regexp.MustCompile(
-					fmt.Sprintf(".*A database with name %s already exists", dbName)),
-			},
-		},
-	})
+resource "google_spanner_database" "database" {
+  instance = google_spanner_instance.main.name
+  name     = "tf-test-my-database%{random_suffix}"
+  ddl = [
+    "CREATE TABLE t1 (t1 INT64 NOT NULL,) PRIMARY KEY(t1)",
+    "CREATE TABLE t2 (t2 INT64 NOT NULL,) PRIMARY KEY(t2)",
+  ]
 }
-
-func testAccCheckSpannerDatabaseDestroy(s *terraform.State) error {
-	config := testAccProvider.Meta().(*Config)
-
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "google_spanner_database" {
-			continue
-		}
-
-		if rs.Primary.ID == "" {
-			return fmt.Errorf("Unable to verify delete of spanner database, ID is empty")
-		}
-
-		project, err := getTestProject(rs.Primary, config)
-		if err != nil {
-			return err
-		}
-
-		id := spannerDatabaseId{
-			Project:  project,
-			Instance: rs.Primary.Attributes["instance"],
-			Database: rs.Primary.Attributes["name"],
-		}
-		_, err = config.clientSpanner.Projects.Instances.Databases.Get(
-			id.databaseUri()).Do()
-
-		if err != nil {
-			if gerr, ok := err.(*googleapi.Error); ok && gerr.Code == http.StatusNotFound {
-				return nil
-			}
-			return fmt.Errorf("Error make GCP platform call to verify spanner database deleted: %s", err.Error())
-		}
-		return fmt.Errorf("Spanner database not destroyed - still exists")
-	}
-
-	return nil
-}
-
-func testAccCheckSpannerDatabaseExists(n string, instance *spanner.Database) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		config := testAccProvider.Meta().(*Config)
-		rs, ok := s.RootModule().Resources[n]
-		if !ok {
-			return fmt.Errorf("Terraform resource Not found: %s", n)
-		}
-
-		if rs.Primary.ID == "" {
-			return fmt.Errorf("No ID is set for Spanner instance")
-		}
-
-		id, err := extractSpannerDatabaseId(rs.Primary.ID)
-		found, err := config.clientSpanner.Projects.Instances.Databases.Get(
-			id.databaseUri()).Do()
-		if err != nil {
-			return err
-		}
-
-		if fName := GetResourceNameFromSelfLink(found.Name); fName != id.Database {
-			return fmt.Errorf("Spanner database %s not found, found %s instead", id.Database, fName)
-		}
-
-		*instance = *found
-
-		return nil
-	}
-}
-
-func testAccSpannerDatabase_basic(rnd string) string {
-	return fmt.Sprintf(`
-resource "google_spanner_instance" "basic" {
-  name          = "my-instance-%s"
-  config        = "regional-us-central1"
-  display_name  = "my-displayname-%s"
-  num_nodes     = 1
-}
-
-resource "google_spanner_database" "basic" {
-  instance      = "${google_spanner_instance.basic.name}"
-  name          = "my-db-%s"
-
-}
-`, rnd, rnd, rnd)
-}
-
-func testAccSpannerDatabase_basicWithInitialDDL(rnd string) string {
-	return fmt.Sprintf(`
-resource "google_spanner_instance" "basic" {
-  name          = "my-instance-%s"
-  config        = "regional-us-central1"
-  display_name  = "my-displayname-%s"
-  num_nodes     = 1
-}
-
-resource "google_spanner_database" "basic" {
-  instance      = "${google_spanner_instance.basic.name}"
-  name          = "my-db-%s"
-  ddl           =  [
-     "CREATE TABLE t1 (t1 INT64 NOT NULL,) PRIMARY KEY(t1)",
-     "CREATE TABLE t2 (t2 INT64 NOT NULL,) PRIMARY KEY(t2)" ]
-}
-`, rnd, rnd, rnd)
-}
-
-func testAccSpannerDatabase_duplicateNameError_part1(rnd, dbName string) string {
-	return fmt.Sprintf(`
-resource "google_spanner_instance" "basic" {
-  name          = "my-instance-%s"
-  config        = "regional-us-central1"
-  display_name  = "my-displayname-%s"
-  num_nodes     = 1
-}
-
-resource "google_spanner_database" "basic1" {
-  instance      = "${google_spanner_instance.basic.name}"
-  name          = "%s"
-
-}
-`, rnd, rnd, dbName)
-}
-
-func testAccSpannerDatabase_duplicateNameError_part2(rnd, dbName string) string {
-	return fmt.Sprintf(`
-%s
-
-resource "google_spanner_database" "basic2" {
-  instance      = "${google_spanner_instance.basic.name}"
-  name          = "%s"
-}
-`, testAccSpannerDatabase_duplicateNameError_part1(rnd, dbName), dbName)
-}
-
-func testAccSpannerDatabase_basicImport(iname, dbname string) string {
-	return fmt.Sprintf(`
-resource "google_spanner_instance" "basic" {
-  name          = "%s"
-  config        = "regional-us-central1"
-  display_name  = "%s"
-  num_nodes     = 1
-}
-
-resource "google_spanner_database" "basic" {
-  instance      = "${google_spanner_instance.basic.name}"
-  name          = "%s"
-
-}
-`, iname, iname, dbname)
-}
-
-func testAccSpannerDatabase_basicImportWithProject(project, iname, dbname string) string {
-	return fmt.Sprintf(`
-resource "google_spanner_instance" "basic" {
-  project       = "%s"
-  name          = "%s"
-  config        = "regional-us-central1"
-  display_name  = "%s"
-  num_nodes     = 1
-}
-
-resource "google_spanner_database" "basic" {
-  project       = "%s"
-  instance      = "${google_spanner_instance.basic.name}"
-  name          = "%s"
-
-}
-`, project, iname, iname, project, dbname)
+`, context)
 }

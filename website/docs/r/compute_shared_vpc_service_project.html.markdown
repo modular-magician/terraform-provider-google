@@ -1,4 +1,5 @@
 ---
+subcategory: "Compute Engine"
 layout: "google"
 page_title: "Google: google_compute_shared_vpc_service_project"
 sidebar_current: "docs-google-compute-shared-vpc-service-project"
@@ -16,6 +17,8 @@ with a given host project.
 For more information, see,
 [the Project API documentation](https://cloud.google.com/compute/docs/reference/latest/projects),
 where the Shared VPC feature is referred to by its former name "XPN".
+
+~> **Note:** If Shared VPC Admin role is set at the folder level, use the google-beta provider. The google provider only supports this permission at project or organizational level currently. [[0]](https://cloud.google.com/vpc/docs/provisioning-shared-vpc#enable-shared-vpc-host)
 
 ## Example Usage
 
@@ -36,6 +39,20 @@ The following arguments are expected:
 * `host_project` - (Required) The ID of a host project to associate.
 
 * `service_project` - (Required) The ID of the project that will serve as a Shared VPC service project.
+
+## Attributes Reference
+
+In addition to the arguments listed above, the following computed attributes are exported:
+
+* `id` - an identifier for the resource with format `{{host_project}}/{{service_project}}`
+
+## Timeouts
+
+This resource provides the following
+[Timeouts](/docs/configuration/resources.html#timeouts) configuration options:
+
+- `create` - Default is 4 minutes.
+- `delete` - Default is 4 minutes.
 
 ## Import
 

@@ -2,20 +2,21 @@ package google
 
 import (
 	"fmt"
+
 	"github.com/hashicorp/errwrap"
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"google.golang.org/api/cloudresourcemanager/v1"
 	"google.golang.org/api/pubsub/v1"
 )
 
 var IamPubsubSubscriptionSchema = map[string]*schema.Schema{
-	"subscription": &schema.Schema{
+	"subscription": {
 		Type:             schema.TypeString,
 		Required:         true,
 		ForceNew:         true,
 		DiffSuppressFunc: compareSelfLinkOrResourceName,
 	},
-	"project": &schema.Schema{
+	"project": {
 		Type:     schema.TypeString,
 		Optional: true,
 		Computed: true,
@@ -25,10 +26,11 @@ var IamPubsubSubscriptionSchema = map[string]*schema.Schema{
 
 type PubsubSubscriptionIamUpdater struct {
 	subscription string
+	d            TerraformResourceData
 	Config       *Config
 }
 
-func NewPubsubSubscriptionIamUpdater(d *schema.ResourceData, config *Config) (ResourceIamUpdater, error) {
+func NewPubsubSubscriptionIamUpdater(d TerraformResourceData, config *Config) (ResourceIamUpdater, error) {
 	project, err := getProject(d, config)
 	if err != nil {
 		return nil, err
@@ -38,20 +40,28 @@ func NewPubsubSubscriptionIamUpdater(d *schema.ResourceData, config *Config) (Re
 
 	return &PubsubSubscriptionIamUpdater{
 		subscription: subscription,
+		d:            d,
 		Config:       config,
 	}, nil
 }
 
 func PubsubSubscriptionIdParseFunc(d *schema.ResourceData, _ *Config) error {
-	d.Set("subscription", d.Id())
+	if err := d.Set("subscription", d.Id()); err != nil {
+		return fmt.Errorf("Error setting subscription: %s", err)
+	}
 	return nil
 }
 
 func (u *PubsubSubscriptionIamUpdater) GetResourceIamPolicy() (*cloudresourcemanager.Policy, error) {
-	p, err := u.Config.clientPubsub.Projects.Subscriptions.GetIamPolicy(u.subscription).Do()
+	userAgent, err := generateUserAgentString(u.d, u.Config.userAgent)
+	if err != nil {
+		return nil, err
+	}
+
+	p, err := u.Config.NewPubsubClient(userAgent).Projects.Subscriptions.GetIamPolicy(u.subscription).Do()
 
 	if err != nil {
-		return nil, fmt.Errorf("Error retrieving IAM policy for %s: %s", u.DescribeResource(), err)
+		return nil, errwrap.Wrapf(fmt.Sprintf("Error retrieving IAM policy for %s: {{err}}", u.DescribeResource()), err)
 	}
 
 	v1Policy, err := pubsubToResourceManagerPolicy(p)
@@ -63,17 +73,22 @@ func (u *PubsubSubscriptionIamUpdater) GetResourceIamPolicy() (*cloudresourceman
 }
 
 func (u *PubsubSubscriptionIamUpdater) SetResourceIamPolicy(policy *cloudresourcemanager.Policy) error {
+	userAgent, err := generateUserAgentString(u.d, u.Config.userAgent)
+	if err != nil {
+		return err
+	}
+
 	pubsubPolicy, err := resourceManagerToPubsubPolicy(policy)
 	if err != nil {
 		return err
 	}
 
-	_, err = u.Config.clientPubsub.Projects.Subscriptions.SetIamPolicy(u.subscription, &pubsub.SetIamPolicyRequest{
+	_, err = u.Config.NewPubsubClient(userAgent).Projects.Subscriptions.SetIamPolicy(u.subscription, &pubsub.SetIamPolicyRequest{
 		Policy: pubsubPolicy,
 	}).Do()
 
 	if err != nil {
-		return errwrap.Wrap(fmt.Errorf("Error setting IAM policy for %s.", u.DescribeResource()), err)
+		return errwrap.Wrapf(fmt.Sprintf("Error setting IAM policy for %s: {{err}}", u.DescribeResource()), err)
 	}
 
 	return nil
@@ -89,4 +104,23 @@ func (u *PubsubSubscriptionIamUpdater) GetMutexKey() string {
 
 func (u *PubsubSubscriptionIamUpdater) DescribeResource() string {
 	return fmt.Sprintf("pubsub subscription %q", u.subscription)
+}
+
+// v1 and v2 policy are identical
+func resourceManagerToPubsubPolicy(in *cloudresourcemanager.Policy) (*pubsub.Policy, error) {
+	out := &pubsub.Policy{}
+	err := Convert(in, out)
+	if err != nil {
+		return nil, errwrap.Wrapf("Cannot convert a v1 policy to a pubsub policy: {{err}}", err)
+	}
+	return out, nil
+}
+
+func pubsubToResourceManagerPolicy(in *pubsub.Policy) (*cloudresourcemanager.Policy, error) {
+	out := &cloudresourcemanager.Policy{}
+	err := Convert(in, out)
+	if err != nil {
+		return nil, errwrap.Wrapf("Cannot convert a pubsub policy to a v1 policy: {{err}}", err)
+	}
+	return out, nil
 }

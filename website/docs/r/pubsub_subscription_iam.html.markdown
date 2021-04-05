@@ -1,4 +1,5 @@
 ---
+subcategory: "Cloud Pub/Sub"
 layout: "google"
 page_title: "Google: google_pubsub_subscription_iam"
 sidebar_current: "docs-google-pubsub-subscription-iam"
@@ -23,7 +24,7 @@ Three different resources help you manage your IAM policy for pubsub subscriptio
 ```hcl
 data "google_iam_policy" "admin" {
   binding {
-    role    = "roles/editor"
+    role = "roles/editor"
     members = [
       "user:jane@example.com",
     ]
@@ -32,7 +33,7 @@ data "google_iam_policy" "admin" {
 
 resource "google_pubsub_subscription_iam_policy" "editor" {
   subscription = "your-subscription-name"
-  policy_data  = "${data.google_iam_policy.admin.policy_data}"
+  policy_data  = data.google_iam_policy.admin.policy_data
 }
 ```
 
@@ -42,7 +43,7 @@ resource "google_pubsub_subscription_iam_policy" "editor" {
 resource "google_pubsub_subscription_iam_binding" "editor" {
   subscription = "your-subscription-name"
   role         = "roles/editor"
-  members      = [
+  members = [
     "user:jane@example.com",
   ]
 }
@@ -71,7 +72,7 @@ The following arguments are supported:
   * **user:{emailid}**: An email address that represents a specific Google account. For example, alice@gmail.com or joe@example.com.
   * **serviceAccount:{emailid}**: An email address that represents a service account. For example, my-other-app@appspot.gserviceaccount.com.
   * **group:{emailid}**: An email address that represents a Google group. For example, admins@example.com.
-  * **domain:{domain}**: A Google Apps domain name that represents all the users of that domain. For example, google.com or example.com.
+  * **domain:{domain}**: A G Suite domain (primary, instead of alias) name that represents all the users of that domain. For example, google.com or example.com.
 
 * `role` - (Required) The role that should be applied. Only one
     `google_pubsub_subscription_iam_binding` can be used per role. Note that custom roles must be of the format
@@ -103,3 +104,6 @@ $ terraform import google_pubsub_subscription_iam_binding.editor "projects/{your
 
 $ terraform import google_pubsub_subscription_iam_member.editor "projects/{your-project-id}/subscriptions/{your-subscription-name} roles/editor jane@example.com"
 ```
+
+-> **Custom Roles**: If you're importing a IAM resource with a custom role, make sure to use the
+ full name of the custom role, e.g. `[projects/my-project|organizations/my-org]/roles/my-custom-role`.

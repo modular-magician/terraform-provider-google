@@ -4,27 +4,28 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hashicorp/terraform/helper/acctest"
-	"github.com/hashicorp/terraform/helper/resource"
-	"github.com/hashicorp/terraform/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-func TestAccComputeSslCertificate_basic(t *testing.T) {
+func TestAccComputeSslCertificate_no_name(t *testing.T) {
+	// Randomness
+	skipIfVcr(t)
 	t.Parallel()
 
-	resource.Test(t, resource.TestCase{
+	vcrTest(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckComputeSslCertificateDestroy,
+		CheckDestroy: testAccCheckComputeSslCertificateDestroyProducer(t),
 		Steps: []resource.TestStep{
-			resource.TestStep{
-				Config: testAccComputeSslCertificate_basic(),
+			{
+				Config: testAccComputeSslCertificate_no_name(),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckComputeSslCertificateExists(
-						"google_compute_ssl_certificate.foobar"),
+						t, "google_compute_ssl_certificate.foobar"),
 				),
 			},
-			resource.TestStep{
+			{
 				ResourceName:            "google_compute_ssl_certificate.foobar",
 				ImportState:             true,
 				ImportStateVerify:       true,
@@ -34,63 +35,7 @@ func TestAccComputeSslCertificate_basic(t *testing.T) {
 	})
 }
 
-func TestAccComputeSslCertificate_no_name(t *testing.T) {
-	t.Parallel()
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckComputeSslCertificateDestroy,
-		Steps: []resource.TestStep{
-			resource.TestStep{
-				Config: testAccComputeSslCertificate_no_name(),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckComputeSslCertificateExists(
-						"google_compute_ssl_certificate.foobar"),
-				),
-			},
-		},
-	})
-}
-
-func TestAccComputeSslCertificate_name_prefix(t *testing.T) {
-	t.Parallel()
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckComputeSslCertificateDestroy,
-		Steps: []resource.TestStep{
-			resource.TestStep{
-				Config: testAccComputeSslCertificate_name_prefix(),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckComputeSslCertificateExists(
-						"google_compute_ssl_certificate.foobar"),
-				),
-			},
-		},
-	})
-}
-
-func testAccCheckComputeSslCertificateDestroy(s *terraform.State) error {
-	config := testAccProvider.Meta().(*Config)
-
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "google_compute_ssl_certificate" {
-			continue
-		}
-
-		_, err := config.clientCompute.SslCertificates.Get(
-			config.Project, rs.Primary.ID).Do()
-		if err == nil {
-			return fmt.Errorf("SslCertificate still exists")
-		}
-	}
-
-	return nil
-}
-
-func testAccCheckComputeSslCertificateExists(n string) resource.TestCheckFunc {
+func testAccCheckComputeSslCertificateExists(t *testing.T, n string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -101,15 +46,17 @@ func testAccCheckComputeSslCertificateExists(n string) resource.TestCheckFunc {
 			return fmt.Errorf("No ID is set")
 		}
 
-		config := testAccProvider.Meta().(*Config)
+		config := googleProviderConfig(t)
+		// We don't specify a name, but it is saved during create
+		name := rs.Primary.Attributes["name"]
 
-		found, err := config.clientCompute.SslCertificates.Get(
-			config.Project, rs.Primary.ID).Do()
+		found, err := config.NewComputeClient(config.userAgent).SslCertificates.Get(
+			config.Project, name).Do()
 		if err != nil {
 			return err
 		}
 
-		if found.Name != rs.Primary.ID {
+		if found.Name != name {
 			return fmt.Errorf("Certificate not found")
 		}
 
@@ -117,34 +64,12 @@ func testAccCheckComputeSslCertificateExists(n string) resource.TestCheckFunc {
 	}
 }
 
-func testAccComputeSslCertificate_basic() string {
-	return fmt.Sprintf(`
-resource "google_compute_ssl_certificate" "foobar" {
-	name = "sslcert-test-%s"
-	description = "very descriptive"
-	private_key = "${file("test-fixtures/ssl_cert/test.key")}"
-	certificate = "${file("test-fixtures/ssl_cert/test.crt")}"
-}
-`, acctest.RandString(10))
-}
-
 func testAccComputeSslCertificate_no_name() string {
 	return fmt.Sprintf(`
 resource "google_compute_ssl_certificate" "foobar" {
-	description = "really descriptive"
-	private_key = "${file("test-fixtures/ssl_cert/test.key")}"
-	certificate = "${file("test-fixtures/ssl_cert/test.crt")}"
+  description = "really descriptive"
+  private_key = file("test-fixtures/ssl_cert/test.key")
+  certificate = file("test-fixtures/ssl_cert/test.crt")
 }
 `)
-}
-
-func testAccComputeSslCertificate_name_prefix() string {
-	return fmt.Sprintf(`
-resource "google_compute_ssl_certificate" "foobar" {
-	name_prefix = "sslcert-test-%s-"
-	description = "extremely descriptive"
-	private_key = "${file("test-fixtures/ssl_cert/test.key")}"
-	certificate = "${file("test-fixtures/ssl_cert/test.crt")}"
-}
-`, acctest.RandString(10))
 }

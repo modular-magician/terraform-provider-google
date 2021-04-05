@@ -1,12 +1,12 @@
 package google
 
 import (
-	"encoding/json"
 	"fmt"
-	"log"
 	"strings"
+	"time"
 
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"google.golang.org/api/iam/v1"
 )
 
@@ -17,57 +17,75 @@ func resourceGoogleServiceAccount() *schema.Resource {
 		Delete: resourceGoogleServiceAccountDelete,
 		Update: resourceGoogleServiceAccountUpdate,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			State: resourceGoogleServiceAccountImport,
+		},
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(5 * time.Minute),
 		},
 		Schema: map[string]*schema.Schema{
-			"email": &schema.Schema{
-				Type:     schema.TypeString,
-				Computed: true,
+			"email": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: `The e-mail address of the service account. This value should be referenced from any google_iam_policy data sources that would grant the service account privileges.`,
 			},
-			"unique_id": &schema.Schema{
-				Type:     schema.TypeString,
-				Computed: true,
+			"unique_id": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: `The unique id of the service account.`,
 			},
-			"name": &schema.Schema{
-				Type:     schema.TypeString,
-				Computed: true,
+			"name": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: `The fully-qualified name of the service account.`,
 			},
-			"account_id": &schema.Schema{
+			"account_id": {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: validateRFC1035Name(6, 30),
+				Description:  `The account id that is used to generate the service account email address and a stable unique id. It is unique within a project, must be 6-30 characters long, and match the regular expression [a-z]([-a-z0-9]*[a-z0-9]) to comply with RFC1035. Changing this forces a new service account to be created.`,
 			},
-			"display_name": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
+			"display_name": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: `The display name for the service account. Can be updated without creating a new resource.`,
 			},
-			"project": &schema.Schema{
-				Type:     schema.TypeString,
-				Computed: true,
-				Optional: true,
-				ForceNew: true,
+			"description": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validation.StringLenBetween(0, 256),
+				Description:  `A text description of the service account. Must be less than or equal to 256 UTF-8 bytes.`,
 			},
-			"policy_data": &schema.Schema{
-				Type:       schema.TypeString,
-				Optional:   true,
-				Deprecated: "Use the 'google_service_account_iam_policy' resource to define policies for a service account",
+			"project": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Optional:    true,
+				ForceNew:    true,
+				Description: `The ID of the project that the service account will be created in. Defaults to the provider project configuration.`,
 			},
 		},
+		UseJSONNumber: true,
 	}
 }
 
 func resourceGoogleServiceAccountCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
+	userAgent, err := generateUserAgentString(d, config.userAgent)
+	if err != nil {
+		return err
+	}
+
 	project, err := getProject(d, config)
 	if err != nil {
 		return err
 	}
 	aid := d.Get("account_id").(string)
 	displayName := d.Get("display_name").(string)
+	description := d.Get("description").(string)
 
 	sa := &iam.ServiceAccount{
 		DisplayName: displayName,
+		Description: description,
 	}
 
 	r := &iam.CreateServiceAccountRequest{
@@ -75,68 +93,70 @@ func resourceGoogleServiceAccountCreate(d *schema.ResourceData, meta interface{}
 		ServiceAccount: sa,
 	}
 
-	sa, err = config.clientIAM.Projects.ServiceAccounts.Create("projects/"+project, r).Do()
+	sa, err = config.NewIamClient(userAgent).Projects.ServiceAccounts.Create("projects/"+project, r).Do()
 	if err != nil {
 		return fmt.Errorf("Error creating service account: %s", err)
 	}
 
 	d.SetId(sa.Name)
 
-	// Apply the IAM policy if it is set
-	if pString, ok := d.GetOk("policy_data"); ok {
-		// The policy string is just a marshaled cloudresourcemanager.Policy.
-		// Unmarshal it to a struct.
-		var policy iam.Policy
-		if err = json.Unmarshal([]byte(pString.(string)), &policy); err != nil {
-			return err
-		}
+	err = retryTimeDuration(func() (operr error) {
+		_, saerr := config.NewIamClient(userAgent).Projects.ServiceAccounts.Get(d.Id()).Do()
+		return saerr
+	}, d.Timeout(schema.TimeoutCreate), isNotFoundRetryableError("service account creation"))
 
-		// Retrieve existing IAM policy from project. This will be merged
-		// with the policy defined here.
-		// TODO: overwrite existing policy, instead of merging it
-		p, err := getServiceAccountIamPolicy(sa.Name, config)
-		if err != nil {
-			return fmt.Errorf("Could not find service account %q when applying IAM policy: %s", sa.Name, err)
-		}
-		log.Printf("[DEBUG] Got existing bindings for service account: %#v", p.Bindings)
-
-		// Merge the existing policy bindings with those defined in this manifest.
-		p.Bindings = saMergeBindings(append(p.Bindings, policy.Bindings...))
-
-		// Apply the merged policy
-		log.Printf("[DEBUG] Setting new policy for service account: %#v", p)
-		_, err = config.clientIAM.Projects.ServiceAccounts.SetIamPolicy(sa.Name,
-			&iam.SetIamPolicyRequest{Policy: p}).Do()
-
-		if err != nil {
-			return fmt.Errorf("Error applying IAM policy for service account %q: %s", sa.Name, err)
-		}
+	if err != nil {
+		return fmt.Errorf("Error reading service account after creation: %s", err)
 	}
+
 	return resourceGoogleServiceAccountRead(d, meta)
 }
 
 func resourceGoogleServiceAccountRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
+	userAgent, err := generateUserAgentString(d, config.userAgent)
+	if err != nil {
+		return err
+	}
 
 	// Confirm the service account exists
-	sa, err := config.clientIAM.Projects.ServiceAccounts.Get(d.Id()).Do()
+	sa, err := config.NewIamClient(userAgent).Projects.ServiceAccounts.Get(d.Id()).Do()
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("Service Account %q", d.Id()))
 	}
 
-	d.Set("email", sa.Email)
-	d.Set("unique_id", sa.UniqueId)
-	d.Set("project", sa.ProjectId)
-	d.Set("account_id", strings.Split(sa.Email, "@")[0])
-	d.Set("name", sa.Name)
-	d.Set("display_name", sa.DisplayName)
+	if err := d.Set("email", sa.Email); err != nil {
+		return fmt.Errorf("Error setting email: %s", err)
+	}
+	if err := d.Set("unique_id", sa.UniqueId); err != nil {
+		return fmt.Errorf("Error setting unique_id: %s", err)
+	}
+	if err := d.Set("project", sa.ProjectId); err != nil {
+		return fmt.Errorf("Error setting project: %s", err)
+	}
+	if err := d.Set("account_id", strings.Split(sa.Email, "@")[0]); err != nil {
+		return fmt.Errorf("Error setting account_id: %s", err)
+	}
+	if err := d.Set("name", sa.Name); err != nil {
+		return fmt.Errorf("Error setting name: %s", err)
+	}
+	if err := d.Set("display_name", sa.DisplayName); err != nil {
+		return fmt.Errorf("Error setting display_name: %s", err)
+	}
+	if err := d.Set("description", sa.Description); err != nil {
+		return fmt.Errorf("Error setting description: %s", err)
+	}
 	return nil
 }
 
 func resourceGoogleServiceAccountDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
+	userAgent, err := generateUserAgentString(d, config.userAgent)
+	if err != nil {
+		return err
+	}
 	name := d.Id()
-	_, err := config.clientIAM.Projects.ServiceAccounts.Delete(name).Do()
+	_, err = config.NewIamClient(userAgent).Projects.ServiceAccounts.Delete(name).Do()
 	if err != nil {
 		return err
 	}
@@ -146,173 +166,56 @@ func resourceGoogleServiceAccountDelete(d *schema.ResourceData, meta interface{}
 
 func resourceGoogleServiceAccountUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	var err error
-	if ok := d.HasChange("display_name"); ok {
-		sa, err := config.clientIAM.Projects.ServiceAccounts.Get(d.Id()).Do()
-		if err != nil {
-			return fmt.Errorf("Error retrieving service account %q: %s", d.Id(), err)
-		}
-		_, err = config.clientIAM.Projects.ServiceAccounts.Update(d.Id(),
-			&iam.ServiceAccount{
+	userAgent, err := generateUserAgentString(d, config.userAgent)
+	if err != nil {
+		return err
+	}
+	sa, err := config.NewIamClient(userAgent).Projects.ServiceAccounts.Get(d.Id()).Do()
+	if err != nil {
+		return fmt.Errorf("Error retrieving service account %q: %s", d.Id(), err)
+	}
+	updateMask := make([]string, 0)
+	if d.HasChange("description") {
+		updateMask = append(updateMask, "description")
+	}
+	if d.HasChange("display_name") {
+		updateMask = append(updateMask, "display_name")
+	}
+	_, err = config.NewIamClient(userAgent).Projects.ServiceAccounts.Patch(d.Id(),
+		&iam.PatchServiceAccountRequest{
+			UpdateMask: strings.Join(updateMask, ","),
+			ServiceAccount: &iam.ServiceAccount{
 				DisplayName: d.Get("display_name").(string),
+				Description: d.Get("description").(string),
 				Etag:        sa.Etag,
-			}).Do()
-		if err != nil {
-			return fmt.Errorf("Error updating service account %q: %s", d.Id(), err)
-		}
+			},
+		}).Do()
+	if err != nil {
+		return err
 	}
+	// This API is meant to be synchronous, but in practice it shows the old value for
+	// a few milliseconds after the update goes through. 5 seconds is more than enough
+	// time to ensure following reads are correct.
+	time.Sleep(time.Second * 5)
 
-	if ok := d.HasChange("policy_data"); ok {
-		// The policy string is just a marshaled cloudresourcemanager.Policy.
-		// Unmarshal it to a struct that contains the old and new policies
-		oldP, newP := d.GetChange("policy_data")
-		oldPString := oldP.(string)
-		newPString := newP.(string)
-
-		// JSON Unmarshaling would fail
-		if oldPString == "" {
-			oldPString = "{}"
-		}
-		if newPString == "" {
-			newPString = "{}"
-		}
-
-		log.Printf("[DEBUG]: Old policy: %q\nNew policy: %q", string(oldPString), string(newPString))
-
-		var oldPolicy, newPolicy iam.Policy
-		if err = json.Unmarshal([]byte(newPString), &newPolicy); err != nil {
-			return err
-		}
-		if err = json.Unmarshal([]byte(oldPString), &oldPolicy); err != nil {
-			return err
-		}
-
-		// Find any Roles and Members that were removed (i.e., those that are present
-		// in the old but absent in the new
-		oldMap := saRolesToMembersMap(oldPolicy.Bindings)
-		newMap := saRolesToMembersMap(newPolicy.Bindings)
-		deleted := make(map[string]map[string]bool)
-
-		// Get each role and its associated members in the old state
-		for role, members := range oldMap {
-			// Initialize map for role
-			if _, ok := deleted[role]; !ok {
-				deleted[role] = make(map[string]bool)
-			}
-			// The role exists in the new state
-			if _, ok := newMap[role]; ok {
-				// Check each memeber
-				for member, _ := range members {
-					// Member does not exist in new state, so it was deleted
-					if _, ok = newMap[role][member]; !ok {
-						deleted[role][member] = true
-					}
-				}
-			} else {
-				// This indicates an entire role was deleted. Mark all members
-				// for delete.
-				for member, _ := range members {
-					deleted[role][member] = true
-				}
-			}
-		}
-		log.Printf("[DEBUG] Roles and Members to be deleted: %#v", deleted)
-
-		// Retrieve existing IAM policy from project. This will be merged
-		// with the policy in the current state
-		// TODO: overwrite existing policy instead of merging it
-		p, err := getServiceAccountIamPolicy(d.Id(), config)
-		if err != nil {
-			return err
-		}
-		log.Printf("[DEBUG] Got existing bindings from service account %q: %#v", d.Id(), p.Bindings)
-
-		// Merge existing policy with policy in the current state
-		log.Printf("[DEBUG] Merging new bindings from service account %q: %#v", d.Id(), newPolicy.Bindings)
-		mergedBindings := saMergeBindings(append(p.Bindings, newPolicy.Bindings...))
-
-		// Remove any roles and members that were explicitly deleted
-		mergedBindingsMap := saRolesToMembersMap(mergedBindings)
-		for role, members := range deleted {
-			for member, _ := range members {
-				delete(mergedBindingsMap[role], member)
-			}
-		}
-
-		p.Bindings = saRolesToMembersBinding(mergedBindingsMap)
-		log.Printf("[DEBUG] Setting new policy for project: %#v", p)
-
-		dump, _ := json.MarshalIndent(p.Bindings, " ", "  ")
-		log.Printf(string(dump))
-		_, err = config.clientIAM.Projects.ServiceAccounts.SetIamPolicy(d.Id(),
-			&iam.SetIamPolicyRequest{Policy: p}).Do()
-
-		if err != nil {
-			return fmt.Errorf("Error applying IAM policy for service account %q: %s", d.Id(), err)
-		}
-	}
 	return nil
 }
 
-// Retrieve the existing IAM Policy for a service account
-func getServiceAccountIamPolicy(sa string, config *Config) (*iam.Policy, error) {
-	p, err := config.clientIAM.Projects.ServiceAccounts.GetIamPolicy(sa).Do()
+func resourceGoogleServiceAccountImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	config := meta.(*Config)
+	if err := parseImportId([]string{
+		"projects/(?P<project>[^/]+)/serviceAccounts/(?P<email>[^/]+)",
+		"(?P<project>[^/]+)/(?P<email>[^/]+)",
+		"(?P<email>[^/]+)"}, d, config); err != nil {
+		return nil, err
+	}
 
+	// Replace import id for the resource id
+	id, err := replaceVars(d, config, "projects/{{project}}/serviceAccounts/{{email}}")
 	if err != nil {
-		return nil, fmt.Errorf("Error retrieving IAM policy for service account %q: %s", sa, err)
+		return nil, fmt.Errorf("Error constructing id: %s", err)
 	}
-	return p, nil
-}
+	d.SetId(id)
 
-// Convert a map of roles->members to a list of Binding
-func saRolesToMembersBinding(m map[string]map[string]bool) []*iam.Binding {
-	bindings := make([]*iam.Binding, 0)
-	for role, members := range m {
-		b := iam.Binding{
-			Role:    role,
-			Members: make([]string, 0),
-		}
-		for m, _ := range members {
-			b.Members = append(b.Members, m)
-		}
-		bindings = append(bindings, &b)
-	}
-	return bindings
-}
-
-// Map a role to a map of members, allowing easy merging of multiple bindings.
-func saRolesToMembersMap(bindings []*iam.Binding) map[string]map[string]bool {
-	bm := make(map[string]map[string]bool)
-	// Get each binding
-	for _, b := range bindings {
-		// Initialize members map
-		if _, ok := bm[b.Role]; !ok {
-			bm[b.Role] = make(map[string]bool)
-		}
-		// Get each member (user/principal) for the binding
-		for _, m := range b.Members {
-			// Add the member
-			bm[b.Role][m] = true
-		}
-	}
-	return bm
-}
-
-// Merge multiple Bindings such that Bindings with the same Role result in
-// a single Binding with combined Members
-func saMergeBindings(bindings []*iam.Binding) []*iam.Binding {
-	bm := saRolesToMembersMap(bindings)
-	rb := make([]*iam.Binding, 0)
-
-	for role, members := range bm {
-		var b iam.Binding
-		b.Role = role
-		b.Members = make([]string, 0)
-		for m, _ := range members {
-			b.Members = append(b.Members, m)
-		}
-		rb = append(rb, &b)
-	}
-
-	return rb
+	return []*schema.ResourceData{d}, nil
 }

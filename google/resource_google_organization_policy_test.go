@@ -6,8 +6,8 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/hashicorp/terraform/helper/resource"
-	"github.com/hashicorp/terraform/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"google.golang.org/api/cloudresourcemanager/v1"
 )
 
@@ -18,23 +18,45 @@ var DENIED_ORG_POLICIES = []string{
 
 // Since each test here is acting on the same organization, run the tests serially to
 // avoid race conditions and aborted operations.
+func TestAccOrganizationPolicy(t *testing.T) {
+	testCases := map[string]func(t *testing.T){
+		"boolean":                testAccOrganizationPolicy_boolean,
+		"list_allowAll":          testAccOrganizationPolicy_list_allowAll,
+		"list_allowSome":         testAccOrganizationPolicy_list_allowSome,
+		"list_denySome":          testAccOrganizationPolicy_list_denySome,
+		"list_update":            testAccOrganizationPolicy_list_update,
+		"list_inheritFromParent": testAccOrganizationPolicy_list_inheritFromParent,
+		"restore_policy":         testAccOrganizationPolicy_restore_defaultTrue,
+	}
 
-func TestAccOrganizationPolicy_boolean(t *testing.T) {
-	org := getTestOrgFromEnv(t)
-	resource.Test(t, resource.TestCase{
+	for name, tc := range testCases {
+		// shadow the tc variable into scope so that when
+		// the loop continues, if t.Run hasn't executed tc(t)
+		// yet, we don't have a race condition
+		// see https://github.com/golang/go/wiki/CommonMistakes#using-goroutines-on-loop-iterator-variables
+		tc := tc
+		t.Run(name, func(t *testing.T) {
+			tc(t)
+		})
+	}
+}
+
+func testAccOrganizationPolicy_boolean(t *testing.T) {
+	org := getTestOrgTargetFromEnv(t)
+	vcrTest(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckGoogleOrganizationPolicyDestroy,
+		CheckDestroy: testAccCheckGoogleOrganizationPolicyDestroyProducer(t),
 		Steps: []resource.TestStep{
 			{
 				// Test creation of an enforced boolean policy
-				Config: testAccOrganizationPolicy_boolean(org, true),
-				Check:  testAccCheckGoogleOrganizationBooleanPolicy("bool", true),
+				Config: testAccOrganizationPolicyConfig_boolean(org, true),
+				Check:  testAccCheckGoogleOrganizationBooleanPolicy(t, "bool", true),
 			},
 			{
 				// Test update from enforced to not
-				Config: testAccOrganizationPolicy_boolean(org, false),
-				Check:  testAccCheckGoogleOrganizationBooleanPolicy("bool", false),
+				Config: testAccOrganizationPolicyConfig_boolean(org, false),
+				Check:  testAccCheckGoogleOrganizationBooleanPolicy(t, "bool", false),
 			},
 			{
 				Config:  " ",
@@ -42,13 +64,13 @@ func TestAccOrganizationPolicy_boolean(t *testing.T) {
 			},
 			{
 				// Test creation of a not enforced boolean policy
-				Config: testAccOrganizationPolicy_boolean(org, false),
-				Check:  testAccCheckGoogleOrganizationBooleanPolicy("bool", false),
+				Config: testAccOrganizationPolicyConfig_boolean(org, false),
+				Check:  testAccCheckGoogleOrganizationBooleanPolicy(t, "bool", false),
 			},
 			{
 				// Test update from not enforced to enforced
-				Config: testAccOrganizationPolicy_boolean(org, true),
-				Check:  testAccCheckGoogleOrganizationBooleanPolicy("bool", true),
+				Config: testAccOrganizationPolicyConfig_boolean(org, true),
+				Check:  testAccCheckGoogleOrganizationBooleanPolicy(t, "bool", true),
 			},
 			{
 				ResourceName:      "google_organization_policy.bool",
@@ -60,16 +82,16 @@ func TestAccOrganizationPolicy_boolean(t *testing.T) {
 
 }
 
-func TestAccOrganizationPolicy_list_allowAll(t *testing.T) {
-	org := getTestOrgFromEnv(t)
-	resource.Test(t, resource.TestCase{
+func testAccOrganizationPolicy_list_allowAll(t *testing.T) {
+	org := getTestOrgTargetFromEnv(t)
+	vcrTest(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckGoogleOrganizationPolicyDestroy,
+		CheckDestroy: testAccCheckGoogleOrganizationPolicyDestroyProducer(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccOrganizationPolicy_list_allowAll(org),
-				Check:  testAccCheckGoogleOrganizationListPolicyAll("list", "ALLOW"),
+				Config: testAccOrganizationPolicyConfig_list_allowAll(org),
+				Check:  testAccCheckGoogleOrganizationListPolicyAll(t, "list", "ALLOW"),
 			},
 			{
 				ResourceName:      "google_organization_policy.list",
@@ -80,17 +102,17 @@ func TestAccOrganizationPolicy_list_allowAll(t *testing.T) {
 	})
 }
 
-func TestAccOrganizationPolicy_list_allowSome(t *testing.T) {
-	org := getTestOrgFromEnv(t)
+func testAccOrganizationPolicy_list_allowSome(t *testing.T) {
+	org := getTestOrgTargetFromEnv(t)
 	project := getTestProjectFromEnv()
-	resource.Test(t, resource.TestCase{
+	vcrTest(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckGoogleOrganizationPolicyDestroy,
+		CheckDestroy: testAccCheckGoogleOrganizationPolicyDestroyProducer(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccOrganizationPolicy_list_allowSome(org, project),
-				Check:  testAccCheckGoogleOrganizationListPolicyAllowedValues("list", []string{"projects/" + project, "projects/debian-cloud"}),
+				Config: testAccOrganizationPolicyConfig_list_allowSome(org, project),
+				Check:  testAccCheckGoogleOrganizationListPolicyAllowedValues(t, "list", []string{"projects/" + project, "projects/debian-cloud"}),
 			},
 			{
 				ResourceName:      "google_organization_policy.list",
@@ -101,16 +123,16 @@ func TestAccOrganizationPolicy_list_allowSome(t *testing.T) {
 	})
 }
 
-func TestAccOrganizationPolicy_list_denySome(t *testing.T) {
-	org := getTestOrgFromEnv(t)
-	resource.Test(t, resource.TestCase{
+func testAccOrganizationPolicy_list_denySome(t *testing.T) {
+	org := getTestOrgTargetFromEnv(t)
+	vcrTest(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckGoogleOrganizationPolicyDestroy,
+		CheckDestroy: testAccCheckGoogleOrganizationPolicyDestroyProducer(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccOrganizationPolicy_list_denySome(org),
-				Check:  testAccCheckGoogleOrganizationListPolicyDeniedValues("list", DENIED_ORG_POLICIES),
+				Config: testAccOrganizationPolicyConfig_list_denySome(org),
+				Check:  testAccCheckGoogleOrganizationListPolicyDeniedValues(t, "list", DENIED_ORG_POLICIES),
 			},
 			{
 				ResourceName:      "google_organization_policy.list",
@@ -121,20 +143,20 @@ func TestAccOrganizationPolicy_list_denySome(t *testing.T) {
 	})
 }
 
-func TestAccOrganizationPolicy_list_update(t *testing.T) {
-	org := getTestOrgFromEnv(t)
-	resource.Test(t, resource.TestCase{
+func testAccOrganizationPolicy_list_update(t *testing.T) {
+	org := getTestOrgTargetFromEnv(t)
+	vcrTest(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckGoogleOrganizationPolicyDestroy,
+		CheckDestroy: testAccCheckGoogleOrganizationPolicyDestroyProducer(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccOrganizationPolicy_list_allowAll(org),
-				Check:  testAccCheckGoogleOrganizationListPolicyAll("list", "ALLOW"),
+				Config: testAccOrganizationPolicyConfig_list_allowAll(org),
+				Check:  testAccCheckGoogleOrganizationListPolicyAll(t, "list", "ALLOW"),
 			},
 			{
-				Config: testAccOrganizationPolicy_list_denySome(org),
-				Check:  testAccCheckGoogleOrganizationListPolicyDeniedValues("list", DENIED_ORG_POLICIES),
+				Config: testAccOrganizationPolicyConfig_list_denySome(org),
+				Check:  testAccCheckGoogleOrganizationListPolicyDeniedValues(t, "list", DENIED_ORG_POLICIES),
 			},
 			{
 				ResourceName:      "google_organization_policy.list",
@@ -145,34 +167,75 @@ func TestAccOrganizationPolicy_list_update(t *testing.T) {
 	})
 }
 
-func testAccCheckGoogleOrganizationPolicyDestroy(s *terraform.State) error {
-	config := testAccProvider.Meta().(*Config)
-
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "google_organization_policy" {
-			continue
-		}
-
-		org := "organizations/" + rs.Primary.Attributes["org_id"]
-		constraint := canonicalOrgPolicyConstraint(rs.Primary.Attributes["constraint"])
-		policy, err := config.clientResourceManager.Organizations.GetOrgPolicy(org, &cloudresourcemanager.GetOrgPolicyRequest{
-			Constraint: constraint,
-		}).Do()
-
-		if err != nil {
-			return err
-		}
-
-		if policy.ListPolicy != nil || policy.BooleanPolicy != nil {
-			return fmt.Errorf("Org policy with constraint '%s' hasn't been cleared", constraint)
-		}
-	}
-	return nil
+func testAccOrganizationPolicy_list_inheritFromParent(t *testing.T) {
+	org := getTestOrgTargetFromEnv(t)
+	vcrTest(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckGoogleOrganizationPolicyDestroyProducer(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccOrganizationPolicyConfig_list_inheritFromParent(org),
+			},
+			{
+				ResourceName:      "google_organization_policy.list",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
 }
 
-func testAccCheckGoogleOrganizationBooleanPolicy(n string, enforced bool) resource.TestCheckFunc {
+func testAccOrganizationPolicy_restore_defaultTrue(t *testing.T) {
+	org := getTestOrgTargetFromEnv(t)
+	vcrTest(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckGoogleOrganizationPolicyDestroyProducer(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccOrganizationPolicyConfig_restore_defaultTrue(org),
+				Check:  testAccCheckGoogleOrganizationRestoreDefaultTrue(t, "restore", &cloudresourcemanager.RestoreDefault{}),
+			},
+			{
+				ResourceName:      "google_organization_policy.restore",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func testAccCheckGoogleOrganizationPolicyDestroyProducer(t *testing.T) func(s *terraform.State) error {
 	return func(s *terraform.State) error {
-		policy, err := getGoogleOrganizationPolicyTestResource(s, n)
+		config := googleProviderConfig(t)
+
+		for _, rs := range s.RootModule().Resources {
+			if rs.Type != "google_organization_policy" {
+				continue
+			}
+
+			org := "organizations/" + rs.Primary.Attributes["org_id"]
+			constraint := canonicalOrgPolicyConstraint(rs.Primary.Attributes["constraint"])
+			policy, err := config.NewResourceManagerClient(config.userAgent).Organizations.GetOrgPolicy(org, &cloudresourcemanager.GetOrgPolicyRequest{
+				Constraint: constraint,
+			}).Do()
+
+			if err != nil {
+				return err
+			}
+
+			if policy.ListPolicy != nil || policy.BooleanPolicy != nil {
+				return fmt.Errorf("Org policy with constraint '%s' hasn't been cleared", constraint)
+			}
+		}
+		return nil
+	}
+}
+
+func testAccCheckGoogleOrganizationBooleanPolicy(t *testing.T, n string, enforced bool) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		policy, err := getGoogleOrganizationPolicyTestResource(t, s, n)
 		if err != nil {
 			return err
 		}
@@ -185,9 +248,9 @@ func testAccCheckGoogleOrganizationBooleanPolicy(n string, enforced bool) resour
 	}
 }
 
-func testAccCheckGoogleOrganizationListPolicyAll(n, policyType string) resource.TestCheckFunc {
+func testAccCheckGoogleOrganizationListPolicyAll(t *testing.T, n, policyType string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		policy, err := getGoogleOrganizationPolicyTestResource(s, n)
+		policy, err := getGoogleOrganizationPolicyTestResource(t, s, n)
 		if err != nil {
 			return err
 		}
@@ -204,9 +267,9 @@ func testAccCheckGoogleOrganizationListPolicyAll(n, policyType string) resource.
 	}
 }
 
-func testAccCheckGoogleOrganizationListPolicyAllowedValues(n string, values []string) resource.TestCheckFunc {
+func testAccCheckGoogleOrganizationListPolicyAllowedValues(t *testing.T, n string, values []string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		policy, err := getGoogleOrganizationPolicyTestResource(s, n)
+		policy, err := getGoogleOrganizationPolicyTestResource(t, s, n)
 		if err != nil {
 			return err
 		}
@@ -221,9 +284,9 @@ func testAccCheckGoogleOrganizationListPolicyAllowedValues(n string, values []st
 	}
 }
 
-func testAccCheckGoogleOrganizationListPolicyDeniedValues(n string, values []string) resource.TestCheckFunc {
+func testAccCheckGoogleOrganizationListPolicyDeniedValues(t *testing.T, n string, values []string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		policy, err := getGoogleOrganizationPolicyTestResource(s, n)
+		policy, err := getGoogleOrganizationPolicyTestResource(t, s, n)
 		if err != nil {
 			return err
 		}
@@ -238,7 +301,23 @@ func testAccCheckGoogleOrganizationListPolicyDeniedValues(n string, values []str
 	}
 }
 
-func getGoogleOrganizationPolicyTestResource(s *terraform.State, n string) (*cloudresourcemanager.OrgPolicy, error) {
+func testAccCheckGoogleOrganizationRestoreDefaultTrue(t *testing.T, n string, policyDefault *cloudresourcemanager.RestoreDefault) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+
+		policy, err := getGoogleOrganizationPolicyTestResource(t, s, n)
+		if err != nil {
+			return err
+		}
+
+		if !reflect.DeepEqual(policy.RestoreDefault, policyDefault) {
+			return fmt.Errorf("Expected the restore default '%s', instead denied, %s", policyDefault, policy.RestoreDefault)
+		}
+
+		return nil
+	}
+}
+
+func getGoogleOrganizationPolicyTestResource(t *testing.T, s *terraform.State, n string) (*cloudresourcemanager.OrgPolicy, error) {
 	rn := "google_organization_policy." + n
 	rs, ok := s.RootModule().Resources[rn]
 	if !ok {
@@ -249,73 +328,105 @@ func getGoogleOrganizationPolicyTestResource(s *terraform.State, n string) (*clo
 		return nil, fmt.Errorf("No ID is set")
 	}
 
-	config := testAccProvider.Meta().(*Config)
+	config := googleProviderConfig(t)
 
-	return config.clientResourceManager.Organizations.GetOrgPolicy("organizations/"+rs.Primary.Attributes["org_id"], &cloudresourcemanager.GetOrgPolicyRequest{
+	return config.NewResourceManagerClient(config.userAgent).Organizations.GetOrgPolicy("organizations/"+rs.Primary.Attributes["org_id"], &cloudresourcemanager.GetOrgPolicyRequest{
 		Constraint: rs.Primary.Attributes["constraint"],
 	}).Do()
 }
 
-func testAccOrganizationPolicy_boolean(org string, enforced bool) string {
+func testAccOrganizationPolicyConfig_boolean(org string, enforced bool) string {
 	return fmt.Sprintf(`
 resource "google_organization_policy" "bool" {
-	org_id = "%s"
-	constraint = "constraints/compute.disableSerialPortAccess"
+  org_id     = "%s"
+  constraint = "constraints/compute.disableSerialPortAccess"
 
-	boolean_policy {
-		enforced = %t
-	}
+  boolean_policy {
+    enforced = %t
+  }
 }
 `, org, enforced)
 }
 
-func testAccOrganizationPolicy_list_allowAll(org string) string {
+func testAccOrganizationPolicyConfig_list_allowAll(org string) string {
 	return fmt.Sprintf(`
 resource "google_organization_policy" "list" {
-	org_id = "%s"
-	constraint = "constraints/serviceuser.services"
+  org_id     = "%s"
+  constraint = "constraints/serviceuser.services"
 
-	list_policy {
-		allow {
-			all = true
-		}
-	}
+  list_policy {
+    allow {
+      all = true
+    }
+  }
 }
 `, org)
 }
 
-func testAccOrganizationPolicy_list_allowSome(org, project string) string {
+func testAccOrganizationPolicyConfig_list_allowSome(org, project string) string {
 	return fmt.Sprintf(`
 resource "google_organization_policy" "list" {
-	org_id = "%s"
-	constraint = "constraints/compute.trustedImageProjects"
+  org_id     = "%s"
+  constraint = "constraints/compute.trustedImageProjects"
 
-	list_policy {
-		allow {
-			values = [
-				"projects/%s",
-				"projects/debian-cloud"
-			]
-		}
+  list_policy {
+    allow {
+      values = [
+        "projects/%s",
+        "projects/debian-cloud",
+      ]
+    }
   }
 }
 `, org, project)
 }
 
-func testAccOrganizationPolicy_list_denySome(org string) string {
+func testAccOrganizationPolicyConfig_list_denySome(org string) string {
 	return fmt.Sprintf(`
 resource "google_organization_policy" "list" {
-	org_id = "%s"
-	constraint = "serviceuser.services"
+  org_id     = "%s"
+  constraint = "serviceuser.services"
 
-  	list_policy {
-		deny {
-			values = [
-				"doubleclicksearch.googleapis.com",
-				"replicapoolupdater.googleapis.com",
-			]
-		}
-	}
+  list_policy {
+    deny {
+      values = [
+        "doubleclicksearch.googleapis.com",
+        "replicapoolupdater.googleapis.com",
+      ]
+    }
+  }
+}
+`, org)
+}
+
+func testAccOrganizationPolicyConfig_list_inheritFromParent(org string) string {
+	return fmt.Sprintf(`
+resource "google_organization_policy" "list" {
+  org_id     = "%s"
+  constraint = "serviceuser.services"
+
+  list_policy {
+    deny {
+      values = [
+        "doubleclicksearch.googleapis.com",
+        "replicapoolupdater.googleapis.com",
+      ]
+    }
+    inherit_from_parent = true
+  }
+}
+`, org)
+}
+
+func testAccOrganizationPolicyConfig_restore_defaultTrue(org string) string {
+	return fmt.Sprintf(`
+resource "google_organization_policy" "restore" {
+  org_id     = "%s"
+  constraint = "serviceuser.services"
+
+  restore_policy {
+    default = true
+  }
 }
 `, org)
 }

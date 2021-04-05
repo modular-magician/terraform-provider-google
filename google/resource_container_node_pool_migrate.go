@@ -2,7 +2,7 @@ package google
 
 import (
 	"fmt"
-	"github.com/hashicorp/terraform/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"log"
 )
 

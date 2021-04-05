@@ -1,4 +1,5 @@
 ---
+subcategory: "Compute Engine"
 layout: "google"
 page_title: "Google: google_compute_target_pool"
 sidebar_current: "docs-google-compute-target-pool"
@@ -27,7 +28,7 @@ resource "google_compute_target_pool" "default" {
   ]
 
   health_checks = [
-    "${google_compute_http_health_check.default.name}",
+    google_compute_http_health_check.default.name,
   ]
 }
 
@@ -80,12 +81,26 @@ The following arguments are supported:
 In addition to the arguments listed above, the following computed attributes are
 exported:
 
+* `id` - an identifier for the resource with format `projects/{{project}}/regions/{{region}}/targetPools/{{name}}`
+
 * `self_link` - The URI of the created resource.
+
+## Timeouts
+
+This resource provides the following
+[Timeouts](/docs/configuration/resources.html#timeouts) configuration options:
+
+- `create` - Default is 4 minutes.
+- `update` - Default is 4 minutes.
+- `delete` - Default is 4 minutes.
 
 ## Import
 
-Target pools can be imported using the `name`, e.g.
+Target pools can be imported using any of the following formats:
 
 ```
-$ terraform import google_compute_target_pool.default instance-pool
+$ terraform import google_compute_target_pool.default projects/{{project}}/regions/{{region}}/targetPools/{{name}}
+$ terraform import google_compute_target_pool.default {{project}}/{{region}}/{{name}}
+$ terraform import google_compute_target_pool.default {{region}}/{{name}}
+$ terraform import google_compute_target_pool.default {{name}}
 ```

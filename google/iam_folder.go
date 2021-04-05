@@ -5,10 +5,9 @@ import (
 	"strings"
 
 	"github.com/hashicorp/errwrap"
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"google.golang.org/api/cloudresourcemanager/v1"
-	resourceManagerV2Beta1 "google.golang.org/api/cloudresourcemanager/v2beta1"
-	"google.golang.org/api/googleapi"
+	resourceManagerV2 "google.golang.org/api/cloudresourcemanager/v2"
 )
 
 var IamFolderSchema = map[string]*schema.Schema{
@@ -21,37 +20,55 @@ var IamFolderSchema = map[string]*schema.Schema{
 
 type FolderIamUpdater struct {
 	folderId string
+	d        TerraformResourceData
 	Config   *Config
 }
 
-func NewFolderIamUpdater(d *schema.ResourceData, config *Config) (ResourceIamUpdater, error) {
+func NewFolderIamUpdater(d TerraformResourceData, config *Config) (ResourceIamUpdater, error) {
 	return &FolderIamUpdater{
 		folderId: canonicalFolderId(d.Get("folder").(string)),
+		d:        d,
 		Config:   config,
 	}, nil
 }
 
 func FolderIdParseFunc(d *schema.ResourceData, _ *Config) error {
-	d.Set("folder", d.Id())
+	if !strings.HasPrefix(d.Id(), "folders/") {
+		d.SetId(fmt.Sprintf("folders/%s", d.Id()))
+	}
+	if err := d.Set("folder", d.Id()); err != nil {
+		return fmt.Errorf("Error setting folder: %s", err)
+	}
 	return nil
 }
 
 func (u *FolderIamUpdater) GetResourceIamPolicy() (*cloudresourcemanager.Policy, error) {
-	return getFolderIamPolicyByFolderName(u.folderId, u.Config)
+	userAgent, err := generateUserAgentString(u.d, u.Config.userAgent)
+	if err != nil {
+		return nil, err
+	}
+
+	return getFolderIamPolicyByFolderName(u.folderId, userAgent, u.Config)
 }
 
 func (u *FolderIamUpdater) SetResourceIamPolicy(policy *cloudresourcemanager.Policy) error {
-	v2BetaPolicy, err := v1PolicyToV2Beta(policy)
+	v2Policy, err := v1PolicyToV2(policy)
 	if err != nil {
 		return err
 	}
 
-	_, err = u.Config.clientResourceManagerV2Beta1.Folders.SetIamPolicy(u.folderId, &resourceManagerV2Beta1.SetIamPolicyRequest{
-		Policy: v2BetaPolicy,
+	userAgent, err := generateUserAgentString(u.d, u.Config.userAgent)
+	if err != nil {
+		return err
+	}
+
+	_, err = u.Config.NewResourceManagerV2Client(userAgent).Folders.SetIamPolicy(u.folderId, &resourceManagerV2.SetIamPolicyRequest{
+		Policy:     v2Policy,
+		UpdateMask: "bindings,etag,auditConfigs",
 	}).Do()
 
 	if err != nil {
-		return errwrap.Wrap(fmt.Errorf("Error setting IAM policy for %s.", u.DescribeResource()), err)
+		return errwrap.Wrapf(fmt.Sprintf("Error setting IAM policy for %s: {{err}}", u.DescribeResource()), err)
 	}
 
 	return nil
@@ -77,60 +94,41 @@ func canonicalFolderId(folder string) string {
 	return "folders/" + folder
 }
 
-// v1 and v2beta policy are identical
-func v1PolicyToV2Beta(in *cloudresourcemanager.Policy) (*resourceManagerV2Beta1.Policy, error) {
-	out := &resourceManagerV2Beta1.Policy{}
+// v1 and v2 policy are identical
+func v1PolicyToV2(in *cloudresourcemanager.Policy) (*resourceManagerV2.Policy, error) {
+	out := &resourceManagerV2.Policy{}
 	err := Convert(in, out)
 	if err != nil {
-		return nil, fmt.Errorf("Cannot convert a v1 policy to a v2beta policy: %s", err)
+		return nil, errwrap.Wrapf("Cannot convert a v1 policy to a v2 policy: {{err}}", err)
 	}
 	return out, nil
 }
 
-func v2BetaPolicyToV1(in *resourceManagerV2Beta1.Policy) (*cloudresourcemanager.Policy, error) {
+func v2PolicyToV1(in *resourceManagerV2.Policy) (*cloudresourcemanager.Policy, error) {
 	out := &cloudresourcemanager.Policy{}
 	err := Convert(in, out)
 	if err != nil {
-		return nil, fmt.Errorf("Cannot convert a v2beta policy to a v1 policy: %s", err)
+		return nil, errwrap.Wrapf("Cannot convert a v2 policy to a v1 policy: {{err}}", err)
 	}
 	return out, nil
 }
 
 // Retrieve the existing IAM Policy for a folder
-func getFolderIamPolicyByFolderName(folderName string, config *Config) (*cloudresourcemanager.Policy, error) {
-	p, err := config.clientResourceManagerV2Beta1.Folders.GetIamPolicy(folderName,
-		&resourceManagerV2Beta1.GetIamPolicyRequest{}).Do()
-
+func getFolderIamPolicyByFolderName(folderName, userAgent string, config *Config) (*cloudresourcemanager.Policy, error) {
+	p, err := config.NewResourceManagerV2Client(userAgent).Folders.GetIamPolicy(folderName,
+		&resourceManagerV2.GetIamPolicyRequest{
+			Options: &resourceManagerV2.GetPolicyOptions{
+				RequestedPolicyVersion: iamPolicyVersion,
+			},
+		}).Do()
 	if err != nil {
-		return nil, fmt.Errorf("Error retrieving IAM policy for folder %q: %s", folderName, err)
+		return nil, errwrap.Wrapf(fmt.Sprintf("Error retrieving IAM policy for folder %q: {{err}}", folderName), err)
 	}
 
-	v1Policy, err := v2BetaPolicyToV1(p)
+	v1Policy, err := v2PolicyToV1(p)
 	if err != nil {
 		return nil, err
 	}
 
 	return v1Policy, nil
-}
-
-func getFolderIamPolicyByParentAndDisplayName(parent, displayName string, config *Config) (*cloudresourcemanager.Policy, error) {
-	queryString := fmt.Sprintf("lifecycleState=ACTIVE AND parent=%s AND displayName=%s", parent, displayName)
-	searchRequest := &resourceManagerV2Beta1.SearchFoldersRequest{
-		Query: queryString,
-	}
-	searchResponse, err := config.clientResourceManagerV2Beta1.Folders.Search(searchRequest).Do()
-	if err != nil {
-		if gerr, ok := err.(*googleapi.Error); ok && gerr.Code == 404 {
-			return nil, fmt.Errorf("Folder Not Found: %s,%s", parent, displayName)
-		}
-
-		return nil, fmt.Errorf("Error reading folders: %s", err)
-	}
-
-	folders := searchResponse.Folders
-	if len(folders) != 1 {
-		return nil, fmt.Errorf("More than one folder found")
-	}
-
-	return getFolderIamPolicyByFolderName(folders[0].Name, config)
 }

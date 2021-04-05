@@ -1,50 +1,90 @@
 package google
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"strconv"
 	"strings"
 
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"google.golang.org/api/storage/v1"
 )
 
 func resourceStorageBucketAcl() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceStorageBucketAclCreate,
-		Read:   resourceStorageBucketAclRead,
-		Update: resourceStorageBucketAclUpdate,
-		Delete: resourceStorageBucketAclDelete,
+		Create:        resourceStorageBucketAclCreate,
+		Read:          resourceStorageBucketAclRead,
+		Update:        resourceStorageBucketAclUpdate,
+		Delete:        resourceStorageBucketAclDelete,
+		CustomizeDiff: resourceStorageRoleEntityCustomizeDiff,
 
 		Schema: map[string]*schema.Schema{
-			"bucket": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+			"bucket": {
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: `The name of the bucket it applies to.`,
 			},
 
-			"default_acl": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
+			"default_acl": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: `Configure this ACL to be the default ACL.`,
 			},
 
-			"predefined_acl": &schema.Schema{
+			"predefined_acl": {
 				Type:          schema.TypeString,
 				Optional:      true,
 				ForceNew:      true,
 				ConflictsWith: []string{"role_entity"},
+				Description:   `The canned GCS ACL to apply. Must be set if role_entity is not.`,
 			},
 
-			"role_entity": &schema.Schema{
+			"role_entity": {
 				Type:          schema.TypeList,
 				Optional:      true,
+				Computed:      true,
 				Elem:          &schema.Schema{Type: schema.TypeString},
 				ConflictsWith: []string{"predefined_acl"},
+				Description:   `List of role/entity pairs in the form ROLE:entity. See GCS Bucket ACL documentation  for more details. Must be set if predefined_acl is not.`,
 			},
 		},
+		UseJSONNumber: true,
 	}
+}
+
+func resourceStorageRoleEntityCustomizeDiff(_ context.Context, diff *schema.ResourceDiff, meta interface{}) error {
+	keys := diff.GetChangedKeysPrefix("role_entity")
+	if len(keys) < 1 {
+		return nil
+	}
+	count := diff.Get("role_entity.#").(int)
+	if count < 1 {
+		return nil
+	}
+	state := map[string]struct{}{}
+	conf := map[string]struct{}{}
+	for i := 0; i < count; i++ {
+		old, new := diff.GetChange(fmt.Sprintf("role_entity.%d", i))
+		state[old.(string)] = struct{}{}
+		conf[new.(string)] = struct{}{}
+	}
+	if len(state) != len(conf) {
+		return nil
+	}
+	for k := range state {
+		if _, ok := conf[k]; !ok {
+			// project-owners- is explicitly stripped from the roles that this
+			// resource will delete
+			if strings.Contains(k, "OWNER:project-owners-") {
+				continue
+			}
+			return nil
+		}
+	}
+	return diff.Clear("role_entity")
 }
 
 type RoleEntity struct {
@@ -68,6 +108,10 @@ func getRoleEntityPair(role_entity string) (*RoleEntity, error) {
 
 func resourceStorageBucketAclCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
+	userAgent, err := generateUserAgentString(d, config.userAgent)
+	if err != nil {
+		return err
+	}
 
 	bucket := d.Get("bucket").(string)
 	predefined_acl := ""
@@ -86,14 +130,21 @@ func resourceStorageBucketAclCreate(d *schema.ResourceData, meta interface{}) er
 		default_acl = v.(string)
 	}
 
+	lockName, err := replaceVars(d, config, "storage/buckets/{{bucket}}")
+	if err != nil {
+		return err
+	}
+	mutexKV.Lock(lockName)
+	defer mutexKV.Unlock(lockName)
+
 	if len(predefined_acl) > 0 {
-		res, err := config.clientStorage.Buckets.Get(bucket).Do()
+		res, err := config.NewStorageClient(userAgent).Buckets.Get(bucket).Do()
 
 		if err != nil {
 			return fmt.Errorf("Error reading bucket %s: %v", bucket, err)
 		}
 
-		res, err = config.clientStorage.Buckets.Update(bucket,
+		_, err = config.NewStorageClient(userAgent).Buckets.Update(bucket,
 			res).PredefinedAcl(predefined_acl).Do()
 
 		if err != nil {
@@ -101,8 +152,9 @@ func resourceStorageBucketAclCreate(d *schema.ResourceData, meta interface{}) er
 		}
 
 	}
+
 	if len(role_entity) > 0 {
-		current, err := config.clientStorage.BucketAccessControls.List(bucket).Do()
+		current, err := config.NewStorageClient(userAgent).BucketAccessControls.List(bucket).Do()
 		if err != nil {
 			return fmt.Errorf("Error retrieving current ACLs: %s", err)
 		}
@@ -129,7 +181,7 @@ func resourceStorageBucketAclCreate(d *schema.ResourceData, meta interface{}) er
 
 			log.Printf("[DEBUG]: storing re %s-%s", pair.Role, pair.Entity)
 
-			_, err = config.clientStorage.BucketAccessControls.Insert(bucket, bucketAccessControl).Do()
+			_, err = config.NewStorageClient(userAgent).BucketAccessControls.Insert(bucket, bucketAccessControl).Do()
 
 			if err != nil {
 				return fmt.Errorf("Error updating ACL for bucket %s: %v", bucket, err)
@@ -139,13 +191,13 @@ func resourceStorageBucketAclCreate(d *schema.ResourceData, meta interface{}) er
 	}
 
 	if len(default_acl) > 0 {
-		res, err := config.clientStorage.Buckets.Get(bucket).Do()
+		res, err := config.NewStorageClient(userAgent).Buckets.Get(bucket).Do()
 
 		if err != nil {
 			return fmt.Errorf("Error reading bucket %s: %v", bucket, err)
 		}
 
-		res, err = config.clientStorage.Buckets.Update(bucket,
+		_, err = config.NewStorageClient(userAgent).Buckets.Update(bucket,
 			res).PredefinedDefaultObjectAcl(default_acl).Do()
 
 		if err != nil {
@@ -160,6 +212,10 @@ func resourceStorageBucketAclCreate(d *schema.ResourceData, meta interface{}) er
 
 func resourceStorageBucketAclRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
+	userAgent, err := generateUserAgentString(d, config.userAgent)
+	if err != nil {
+		return err
+	}
 
 	bucket := d.Get("bucket").(string)
 
@@ -170,7 +226,7 @@ func resourceStorageBucketAclRead(d *schema.ResourceData, meta interface{}) erro
 	// This is, needless to say, a bad state of affairs and
 	// should be fixed.
 	if _, ok := d.GetOk("role_entity"); ok {
-		res, err := config.clientStorage.BucketAccessControls.List(bucket).Do()
+		res, err := config.NewStorageClient(userAgent).BucketAccessControls.List(bucket).Do()
 
 		if err != nil {
 			return handleNotFoundError(err, d, fmt.Sprintf("Storage Bucket ACL for bucket %q", d.Get("bucket").(string)))
@@ -180,7 +236,18 @@ func resourceStorageBucketAclRead(d *schema.ResourceData, meta interface{}) erro
 			entities = append(entities, item.Role+":"+item.Entity)
 		}
 
-		d.Set("role_entity", entities)
+		if err := d.Set("role_entity", entities); err != nil {
+			return fmt.Errorf("Error setting role_entity: %s", err)
+		}
+	} else {
+		// if we don't set `role_entity` to nil (effectively setting it
+		// to empty in Terraform state), because it's computed now,
+		// Terraform will think it's missing from state, is supposed
+		// to be there, and throw up a diff for role_entity.#. So it
+		// must always be set in state.
+		if err := d.Set("role_entity", nil); err != nil {
+			return fmt.Errorf("Error setting role_entity: %s", err)
+		}
 	}
 
 	return nil
@@ -188,11 +255,22 @@ func resourceStorageBucketAclRead(d *schema.ResourceData, meta interface{}) erro
 
 func resourceStorageBucketAclUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
+	userAgent, err := generateUserAgentString(d, config.userAgent)
+	if err != nil {
+		return err
+	}
 
 	bucket := d.Get("bucket").(string)
 
+	lockName, err := replaceVars(d, config, "storage/buckets/{{bucket}}")
+	if err != nil {
+		return err
+	}
+	mutexKV.Lock(lockName)
+	defer mutexKV.Unlock(lockName)
+
 	if d.HasChange("role_entity") {
-		bkt, err := config.clientStorage.Buckets.Get(bucket).Do()
+		bkt, err := config.NewStorageClient(userAgent).Buckets.Get(bucket).Do()
 		if err != nil {
 			return fmt.Errorf("Error reading bucket %q: %v", bucket, err)
 		}
@@ -223,7 +301,7 @@ func resourceStorageBucketAclUpdate(d *schema.ResourceData, meta interface{}) er
 
 			// If the old state is missing this entity, it needs to be inserted
 			if _, ok := old_re_map[pair.Entity]; !ok {
-				_, err = config.clientStorage.BucketAccessControls.Insert(
+				_, err = config.NewStorageClient(userAgent).BucketAccessControls.Insert(
 					bucket, bucketAccessControl).Do()
 			}
 
@@ -237,11 +315,11 @@ func resourceStorageBucketAclUpdate(d *schema.ResourceData, meta interface{}) er
 
 		for entity, role := range old_re_map {
 			if entity == fmt.Sprintf("project-owners-%s", project) && role == "OWNER" {
-				log.Printf("Skipping %s-%s; not deleting owner ACL.", role, entity)
+				log.Printf("[WARN]: Skipping %s-%s; not deleting owner ACL.", role, entity)
 				continue
 			}
 			log.Printf("[DEBUG]: removing entity %s", entity)
-			err := config.clientStorage.BucketAccessControls.Delete(bucket, entity).Do()
+			err := config.NewStorageClient(userAgent).BucketAccessControls.Delete(bucket, entity).Do()
 
 			if err != nil {
 				return fmt.Errorf("Error updating ACL for bucket %s: %v", bucket, err)
@@ -254,13 +332,13 @@ func resourceStorageBucketAclUpdate(d *schema.ResourceData, meta interface{}) er
 	if d.HasChange("default_acl") {
 		default_acl := d.Get("default_acl").(string)
 
-		res, err := config.clientStorage.Buckets.Get(bucket).Do()
+		res, err := config.NewStorageClient(userAgent).Buckets.Get(bucket).Do()
 
 		if err != nil {
 			return fmt.Errorf("Error reading bucket %s: %v", bucket, err)
 		}
 
-		res, err = config.clientStorage.Buckets.Update(bucket,
+		_, err = config.NewStorageClient(userAgent).Buckets.Update(bucket,
 			res).PredefinedDefaultObjectAcl(default_acl).Do()
 
 		if err != nil {
@@ -275,10 +353,21 @@ func resourceStorageBucketAclUpdate(d *schema.ResourceData, meta interface{}) er
 
 func resourceStorageBucketAclDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
+	userAgent, err := generateUserAgentString(d, config.userAgent)
+	if err != nil {
+		return err
+	}
 
 	bucket := d.Get("bucket").(string)
 
-	bkt, err := config.clientStorage.Buckets.Get(bucket).Do()
+	lockName, err := replaceVars(d, config, "storage/buckets/{{bucket}}")
+	if err != nil {
+		return err
+	}
+	mutexKV.Lock(lockName)
+	defer mutexKV.Unlock(lockName)
+
+	bkt, err := config.NewStorageClient(userAgent).Buckets.Get(bucket).Do()
 	if err != nil {
 		return fmt.Errorf("Error retrieving bucket %q: %v", bucket, err)
 	}
@@ -292,13 +381,13 @@ func resourceStorageBucketAclDelete(d *schema.ResourceData, meta interface{}) er
 		}
 
 		if res.Entity == fmt.Sprintf("project-owners-%s", project) && res.Role == "OWNER" {
-			log.Printf("Skipping %s-%s; not deleting owner ACL.", res.Role, res.Entity)
+			log.Printf("[WARN]: Skipping %s-%s; not deleting owner ACL.", res.Role, res.Entity)
 			continue
 		}
 
 		log.Printf("[DEBUG]: removing entity %s", res.Entity)
 
-		err = config.clientStorage.BucketAccessControls.Delete(bucket, res.Entity).Do()
+		err = config.NewStorageClient(userAgent).BucketAccessControls.Delete(bucket, res.Entity).Do()
 
 		if err != nil {
 			return fmt.Errorf("Error deleting entity %s ACL: %s", res.Entity, err)

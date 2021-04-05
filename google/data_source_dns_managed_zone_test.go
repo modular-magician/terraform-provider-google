@@ -2,71 +2,47 @@ package google
 
 import (
 	"fmt"
-	"github.com/hashicorp/terraform/helper/acctest"
-	"github.com/hashicorp/terraform/helper/resource"
-	"github.com/hashicorp/terraform/terraform"
 	"testing"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
 func TestAccDataSourceDnsManagedZone_basic(t *testing.T) {
 	t.Parallel()
 
-	resource.Test(t, resource.TestCase{
+	vcrTest(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckDnsManagedZoneDestroy,
+		CheckDestroy: testAccCheckDNSManagedZoneDestroyProducer(t),
 		Steps: []resource.TestStep{
-			resource.TestStep{
-				Config: testAccDataSourceDnsManagedZone_basic(),
-				Check:  testAccDataSourceDnsManagedZoneCheck("data.google_dns_managed_zone.qa", "google_dns_managed_zone.foo"),
+			{
+				Config: testAccDataSourceDnsManagedZone_basic(randString(t, 10)),
+				Check: checkDataSourceStateMatchesResourceStateWithIgnores(
+					"data.google_dns_managed_zone.qa",
+					"google_dns_managed_zone.foo",
+					map[string]struct{}{
+						"dnssec_config.#":             {},
+						"private_visibility_config.#": {},
+						"peering_config.#":            {},
+						"forwarding_config.#":         {},
+						"force_destroy":               {},
+					},
+				),
 			},
 		},
 	})
 }
 
-func testAccDataSourceDnsManagedZoneCheck(dsName, rsName string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		ds, ok := s.RootModule().Resources[rsName]
-		if !ok {
-			return fmt.Errorf("can't find resource called %s in state", rsName)
-		}
-
-		rs, ok := s.RootModule().Resources[dsName]
-		if !ok {
-			return fmt.Errorf("can't find data source called %s in state", dsName)
-		}
-
-		dsAttr := ds.Primary.Attributes
-		rsAttr := rs.Primary.Attributes
-
-		attrsToTest := []string{
-			"id",
-			"name",
-			"description",
-			"dns_name",
-			"name_servers",
-		}
-
-		for _, attrToTest := range attrsToTest {
-			if dsAttr[attrToTest] != rsAttr[attrToTest] {
-				return fmt.Errorf("%s is %s; want %s", attrToTest, dsAttr[attrToTest], rsAttr[attrToTest])
-			}
-		}
-
-		return nil
-	}
-}
-
-func testAccDataSourceDnsManagedZone_basic() string {
+func testAccDataSourceDnsManagedZone_basic(managedZoneName string) string {
 	return fmt.Sprintf(`
 resource "google_dns_managed_zone" "foo" {
-	name		= "qa-zone-%s"
-	dns_name	= "qa.test.com."
-	description	= "QA DNS zone"
+  name        = "qa-zone-%s"
+  dns_name    = "qa.tf-test.club."
+  description = "QA DNS zone"
 }
 
 data "google_dns_managed_zone" "qa" {
-	name	= "${google_dns_managed_zone.foo.name}"
+  name = google_dns_managed_zone.foo.name
 }
-`, acctest.RandString(10))
+`, managedZoneName)
 }

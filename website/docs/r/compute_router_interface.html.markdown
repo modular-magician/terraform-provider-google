@@ -1,4 +1,5 @@
 ---
+subcategory: "Compute Engine"
 layout: "google"
 page_title: "Google: google_compute_router_interface"
 sidebar_current: "docs-google-compute-router-interface"
@@ -35,13 +36,23 @@ The following arguments are supported:
 * `router` - (Required) The name of the router this interface will be attached to.
     Changing this forces a new interface to be created.
 
-* `vpn_tunnel` - (Required) The name or resource link to the VPN tunnel this
-    interface will be linked to. Changing this forces a new interface to be created.
+In addition to the above required fields, a router interface must have specified
+either `ip_range` or exactly one of `vpn_tunnel` or `interconnect_attachment`,
+or both.
 
 - - -
 
 * `ip_range` - (Optional) IP address and range of the interface. The IP range must be
     in the RFC3927 link-local IP space. Changing this forces a new interface to be created.
+
+* `vpn_tunnel` - (Optional) The name or resource link to the VPN tunnel this
+    interface will be linked to. Changing this forces a new interface to be created. Only
+    one of `vpn_tunnel` and `interconnect_attachment` can be specified.
+
+* `interconnect_attachment` - (Optional) The name or resource link to the
+  VLAN interconnect for this interface. Changing this forces a new interface to
+  be created. Only one of `vpn_tunnel` and `interconnect_attachment` can be
+  specified.
 
 * `project` - (Optional) The ID of the project in which this interface's router belongs. If it
     is not provided, the provider project is used. Changing this forces a new interface to be created.
@@ -52,7 +63,17 @@ The following arguments are supported:
 
 ## Attributes Reference
 
-Only the arguments listed above are exposed as attributes.
+In addition to the arguments listed above, the following computed attributes are exported:
+
+* `id` - an identifier for the resource with format `{{region}}/{{router}}/{{name}}`
+
+## Timeouts
+
+This resource provides the following
+[Timeouts](/docs/configuration/resources.html#timeouts) configuration options:
+
+- `create` - Default is 4 minutes.
+- `delete` - Default is 4 minutes.
 
 ## Import
 

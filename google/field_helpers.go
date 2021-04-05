@@ -14,6 +14,8 @@ const (
 	regionalLinkTemplate           = "projects/%s/regions/%s/%s/%s"
 	regionalLinkBasePattern        = "projects/(.+)/regions/(.+)/%s/(.+)"
 	regionalPartialLinkBasePattern = "regions/(.+)/%s/(.+)"
+	projectLinkTemplate            = "projects/%s/%s/%s"
+	projectBasePattern             = "projects/(.+)/%s/(.+)"
 	organizationLinkTemplate       = "organizations/%s/%s/%s"
 	organizationBasePattern        = "organizations/(.+)/%s/(.+)"
 )
@@ -46,6 +48,10 @@ func ParseDiskFieldValue(disk string, d TerraformResourceData, config *Config) (
 	return parseZonalFieldValue("disks", disk, "project", "zone", d, config, false)
 }
 
+func ParseRegionDiskFieldValue(disk string, d TerraformResourceData, config *Config) (*RegionalFieldValue, error) {
+	return parseRegionalFieldValue("disks", disk, "project", "region", "zone", d, config, false)
+}
+
 func ParseOrganizationCustomRoleName(role string) (*OrganizationFieldValue, error) {
 	return parseOrganizationFieldValue("roles", role, false)
 }
@@ -56,6 +62,30 @@ func ParseAcceleratorFieldValue(accelerator string, d TerraformResourceData, con
 
 func ParseMachineTypesFieldValue(machineType string, d TerraformResourceData, config *Config) (*ZonalFieldValue, error) {
 	return parseZonalFieldValue("machineTypes", machineType, "project", "zone", d, config, false)
+}
+
+func ParseInstanceFieldValue(instance string, d TerraformResourceData, config *Config) (*ZonalFieldValue, error) {
+	return parseZonalFieldValue("instances", instance, "project", "zone", d, config, false)
+}
+
+func ParseInstanceGroupFieldValue(instanceGroup string, d TerraformResourceData, config *Config) (*ZonalFieldValue, error) {
+	return parseZonalFieldValue("instanceGroups", instanceGroup, "project", "zone", d, config, false)
+}
+
+func ParseInstanceTemplateFieldValue(instanceTemplate string, d TerraformResourceData, config *Config) (*GlobalFieldValue, error) {
+	return parseGlobalFieldValue("instanceTemplates", instanceTemplate, "project", d, config, false)
+}
+
+func ParseMachineImageFieldValue(machineImage string, d TerraformResourceData, config *Config) (*GlobalFieldValue, error) {
+	return parseGlobalFieldValue("machineImages", machineImage, "project", d, config, false)
+}
+
+func ParseSecurityPolicyFieldValue(securityPolicy string, d TerraformResourceData, config *Config) (*GlobalFieldValue, error) {
+	return parseGlobalFieldValue("securityPolicies", securityPolicy, "project", d, config, true)
+}
+
+func ParseNetworkEndpointGroupFieldValue(networkEndpointGroup string, d TerraformResourceData, config *Config) (*ZonalFieldValue, error) {
+	return parseZonalFieldValue("networkEndpointGroups", networkEndpointGroup, "project", "zone", d, config, false)
 }
 
 // ------------------------------------------------------------
@@ -180,7 +210,10 @@ func parseZonalFieldValue(resourceType, fieldValue, projectSchemaField, zoneSche
 
 	zone, ok := d.GetOk(zoneSchemaField)
 	if !ok {
-		return nil, fmt.Errorf("A zone must be specified")
+		zone = config.Zone
+		if zone == "" {
+			return nil, fmt.Errorf("A zone must be specified")
+		}
 	}
 
 	return &ZonalFieldValue{
@@ -200,6 +233,17 @@ func getProjectFromSchema(projectSchemaField string, d TerraformResourceData, co
 		return config.Project, nil
 	}
 	return "", fmt.Errorf("%s: required field is not set", projectSchemaField)
+}
+
+func getBillingProjectFromSchema(billingProjectSchemaField string, d TerraformResourceData, config *Config) (string, error) {
+	res, ok := d.GetOk(billingProjectSchemaField)
+	if ok && billingProjectSchemaField != "" {
+		return res.(string), nil
+	}
+	if config.BillingProject != "" {
+		return config.BillingProject, nil
+	}
+	return "", fmt.Errorf("%s: required field is not set", billingProjectSchemaField)
 }
 
 type OrganizationFieldValue struct {
@@ -317,6 +361,18 @@ func parseRegionalFieldValue(resourceType, fieldValue, projectSchemaField, regio
 // - provider-level region
 // - region extracted from the provider-level zone
 func getRegionFromSchema(regionSchemaField, zoneSchemaField string, d TerraformResourceData, config *Config) (string, error) {
+	// if identical such as GKE location, check if it's a zone first and find
+	// the region if so. Otherwise, return as it's a region.
+	if regionSchemaField == zoneSchemaField {
+		if v, ok := d.GetOk(regionSchemaField); ok {
+			if isZone(v.(string)) {
+				return getRegionFromZone(v.(string)), nil
+			}
+
+			return v.(string), nil
+		}
+	}
+
 	if v, ok := d.GetOk(regionSchemaField); ok && regionSchemaField != "" {
 		return GetResourceNameFromSelfLink(v.(string)), nil
 	}
@@ -331,4 +387,52 @@ func getRegionFromSchema(regionSchemaField, zoneSchemaField string, d TerraformR
 	}
 
 	return "", fmt.Errorf("Cannot determine region: set in this resource, or set provider-level 'region' or 'zone'.")
+}
+
+type ProjectFieldValue struct {
+	Project string
+	Name    string
+
+	resourceType string
+}
+
+func (f ProjectFieldValue) RelativeLink() string {
+	if len(f.Name) == 0 {
+		return ""
+	}
+
+	return fmt.Sprintf(projectLinkTemplate, f.Project, f.resourceType, f.Name)
+}
+
+// Parses a project field with the following formats:
+// - projects/{my_projects}/{resource_type}/{resource_name}
+func parseProjectFieldValue(resourceType, fieldValue, projectSchemaField string, d TerraformResourceData, config *Config, isEmptyValid bool) (*ProjectFieldValue, error) {
+	if len(fieldValue) == 0 {
+		if isEmptyValid {
+			return &ProjectFieldValue{resourceType: resourceType}, nil
+		}
+		return nil, fmt.Errorf("The project field for resource %s cannot be empty", resourceType)
+	}
+
+	r := regexp.MustCompile(fmt.Sprintf(projectBasePattern, resourceType))
+	if parts := r.FindStringSubmatch(fieldValue); parts != nil {
+		return &ProjectFieldValue{
+			Project: parts[1],
+			Name:    parts[2],
+
+			resourceType: resourceType,
+		}, nil
+	}
+
+	project, err := getProjectFromSchema(projectSchemaField, d, config)
+	if err != nil {
+		return nil, err
+	}
+
+	return &ProjectFieldValue{
+		Project: project,
+		Name:    GetResourceNameFromSelfLink(fieldValue),
+
+		resourceType: resourceType,
+	}, nil
 }

@@ -6,7 +6,9 @@ import (
 
 	"strings"
 
-	"github.com/hashicorp/terraform/helper/schema"
+	"net"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"google.golang.org/api/dns/v1"
 )
 
@@ -21,51 +23,68 @@ func resourceDnsRecordSet() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-			"managed_zone": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+			"managed_zone": {
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: `The name of the zone in which this record set will reside.`,
 			},
 
-			"name": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+			"name": {
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: `The DNS name this record set will apply to.`,
 			},
 
-			"rrdatas": &schema.Schema{
+			"rrdatas": {
 				Type:     schema.TypeList,
 				Required: true,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
+					DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+						if d.Get("type") == "AAAA" {
+							return ipv6AddressDiffSuppress(k, old, new, d)
+						}
+						return false
+					},
 				},
 				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
 					return strings.ToLower(strings.Trim(old, `"`)) == strings.ToLower(strings.Trim(new, `"`))
 				},
+				Description: `The string data for the records in this record set whose meaning depends on the DNS type. For TXT record, if the string data contains spaces, add surrounding \" if you don't want your string to get split on spaces. To specify a single record value longer than 255 characters such as a TXT record for DKIM, add \"\" inside the Terraform configuration string (e.g. "first255characters\"\"morecharacters").`,
 			},
 
-			"ttl": &schema.Schema{
-				Type:     schema.TypeInt,
-				Required: true,
+			"ttl": {
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: `The time-to-live of this record set (seconds).`,
 			},
 
-			"type": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
+			"type": {
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: `The DNS record set type.`,
 			},
 
-			"project": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
-				ForceNew: true,
+			"project": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				ForceNew:    true,
+				Description: `The ID of the project in which the resource belongs. If it is not provided, the provider project is used.`,
 			},
 		},
+		UseJSONNumber: true,
 	}
 }
 
 func resourceDnsRecordSetCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
+	userAgent, err := generateUserAgentString(d, config.userAgent)
+	if err != nil {
+		return err
+	}
 
 	project, err := getProject(d, config)
 	if err != nil {
@@ -79,7 +98,7 @@ func resourceDnsRecordSetCreate(d *schema.ResourceData, meta interface{}) error 
 	// Build the change
 	chg := &dns.Change{
 		Additions: []*dns.ResourceRecordSet{
-			&dns.ResourceRecordSet{
+			{
 				Name:    name,
 				Type:    rType,
 				Ttl:     int64(d.Get("ttl").(int)),
@@ -88,35 +107,29 @@ func resourceDnsRecordSetCreate(d *schema.ResourceData, meta interface{}) error 
 		},
 	}
 
-	// we need to replace NS record sets in the same call. That means
-	// we need to list all the current NS record sets attached to the
-	// zone and add them to the change as deletions. We can't just add
-	// new NS record sets, or we'll get an error about the NS record set
-	// already existing; see terraform-providers/terraform-provider-google#95.
-	// We also can't just remove the NS recordsets on creation, as at
-	// least one is required. So the solution is to "update in place" by
-	// putting the addition and the removal in the same API call.
-	if rType == "NS" {
-		log.Printf("[DEBUG] DNS record list request for %q", zone)
-		res, err := config.clientDns.ResourceRecordSets.List(project, zone).Do()
-		if err != nil {
-			return fmt.Errorf("Error retrieving record sets for %q: %s", zone, err)
-		}
-		var deletions []*dns.ResourceRecordSet
+	// The terraform provider is authoritative, so what we do here is check if
+	// any records that we are trying to create already exist and make sure we
+	// delete them, before adding in the changes requested.  Normally this would
+	// result in an AlreadyExistsError.
+	log.Printf("[DEBUG] DNS record list request for %q", zone)
+	res, err := config.NewDnsClient(userAgent).ResourceRecordSets.List(project, zone).Do()
+	if err != nil {
+		return fmt.Errorf("Error retrieving record sets for %q: %s", zone, err)
+	}
+	var deletions []*dns.ResourceRecordSet
 
-		for _, record := range res.Rrsets {
-			if record.Type != "NS" || record.Name != name {
-				continue
-			}
-			deletions = append(deletions, record)
+	for _, record := range res.Rrsets {
+		if record.Type != rType || record.Name != name {
+			continue
 		}
-		if len(deletions) > 0 {
-			chg.Deletions = deletions
-		}
+		deletions = append(deletions, record)
+	}
+	if len(deletions) > 0 {
+		chg.Deletions = deletions
 	}
 
 	log.Printf("[DEBUG] DNS Record create request: %#v", chg)
-	chg, err = config.clientDns.Changes.Create(project, zone, chg).Do()
+	chg, err = config.NewDnsClient(userAgent).Changes.Create(project, zone, chg).Do()
 	if err != nil {
 		return fmt.Errorf("Error creating DNS RecordSet: %s", err)
 	}
@@ -124,7 +137,7 @@ func resourceDnsRecordSetCreate(d *schema.ResourceData, meta interface{}) error 
 	d.SetId(fmt.Sprintf("%s/%s/%s", zone, name, rType))
 
 	w := &DnsChangeWaiter{
-		Service:     config.clientDns,
+		Service:     config.NewDnsClient(userAgent),
 		Change:      chg,
 		Project:     project,
 		ManagedZone: zone,
@@ -139,6 +152,10 @@ func resourceDnsRecordSetCreate(d *schema.ResourceData, meta interface{}) error 
 
 func resourceDnsRecordSetRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
+	userAgent, err := generateUserAgentString(d, config.userAgent)
+	if err != nil {
+		return err
+	}
 
 	project, err := getProject(d, config)
 	if err != nil {
@@ -151,8 +168,13 @@ func resourceDnsRecordSetRead(d *schema.ResourceData, meta interface{}) error {
 	name := d.Get("name").(string)
 	dnsType := d.Get("type").(string)
 
-	resp, err := config.clientDns.ResourceRecordSets.List(
-		project, zone).Name(name).Type(dnsType).Do()
+	var resp *dns.ResourceRecordSetsListResponse
+	err = retry(func() error {
+		var reqErr error
+		resp, reqErr = config.NewDnsClient(userAgent).ResourceRecordSets.List(
+			project, zone).Name(name).Type(dnsType).Do()
+		return reqErr
+	})
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("DNS Record Set %q", d.Get("name").(string)))
 	}
@@ -166,16 +188,28 @@ func resourceDnsRecordSetRead(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("Only expected 1 record set, got %d", len(resp.Rrsets))
 	}
 
-	d.Set("type", resp.Rrsets[0].Type)
-	d.Set("ttl", resp.Rrsets[0].Ttl)
-	d.Set("rrdatas", resp.Rrsets[0].Rrdatas)
-	d.Set("project", project)
+	if err := d.Set("type", resp.Rrsets[0].Type); err != nil {
+		return fmt.Errorf("Error setting type: %s", err)
+	}
+	if err := d.Set("ttl", resp.Rrsets[0].Ttl); err != nil {
+		return fmt.Errorf("Error setting ttl: %s", err)
+	}
+	if err := d.Set("rrdatas", resp.Rrsets[0].Rrdatas); err != nil {
+		return fmt.Errorf("Error setting rrdatas: %s", err)
+	}
+	if err := d.Set("project", project); err != nil {
+		return fmt.Errorf("Error setting project: %s", err)
+	}
 
 	return nil
 }
 
 func resourceDnsRecordSetDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
+	userAgent, err := generateUserAgentString(d, config.userAgent)
+	if err != nil {
+		return err
+	}
 
 	project, err := getProject(d, config)
 	if err != nil {
@@ -192,7 +226,7 @@ func resourceDnsRecordSetDelete(d *schema.ResourceData, meta interface{}) error 
 	// check if what we're looking at is a subdomain, and only not delete
 	// if it's not actually a subdomain
 	if d.Get("type").(string) == "NS" {
-		mz, err := config.clientDns.ManagedZones.Get(project, zone).Do()
+		mz, err := config.NewDnsClient(userAgent).ManagedZones.Get(project, zone).Do()
 		if err != nil {
 			return fmt.Errorf("Error retrieving managed zone %q from %q: %s", zone, project, err)
 		}
@@ -207,7 +241,7 @@ func resourceDnsRecordSetDelete(d *schema.ResourceData, meta interface{}) error 
 	// Build the change
 	chg := &dns.Change{
 		Deletions: []*dns.ResourceRecordSet{
-			&dns.ResourceRecordSet{
+			{
 				Name:    d.Get("name").(string),
 				Type:    d.Get("type").(string),
 				Ttl:     int64(d.Get("ttl").(int)),
@@ -217,13 +251,13 @@ func resourceDnsRecordSetDelete(d *schema.ResourceData, meta interface{}) error 
 	}
 
 	log.Printf("[DEBUG] DNS Record delete request: %#v", chg)
-	chg, err = config.clientDns.Changes.Create(project, zone, chg).Do()
+	chg, err = config.NewDnsClient(userAgent).Changes.Create(project, zone, chg).Do()
 	if err != nil {
-		return fmt.Errorf("Error deleting DNS RecordSet: %s", err)
+		return handleNotFoundError(err, d, "google_dns_record_set")
 	}
 
 	w := &DnsChangeWaiter{
-		Service:     config.clientDns,
+		Service:     config.NewDnsClient(userAgent),
 		Change:      chg,
 		Project:     project,
 		ManagedZone: zone,
@@ -239,6 +273,10 @@ func resourceDnsRecordSetDelete(d *schema.ResourceData, meta interface{}) error 
 
 func resourceDnsRecordSetUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
+	userAgent, err := generateUserAgentString(d, config.userAgent)
+	if err != nil {
+		return err
+	}
 
 	project, err := getProject(d, config)
 	if err != nil {
@@ -256,7 +294,7 @@ func resourceDnsRecordSetUpdate(d *schema.ResourceData, meta interface{}) error 
 
 	chg := &dns.Change{
 		Deletions: []*dns.ResourceRecordSet{
-			&dns.ResourceRecordSet{
+			{
 				Name:    recordName,
 				Type:    oldType.(string),
 				Ttl:     int64(oldTtl.(int)),
@@ -264,7 +302,7 @@ func resourceDnsRecordSetUpdate(d *schema.ResourceData, meta interface{}) error 
 			},
 		},
 		Additions: []*dns.ResourceRecordSet{
-			&dns.ResourceRecordSet{
+			{
 				Name:    recordName,
 				Type:    newType.(string),
 				Ttl:     int64(newTtl.(int)),
@@ -279,13 +317,13 @@ func resourceDnsRecordSetUpdate(d *schema.ResourceData, meta interface{}) error 
 		chg.Deletions[0].Rrdatas[i] = oldRR.(string)
 	}
 	log.Printf("[DEBUG] DNS Record change request: %#v old: %#v new: %#v", chg, chg.Deletions[0], chg.Additions[0])
-	chg, err = config.clientDns.Changes.Create(project, zone, chg).Do()
+	chg, err = config.NewDnsClient(userAgent).Changes.Create(project, zone, chg).Do()
 	if err != nil {
 		return fmt.Errorf("Error changing DNS RecordSet: %s", err)
 	}
 
 	w := &DnsChangeWaiter{
-		Service:     config.clientDns,
+		Service:     config.NewDnsClient(userAgent),
 		Change:      chg,
 		Project:     project,
 		ManagedZone: zone,
@@ -299,13 +337,33 @@ func resourceDnsRecordSetUpdate(d *schema.ResourceData, meta interface{}) error 
 
 func resourceDnsRecordSetImportState(d *schema.ResourceData, _ interface{}) ([]*schema.ResourceData, error) {
 	parts := strings.Split(d.Id(), "/")
-	if len(parts) != 3 {
-		return nil, fmt.Errorf("Invalid dns record specifier. Expecting {zone-name}/{record-name}/{record-type}. The record name must include a trailing '.' at the end.")
+	if len(parts) == 3 {
+		if err := d.Set("managed_zone", parts[0]); err != nil {
+			return nil, fmt.Errorf("Error setting managed_zone: %s", err)
+		}
+		if err := d.Set("name", parts[1]); err != nil {
+			return nil, fmt.Errorf("Error setting name: %s", err)
+		}
+		if err := d.Set("type", parts[2]); err != nil {
+			return nil, fmt.Errorf("Error setting type: %s", err)
+		}
+	} else if len(parts) == 4 {
+		if err := d.Set("project", parts[0]); err != nil {
+			return nil, fmt.Errorf("Error setting project: %s", err)
+		}
+		if err := d.Set("managed_zone", parts[1]); err != nil {
+			return nil, fmt.Errorf("Error setting managed_zone: %s", err)
+		}
+		if err := d.Set("name", parts[2]); err != nil {
+			return nil, fmt.Errorf("Error setting name: %s", err)
+		}
+		if err := d.Set("type", parts[3]); err != nil {
+			return nil, fmt.Errorf("Error setting type: %s", err)
+		}
+		d.SetId(parts[1] + "/" + parts[2] + "/" + parts[3])
+	} else {
+		return nil, fmt.Errorf("Invalid dns record specifier. Expecting {zone-name}/{record-name}/{record-type} or {project}/{zone-name}/{record-name}/{record-type}. The record name must include a trailing '.' at the end.")
 	}
-
-	d.Set("managed_zone", parts[0])
-	d.Set("name", parts[1])
-	d.Set("type", parts[2])
 
 	return []*schema.ResourceData{d}, nil
 }
@@ -319,4 +377,11 @@ func rrdata(
 		data[i] = d.Get(fmt.Sprintf("rrdatas.%d", i)).(string)
 	}
 	return data
+}
+
+func ipv6AddressDiffSuppress(_, old, new string, _ *schema.ResourceData) bool {
+	oldIp := net.ParseIP(old)
+	newIp := net.ParseIP(new)
+
+	return oldIp.Equal(newIp)
 }

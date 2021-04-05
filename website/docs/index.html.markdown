@@ -1,115 +1,105 @@
 ---
 layout: "google"
-page_title: "Provider: Google Cloud"
-sidebar_current: "docs-google-index"
+page_title: "Provider: Google Cloud Platform"
+sidebar_current: "docs-google-provider-x"
 description: |-
-  The Google Cloud provider is used to interact with Google Cloud services. The provider needs to be configured with the proper credentials before it can be used.
+   The Google provider is used to configure your Google Cloud Platform infrastructure
 ---
 
-# Google Cloud Provider
+# Google Cloud Platform Provider
 
-The Google Cloud provider is used to interact with
-[Google Cloud services](https://cloud.google.com/). The provider needs
-to be configured with the proper credentials before it can be used.
+The Google provider is used to configure your [Google Cloud Platform](https://cloud.google.com/) infrastructure.
+See the [Getting Started](/docs/providers/google/guides/getting_started.html) page for an introduction to using the provider.
 
-Use the navigation to the left to read about the available resources.
-
-## Example Usage
+A typical provider configuration will look something like:
 
 ```hcl
-// Configure the Google Cloud provider
 provider "google" {
-  credentials = "${file("account.json")}"
-  project     = "my-gce-project-id"
+  project     = "my-project-id"
   region      = "us-central1"
-}
-
-// Create a new instance
-resource "google_compute_instance" "default" {
-  # ...
 }
 ```
 
-## Configuration Reference
+See the [provider reference](/docs/providers/google/guides/provider_reference.html)
+for more details on authentication or otherwise configuring the provider.
 
-The following keys can be used to configure the provider.
+Take advantage of [Modules](https://www.terraform.io/docs/modules/index.html)
+to simplify your config by browsing the [Module Registry for GCP modules](https://registry.terraform.io/browse?provider=google).
 
-* `credentials` - (Optional) Contents of the JSON file used to describe your
-  account credentials, downloaded from Google Cloud Console. More details on
-  retrieving this file are below.
+The Google provider is jointly maintained by:
 
-  Credentials can also be specified using any of the following environment
-  variables (listed in order of precedence):
+* The [Terraform Team](https://cloud.google.com/docs/terraform) at Google
+* The Terraform team at [HashiCorp](https://www.hashicorp.com/)
 
-    * `GOOGLE_CREDENTIALS`
-    * `GOOGLE_CLOUD_KEYFILE_JSON`
-    * `GCLOUD_KEYFILE_JSON`
+If you have configuration questions, or general questions about using the provider, try checking out:
 
-  The [`GOOGLE_APPLICATION_CREDENTIALS`](https://developers.google.com/identity/protocols/application-default-credentials#howtheywork)
-  environment variable can also contain the path of a file to obtain credentials
-  from.
+* The [Google Cloud Platform Community Slack](https://gcp-slack.appspot.com/) #terraform channel
+* [Terraform's community resources](https://www.terraform.io/docs/extend/community/index.html)
+* [HashiCorp support](https://support.hashicorp.com) for Terraform Enterprise customers
 
-  If no credentials are specified, the provider will fall back to using the
-  [Google Application Default
-  Credentials](https://developers.google.com/identity/protocols/application-default-credentials).
-  If you are running Terraform from a GCE instance, see [Creating and Enabling
-  Service Accounts for
-  Instances](https://cloud.google.com/compute/docs/authentication) for
-  details. On your computer, if you have made your identity available as the
-  Application Default Credentials by running [`gcloud auth application-default
-  login`](https://cloud.google.com/sdk/gcloud/reference/auth/application-default/login),
-  the provider will use your identity.
+## Releases
 
-* `project` - (Optional) The ID of the project to apply any resources to.  This
-  can also be specified using any of the following environment variables (listed
-  in order of precedence):
+Interested in the provider's latest features, or want to make sure you're up to date?
+Check out the [`google` provider changelog](https://github.com/hashicorp/terraform-provider-google/blob/master/CHANGELOG.md)
+and the [`google-beta` provider changelog](https://github.com/hashicorp/terraform-provider-google-beta/blob/master/CHANGELOG.md))
+for release notes and additional information.
 
-    * `GOOGLE_PROJECT`
-    * `GCLOUD_PROJECT`
-    * `CLOUDSDK_CORE_PROJECT`
+Per [Terraform Provider Versioning](https://www.hashicorp.com/blog/hashicorp-terraform-provider-versioning),
+the Google provider follows [semantic versioning](https://semver.org/).
 
-* `region` - (Optional) The region to operate under, if not specified by a given resource.
-  This can also be specified using any of the following environment variables (listed in order of
-  precedence):
+In practice, patch / bugfix-only releases of the provider are infrequent. Most
+provider releases are either minor or major releases.
 
-    * `GOOGLE_REGION`
-    * `GCLOUD_REGION`
-    * `CLOUDSDK_COMPUTE_REGION`
-    
-* `zone` - (Optional) The zone to operate under, if not specified by a given resource.
-  This can also be specified using any of the following environment variables (listed in order of
-  precedence):
-  
-    * `GOOGLE_ZONE`
-    * `GCLOUD_ZONE`
-    * `CLOUDSDK_COMPUTE_ZONE`
+### Minor Releases
 
-## Authentication JSON File
+The Google provider currently aims to publish a minor release every week,
+although the timing of individual releases may differ if required by the
+provider team.
 
-Authenticating with Google Cloud services requires a JSON
-file which we call the _account file_.
+### Major Releases
 
-This file is downloaded directly from the
-[Google Developers Console](https://console.developers.google.com). To make
-the process more straightforwarded, it is documented here:
+The Google provider publishes major releases roughly yearly. An upgrade guide
+will be published to help ease you through the transition between the prior
+releases series and the new major release.
 
-1. Log into the [Google Developers Console](https://console.developers.google.com)
-   and select a project.
+During major releases, all current deprecation warnings will be resolved,
+removing the field in question unless the deprecation warning message specifies
+another resolution.
 
-2. The API Manager view should be selected, click on "Credentials" on the left,
-   then "Create credentials", and finally "Service account key".
+Before a major release, deprecation warnings don't require immediate action. The
+provider team aims to surface deprecation warnings early in a major release
+lifecycle to give users plenty of time to safely update their configs.
 
-3. Select "Compute Engine default service account" in the "Service account"
-   dropdown, and select "JSON" as the key type.
+## Features and Bug Requests
 
-4. Clicking "Create" will download your `credentials`.
+The Google provider's bugs and feature requests can be found in the [GitHub repo issues](https://github.com/hashicorp/terraform-provider-google/issues).
+Please avoid "me too" or "+1" comments. Instead, use a thumbs up [reaction](https://blog.github.com/2016-03-10-add-reactions-to-pull-requests-issues-and-comments/)
+on enhancement requests. Provider maintainers will often prioritize work based on the
+number of thumbs on an issue.
 
-## Beta Features
+Community input is appreciated on outstanding issues! We love to hear what use
+cases you have for new features, and want to provide the best possible
+experience for you using the Google provider.
 
-Some Google Provider resources contain Beta features; Beta GCP Features have no
-deprecation policy, and no SLA, but are otherwise considered to be feature-complete
-with only minor outstanding issues after their Alpha period. Beta is when a GCP feature
-is publicly announced, and is when they generally become publicly available.
+If you have a bug or feature request without an existing issue
 
-Resources will automatically be provisioned using Beta APIs when you specify a feature
-marked Beta in your Terraform config file.
+* and an existing resource or field is working in an unexpected way, [file a bug](https://github.com/hashicorp/terraform-provider-google/issues/new?template=bug.md).
+
+* and you'd like the provider to support a new resource or field, [file an enhancement/feature request](https://github.com/hashicorp/terraform-provider-google/issues/new?template=enhancement.md).
+
+The provider maintainers will often use the assignee field on an issue to mark
+who is working on it.
+
+* An issue assigned to an individual maintainer indicates that maintainer is working
+on the issue
+* An issue assigned to `hashibot` indicates a member of the community has taken on
+the issue!
+
+## Contributing
+
+If you'd like to help extend the Google provider, we gladly accept community
+contributions! Our full contribution guide is available at [CONTRIBUTING.md](https://github.com/hashicorp/terraform-provider-google/blob/master/.github/CONTRIBUTING.md)
+
+Pull requests can be made against either provider repo where a maintainer will
+apply them to both `google` and `google-beta`, or against [Magic Modules](https://github.com/GoogleCloudPlatform/magic-modules)
+directly.

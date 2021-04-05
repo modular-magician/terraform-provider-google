@@ -1,38 +1,46 @@
 package google
 
-import "github.com/hashicorp/terraform/helper/schema"
+import (
+	"fmt"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+)
 
 func dataSourceDnsManagedZone() *schema.Resource {
 	return &schema.Resource{
 		Read: dataSourceDnsManagedZoneRead,
 
 		Schema: map[string]*schema.Schema{
-			"dns_name": &schema.Schema{
+			"dns_name": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
 
-			"name": &schema.Schema{
+			"name": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
 
-			"description": &schema.Schema{
+			"description": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
 
-			"name_servers": &schema.Schema{
-				Type:     schema.TypeSet,
+			"name_servers": {
+				Type:     schema.TypeList,
 				Computed: true,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
 			},
 
-			// Google Cloud DNS ManagedZone resources do not have a SelfLink attribute.
+			"visibility": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 
-			"project": &schema.Schema{
+			// Google Cloud DNS ManagedZone resources do not have a SelfLink attribute.
+			"project": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
@@ -42,24 +50,43 @@ func dataSourceDnsManagedZone() *schema.Resource {
 
 func dataSourceDnsManagedZoneRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-
-	d.SetId(d.Get("name").(string))
+	userAgent, err := generateUserAgentString(d, config.userAgent)
+	if err != nil {
+		return err
+	}
 
 	project, err := getProject(d, config)
 	if err != nil {
 		return err
 	}
 
-	zone, err := config.clientDns.ManagedZones.Get(
-		project, d.Id()).Do()
+	name := d.Get("name").(string)
+	d.SetId(fmt.Sprintf("projects/%s/managedZones/%s", project, name))
+
+	zone, err := config.NewDnsClient(userAgent).ManagedZones.Get(
+		project, name).Do()
 	if err != nil {
 		return err
 	}
 
-	d.Set("name_servers", zone.NameServers)
-	d.Set("name", zone.Name)
-	d.Set("dns_name", zone.DnsName)
-	d.Set("description", zone.Description)
+	if err := d.Set("name_servers", zone.NameServers); err != nil {
+		return fmt.Errorf("Error setting name_servers: %s", err)
+	}
+	if err := d.Set("name", zone.Name); err != nil {
+		return fmt.Errorf("Error setting name: %s", err)
+	}
+	if err := d.Set("dns_name", zone.DnsName); err != nil {
+		return fmt.Errorf("Error setting dns_name: %s", err)
+	}
+	if err := d.Set("description", zone.Description); err != nil {
+		return fmt.Errorf("Error setting description: %s", err)
+	}
+	if err := d.Set("visibility", zone.Visibility); err != nil {
+		return fmt.Errorf("Error setting visibility: %s", err)
+	}
+	if err := d.Set("project", project); err != nil {
+		return fmt.Errorf("Error setting project: %s", err)
+	}
 
 	return nil
 }

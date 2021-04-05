@@ -1,11 +1,15 @@
 package google
 
 import (
+	"net/url"
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/errwrap"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"google.golang.org/api/googleapi"
 )
 
 func TestConvertStringArr(t *testing.T) {
@@ -52,87 +56,87 @@ func TestConvertStringMap(t *testing.T) {
 
 func TestIpCidrRangeDiffSuppress(t *testing.T) {
 	cases := map[string]struct {
-		Old, New          string
-		ExpectDiffSupress bool
+		Old, New           string
+		ExpectDiffSuppress bool
 	}{
 		"single ip address": {
-			Old:               "10.2.3.4",
-			New:               "10.2.3.5",
-			ExpectDiffSupress: false,
+			Old:                "10.2.3.4",
+			New:                "10.2.3.5",
+			ExpectDiffSuppress: false,
 		},
 		"cidr format string": {
-			Old:               "10.1.2.0/24",
-			New:               "10.1.3.0/24",
-			ExpectDiffSupress: false,
+			Old:                "10.1.2.0/24",
+			New:                "10.1.3.0/24",
+			ExpectDiffSuppress: false,
 		},
 		"netmask same mask": {
-			Old:               "10.1.2.0/24",
-			New:               "/24",
-			ExpectDiffSupress: true,
+			Old:                "10.1.2.0/24",
+			New:                "/24",
+			ExpectDiffSuppress: true,
 		},
 		"netmask different mask": {
-			Old:               "10.1.2.0/24",
-			New:               "/32",
-			ExpectDiffSupress: false,
+			Old:                "10.1.2.0/24",
+			New:                "/32",
+			ExpectDiffSuppress: false,
 		},
 		"add netmask": {
-			Old:               "",
-			New:               "/24",
-			ExpectDiffSupress: false,
+			Old:                "",
+			New:                "/24",
+			ExpectDiffSuppress: false,
 		},
 		"remove netmask": {
-			Old:               "/24",
-			New:               "",
-			ExpectDiffSupress: false,
+			Old:                "/24",
+			New:                "",
+			ExpectDiffSuppress: false,
 		},
 	}
 
 	for tn, tc := range cases {
-		if ipCidrRangeDiffSuppress("ip_cidr_range", tc.Old, tc.New, nil) != tc.ExpectDiffSupress {
-			t.Fatalf("bad: %s, '%s' => '%s' expect %t", tn, tc.Old, tc.New, tc.ExpectDiffSupress)
+		if ipCidrRangeDiffSuppress("ip_cidr_range", tc.Old, tc.New, nil) != tc.ExpectDiffSuppress {
+			t.Fatalf("bad: %s, '%s' => '%s' expect %t", tn, tc.Old, tc.New, tc.ExpectDiffSuppress)
 		}
 	}
 }
 
 func TestRfc3339TimeDiffSuppress(t *testing.T) {
 	cases := map[string]struct {
-		Old, New          string
-		ExpectDiffSupress bool
+		Old, New           string
+		ExpectDiffSuppress bool
 	}{
 		"same time, format changed to have leading zero": {
-			Old:               "2:00",
-			New:               "02:00",
-			ExpectDiffSupress: true,
+			Old:                "2:00",
+			New:                "02:00",
+			ExpectDiffSuppress: true,
 		},
 		"same time, format changed not to have leading zero": {
-			Old:               "02:00",
-			New:               "2:00",
-			ExpectDiffSupress: true,
+			Old:                "02:00",
+			New:                "2:00",
+			ExpectDiffSuppress: true,
 		},
 		"different time, both without leading zero": {
-			Old:               "2:00",
-			New:               "3:00",
-			ExpectDiffSupress: false,
+			Old:                "2:00",
+			New:                "3:00",
+			ExpectDiffSuppress: false,
 		},
 		"different time, old with leading zero, new without": {
-			Old:               "02:00",
-			New:               "3:00",
-			ExpectDiffSupress: false,
+			Old:                "02:00",
+			New:                "3:00",
+			ExpectDiffSuppress: false,
 		},
 		"different time, new with leading zero, oldwithout": {
-			Old:               "2:00",
-			New:               "03:00",
-			ExpectDiffSupress: false,
+			Old:                "2:00",
+			New:                "03:00",
+			ExpectDiffSuppress: false,
 		},
 		"different time, both with leading zero": {
-			Old:               "02:00",
-			New:               "03:00",
-			ExpectDiffSupress: false,
+			Old:                "02:00",
+			New:                "03:00",
+			ExpectDiffSuppress: false,
 		},
 	}
 	for tn, tc := range cases {
-		if rfc3339TimeDiffSuppress("time", tc.Old, tc.New, nil) != tc.ExpectDiffSupress {
-			t.Errorf("bad: %s, '%s' => '%s' expect DiffSuppress to return %t", tn, tc.Old, tc.New, tc.ExpectDiffSupress)
+		if rfc3339TimeDiffSuppress("time", tc.Old, tc.New, nil) != tc.ExpectDiffSuppress {
+			t.Errorf("bad: %s, '%s' => '%s' expect DiffSuppress to return %t", tn, tc.Old, tc.New, tc.ExpectDiffSuppress)
 		}
 	}
 }
@@ -152,7 +156,9 @@ func TestGetZone(t *testing.T) {
 	if zone, err := getZone(d, &config); err != nil || zone != "foo" {
 		t.Fatalf("Zone '%s' != 'foo', %s", zone, err)
 	}
-	d.Set("zone", "")
+	if err := d.Set("zone", ""); err != nil {
+		t.Fatalf("Error setting zone: %s", err)
+	}
 	if zone, err := getZone(d, &config); err != nil || zone != "bar" {
 		t.Fatalf("Zone '%s' != 'bar', %s", zone, err)
 	}
@@ -175,7 +181,9 @@ func TestGetRegion(t *testing.T) {
 	}
 
 	config.Zone = "bar"
-	d.Set("zone", "")
+	if err := d.Set("zone", ""); err != nil {
+		t.Fatalf("Error setting zone: %s", err)
+	}
 	if region, err := getRegion(d, &config); err != nil || region != barRegionName {
 		t.Fatalf("Zone '%s' != '%s', %s", region, barRegionName, err)
 	}
@@ -409,38 +417,193 @@ func TestEmptyOrDefaultStringSuppress(t *testing.T) {
 	testFunc := emptyOrDefaultStringSuppress("default value")
 
 	cases := map[string]struct {
-		Old, New          string
-		ExpectDiffSupress bool
+		Old, New           string
+		ExpectDiffSuppress bool
 	}{
 		"same value, format changed from empty to default": {
-			Old:               "",
-			New:               "default value",
-			ExpectDiffSupress: true,
+			Old:                "",
+			New:                "default value",
+			ExpectDiffSuppress: true,
 		},
 		"same value, format changed from default to empty": {
-			Old:               "default value",
-			New:               "",
-			ExpectDiffSupress: true,
+			Old:                "default value",
+			New:                "",
+			ExpectDiffSuppress: true,
 		},
 		"different value, format changed from empty to non-default": {
-			Old:               "",
-			New:               "not default new",
-			ExpectDiffSupress: false,
+			Old:                "",
+			New:                "not default new",
+			ExpectDiffSuppress: false,
 		},
 		"different value, format changed from non-default to empty": {
-			Old:               "not default old",
-			New:               "",
-			ExpectDiffSupress: false,
+			Old:                "not default old",
+			New:                "",
+			ExpectDiffSuppress: false,
 		},
 		"different value, format changed from non-default to non-default": {
-			Old:               "not default 1",
-			New:               "not default 2",
-			ExpectDiffSupress: false,
+			Old:                "not default 1",
+			New:                "not default 2",
+			ExpectDiffSuppress: false,
 		},
 	}
 	for tn, tc := range cases {
-		if testFunc("", tc.Old, tc.New, nil) != tc.ExpectDiffSupress {
-			t.Errorf("bad: %s, '%s' => '%s' expect DiffSuppress to return %t", tn, tc.Old, tc.New, tc.ExpectDiffSupress)
+		if testFunc("", tc.Old, tc.New, nil) != tc.ExpectDiffSuppress {
+			t.Errorf("bad: %s, '%s' => '%s' expect DiffSuppress to return %t", tn, tc.Old, tc.New, tc.ExpectDiffSuppress)
 		}
+	}
+}
+
+func TestServiceAccountFQN(t *testing.T) {
+	// Every test case should produce this fully qualified service account name
+	serviceAccountExpected := "projects/-/serviceAccounts/test-service-account@test-project.iam.gserviceaccount.com"
+	cases := map[string]struct {
+		serviceAccount string
+		project        string
+	}{
+		"service account fully qualified name from account id": {
+			serviceAccount: "test-service-account",
+			project:        "test-project",
+		},
+		"service account fully qualified name from account email": {
+			serviceAccount: "test-service-account@test-project.iam.gserviceaccount.com",
+		},
+		"service account fully qualified name from account name": {
+			serviceAccount: "projects/-/serviceAccounts/test-service-account@test-project.iam.gserviceaccount.com",
+		},
+	}
+
+	for tn, tc := range cases {
+		config := &Config{Project: tc.project}
+		d := &schema.ResourceData{}
+		serviceAccountName, err := serviceAccountFQN(tc.serviceAccount, d, config)
+		if err != nil {
+			t.Fatalf("unexpected error for service account FQN: %s", err)
+		}
+		if serviceAccountName != serviceAccountExpected {
+			t.Errorf("bad: %s, expected '%s' but returned '%s", tn, serviceAccountExpected, serviceAccountName)
+		}
+	}
+}
+
+func TestRetryTimeDuration(t *testing.T) {
+	i := 0
+	f := func() error {
+		i++
+		return &googleapi.Error{
+			Code: 500,
+		}
+	}
+	if err := retryTimeDuration(f, time.Duration(1000)*time.Millisecond); err == nil || err.(*googleapi.Error).Code != 500 {
+		t.Errorf("unexpected error retrying: %v", err)
+	}
+	if i < 2 {
+		t.Errorf("expected error function to be called at least twice, but was called %d times", i)
+	}
+}
+
+func TestRetryTimeDuration_wrapped(t *testing.T) {
+	i := 0
+	f := func() error {
+		i++
+		err := &googleapi.Error{
+			Code: 500,
+		}
+		return errwrap.Wrapf("nested error: {{err}}", err)
+	}
+	if err := retryTimeDuration(f, time.Duration(1000)*time.Millisecond); err == nil {
+		t.Errorf("unexpected nil error, expected an error")
+	} else {
+		innerErr := errwrap.GetType(err, &googleapi.Error{})
+		if innerErr == nil {
+			t.Errorf("unexpected error %v does not have a google api error", err)
+		}
+		gerr := innerErr.(*googleapi.Error)
+		if gerr.Code != 500 {
+			t.Errorf("unexpected googleapi error expected code 500, error: %v", gerr)
+		}
+	}
+	if i < 2 {
+		t.Errorf("expected error function to be called at least twice, but was called %d times", i)
+	}
+}
+
+func TestRetryTimeDuration_noretry(t *testing.T) {
+	i := 0
+	f := func() error {
+		i++
+		return &googleapi.Error{
+			Code: 400,
+		}
+	}
+	if err := retryTimeDuration(f, time.Duration(1000)*time.Millisecond); err == nil || err.(*googleapi.Error).Code != 400 {
+		t.Errorf("unexpected error retrying: %v", err)
+	}
+	if i != 1 {
+		t.Errorf("expected error function to be called exactly once, but was called %d times", i)
+	}
+}
+
+type TimeoutError struct {
+	timeout bool
+}
+
+func (e *TimeoutError) Timeout() bool {
+	return e.timeout
+}
+
+func (e *TimeoutError) Error() string {
+	return "timeout error"
+}
+
+func TestRetryTimeDuration_URLTimeoutsShouldRetry(t *testing.T) {
+	runCount := 0
+	retryFunc := func() error {
+		runCount++
+		if runCount == 1 {
+			return &url.Error{
+				Err: &TimeoutError{timeout: true},
+			}
+		}
+		return nil
+	}
+	err := retryTimeDuration(retryFunc, 1*time.Minute)
+	if err != nil {
+		t.Errorf("unexpected error: got '%v' want 'nil'", err)
+	}
+	expectedRunCount := 2
+	if runCount != expectedRunCount {
+		t.Errorf("expected the retryFunc to be called %v time(s), instead was called %v time(s)", expectedRunCount, runCount)
+	}
+}
+
+func TestConflictError(t *testing.T) {
+	confErr := &googleapi.Error{
+		Code: 409,
+	}
+	if !isConflictError(confErr) {
+		t.Error("did not find that a 409 was a conflict error.")
+	}
+	if !isConflictError(errwrap.Wrapf("wrap", confErr)) {
+		t.Error("did not find that a wrapped 409 was a conflict error.")
+	}
+	confErr = &googleapi.Error{
+		Code: 412,
+	}
+	if !isConflictError(confErr) {
+		t.Error("did not find that a 412 was a conflict error.")
+	}
+	if !isConflictError(errwrap.Wrapf("wrap", confErr)) {
+		t.Error("did not find that a wrapped 412 was a conflict error.")
+	}
+	// skipping negative tests as other cases may be added later.
+}
+
+func TestSnakeToPascalCase(t *testing.T) {
+	input := "boot_disk"
+	expected := "BootDisk"
+	actual := SnakeToPascalCase(input)
+
+	if actual != expected {
+		t.Fatalf("(%s) did not match expected value: %s", actual, expected)
 	}
 }

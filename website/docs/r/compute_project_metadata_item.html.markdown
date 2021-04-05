@@ -1,4 +1,5 @@
 ---
+subcategory: "Compute Engine"
 layout: "google"
 page_title: "Google: google_compute_project_metadata_item"
 sidebar_current: "docs-google-compute-project-metadata-item"
@@ -17,7 +18,7 @@ project metadata map.
 
 ```hcl
 resource "google_compute_project_metadata_item" "default" {
-  key = "my_metadata"
+  key   = "my_metadata"
   value = "my_value"
 }
 ```
@@ -37,7 +38,9 @@ The following arguments are supported:
 
 ## Attributes Reference
 
-Only the arguments listed above are exposed as attributes.
+In addition to the arguments listed above, the following computed attributes are exported:
+
+* `id` - an identifier for the resource with format `{{key}}``
 
 ## Import
 
@@ -46,3 +49,12 @@ Project metadata items can be imported using the `key`, e.g.
 ```
 $ terraform import google_compute_project_metadata_item.default my_metadata
 ```
+
+## Timeouts
+
+This resource provides the following
+[Timeouts](/docs/configuration/resources.html#timeouts) configuration options:
+
+- `create` - Default is 5 minutes.
+- `update` - Default is 5 minutes.
+- `delete` - Default is 5 minutes.

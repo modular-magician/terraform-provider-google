@@ -3,7 +3,7 @@ package google
 import (
 	"testing"
 
-	"github.com/hashicorp/terraform/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestContainerClusterMigrateState(t *testing.T) {
@@ -67,7 +67,7 @@ func TestContainerClusterMigrateState_empty(t *testing.T) {
 
 	// should handle non-nil but empty
 	is = &terraform.InstanceState{}
-	is, err = resourceContainerClusterMigrateState(0, is, meta)
+	_, err = resourceContainerClusterMigrateState(0, is, meta)
 
 	if err != nil {
 		t.Fatalf("err: %#v", err)

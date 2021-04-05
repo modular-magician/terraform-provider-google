@@ -3,7 +3,7 @@ package google
 import (
 	"testing"
 
-	"github.com/hashicorp/terraform/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestComputeFirewallMigrateState(t *testing.T) {
@@ -73,7 +73,7 @@ func TestComputeFirewallMigrateState_empty(t *testing.T) {
 
 	// should handle non-nil but empty
 	is = &terraform.InstanceState{}
-	is, err = resourceComputeFirewallMigrateState(0, is, meta)
+	_, err = resourceComputeFirewallMigrateState(0, is, meta)
 
 	if err != nil {
 		t.Fatalf("err: %#v", err)

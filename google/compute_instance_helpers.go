@@ -1,11 +1,40 @@
+//
 package google
 
 import (
 	"fmt"
+	"reflect"
 
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	computeBeta "google.golang.org/api/compute/v0.beta"
+	"google.golang.org/api/googleapi"
 )
+
+func instanceSchedulingNodeAffinitiesElemSchema() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"key": {
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
+			},
+			"operator": {
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
+				ValidateFunc: validation.StringInSlice([]string{"IN", "NOT_IN"}, false),
+			},
+			"values": {
+				Type:     schema.TypeSet,
+				Required: true,
+				ForceNew: true,
+				Elem:     &schema.Schema{Type: schema.TypeString},
+				Set:      schema.HashString,
+			},
+		},
+	}
+}
 
 func expandAliasIpRanges(ranges []interface{}) []*computeBeta.AliasIpRange {
 	ipRanges := make([]*computeBeta.AliasIpRange, 0, len(ranges))
@@ -30,17 +59,88 @@ func flattenAliasIpRange(ranges []*computeBeta.AliasIpRange) []map[string]interf
 	return rangesSchema
 }
 
-func flattenScheduling(scheduling *computeBeta.Scheduling) []map[string]interface{} {
-	result := make([]map[string]interface{}, 0, 1)
+func expandScheduling(v interface{}) (*computeBeta.Scheduling, error) {
+	if v == nil {
+		// We can't set default values for lists.
+		return &computeBeta.Scheduling{
+			AutomaticRestart: googleapi.Bool(true),
+		}, nil
+	}
+
+	ls := v.([]interface{})
+	if len(ls) == 0 {
+		// We can't set default values for lists
+		return &computeBeta.Scheduling{
+			AutomaticRestart: googleapi.Bool(true),
+		}, nil
+	}
+
+	if len(ls) > 1 || ls[0] == nil {
+		return nil, fmt.Errorf("expected exactly one scheduling block")
+	}
+
+	original := ls[0].(map[string]interface{})
+	scheduling := &computeBeta.Scheduling{
+		ForceSendFields: make([]string, 0, 4),
+	}
+
+	if v, ok := original["automatic_restart"]; ok {
+		scheduling.AutomaticRestart = googleapi.Bool(v.(bool))
+		scheduling.ForceSendFields = append(scheduling.ForceSendFields, "AutomaticRestart")
+	}
+
+	if v, ok := original["preemptible"]; ok {
+		scheduling.Preemptible = v.(bool)
+		scheduling.ForceSendFields = append(scheduling.ForceSendFields, "Preemptible")
+	}
+
+	if v, ok := original["on_host_maintenance"]; ok {
+		scheduling.OnHostMaintenance = v.(string)
+		scheduling.ForceSendFields = append(scheduling.ForceSendFields, "OnHostMaintenance")
+	}
+
+	if v, ok := original["node_affinities"]; ok && v != nil {
+		naSet := v.(*schema.Set).List()
+		scheduling.NodeAffinities = make([]*computeBeta.SchedulingNodeAffinity, len(ls))
+		scheduling.ForceSendFields = append(scheduling.ForceSendFields, "NodeAffinities")
+		for _, nodeAffRaw := range naSet {
+			if nodeAffRaw == nil {
+				continue
+			}
+			nodeAff := nodeAffRaw.(map[string]interface{})
+			transformed := &computeBeta.SchedulingNodeAffinity{
+				Key:      nodeAff["key"].(string),
+				Operator: nodeAff["operator"].(string),
+				Values:   convertStringArr(nodeAff["values"].(*schema.Set).List()),
+			}
+			scheduling.NodeAffinities = append(scheduling.NodeAffinities, transformed)
+		}
+	}
+
+	return scheduling, nil
+}
+
+func flattenScheduling(resp *computeBeta.Scheduling) []map[string]interface{} {
 	schedulingMap := map[string]interface{}{
-		"on_host_maintenance": scheduling.OnHostMaintenance,
-		"preemptible":         scheduling.Preemptible,
+		"on_host_maintenance": resp.OnHostMaintenance,
+		"preemptible":         resp.Preemptible,
 	}
-	if scheduling.AutomaticRestart != nil {
-		schedulingMap["automatic_restart"] = *scheduling.AutomaticRestart
+
+	if resp.AutomaticRestart != nil {
+		schedulingMap["automatic_restart"] = *resp.AutomaticRestart
 	}
-	result = append(result, schedulingMap)
-	return result
+
+	nodeAffinities := schema.NewSet(schema.HashResource(instanceSchedulingNodeAffinitiesElemSchema()), nil)
+	for _, na := range resp.NodeAffinities {
+		nodeAffinities.Add(map[string]interface{}{
+			"key":      na.Key,
+			"operator": na.Operator,
+			"values":   schema.NewSet(schema.HashString, convertStringArrToInterface(na.Values)),
+		})
+	}
+	schedulingMap["node_affinities"] = nodeAffinities
+
+	return []map[string]interface{}{schedulingMap}
 }
 
 func flattenAccessConfigs(accessConfigs []*computeBeta.AccessConfig) ([]map[string]interface{}, string) {
@@ -48,8 +148,11 @@ func flattenAccessConfigs(accessConfigs []*computeBeta.AccessConfig) ([]map[stri
 	natIP := ""
 	for i, ac := range accessConfigs {
 		flattened[i] = map[string]interface{}{
-			"nat_ip":          ac.NatIP,
-			"assigned_nat_ip": ac.NatIP,
+			"nat_ip":       ac.NatIP,
+			"network_tier": ac.NetworkTier,
+		}
+		if ac.SetPublicPtr {
+			flattened[i]["public_ptr_domain_name"] = ac.PublicPtrDomainName
 		}
 		if natIP == "" {
 			natIP = ac.NatIP
@@ -73,13 +176,13 @@ func flattenNetworkInterfaces(d *schema.ResourceData, config *Config, networkInt
 		region = subnet.Region
 
 		flattened[i] = map[string]interface{}{
-			"address":            iface.NetworkIP,
 			"network_ip":         iface.NetworkIP,
-			"network":            iface.Network,
-			"subnetwork":         iface.Subnetwork,
+			"network":            ConvertSelfLinkToV1(iface.Network),
+			"subnetwork":         ConvertSelfLinkToV1(iface.Subnetwork),
 			"subnetwork_project": subnet.Project,
 			"access_config":      ac,
 			"alias_ip_range":     flattenAliasIpRange(iface.AliasIpRanges),
+			"nic_type":           iface.NicType,
 		}
 		// Instance template interfaces never have names, so they're absent
 		// in the instance template network_interface schema. We want to use the
@@ -98,16 +201,22 @@ func flattenNetworkInterfaces(d *schema.ResourceData, config *Config, networkInt
 func expandAccessConfigs(configs []interface{}) []*computeBeta.AccessConfig {
 	acs := make([]*computeBeta.AccessConfig, len(configs))
 	for i, raw := range configs {
-		data := raw.(map[string]interface{})
-		acs[i] = &computeBeta.AccessConfig{
-			Type:  "ONE_TO_ONE_NAT",
-			NatIP: data["nat_ip"].(string),
+		acs[i] = &computeBeta.AccessConfig{}
+		acs[i].Type = "ONE_TO_ONE_NAT"
+		if raw != nil {
+			data := raw.(map[string]interface{})
+			acs[i].NatIP = data["nat_ip"].(string)
+			acs[i].NetworkTier = data["network_tier"].(string)
+			if ptr, ok := data["public_ptr_domain_name"]; ok && ptr != "" {
+				acs[i].SetPublicPtr = true
+				acs[i].PublicPtrDomainName = ptr.(string)
+			}
 		}
 	}
 	return acs
 }
 
-func expandNetworkInterfaces(d *schema.ResourceData, config *Config) ([]*computeBeta.NetworkInterface, error) {
+func expandNetworkInterfaces(d TerraformResourceData, config *Config) ([]*computeBeta.NetworkInterface, error) {
 	configs := d.Get("network_interface").([]interface{})
 	ifaces := make([]*computeBeta.NetworkInterface, len(configs))
 	for i, raw := range configs {
@@ -115,7 +224,7 @@ func expandNetworkInterfaces(d *schema.ResourceData, config *Config) ([]*compute
 
 		network := data["network"].(string)
 		subnetwork := data["subnetwork"].(string)
-		if (network == "" && subnetwork == "") || (network != "" && subnetwork != "") {
+		if network == "" && subnetwork == "" {
 			return nil, fmt.Errorf("exactly one of network or subnetwork must be provided")
 		}
 
@@ -136,13 +245,8 @@ func expandNetworkInterfaces(d *schema.ResourceData, config *Config) ([]*compute
 			Subnetwork:    sf.RelativeLink(),
 			AccessConfigs: expandAccessConfigs(data["access_config"].([]interface{})),
 			AliasIpRanges: expandAliasIpRanges(data["alias_ip_range"].([]interface{})),
+			NicType:       data["nic_type"].(string),
 		}
-
-		// network_ip is deprecated. We want address to win if both are set.
-		if data["address"].(string) != "" {
-			ifaces[i].NetworkIP = data["address"].(string)
-		}
-
 	}
 	return ifaces, nil
 }
@@ -186,7 +290,7 @@ func flattenGuestAccelerators(accelerators []*computeBeta.AcceleratorConfig) []m
 	return acceleratorsSchema
 }
 
-func resourceInstanceTags(d *schema.ResourceData) *computeBeta.Tags {
+func resourceInstanceTags(d TerraformResourceData) *computeBeta.Tags {
 	// Calculate the tags
 	var tags *computeBeta.Tags
 	if v := d.Get("tags"); v != nil {
@@ -201,4 +305,98 @@ func resourceInstanceTags(d *schema.ResourceData) *computeBeta.Tags {
 	}
 
 	return tags
+}
+
+func expandShieldedVmConfigs(d TerraformResourceData) *computeBeta.ShieldedInstanceConfig {
+	if _, ok := d.GetOk("shielded_instance_config"); !ok {
+		return nil
+	}
+
+	prefix := "shielded_instance_config.0"
+	return &computeBeta.ShieldedInstanceConfig{
+		EnableSecureBoot:          d.Get(prefix + ".enable_secure_boot").(bool),
+		EnableVtpm:                d.Get(prefix + ".enable_vtpm").(bool),
+		EnableIntegrityMonitoring: d.Get(prefix + ".enable_integrity_monitoring").(bool),
+		ForceSendFields:           []string{"EnableSecureBoot", "EnableVtpm", "EnableIntegrityMonitoring"},
+	}
+}
+
+func expandConfidentialInstanceConfig(d TerraformResourceData) *computeBeta.ConfidentialInstanceConfig {
+	if _, ok := d.GetOk("confidential_instance_config"); !ok {
+		return nil
+	}
+
+	prefix := "confidential_instance_config.0"
+	return &computeBeta.ConfidentialInstanceConfig{
+		EnableConfidentialCompute: d.Get(prefix + ".enable_confidential_compute").(bool),
+		ForceSendFields:           []string{"EnableSecureBoot"},
+	}
+}
+
+func flattenConfidentialInstanceConfig(ConfidentialInstanceConfig *computeBeta.ConfidentialInstanceConfig) []map[string]bool {
+	if ConfidentialInstanceConfig == nil {
+		return nil
+	}
+
+	return []map[string]bool{{
+		"enable_confidential_compute": ConfidentialInstanceConfig.EnableConfidentialCompute,
+	}}
+}
+
+func flattenShieldedVmConfig(shieldedVmConfig *computeBeta.ShieldedInstanceConfig) []map[string]bool {
+	if shieldedVmConfig == nil {
+		return nil
+	}
+
+	return []map[string]bool{{
+		"enable_secure_boot":          shieldedVmConfig.EnableSecureBoot,
+		"enable_vtpm":                 shieldedVmConfig.EnableVtpm,
+		"enable_integrity_monitoring": shieldedVmConfig.EnableIntegrityMonitoring,
+	}}
+}
+
+func expandDisplayDevice(d TerraformResourceData) *computeBeta.DisplayDevice {
+	if _, ok := d.GetOk("enable_display"); !ok {
+		return nil
+	}
+	return &computeBeta.DisplayDevice{
+		EnableDisplay:   d.Get("enable_display").(bool),
+		ForceSendFields: []string{"EnableDisplay"},
+	}
+}
+
+func flattenEnableDisplay(displayDevice *computeBeta.DisplayDevice) interface{} {
+	if displayDevice == nil {
+		return nil
+	}
+
+	return displayDevice.EnableDisplay
+}
+
+// Terraform doesn't correctly calculate changes on schema.Set, so we do it manually
+// https://github.com/hashicorp/terraform-plugin-sdk/issues/98
+func schedulingHasChange(d *schema.ResourceData) bool {
+	if !d.HasChange("scheduling") {
+		// This doesn't work correctly, which is why this method exists
+		// But it is here for posterity
+		return false
+	}
+	o, n := d.GetChange("scheduling")
+	oScheduling := o.([]interface{})[0].(map[string]interface{})
+	newScheduling := n.([]interface{})[0].(map[string]interface{})
+	originalNa := oScheduling["node_affinities"].(*schema.Set)
+	newNa := newScheduling["node_affinities"].(*schema.Set)
+	if oScheduling["automatic_restart"] != newScheduling["automatic_restart"] {
+		return true
+	}
+
+	if oScheduling["preemptible"] != newScheduling["preemptible"] {
+		return true
+	}
+
+	if oScheduling["on_host_maintenance"] != newScheduling["on_host_maintenance"] {
+		return true
+	}
+
+	return reflect.DeepEqual(newNa, originalNa)
 }

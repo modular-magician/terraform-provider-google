@@ -2,12 +2,10 @@ package google
 
 import (
 	"fmt"
-	"log"
 	"testing"
 
-	"github.com/hashicorp/terraform/helper/acctest"
-	"github.com/hashicorp/terraform/helper/resource"
-	"github.com/hashicorp/terraform/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestKeyRingIdParsing(t *testing.T) {
@@ -23,6 +21,12 @@ func TestKeyRingIdParsing(t *testing.T) {
 			ExpectedError:       false,
 			ExpectedTerraformId: "test-project/us-central1/test-key-ring",
 			ExpectedKeyRingId:   "projects/test-project/locations/us-central1/keyRings/test-key-ring",
+		},
+		"id is in domain:project/location/keyRingName format": {
+			ImportId:            "example.com:test-project/us-central1/test-key-ring",
+			ExpectedError:       false,
+			ExpectedTerraformId: "example.com:test-project/us-central1/test-key-ring",
+			ExpectedKeyRingId:   "projects/example.com:test-project/locations/us-central1/keyRings/test-key-ring",
 		},
 		"id contains name that is longer than 63 characters": {
 			ImportId:      "test-project/us-central1/can-you-believe-that-this-key-ring-name-is-exactly-64-characters",
@@ -67,23 +71,25 @@ func TestKeyRingIdParsing(t *testing.T) {
 }
 
 func TestAccKmsKeyRing_basic(t *testing.T) {
-	projectId := "terraform-" + acctest.RandString(10)
+	projectId := fmt.Sprintf("tf-test-%d", randInt(t))
 	projectOrg := getTestOrgFromEnv(t)
 	projectBillingAccount := getTestBillingAccountFromEnv(t)
-	keyRingName := fmt.Sprintf("tf-test-%s", acctest.RandString(10))
+	keyRingName := fmt.Sprintf("tf-test-%s", randString(t, 10))
 
-	resource.Test(t, resource.TestCase{
+	vcrTest(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckGoogleKmsKeyRingWasRemovedFromState("google_kms_key_ring.key_ring"),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testGoogleKmsKeyRing_basic(projectId, projectOrg, projectBillingAccount, keyRingName),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckGoogleKmsKeyRingExists("google_kms_key_ring.key_ring"),
-				),
 			},
-			resource.TestStep{
+			{
+				ResourceName:      "google_kms_key_ring.key_ring",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			{
 				Config: testGoogleKmsKeyRing_removed(projectId, projectOrg, projectBillingAccount),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckGoogleKmsKeyRingWasRemovedFromState("google_kms_key_ring.key_ring"),
@@ -91,38 +97,6 @@ func TestAccKmsKeyRing_basic(t *testing.T) {
 			},
 		},
 	})
-}
-
-func testAccCheckGoogleKmsKeyRingExists(resourceName string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		config := testAccProvider.Meta().(*Config)
-
-		rs, ok := s.RootModule().Resources[resourceName]
-		if !ok {
-			return fmt.Errorf("Resource not found: %s", resourceName)
-		}
-
-		keyRingId := &kmsKeyRingId{
-			Project:  rs.Primary.Attributes["project"],
-			Location: rs.Primary.Attributes["location"],
-			Name:     rs.Primary.Attributes["name"],
-		}
-
-		listKeyRingsResponse, err := config.clientKms.Projects.Locations.KeyRings.List(keyRingId.parentId()).Do()
-		if err != nil {
-			return fmt.Errorf("Error listing KeyRings: %s", err)
-		}
-
-		for _, keyRing := range listKeyRingsResponse.KeyRings {
-			log.Printf("[DEBUG] Found KeyRing: %s", keyRing.Name)
-
-			if keyRing.Name == keyRingId.keyRingId() {
-				return nil
-			}
-		}
-
-		return fmt.Errorf("KeyRing not found: %s", keyRingId.keyRingId())
-	}
 }
 
 /*
@@ -148,41 +122,37 @@ func testAccCheckGoogleKmsKeyRingWasRemovedFromState(resourceName string) resour
 func testGoogleKmsKeyRing_basic(projectId, projectOrg, projectBillingAccount, keyRingName string) string {
 	return fmt.Sprintf(`
 resource "google_project" "acceptance" {
-	name			= "%s"
-	project_id		= "%s"
-	org_id			= "%s"
-	billing_account	= "%s"
+  name            = "%s"
+  project_id      = "%s"
+  org_id          = "%s"
+  billing_account = "%s"
 }
 
-resource "google_project_services" "acceptance" {
-	project  = "${google_project.acceptance.project_id}"
-	services = [
-		"cloudkms.googleapis.com"
-	]
+resource "google_project_service" "acceptance" {
+  project = google_project.acceptance.project_id
+  service = "cloudkms.googleapis.com"
 }
 
 resource "google_kms_key_ring" "key_ring" {
-	project  = "${google_project_services.acceptance.project}"
-	name     = "%s"
-	location = "us-central1"
+  project  = google_project_service.acceptance.project
+  name     = "%s"
+  location = "us-central1"
 }
-	`, projectId, projectId, projectOrg, projectBillingAccount, keyRingName)
+`, projectId, projectId, projectOrg, projectBillingAccount, keyRingName)
 }
 
 func testGoogleKmsKeyRing_removed(projectId, projectOrg, projectBillingAccount string) string {
 	return fmt.Sprintf(`
 resource "google_project" "acceptance" {
-	name 			= "%s"
-	project_id		= "%s"
-	org_id			= "%s"
-	billing_account	= "%s"
+  name            = "%s"
+  project_id      = "%s"
+  org_id          = "%s"
+  billing_account = "%s"
 }
 
-resource "google_project_services" "acceptance" {
-	project  = "${google_project.acceptance.project_id}"
-	services = [
-		"cloudkms.googleapis.com"
-	]
+resource "google_project_service" "acceptance" {
+  project = google_project.acceptance.project_id
+  service = "cloudkms.googleapis.com"
 }
-	`, projectId, projectId, projectOrg, projectBillingAccount)
+`, projectId, projectId, projectOrg, projectBillingAccount)
 }

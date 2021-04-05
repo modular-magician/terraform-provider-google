@@ -21,9 +21,8 @@ import (
 	"sort"
 
 	"github.com/hashicorp/errwrap"
-	"github.com/hashicorp/terraform/helper/pathorcontents"
-	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/hashicorp/terraform/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"golang.org/x/oauth2/google"
 	"golang.org/x/oauth2/jwt"
 )
@@ -36,46 +35,47 @@ func dataSourceGoogleSignedUrl() *schema.Resource {
 		Read: dataSourceGoogleSignedUrlRead,
 
 		Schema: map[string]*schema.Schema{
-			"bucket": &schema.Schema{
+			"bucket": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"content_md5": &schema.Schema{
+			"content_md5": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Default:  "",
 			},
-			"content_type": &schema.Schema{
+			"content_type": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Default:  "",
 			},
-			"credentials": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
+			"credentials": {
+				Type:      schema.TypeString,
+				Sensitive: true,
+				Optional:  true,
 			},
-			"duration": &schema.Schema{
+			"duration": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Default:  "1h",
 			},
-			"extension_headers": &schema.Schema{
+			"extension_headers": {
 				Type:         schema.TypeMap,
 				Optional:     true,
-				Elem:         schema.TypeString,
+				Elem:         &schema.Schema{Type: schema.TypeString},
 				ValidateFunc: validateExtensionHeaders,
 			},
-			"http_method": &schema.Schema{
+			"http_method": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				Default:      "GET",
 				ValidateFunc: validation.StringInSlice([]string{"GET", "HEAD", "PUT", "DELETE"}, true),
 			},
-			"path": &schema.Schema{
+			"path": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"signed_url": &schema.Schema{
+			"signed_url": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
@@ -85,7 +85,7 @@ func dataSourceGoogleSignedUrl() *schema.Resource {
 
 func validateExtensionHeaders(v interface{}, k string) (ws []string, errors []error) {
 	hdrMap := v.(map[string]interface{})
-	for k, _ := range hdrMap {
+	for k := range hdrMap {
 		if !strings.HasPrefix(strings.ToLower(k), "x-goog-") {
 			errors = append(errors, fmt.Errorf(
 				"extension_header (%s) not valid, header name must begin with 'x-goog-'", k))
@@ -155,7 +155,9 @@ func dataSourceGoogleSignedUrlRead(d *schema.ResourceData, meta interface{}) err
 	}
 
 	// Success
-	d.Set("signed_url", signedUrl)
+	if err := d.Set("signed_url", signedUrl); err != nil {
+		return fmt.Errorf("Error setting signed_url: %s", err)
+	}
 
 	encodedSig, err := urlData.EncodedSignature()
 	if err != nil {
@@ -191,7 +193,7 @@ func loadJwtConfig(d *schema.ResourceData, meta interface{}) (*jwt.Config, error
 	}
 
 	if strings.TrimSpace(credentials) != "" {
-		contents, _, err := pathorcontents.Read(credentials)
+		contents, _, err := pathOrContents(credentials)
 		if err != nil {
 			return nil, errwrap.Wrapf("Error loading credentials: {{err}}", err)
 		}
@@ -283,7 +285,7 @@ func (u *UrlData) SigningString() []byte {
 		buf.WriteString(fmt.Sprintf("%s:%s\n", k, u.HttpHeaders[k]))
 	}
 
-	// Storate Object path (includes bucketname)
+	// Storage Object path (includes bucketname)
 	buf.WriteString(u.Path)
 
 	return buf.Bytes()
@@ -348,7 +350,9 @@ func SignString(toSign []byte, cfg *jwt.Config) ([]byte, error) {
 
 	// Hash string
 	hasher := sha256.New()
-	hasher.Write(toSign)
+	if _, err := hasher.Write(toSign); err != nil {
+		return nil, errwrap.Wrapf("failed to calculate sha256: {{err}}", err)
+	}
 
 	// Sign string
 	signed, err := rsa.SignPKCS1v15(rand.Reader, pk, crypto.SHA256, hasher.Sum(nil))

@@ -4,20 +4,19 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hashicorp/terraform/helper/acctest"
-	"github.com/hashicorp/terraform/helper/resource"
-	"github.com/hashicorp/terraform/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccDataSourceGoogleNetwork(t *testing.T) {
 	t.Parallel()
 
-	networkName := fmt.Sprintf("tf-test-%s", acctest.RandString(10))
-	resource.Test(t, resource.TestCase{
+	networkName := fmt.Sprintf("tf-test-%s", randString(t, 10))
+	vcrTest(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testAccDataSourceGoogleNetworkConfig(networkName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccDataSourceGoogleNetworkCheck("data.google_compute_network.my_network", "google_compute_network.foobar"),
@@ -43,7 +42,6 @@ func testAccDataSourceGoogleNetworkCheck(data_source_name string, resource_name 
 		rs_attr := rs.Primary.Attributes
 		network_attrs_to_test := []string{
 			"id",
-			"self_link",
 			"name",
 			"description",
 		}
@@ -58,6 +56,11 @@ func testAccDataSourceGoogleNetworkCheck(data_source_name string, resource_name 
 				)
 			}
 		}
+
+		if !compareSelfLinkOrResourceName("", ds_attr["self_link"], rs_attr["self_link"], nil) && ds_attr["self_link"] != rs_attr["self_link"] {
+			return fmt.Errorf("self link does not match: %s vs %s", ds_attr["self_link"], rs_attr["self_link"])
+		}
+
 		return nil
 	}
 }
@@ -65,11 +68,12 @@ func testAccDataSourceGoogleNetworkCheck(data_source_name string, resource_name 
 func testAccDataSourceGoogleNetworkConfig(name string) string {
 	return fmt.Sprintf(`
 resource "google_compute_network" "foobar" {
-	name = "%s"
-	description = "my-description"
+  name        = "%s"
+  description = "my-description"
 }
 
 data "google_compute_network" "my_network" {
-	name = "${google_compute_network.foobar.name}"
-}`, name)
+  name = google_compute_network.foobar.name
+}
+`, name)
 }

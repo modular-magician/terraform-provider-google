@@ -86,3 +86,39 @@ func TestGetResourceNameFromSelfLink(t *testing.T) {
 		}
 	}
 }
+
+func TestSelfLinkNameHash(t *testing.T) {
+	cases := map[string]struct {
+		SelfLink, Name string
+		Expect         bool
+	}{
+		"same": {
+			SelfLink: "https://www.googleapis.com/compute/v1/projects/your-project/global/networks/a-network",
+			Name:     "a-network",
+			Expect:   true,
+		},
+		"different": {
+			SelfLink: "https://www.googleapis.com/compute/v1/projects/your-project/global/networks/a-network",
+			Name:     "another-network",
+			Expect:   false,
+		},
+	}
+
+	for tn, tc := range cases {
+		if (selfLinkNameHash(tc.SelfLink) == selfLinkNameHash(tc.Name)) != tc.Expect {
+			t.Errorf("%s: expected %t for whether hashes matched for self link = %q, name = %q", tn, tc.Expect, tc.SelfLink, tc.Name)
+		}
+	}
+}
+
+func TestGetRegionFromRegionSelfLink(t *testing.T) {
+	cases := map[string]string{
+		"https://www.googleapis.com/compute/v1/projects/test/regions/europe-west3": "europe-west3",
+		"europe-west3": "europe-west3",
+	}
+	for input, expected := range cases {
+		if result := GetRegionFromRegionSelfLink(input); result != expected {
+			t.Errorf("expected to get %q from %q, got %q", expected, input, result)
+		}
+	}
+}

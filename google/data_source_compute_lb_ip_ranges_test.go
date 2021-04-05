@@ -4,15 +4,15 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
 func TestAccDataSourceComputeLbIpRanges_basic(t *testing.T) {
-	resource.Test(t, resource.TestCase{
+	vcrTest(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testAccComputeLbIpRangesConfig,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr("data.google_compute_lb_ip_ranges.some",
@@ -30,5 +30,6 @@ func TestAccDataSourceComputeLbIpRanges_basic(t *testing.T) {
 }
 
 const testAccComputeLbIpRangesConfig = `
-data "google_compute_lb_ip_ranges" "some" {}
+data "google_compute_lb_ip_ranges" "some" {
+}
 `

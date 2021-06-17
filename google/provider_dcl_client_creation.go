@@ -19,6 +19,7 @@ import (
 
 	dataproc "github.com/GoogleCloudPlatform/declarative-resource-client-library/services/google/dataproc"
 	eventarc "github.com/GoogleCloudPlatform/declarative-resource-client-library/services/google/eventarc"
+	run "github.com/GoogleCloudPlatform/declarative-resource-client-library/services/google/run"
 )
 
 func NewDCLDataprocClient(config *Config, userAgent, billingProject string) *dataproc.Client {
@@ -71,4 +72,30 @@ func NewDCLEventarcClient(config *Config, userAgent, billingProject string) *eve
 	}
 
 	return eventarc.NewClient(dclConfig)
+}
+
+func NewDCLRunClient(config *Config, userAgent, billingProject string) *run.Client {
+	dclClientOptions := dcl.WithHTTPClient(config.client)
+	dclUserAgentOptions := dcl.WithUserAgent(userAgent)
+	dclLoggerOptions := dcl.WithLogger(dclLogger{})
+	var dclConfig *dcl.Config
+	if config.UserProjectOverride && billingProject != "" {
+		dclBillingProjectHeader := dcl.WithHeader("X-Goog-User-Project", billingProject)
+		dclConfig = dcl.NewConfig(
+			dclClientOptions,
+			dclUserAgentOptions,
+			dclLoggerOptions,
+			dcl.WithBasePath(config.RunBasePath),
+			dclBillingProjectHeader,
+		)
+	} else {
+		dclConfig = dcl.NewConfig(
+			dclClientOptions,
+			dclUserAgentOptions,
+			dclLoggerOptions,
+			dcl.WithBasePath(config.RunBasePath),
+		)
+	}
+
+	return run.NewClient(dclConfig)
 }

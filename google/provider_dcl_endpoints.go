@@ -30,11 +30,23 @@ var EventarcEndpointEntry = &schema.Schema{
 	}, ""),
 }
 
+var RunEndpointEntryKey = "run_custom_endpoint"
+var RunEndpointEntry = &schema.Schema{
+	Type:     schema.TypeString,
+	Optional: true,
+	DefaultFunc: schema.MultiEnvDefaultFunc([]string{
+		"GOOGLE_RUN_CUSTOM_ENDPOINT",
+	}, ""),
+}
+
 //Add new values to config.go.erb config object declaration
 //EventarcBasePath string
+//RunBasePath string
 
 //Add new values to provider.go.erb schema initialization
 // EventarcEndpointEntryKey:               EventarcEndpointEntry,
+// RunEndpointEntryKey:               RunEndpointEntry,
 
 //Add new values to provider.go.erb - provider block read
 // config.EventarcBasePath = d.Get(EventarcEndpointEntryKey).(string)
+// config.RunBasePath = d.Get(RunEndpointEntryKey).(string)

@@ -40,14 +40,26 @@ var EventarcEndpointEntry = &schema.Schema{
 	}, ""),
 }
 
+var GkemulticloudEndpointEntryKey = "gkemulticloud_custom_endpoint"
+var GkemulticloudEndpointEntry = &schema.Schema{
+	Type:     schema.TypeString,
+	Optional: true,
+	DefaultFunc: schema.MultiEnvDefaultFunc([]string{
+		"GOOGLE_GKEMULTICLOUD_CUSTOM_ENDPOINT",
+	}, ""),
+}
+
 //Add new values to config.go.erb config object declaration
 //AssuredWorkloadsBasePath string
 //EventarcBasePath string
+//GkemulticloudBasePath string
 
 //Add new values to provider.go.erb schema initialization
 // AssuredWorkloadsEndpointEntryKey:               AssuredWorkloadsEndpointEntry,
 // EventarcEndpointEntryKey:               EventarcEndpointEntry,
+// GkemulticloudEndpointEntryKey:               GkemulticloudEndpointEntry,
 
 //Add new values to provider.go.erb - provider block read
 // config.AssuredWorkloadsBasePath = d.Get(AssuredWorkloadsEndpointEntryKey).(string)
 // config.EventarcBasePath = d.Get(EventarcEndpointEntryKey).(string)
+// config.GkemulticloudBasePath = d.Get(GkemulticloudEndpointEntryKey).(string)

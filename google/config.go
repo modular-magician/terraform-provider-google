@@ -169,6 +169,7 @@ type Config struct {
 	AssuredWorkloadsBasePath string
 	EventarcBasePath         string
 	GkeHubBasePath           string
+	GkemulticloudBasePath    string
 }
 
 const AccessApprovalBasePathKey = "AccessApproval"

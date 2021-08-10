@@ -21,6 +21,7 @@ import (
 	assuredworkloads "github.com/GoogleCloudPlatform/declarative-resource-client-library/services/google/assuredworkloads"
 	dataproc "github.com/GoogleCloudPlatform/declarative-resource-client-library/services/google/dataproc"
 	eventarc "github.com/GoogleCloudPlatform/declarative-resource-client-library/services/google/eventarc"
+	gkemulticloud "github.com/GoogleCloudPlatform/declarative-resource-client-library/services/google/gkemulticloud"
 )
 
 func NewDCLAssuredWorkloadsClient(config *Config, userAgent, billingProject string) *assuredworkloads.Client {
@@ -99,4 +100,30 @@ func NewDCLEventarcClient(config *Config, userAgent, billingProject string) *eve
 	}
 
 	return eventarc.NewClient(dclConfig)
+}
+
+func NewDCLGkemulticloudClient(config *Config, userAgent, billingProject string) *gkemulticloud.Client {
+	dclClientOptions := dcl.WithHTTPClient(config.client)
+	dclUserAgentOptions := dcl.WithUserAgent(userAgent)
+	dclLoggerOptions := dcl.WithLogger(dclLogger{})
+	var dclConfig *dcl.Config
+	if config.UserProjectOverride && billingProject != "" {
+		dclBillingProjectHeader := dcl.WithHeader("X-Goog-User-Project", billingProject)
+		dclConfig = dcl.NewConfig(
+			dclClientOptions,
+			dclUserAgentOptions,
+			dclLoggerOptions,
+			dcl.WithBasePath(config.GkemulticloudBasePath),
+			dclBillingProjectHeader,
+		)
+	} else {
+		dclConfig = dcl.NewConfig(
+			dclClientOptions,
+			dclUserAgentOptions,
+			dclLoggerOptions,
+			dcl.WithBasePath(config.GkemulticloudBasePath),
+		)
+	}
+
+	return gkemulticloud.NewClient(dclConfig)
 }

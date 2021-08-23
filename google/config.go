@@ -162,6 +162,7 @@ type Config struct {
 	ServiceNetworkingBasePath string
 	StorageTransferBasePath   string
 	BigtableAdminBasePath     string
+	OrgPolicyBasePath         string
 
 	requestBatcherServiceUsage *RequestBatcher
 	requestBatcherIam          *RequestBatcher
@@ -251,6 +252,7 @@ const IamCredentialsBasePathKey = "IamCredentials"
 const ResourceManagerV2BasePathKey = "ResourceManagerV2"
 const ServiceNetworkingBasePathKey = "ServiceNetworking"
 const StorageTransferBasePathKey = "StorageTransfer"
+const OrgPolicyBasePathKey = "OrgPolicy"
 const BigtableAdminBasePathKey = "BigtableAdmin"
 const GkeHubFeatureBasePathKey = "GkeHubFeatureBasePathKey"
 
@@ -336,6 +338,7 @@ var DefaultBasePaths = map[string]string{
 	StorageTransferBasePathKey:      "https://storagetransfer.googleapis.com/v1/",
 	BigtableAdminBasePathKey:        "https://bigtableadmin.googleapis.com/v2/",
 	GkeHubFeatureBasePathKey:        "https://gkehub.googleapis.com/v1beta/",
+	OrgPolicyBasePathKey:            "https://orgpolicy.googleapis.com/v2/",
 }
 
 var DefaultClientScopes = []string{
@@ -1182,4 +1185,5 @@ func ConfigureBasePaths(c *Config) {
 	c.BigQueryBasePath = DefaultBasePaths[BigQueryBasePathKey]
 	c.StorageTransferBasePath = DefaultBasePaths[StorageTransferBasePathKey]
 	c.BigtableAdminBasePath = DefaultBasePaths[BigtableAdminBasePathKey]
+	c.OrgPolicyBasePath = DefaultBasePaths[OrgPolicyBasePathKey]
 }

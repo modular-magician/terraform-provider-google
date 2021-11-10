@@ -38,8 +38,8 @@ func resourceDataprocWorkflowTemplate() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(30 * time.Minute),
-			Delete: schema.DefaultTimeout(30 * time.Minute),
+			Create: schema.DefaultTimeout(10 * time.Minute),
+			Delete: schema.DefaultTimeout(10 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -1772,7 +1772,7 @@ func resourceDataprocWorkflowTemplateCreate(d *schema.ResourceData, meta interfa
 	if bp, err := getBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
-	client := NewDCLDataprocClient(config, userAgent, billingProject)
+	client := NewDCLDataprocClient(config, userAgent, billingProject, d.Timeout(schema.TimeoutCreate))
 	res, err := client.ApplyWorkflowTemplate(context.Background(), obj, createDirective...)
 
 	if _, ok := err.(dcl.DiffAfterApplyError); ok {
@@ -1816,7 +1816,7 @@ func resourceDataprocWorkflowTemplateRead(d *schema.ResourceData, meta interface
 	if bp, err := getBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
-	client := NewDCLDataprocClient(config, userAgent, billingProject)
+	client := NewDCLDataprocClient(config, userAgent, billingProject, d.Timeout(schema.TimeoutRead))
 	res, err := client.GetWorkflowTemplate(context.Background(), obj)
 	if err != nil {
 		resourceName := fmt.Sprintf("DataprocWorkflowTemplate %q", d.Id())
@@ -1889,7 +1889,7 @@ func resourceDataprocWorkflowTemplateDelete(d *schema.ResourceData, meta interfa
 	if bp, err := getBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
-	client := NewDCLDataprocClient(config, userAgent, billingProject)
+	client := NewDCLDataprocClient(config, userAgent, billingProject, d.Timeout(schema.TimeoutDelete))
 	if err := client.DeleteWorkflowTemplate(context.Background(), obj); err != nil {
 		return fmt.Errorf("Error deleting WorkflowTemplate: %s", err)
 	}

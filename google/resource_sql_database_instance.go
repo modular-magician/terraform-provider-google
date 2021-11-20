@@ -732,6 +732,8 @@ func resourceSqlDatabaseInstanceCreate(d *schema.ResourceData, meta interface{})
 		return err
 	}
 
+	quotaProject := getQuotaProjectOrEmpty(d, config, project)
+
 	region, err := getRegion(d, config)
 	if err != nil {
 		return err
@@ -803,9 +805,9 @@ func resourceSqlDatabaseInstanceCreate(d *schema.ResourceData, meta interface{})
 		if cloneContext != nil {
 			cloneContext.DestinationInstanceName = name
 			clodeReq := sqladmin.InstancesCloneRequest{CloneContext: cloneContext}
-			op, operr = config.NewSqlAdminClient(userAgent).Instances.Clone(project, cloneSource, &clodeReq).Do()
+			op, operr = config.NewSqlAdminClient(userAgent, quotaProject).Instances.Clone(project, cloneSource, &clodeReq).Do()
 		} else {
-			op, operr = config.NewSqlAdminClient(userAgent).Instances.Insert(project, instance).Do()
+			op, operr = config.NewSqlAdminClient(userAgent, quotaProject).Instances.Insert(project, instance).Do()
 		}
 		return operr
 	}, d.Timeout(schema.TimeoutCreate), isSqlOperationInProgressError)
@@ -819,7 +821,7 @@ func resourceSqlDatabaseInstanceCreate(d *schema.ResourceData, meta interface{})
 	}
 	d.SetId(id)
 
-	err = sqlAdminOperationWaitTime(config, op, project, "Create Instance", userAgent, d.Timeout(schema.TimeoutCreate))
+	err = sqlAdminOperationWaitTime(config, op, project, quotaProject, "Create Instance", userAgent, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		d.SetId("")
 		return err
@@ -828,13 +830,13 @@ func resourceSqlDatabaseInstanceCreate(d *schema.ResourceData, meta interface{})
 	// patch any fields that need to be sent postcreation
 	if patchData != nil {
 		err = retryTimeDuration(func() (rerr error) {
-			op, rerr = config.NewSqlAdminClient(userAgent).Instances.Patch(project, instance.Name, patchData).Do()
+			op, rerr = config.NewSqlAdminClient(userAgent, quotaProject).Instances.Patch(project, instance.Name, patchData).Do()
 			return rerr
 		}, d.Timeout(schema.TimeoutUpdate), isSqlOperationInProgressError)
 		if err != nil {
 			return fmt.Errorf("Error, failed to update instance settings for %s: %s", instance.Name, err)
 		}
-		err = sqlAdminOperationWaitTime(config, op, project, "Patch Instance", userAgent, d.Timeout(schema.TimeoutUpdate))
+		err = sqlAdminOperationWaitTime(config, op, project, quotaProject, "Patch Instance", userAgent, d.Timeout(schema.TimeoutUpdate))
 		if err != nil {
 			return err
 		}
@@ -856,14 +858,14 @@ func resourceSqlDatabaseInstanceCreate(d *schema.ResourceData, meta interface{})
 		instanceUpdate.Settings.SettingsVersion = int64(_settings["version"].(int))
 		var op *sqladmin.Operation
 		err = retryTimeDuration(func() (rerr error) {
-			op, rerr = config.NewSqlAdminClient(userAgent).Instances.Update(project, name, instanceUpdate).Do()
+			op, rerr = config.NewSqlAdminClient(userAgent, quotaProject).Instances.Update(project, name, instanceUpdate).Do()
 			return rerr
 		}, d.Timeout(schema.TimeoutUpdate), isSqlOperationInProgressError)
 		if err != nil {
 			return fmt.Errorf("Error, failed to update instance settings for %s: %s", instance.Name, err)
 		}
 
-		err = sqlAdminOperationWaitTime(config, op, project, "Update Instance", userAgent, d.Timeout(schema.TimeoutUpdate))
+		err = sqlAdminOperationWaitTime(config, op, project, quotaProject, "Update Instance", userAgent, d.Timeout(schema.TimeoutUpdate))
 		if err != nil {
 			return err
 		}
@@ -880,7 +882,7 @@ func resourceSqlDatabaseInstanceCreate(d *schema.ResourceData, meta interface{})
 	if sqlDatabaseIsMaster(d) {
 		var users *sqladmin.UsersListResponse
 		err = retryTimeDuration(func() error {
-			users, err = config.NewSqlAdminClient(userAgent).Users.List(project, instance.Name).Do()
+			users, err = config.NewSqlAdminClient(userAgent, quotaProject).Users.List(project, instance.Name).Do()
 			return err
 		}, d.Timeout(schema.TimeoutRead), isSqlOperationInProgressError)
 		if err != nil {
@@ -889,9 +891,9 @@ func resourceSqlDatabaseInstanceCreate(d *schema.ResourceData, meta interface{})
 		for _, u := range users.Items {
 			if u.Name == "root" && u.Host == "%" {
 				err = retry(func() error {
-					op, err = config.NewSqlAdminClient(userAgent).Users.Delete(project, instance.Name).Host(u.Host).Name(u.Name).Do()
+					op, err = config.NewSqlAdminClient(userAgent, quotaProject).Users.Delete(project, instance.Name).Host(u.Host).Name(u.Name).Do()
 					if err == nil {
-						err = sqlAdminOperationWaitTime(config, op, project, "Delete default root User", userAgent, d.Timeout(schema.TimeoutCreate))
+						err = sqlAdminOperationWaitTime(config, op, project, quotaProject, "Delete default root User", userAgent, d.Timeout(schema.TimeoutCreate))
 					}
 					return err
 				})
@@ -1108,9 +1110,11 @@ func resourceSqlDatabaseInstanceRead(d *schema.ResourceData, meta interface{}) e
 		return err
 	}
 
+	quotaProject := getQuotaProjectOrEmpty(d, config, project)
+
 	var instance *sqladmin.DatabaseInstance
 	err = retryTimeDuration(func() (rerr error) {
-		instance, rerr = config.NewSqlAdminClient(userAgent).Instances.Get(project, d.Get("name").(string)).Do()
+		instance, rerr = config.NewSqlAdminClient(userAgent, quotaProject).Instances.Get(project, d.Get("name").(string)).Do()
 		return rerr
 	}, d.Timeout(schema.TimeoutRead), isSqlOperationInProgressError)
 	if err != nil {
@@ -1200,6 +1204,8 @@ func resourceSqlDatabaseInstanceUpdate(d *schema.ResourceData, meta interface{})
 		return err
 	}
 
+	quotaProject := getQuotaProjectOrEmpty(d, config, project)
+
 	// Update only updates the settings, so they are all we need to set.
 	instance := &sqladmin.DatabaseInstance{
 		Settings: expandSqlDatabaseInstanceSettings(d.Get("settings").([]interface{})),
@@ -1214,14 +1220,14 @@ func resourceSqlDatabaseInstanceUpdate(d *schema.ResourceData, meta interface{})
 
 	var op *sqladmin.Operation
 	err = retryTimeDuration(func() (rerr error) {
-		op, rerr = config.NewSqlAdminClient(userAgent).Instances.Update(project, d.Get("name").(string), instance).Do()
+		op, rerr = config.NewSqlAdminClient(userAgent, quotaProject).Instances.Update(project, d.Get("name").(string), instance).Do()
 		return rerr
 	}, d.Timeout(schema.TimeoutUpdate), isSqlOperationInProgressError)
 	if err != nil {
 		return fmt.Errorf("Error, failed to update instance settings for %s: %s", instance.Name, err)
 	}
 
-	err = sqlAdminOperationWaitTime(config, op, project, "Update Instance", userAgent, d.Timeout(schema.TimeoutUpdate))
+	err = sqlAdminOperationWaitTime(config, op, project, quotaProject, "Update Instance", userAgent, d.Timeout(schema.TimeoutUpdate))
 	if err != nil {
 		return err
 	}
@@ -1251,6 +1257,8 @@ func resourceSqlDatabaseInstanceDelete(d *schema.ResourceData, meta interface{})
 		return err
 	}
 
+	quotaProject := getQuotaProjectOrEmpty(d, config, project)
+
 	// Check if deletion protection is enabled.
 
 	if d.Get("deletion_protection").(bool) {
@@ -1266,11 +1274,11 @@ func resourceSqlDatabaseInstanceDelete(d *schema.ResourceData, meta interface{})
 
 	var op *sqladmin.Operation
 	err = retryTimeDuration(func() (rerr error) {
-		op, rerr = config.NewSqlAdminClient(userAgent).Instances.Delete(project, d.Get("name").(string)).Do()
+		op, rerr = config.NewSqlAdminClient(userAgent, quotaProject).Instances.Delete(project, d.Get("name").(string)).Do()
 		if rerr != nil {
 			return rerr
 		}
-		err = sqlAdminOperationWaitTime(config, op, project, "Delete Instance", userAgent, d.Timeout(schema.TimeoutDelete))
+		err = sqlAdminOperationWaitTime(config, op, project, quotaProject, "Delete Instance", userAgent, d.Timeout(schema.TimeoutDelete))
 		if err != nil {
 			return err
 		}
@@ -1578,16 +1586,18 @@ func sqlDatabaseInstanceRestoreFromBackup(d *schema.ResourceData, config *Config
 		RestoreBackupContext: expandRestoreBackupContext(restoreContext),
 	}
 
+	quotaProject := getQuotaProjectOrEmpty(d, config, project)
+
 	var op *sqladmin.Operation
 	err := retryTimeDuration(func() (operr error) {
-		op, operr = config.NewSqlAdminClient(userAgent).Instances.RestoreBackup(project, instanceId, backupRequest).Do()
+		op, operr = config.NewSqlAdminClient(userAgent, quotaProject).Instances.RestoreBackup(project, instanceId, backupRequest).Do()
 		return operr
 	}, d.Timeout(schema.TimeoutUpdate), isSqlOperationInProgressError)
 	if err != nil {
 		return fmt.Errorf("Error, failed to restore instance from backup %s: %s", instanceId, err)
 	}
 
-	err = sqlAdminOperationWaitTime(config, op, project, "Restore Backup", userAgent, d.Timeout(schema.TimeoutUpdate))
+	err = sqlAdminOperationWaitTime(config, op, project, quotaProject, "Restore Backup", userAgent, d.Timeout(schema.TimeoutUpdate))
 	if err != nil {
 		return err
 	}

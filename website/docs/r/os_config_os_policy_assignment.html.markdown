@@ -13,15 +13,14 @@
 #     are required, please file an issue at https:#github.com/hashicorp/terraform-provider-google/issues/new/choose
 #
 # ----------------------------------------------------------------------------
-subcategory: "OSConfig"
+subcategory: "OsConfig"
 layout: "google"
 page_title: "Google: google_os_config_os_policy_assignment"
-sidebar_current: "docs-google-os-config-os-policy-assignment"
 description: |-
 Represents an OSPolicyAssignment resource.
 ---
 
-# google\_os\_config\_os\_policy\_assignment
+# google_os_config_os_policy_assignment
 
 Represents an OSPolicyAssignment resource.
 

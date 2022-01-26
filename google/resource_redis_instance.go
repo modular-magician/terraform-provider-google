@@ -97,7 +97,7 @@ func resourceRedisInstance() *schema.Resource {
 				Computed: true,
 				Optional: true,
 				ForceNew: true,
-				Description: `Only applicable to STANDARD_HA tier which protects the instance
+				Description: `Only applicable to STANDARD_HA tier which protects the instances
 against zonal failures by provisioning it across two zones.
 If provided, it must be a different zone from the one provided in
 [locationId].`,
@@ -296,7 +296,7 @@ https://cloud.google.com/memorystore/docs/redis/reference/rest/v1/projects.locat
 				Computed: true,
 				Optional: true,
 				Description: `The version of Redis software. If not provided, latest supported
-version will be used. Please check the API documentation linked 
+version will be used. Please check the API documentation linked
 at the top for the latest valid values.`,
 			},
 			"region": {

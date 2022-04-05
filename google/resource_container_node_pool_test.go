@@ -1130,7 +1130,7 @@ resource "google_container_node_pool" "np_with_management" {
   %s
 
   node_config {
-    machine_type = "g1-small"
+    machine_type = "e2-medium"
     disk_size_gb = 10
     oauth_scopes = ["compute-rw", "storage-ro", "logging-write", "monitoring"]
   }
@@ -1162,7 +1162,6 @@ resource "google_container_node_pool" "np_with_node_config" {
     ]
     preemptible      = true
     min_cpu_platform = "Intel Broadwell"
-
     taint {
       key    = "taint_key"
       value  = "taint_value"
@@ -1206,7 +1205,6 @@ resource "google_container_node_pool" "np_with_node_config" {
     ]
     preemptible      = true
     min_cpu_platform = "Intel Broadwell"
-
     taint {
       key    = "taint_key"
       value  = "taint_value"
@@ -1385,7 +1383,7 @@ resource "google_container_node_pool" "np_with_node_config_scope_alias" {
   cluster            = google_container_cluster.cluster.name
   initial_node_count = 1
   node_config {
-    machine_type = "g1-small"
+    machine_type = "e2-medium"
     disk_size_gb = 10
     oauth_scopes = ["compute-rw", "storage-ro", "logging-write", "monitoring"]
   }

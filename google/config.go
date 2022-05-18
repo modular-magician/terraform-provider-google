@@ -215,6 +215,7 @@ type Config struct {
 	PubsubLiteBasePath           string
 	RedisBasePath                string
 	ResourceManagerBasePath      string
+	ResourceSettingsBasePath     string
 	SecretManagerBasePath        string
 	SecurityCenterBasePath       string
 	ServiceManagementBasePath    string
@@ -317,6 +318,7 @@ const PubsubBasePathKey = "Pubsub"
 const PubsubLiteBasePathKey = "PubsubLite"
 const RedisBasePathKey = "Redis"
 const ResourceManagerBasePathKey = "ResourceManager"
+const ResourceSettingsBasePathKey = "ResourceSettings"
 const SecretManagerBasePathKey = "SecretManager"
 const SecurityCenterBasePathKey = "SecurityCenter"
 const ServiceManagementBasePathKey = "ServiceManagement"
@@ -401,6 +403,7 @@ var DefaultBasePaths = map[string]string{
 	PubsubLiteBasePathKey:           "https://{{region}}-pubsublite.googleapis.com/v1/admin/",
 	RedisBasePathKey:                "https://redis.googleapis.com/v1/",
 	ResourceManagerBasePathKey:      "https://cloudresourcemanager.googleapis.com/v1/",
+	ResourceSettingsBasePathKey:     "https://resourcesettings.googleapis.com/v1/",
 	SecretManagerBasePathKey:        "https://secretmanager.googleapis.com/v1/",
 	SecurityCenterBasePathKey:       "https://securitycenter.googleapis.com/v1/",
 	ServiceManagementBasePathKey:    "https://servicemanagement.googleapis.com/v1/",
@@ -1247,6 +1250,7 @@ func ConfigureBasePaths(c *Config) {
 	c.PubsubLiteBasePath = DefaultBasePaths[PubsubLiteBasePathKey]
 	c.RedisBasePath = DefaultBasePaths[RedisBasePathKey]
 	c.ResourceManagerBasePath = DefaultBasePaths[ResourceManagerBasePathKey]
+	c.ResourceSettingsBasePath = DefaultBasePaths[ResourceSettingsBasePathKey]
 	c.SecretManagerBasePath = DefaultBasePaths[SecretManagerBasePathKey]
 	c.SecurityCenterBasePath = DefaultBasePaths[SecurityCenterBasePathKey]
 	c.ServiceManagementBasePath = DefaultBasePaths[ServiceManagementBasePathKey]

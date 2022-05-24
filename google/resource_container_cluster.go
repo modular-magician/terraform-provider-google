@@ -93,6 +93,38 @@ func rfc5545RecurrenceDiffSuppress(k, o, n string, d *schema.ResourceData) bool 
 	return false
 }
 
+func securityGroupUnchangedCustomizeDiff(_ context.Context, diff *schema.ResourceDiff, meta interface{}) error {
+	oChange, nChange := diff.GetChange("authenticator_groups_config")
+	oList := oChange.([]interface{})
+	nList := nChange.([]interface{})
+
+	if len(oList) == 0 {
+		return nil
+	}
+
+	if len(nList) == 0 {
+		return fmt.Errorf("authenticator_groups_config cannot be removed once set.")
+	}
+
+	oldSGU := (oList[0]).(map[string]interface{})
+	newSGU := nList[0].(map[string]interface{})
+
+	oldGroup := oldSGU["security_group"].(string)
+	newGroup := newSGU["security_group"].(string)
+	oldEnabled := oldSGU["enabled"].(bool)
+	newEnabled := newSGU["enabled"].(bool)
+
+	if len(newGroup) == 0 && (oldEnabled || newEnabled) {
+		return fmt.Errorf("security_group must be set if enabled")
+	}
+
+	if newGroup != oldGroup {
+		return fmt.Errorf("security_group cannot be changed once set according to google api spec")
+	}
+
+	return nil
+}
+
 func resourceContainerCluster() *schema.Resource {
 	return &schema.Resource{
 		UseJSONNumber: true,
@@ -105,6 +137,7 @@ func resourceContainerCluster() *schema.Resource {
 			resourceNodeConfigEmptyGuestAccelerator,
 			containerClusterAutopilotCustomizeDiff,
 			containerClusterNodeVersionRemoveDefaultCustomizeDiff,
+			securityGroupUnchangedCustomizeDiff,
 		),
 
 		Timeouts: &schema.ResourceTimeout{
@@ -412,8 +445,7 @@ func resourceContainerCluster() *schema.Resource {
 			"authenticator_groups_config": {
 				Type:        schema.TypeList,
 				Optional:    true,
-				Computed:    true,
-				ForceNew:    true,
+				ForceNew:    false,
 				MaxItems:    1,
 				Description: `Configuration for the Google Groups for GKE feature.`,
 				Elem: &schema.Resource{
@@ -421,8 +453,16 @@ func resourceContainerCluster() *schema.Resource {
 						"security_group": {
 							Type:        schema.TypeString,
 							Required:    true,
-							ForceNew:    true,
+							ForceNew:    false,
 							Description: `The name of the RBAC security group for use with Google security groups in Kubernetes RBAC. Group name must be in format gke-security-groups@yourdomain.com.`,
+						},
+						"enabled": {
+							Type:        schema.TypeBool,
+							Required:    false,
+							Optional:    true,
+							Default:     true,
+							ForceNew:    false,
+							Description: `Whether to enable or disable RBAC security group usage. Default is true.`,
 						},
 					},
 				},
@@ -1730,6 +1770,21 @@ func resourceContainerClusterUpdate(d *schema.ResourceData, meta interface{}) er
 		}
 	}
 
+	if d.HasChange("authenticator_groups_config") {
+		agc := d.Get("authenticator_groups_config")
+		req := &container.UpdateClusterRequest{
+			Update: &container.ClusterUpdate{
+				DesiredAuthenticatorGroupsConfig: expandAuthenticatorGroupsConfig(agc),
+			},
+		}
+
+		updateF := updateFunc(req, "updating GKE cluster authenticator groups config")
+		if err := lockedCall(lockKey, updateF); err != nil {
+			return err
+		}
+		log.Printf("[INFO] GKE cluster %s authenticator groups config has been updated", d.Id())
+	}
+
 	// The ClusterUpdate object that we use for most of these updates only allows updating one field at a time,
 	// so we have to make separate calls for each field that we want to update. The order here is fairly arbitrary-
 	// if the order of updating fields does matter, it is called out explicitly.
@@ -2824,8 +2879,10 @@ func expandAuthenticatorGroupsConfig(configured interface{}) *container.Authenti
 	result := &container.AuthenticatorGroupsConfig{}
 	config := l[0].(map[string]interface{})
 	if securityGroup, ok := config["security_group"]; ok {
-		result.Enabled = true
 		result.SecurityGroup = securityGroup.(string)
+	}
+	if enabled, ok := config["enabled"]; ok {
+		result.Enabled = enabled.(bool)
 	}
 	return result
 }
@@ -3174,6 +3231,7 @@ func flattenAuthenticatorGroupsConfig(c *container.AuthenticatorGroupsConfig) []
 	return []map[string]interface{}{
 		{
 			"security_group": c.SecurityGroup,
+			"enabled":        c.Enabled,
 		},
 	}
 }

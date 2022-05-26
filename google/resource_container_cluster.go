@@ -585,6 +585,22 @@ func resourceContainerCluster() *schema.Resource {
 								ValidateFunc: validation.StringInSlice([]string{"SYSTEM_COMPONENTS"}, false),
 							},
 						},
+						"managed_prometheus": {
+							Type:        schema.TypeList,
+							Optional:    true,
+							Computed:    true,
+							MaxItems:    1,
+							Description: `Configuration for Google Cloud Managed Services for Prometheus.`,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"enabled": {
+										Type:        schema.TypeBool,
+										Required:    true,
+										Description: `Whether or not the managed collection is enabled.`,
+									},
+								},
+							},
+						},
 					},
 				},
 			},
@@ -3068,13 +3084,21 @@ func expandMonitoringConfig(configured interface{}) *container.MonitoringConfig 
 	if len(l) == 0 || l[0] == nil {
 		return nil
 	}
-
+	mc := &container.MonitoringConfig{}
 	config := l[0].(map[string]interface{})
-	return &container.MonitoringConfig{
-		ComponentConfig: &container.MonitoringComponentConfig{
-			EnableComponents: convertStringArr(config["enable_components"].([]interface{})),
-		},
+	if v, ok := config["enable_components"]; ok && len(v.([]interface{})) > 0 {
+		enable_components := v.([]interface{})
+		mc.ComponentConfig = &container.MonitoringComponentConfig{
+			EnableComponents: convertStringArr(enable_components),
+		}
 	}
+	if v, ok := config["managed_prometheus"]; ok && len(v.([]interface{})) > 0 {
+		managed_prometheus := v.([]interface{})[0].(map[string]interface{})
+		mc.ManagedPrometheusConfig = &container.ManagedPrometheusConfig{
+			Enabled: managed_prometheus["enabled"].(bool),
+		}
+	}
+	return mc
 }
 
 func flattenConfidentialNodes(c *container.ConfidentialNodes) []map[string]interface{} {
@@ -3480,9 +3504,20 @@ func flattenMonitoringConfig(c *container.MonitoringConfig) []map[string]interfa
 		return nil
 	}
 
+	result := make(map[string]interface{})
+	if c.ComponentConfig != nil {
+		result["enable_components"] = c.ComponentConfig.EnableComponents
+	}
+	if c.ManagedPrometheusConfig != nil {
+		result["managed_prometheus"] = flattenManagedPrometheusConfig(c.ManagedPrometheusConfig)
+	}
+	return []map[string]interface{}{result}
+}
+
+func flattenManagedPrometheusConfig(c *container.ManagedPrometheusConfig) []map[string]interface{} {
 	return []map[string]interface{}{
 		{
-			"enable_components": c.ComponentConfig.EnableComponents,
+			"enabled": c != nil && c.Enabled,
 		},
 	}
 }

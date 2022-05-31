@@ -1763,6 +1763,27 @@ func TestAccContainerCluster_withSoleTenantGroup(t *testing.T) {
 	})
 }
 
+func TestAccContainerCluster_withAdvancedMachineFeatures(t *testing.T) {
+	t.Parallel()
+
+	resourceName := fmt.Sprintf("tf-test-%s", randString(t, 10))
+	vcrTest(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckContainerClusterDestroyProducer(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccContainerCluster_withAdvancedMachineFeatures(resourceName),
+			},
+			{
+				ResourceName:      "google_container_cluster.primary",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
 func TestAccContainerCluster_nodeAutoprovisioningDefaultsImageType(t *testing.T) {
 	t.Parallel()
 
@@ -4204,4 +4225,20 @@ resource "google_container_cluster" "primary" {
   }
 }
 `, name, name, name)
+}
+
+func testAccContainerCluster_withAdvancedMachineFeatures(name string) string {
+	return fmt.Sprintf(`
+resource "google_container_cluster" "primary" {
+  name               = "%s"
+  location           = "us-central1-f"
+  initial_node_count = 1
+  node_config {
+    machine_type    = "n1-standard-2"
+    advanced_machine_features {
+      threads_per_core = 1
+    }
+  }
+}
+`, name)
 }

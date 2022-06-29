@@ -256,6 +256,11 @@ This is in RFC3339 text format.`,
 				Computed:    true,
 				Description: `Unique identifier for the resource; defined by the server.`,
 			},
+			"managed_zone_id": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: `Unique identifier for the resource; defined by the server.`,
+			},
 			"name_servers": {
 				Type:     schema.TypeList,
 				Computed: true,
@@ -465,6 +470,9 @@ func resourceDNSManagedZoneRead(d *schema.ResourceData, meta interface{}) error 
 		return fmt.Errorf("Error reading ManagedZone: %s", err)
 	}
 	if err := d.Set("managed_zone_id", flattenDNSManagedZoneManagedZoneID(res["id"], d, config)); err != nil {
+		return fmt.Errorf("Error reading ManagedZone: %s", err)
+	}
+	if err := d.Set("managed_zone_id", flattenDNSManagedZoneManagedZoneId(res["managedZoneId"], d, config)); err != nil {
 		return fmt.Errorf("Error reading ManagedZone: %s", err)
 	}
 	if err := d.Set("name", flattenDNSManagedZoneName(res["name"], d, config)); err != nil {
@@ -830,6 +838,10 @@ func flattenDNSManagedZoneManagedZoneID(v interface{}, d *schema.ResourceData, c
 	}
 
 	return v // let terraform core handle it otherwise
+}
+
+func flattenDNSManagedZoneManagedZoneId(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
 }
 
 func flattenDNSManagedZoneName(v interface{}, d *schema.ResourceData, config *Config) interface{} {

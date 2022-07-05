@@ -15,37 +15,37 @@
 package google
 
 import (
-	"testing"
+  "testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+  "github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
 func TestAccCGCSnippet_flaskGoogleCloudQuickstartExample(t *testing.T) {
-	t.Parallel()
+  t.Parallel()
 
-	context := map[string]interface{}{
-		"random_suffix": randString(t, 10),
+	context := map[string]interface{} {
+				"random_suffix": randString(t, 10),
 	}
 
 	vcrTest(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
-		Steps: []resource.TestStep{
+		PreCheck:     func() { testAccPreCheck(t) },
+				Providers: testAccProviders,
+								Steps: []resource.TestStep{
 			{
 				Config: testAccCGCSnippet_flaskGoogleCloudQuickstartExample(context),
 			},
-			{
-				ResourceName:            "google_compute_instance.default",
-				ImportState:             true,
-				ImportStateVerify:       true,
+					{
+				ResourceName:      "google_compute_instance.default",
+				ImportState:       true,
+				ImportStateVerify: true,
 				ImportStateVerifyIgnore: []string{"metadata", "metadata_startup_script"},
 			},
-		},
+				},
 	})
 }
 
 func testAccCGCSnippet_flaskGoogleCloudQuickstartExample(context map[string]interface{}) string {
-	return Nprintf(`
+  return Nprintf(`
 # Create a single Compute Engine instance
 resource "google_compute_instance" "default" {
   name         = "tf-test-flask-vm%{random_suffix}"
@@ -117,30 +117,30 @@ resource "google_storage_bucket" "default" {
 }
 
 func TestAccCGCSnippet_spotInstanceBasicExample(t *testing.T) {
-	t.Parallel()
+  t.Parallel()
 
-	context := map[string]interface{}{
-		"random_suffix": randString(t, 10),
+	context := map[string]interface{} {
+				"random_suffix": randString(t, 10),
 	}
 
 	vcrTest(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
-		Steps: []resource.TestStep{
+		PreCheck:     func() { testAccPreCheck(t) },
+				Providers: testAccProviders,
+								Steps: []resource.TestStep{
 			{
 				Config: testAccCGCSnippet_spotInstanceBasicExample(context),
 			},
-			{
+					{
 				ResourceName:      "google_compute_instance.spot_vm_instance",
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
-		},
+				},
 	})
 }
 
 func testAccCGCSnippet_spotInstanceBasicExample(context map[string]interface{}) string {
-	return Nprintf(`
+  return Nprintf(`
 
 resource "google_compute_instance" "spot_vm_instance" {
   name         = "tf-test-spot-instance-name%{random_suffix}"
@@ -171,30 +171,30 @@ resource "google_compute_instance" "spot_vm_instance" {
 }
 
 func TestAccCGCSnippet_instanceCustomHostnameExample(t *testing.T) {
-	t.Parallel()
+  t.Parallel()
 
-	context := map[string]interface{}{
-		"random_suffix": randString(t, 10),
+	context := map[string]interface{} {
+				"random_suffix": randString(t, 10),
 	}
 
 	vcrTest(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
-		Steps: []resource.TestStep{
+		PreCheck:     func() { testAccPreCheck(t) },
+				Providers: testAccProviders,
+								Steps: []resource.TestStep{
 			{
 				Config: testAccCGCSnippet_instanceCustomHostnameExample(context),
 			},
-			{
+					{
 				ResourceName:      "google_compute_instance.custom_hostname_instance",
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
-		},
+				},
 	})
 }
 
 func testAccCGCSnippet_instanceCustomHostnameExample(context map[string]interface{}) string {
-	return Nprintf(`
+  return Nprintf(`
 
 resource "google_compute_instance" "custom_hostname_instance" {
   name         = "tf-test-custom-hostname-instance-name%{random_suffix}"
@@ -220,34 +220,81 @@ resource "google_compute_instance" "custom_hostname_instance" {
 `, context)
 }
 
-func TestAccCGCSnippet_sqlDatabaseInstanceSqlserverExample(t *testing.T) {
-	skipIfVcr(t)
-	t.Parallel()
+func TestAccCGCSnippet_compute-reservationExample(t *testing.T) {
+  t.Parallel()
 
-	context := map[string]interface{}{
-		"deletion_protection": false,
-		"random_suffix":       randString(t, 10),
+	context := map[string]interface{} {
+				"random_suffix": randString(t, 10),
 	}
 
 	vcrTest(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
-		Steps: []resource.TestStep{
+		PreCheck:     func() { testAccPreCheck(t) },
+				Providers: testAccProviders,
+								Steps: []resource.TestStep{
+			{
+				Config: testAccCGCSnippet_compute-reservationExample(context),
+			},
+					{
+				ResourceName:      "google_compute_reservation.gce_reservation_local",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+				},
+	})
+}
+
+func testAccCGCSnippet_compute-reservationExample(context map[string]interface{}) string {
+  return Nprintf(`
+
+resource "google_compute_reservation" "gce_reservation_local" {
+  name = "tf-test-gce-reservation-local%{random_suffix}"
+  zone = "us-central1-c"
+  project = "my-project-name"
+
+  share_settings {
+    share_type = "LOCAL"
+  }
+
+  specific_reservation {
+    count = 1
+    instance_properties {
+      machine_type     = "n2-standard-2"
+    }
+
+  }
+}
+
+`, context)
+}
+
+func TestAccCGCSnippet_sqlDatabaseInstanceSqlserverExample(t *testing.T) {
+	skipIfVcr(t)
+  t.Parallel()
+
+	context := map[string]interface{} {
+					"deletion_protection": false,
+					"random_suffix": randString(t, 10),
+	}
+
+	vcrTest(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+				Providers: testAccProviders,
+								Steps: []resource.TestStep{
 			{
 				Config: testAccCGCSnippet_sqlDatabaseInstanceSqlserverExample(context),
 			},
-			{
-				ResourceName:            "google_sql_database_instance.instance",
-				ImportState:             true,
-				ImportStateVerify:       true,
+					{
+				ResourceName:      "google_sql_database_instance.instance",
+				ImportState:       true,
+				ImportStateVerify: true,
 				ImportStateVerifyIgnore: []string{"deletion_protection", "root_password"},
 			},
-		},
+				},
 	})
 }
 
 func testAccCGCSnippet_sqlDatabaseInstanceSqlserverExample(context map[string]interface{}) string {
-	return Nprintf(`
+  return Nprintf(`
 # [START cloud_sql_sqlserver_instance_80_db_n1_s2]
 resource "google_sql_database_instance" "instance" {
   name             = "tf-test-sqlserver-instance%{random_suffix}"
@@ -275,32 +322,32 @@ resource "google_sql_user" "user" {
 }
 
 func TestAccCGCSnippet_sqlSqlserverInstanceCloneExample(t *testing.T) {
-	t.Parallel()
+  t.Parallel()
 
-	context := map[string]interface{}{
-		"deletion_protection": false,
-		"random_suffix":       randString(t, 10),
+	context := map[string]interface{} {
+					"deletion_protection": false,
+					"random_suffix": randString(t, 10),
 	}
 
 	vcrTest(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
-		Steps: []resource.TestStep{
+		PreCheck:     func() { testAccPreCheck(t) },
+				Providers: testAccProviders,
+								Steps: []resource.TestStep{
 			{
 				Config: testAccCGCSnippet_sqlSqlserverInstanceCloneExample(context),
 			},
-			{
-				ResourceName:            "google_sql_database_instance.clone",
-				ImportState:             true,
-				ImportStateVerify:       true,
+					{
+				ResourceName:      "google_sql_database_instance.clone",
+				ImportState:       true,
+				ImportStateVerify: true,
 				ImportStateVerifyIgnore: []string{"deletion_protection", "root_password", "clone"},
 			},
-		},
+				},
 	})
 }
 
 func testAccCGCSnippet_sqlSqlserverInstanceCloneExample(context map[string]interface{}) string {
-	return Nprintf(`
+  return Nprintf(`
 resource "google_sql_database_instance" "source" {
   name             = "tf-test-sqlserver-instance-source-name%{random_suffix}"
   region           = "us-central1"
@@ -326,32 +373,32 @@ resource "google_sql_database_instance" "clone" {
 }
 
 func TestAccCGCSnippet_sqlSqlserverInstanceBackupExample(t *testing.T) {
-	t.Parallel()
+  t.Parallel()
 
-	context := map[string]interface{}{
-		"deletion_protection": false,
-		"random_suffix":       randString(t, 10),
+	context := map[string]interface{} {
+					"deletion_protection": false,
+					"random_suffix": randString(t, 10),
 	}
 
 	vcrTest(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
-		Steps: []resource.TestStep{
+		PreCheck:     func() { testAccPreCheck(t) },
+				Providers: testAccProviders,
+								Steps: []resource.TestStep{
 			{
 				Config: testAccCGCSnippet_sqlSqlserverInstanceBackupExample(context),
 			},
-			{
-				ResourceName:            "google_sql_database_instance.default",
-				ImportState:             true,
-				ImportStateVerify:       true,
+					{
+				ResourceName:      "google_sql_database_instance.default",
+				ImportState:       true,
+				ImportStateVerify: true,
 				ImportStateVerifyIgnore: []string{"deletion_protection", "root_password"},
 			},
-		},
+				},
 	})
 }
 
 func testAccCGCSnippet_sqlSqlserverInstanceBackupExample(context map[string]interface{}) string {
-	return Nprintf(`
+  return Nprintf(`
 resource "google_sql_database_instance" "default" {
   name             = "tf-test-sqlserver-instance-backup%{random_suffix}"
   region           = "us-central1"
@@ -370,32 +417,32 @@ resource "google_sql_database_instance" "default" {
 }
 
 func TestAccCGCSnippet_sqlSqlserverInstanceAuthorizedNetworkExample(t *testing.T) {
-	t.Parallel()
+  t.Parallel()
 
-	context := map[string]interface{}{
-		"deletion_protection": false,
-		"random_suffix":       randString(t, 10),
+	context := map[string]interface{} {
+					"deletion_protection": false,
+					"random_suffix": randString(t, 10),
 	}
 
 	vcrTest(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
-		Steps: []resource.TestStep{
+		PreCheck:     func() { testAccPreCheck(t) },
+				Providers: testAccProviders,
+								Steps: []resource.TestStep{
 			{
 				Config: testAccCGCSnippet_sqlSqlserverInstanceAuthorizedNetworkExample(context),
 			},
-			{
-				ResourceName:            "google_sql_database_instance.default",
-				ImportState:             true,
-				ImportStateVerify:       true,
+					{
+				ResourceName:      "google_sql_database_instance.default",
+				ImportState:       true,
+				ImportStateVerify: true,
 				ImportStateVerifyIgnore: []string{"deletion_protection", "root_password"},
 			},
-		},
+				},
 	})
 }
 
 func testAccCGCSnippet_sqlSqlserverInstanceAuthorizedNetworkExample(context map[string]interface{}) string {
-	return Nprintf(`
+  return Nprintf(`
 resource "google_sql_database_instance" "default" {
   name = "tf-test-sqlserver-instance-with-authorized-network%{random_suffix}"
   region           = "us-central1"
@@ -417,32 +464,32 @@ resource "google_sql_database_instance" "default" {
 }
 
 func TestAccCGCSnippet_sqlSqlserverInstanceBackupLocationExample(t *testing.T) {
-	t.Parallel()
+  t.Parallel()
 
-	context := map[string]interface{}{
-		"deletion_protection": false,
-		"random_suffix":       randString(t, 10),
+	context := map[string]interface{} {
+					"deletion_protection": false,
+					"random_suffix": randString(t, 10),
 	}
 
 	vcrTest(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
-		Steps: []resource.TestStep{
+		PreCheck:     func() { testAccPreCheck(t) },
+				Providers: testAccProviders,
+								Steps: []resource.TestStep{
 			{
 				Config: testAccCGCSnippet_sqlSqlserverInstanceBackupLocationExample(context),
 			},
-			{
-				ResourceName:            "google_sql_database_instance.default",
-				ImportState:             true,
-				ImportStateVerify:       true,
+					{
+				ResourceName:      "google_sql_database_instance.default",
+				ImportState:       true,
+				ImportStateVerify: true,
 				ImportStateVerifyIgnore: []string{"root_password", "deletion_protection"},
 			},
-		},
+				},
 	})
 }
 
 func testAccCGCSnippet_sqlSqlserverInstanceBackupLocationExample(context map[string]interface{}) string {
-	return Nprintf(`
+  return Nprintf(`
 resource "google_sql_database_instance" "default" {
   name             = "tf-test-sqlserver-instance-with-backup-location%{random_suffix}"
   region           = "us-central1"
@@ -461,32 +508,32 @@ resource "google_sql_database_instance" "default" {
 }
 
 func TestAccCGCSnippet_sqlSqlserverInstanceBackupRetentionExample(t *testing.T) {
-	t.Parallel()
+  t.Parallel()
 
-	context := map[string]interface{}{
-		"deletion_protection": false,
-		"random_suffix":       randString(t, 10),
+	context := map[string]interface{} {
+					"deletion_protection": false,
+					"random_suffix": randString(t, 10),
 	}
 
 	vcrTest(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
-		Steps: []resource.TestStep{
+		PreCheck:     func() { testAccPreCheck(t) },
+				Providers: testAccProviders,
+								Steps: []resource.TestStep{
 			{
 				Config: testAccCGCSnippet_sqlSqlserverInstanceBackupRetentionExample(context),
 			},
-			{
-				ResourceName:            "google_sql_database_instance.default",
-				ImportState:             true,
-				ImportStateVerify:       true,
+					{
+				ResourceName:      "google_sql_database_instance.default",
+				ImportState:       true,
+				ImportStateVerify: true,
 				ImportStateVerifyIgnore: []string{"root_password", "deletion_protection"},
 			},
-		},
+				},
 	})
 }
 
 func testAccCGCSnippet_sqlSqlserverInstanceBackupRetentionExample(context map[string]interface{}) string {
-	return Nprintf(`
+  return Nprintf(`
 resource "google_sql_database_instance" "default" {
   name             = "tf-test-sqlserver-instance-backup-retention%{random_suffix}"
   region           = "us-central1"
@@ -508,32 +555,32 @@ resource "google_sql_database_instance" "default" {
 }
 
 func TestAccCGCSnippet_sqlSqlserverInstanceReplicaExample(t *testing.T) {
-	t.Parallel()
+  t.Parallel()
 
-	context := map[string]interface{}{
-		"deletion_protection": false,
-		"random_suffix":       randString(t, 10),
+	context := map[string]interface{} {
+					"deletion_protection": false,
+					"random_suffix": randString(t, 10),
 	}
 
 	vcrTest(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
-		Steps: []resource.TestStep{
+		PreCheck:     func() { testAccPreCheck(t) },
+				Providers: testAccProviders,
+								Steps: []resource.TestStep{
 			{
 				Config: testAccCGCSnippet_sqlSqlserverInstanceReplicaExample(context),
 			},
-			{
-				ResourceName:            "google_sql_database_instance.read_replica",
-				ImportState:             true,
-				ImportStateVerify:       true,
+					{
+				ResourceName:      "google_sql_database_instance.read_replica",
+				ImportState:       true,
+				ImportStateVerify: true,
 				ImportStateVerifyIgnore: []string{"deletion_protection", "root_password"},
 			},
-		},
+				},
 	})
 }
 
 func testAccCGCSnippet_sqlSqlserverInstanceReplicaExample(context map[string]interface{}) string {
-	return Nprintf(`
+  return Nprintf(`
 resource "google_sql_database_instance" "primary" {
   name             = "tf-test-sqlserver-primary-instance-name%{random_suffix}"
   region           = "europe-west4"
@@ -569,32 +616,32 @@ resource "google_sql_database_instance" "read_replica" {
 }
 
 func TestAccCGCSnippet_sqlSqlserverInstancePublicIpExample(t *testing.T) {
-	t.Parallel()
+  t.Parallel()
 
-	context := map[string]interface{}{
-		"deletion_protection": false,
-		"random_suffix":       randString(t, 10),
+	context := map[string]interface{} {
+					"deletion_protection": false,
+					"random_suffix": randString(t, 10),
 	}
 
 	vcrTest(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
-		Steps: []resource.TestStep{
+		PreCheck:     func() { testAccPreCheck(t) },
+				Providers: testAccProviders,
+								Steps: []resource.TestStep{
 			{
 				Config: testAccCGCSnippet_sqlSqlserverInstancePublicIpExample(context),
 			},
-			{
-				ResourceName:            "google_sql_database_instance.sqlserver_public_ip_instance_name",
-				ImportState:             true,
-				ImportStateVerify:       true,
+					{
+				ResourceName:      "google_sql_database_instance.sqlserver_public_ip_instance_name",
+				ImportState:       true,
+				ImportStateVerify: true,
 				ImportStateVerifyIgnore: []string{"deletion_protection", "root_password"},
 			},
-		},
+				},
 	})
 }
 
 func testAccCGCSnippet_sqlSqlserverInstancePublicIpExample(context map[string]interface{}) string {
-	return Nprintf(`
+  return Nprintf(`
 resource "google_sql_database_instance" "sqlserver_public_ip_instance_name" {
   name                 = "tf-test-sqlserver-public-ip-instance-name%{random_suffix}"
   region               = "europe-west4"
@@ -620,31 +667,31 @@ resource "google_sql_database_instance" "sqlserver_public_ip_instance_name" {
 }
 
 func TestAccCGCSnippet_sqlSqlserverInstancePrivateIpExample(t *testing.T) {
-	t.Parallel()
+  t.Parallel()
 
-	context := map[string]interface{}{
-		"random_suffix": randString(t, 10),
+	context := map[string]interface{} {
+				"random_suffix": randString(t, 10),
 	}
 
 	vcrTest(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
-		Steps: []resource.TestStep{
+		PreCheck:     func() { testAccPreCheck(t) },
+				Providers: testAccProviders,
+								Steps: []resource.TestStep{
 			{
 				Config: testAccCGCSnippet_sqlSqlserverInstancePrivateIpExample(context),
 			},
-			{
-				ResourceName:            "google_sql_database_instance.instance",
-				ImportState:             true,
-				ImportStateVerify:       true,
+					{
+				ResourceName:      "google_sql_database_instance.instance",
+				ImportState:       true,
+				ImportStateVerify: true,
 				ImportStateVerifyIgnore: []string{"root_password", "deletion_protection"},
 			},
-		},
+				},
 	})
 }
 
 func testAccCGCSnippet_sqlSqlserverInstancePrivateIpExample(context map[string]interface{}) string {
-	return Nprintf(`
+  return Nprintf(`
 
 resource "google_compute_network" "private_network" {
   name                    = "tf-test-private-network%{random_suffix}"
@@ -687,32 +734,32 @@ resource "google_sql_database_instance" "instance" {
 }
 
 func TestAccCGCSnippet_sqlSqlserverInstanceFlagsExample(t *testing.T) {
-	t.Parallel()
+  t.Parallel()
 
-	context := map[string]interface{}{
-		"deletion_protection": false,
-		"random_suffix":       randString(t, 10),
+	context := map[string]interface{} {
+					"deletion_protection": false,
+					"random_suffix": randString(t, 10),
 	}
 
 	vcrTest(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
-		Steps: []resource.TestStep{
+		PreCheck:     func() { testAccPreCheck(t) },
+				Providers: testAccProviders,
+								Steps: []resource.TestStep{
 			{
 				Config: testAccCGCSnippet_sqlSqlserverInstanceFlagsExample(context),
 			},
-			{
-				ResourceName:            "google_sql_database_instance.instance",
-				ImportState:             true,
-				ImportStateVerify:       true,
+					{
+				ResourceName:      "google_sql_database_instance.instance",
+				ImportState:       true,
+				ImportStateVerify: true,
 				ImportStateVerifyIgnore: []string{"deletion_protection", "root_password"},
 			},
-		},
+				},
 	})
 }
 
 func testAccCGCSnippet_sqlSqlserverInstanceFlagsExample(context map[string]interface{}) string {
-	return Nprintf(`
+  return Nprintf(`
 resource "google_sql_database_instance" "instance" {
   name             = "tf-test-sqlserver-instance%{random_suffix}"
   region           = "us-central1"
@@ -739,30 +786,30 @@ resource "google_sql_database_instance" "instance" {
 }
 
 func TestAccCGCSnippet_storageNewBucketExample(t *testing.T) {
-	t.Parallel()
+  t.Parallel()
 
-	context := map[string]interface{}{
-		"random_suffix": randString(t, 10),
+	context := map[string]interface{} {
+				"random_suffix": randString(t, 10),
 	}
 
 	vcrTest(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
-		Steps: []resource.TestStep{
+		PreCheck:     func() { testAccPreCheck(t) },
+				Providers: testAccProviders,
+								Steps: []resource.TestStep{
 			{
 				Config: testAccCGCSnippet_storageNewBucketExample(context),
 			},
-			{
+					{
 				ResourceName:      "google_storage_bucket.static",
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
-		},
+				},
 	})
 }
 
 func testAccCGCSnippet_storageNewBucketExample(context map[string]interface{}) string {
-	return Nprintf(`
+  return Nprintf(`
 # Create new storage bucket in the US multi-region
 # with coldline storage
 resource "google_storage_bucket" "static" {

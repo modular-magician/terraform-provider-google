@@ -872,9 +872,9 @@ func Provider() *schema.Provider {
 	return provider
 }
 
-// Generated resources: 228
+// Generated resources: 229
 // Generated IAM resources: 135
-// Total generated resources: 363
+// Total generated resources: 364
 func ResourceMap() map[string]*schema.Resource {
 	resourceMap, _ := ResourceMapWithErrors()
 	return resourceMap
@@ -1139,6 +1139,7 @@ func ResourceMapWithErrors() (map[string]*schema.Resource, error) {
 			"google_iap_tunnel_iam_policy":                                 ResourceIamPolicy(IapTunnelIamSchema, IapTunnelIamUpdaterProducer, IapTunnelIdParseFunc),
 			"google_iap_brand":                                             resourceIapBrand(),
 			"google_iap_client":                                            resourceIapClient(),
+			"google_iap_settings":                                          resourceIapSettings(),
 			"google_identity_platform_default_supported_idp_config":        resourceIdentityPlatformDefaultSupportedIdpConfig(),
 			"google_identity_platform_tenant_default_supported_idp_config": resourceIdentityPlatformTenantDefaultSupportedIdpConfig(),
 			"google_identity_platform_inbound_saml_config":                 resourceIdentityPlatformInboundSamlConfig(),

@@ -39,6 +39,7 @@ import (
 	osconfig "github.com/GoogleCloudPlatform/declarative-resource-client-library/services/google/osconfig"
 	privateca "github.com/GoogleCloudPlatform/declarative-resource-client-library/services/google/privateca"
 	recaptchaenterprise "github.com/GoogleCloudPlatform/declarative-resource-client-library/services/google/recaptchaenterprise"
+	vertexai "github.com/GoogleCloudPlatform/declarative-resource-client-library/services/google/vertexai"
 )
 
 func NewDCLApikeysClient(config *Config, userAgent, billingProject string, timeout time.Duration) *apikeys.Client {
@@ -499,4 +500,27 @@ func NewDCLRecaptchaEnterpriseClient(config *Config, userAgent, billingProject s
 
 	dclConfig := dcl.NewConfig(configOptions...)
 	return recaptchaenterprise.NewClient(dclConfig)
+}
+
+func NewDCLVertexAiClient(config *Config, userAgent, billingProject string, timeout time.Duration) *vertexai.Client {
+	configOptions := []dcl.ConfigOption{
+		dcl.WithHTTPClient(config.client),
+		dcl.WithUserAgent(userAgent),
+		dcl.WithLogger(dclLogger{}),
+		dcl.WithBasePath(config.VertexAIBasePath),
+	}
+
+	if timeout != 0 {
+		configOptions = append(configOptions, dcl.WithTimeout(timeout))
+	}
+
+	if config.UserProjectOverride {
+		configOptions = append(configOptions, dcl.WithUserProjectOverride())
+		if billingProject != "" {
+			configOptions = append(configOptions, dcl.WithBillingProject(billingProject))
+		}
+	}
+
+	dclConfig := dcl.NewConfig(configOptions...)
+	return vertexai.NewClient(dclConfig)
 }

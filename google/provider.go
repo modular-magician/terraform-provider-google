@@ -889,8 +889,8 @@ func Provider() *schema.Provider {
 }
 
 // Generated resources: 233
-// Generated IAM resources: 138
-// Total generated resources: 371
+// Generated IAM resources: 141
+// Total generated resources: 374
 func ResourceMap() map[string]*schema.Resource {
 	resourceMap, _ := ResourceMapWithErrors()
 	return resourceMap
@@ -1226,6 +1226,9 @@ func ResourceMapWithErrors() (map[string]*schema.Resource, error) {
 			"google_secret_manager_secret_iam_policy":                      ResourceIamPolicy(SecretManagerSecretIamSchema, SecretManagerSecretIamUpdaterProducer, SecretManagerSecretIdParseFunc),
 			"google_secret_manager_secret_version":                         resourceSecretManagerSecretVersion(),
 			"google_scc_source":                                            resourceSecurityCenterSource(),
+			"google_scc_source_iam_binding":                                ResourceIamBinding(SecurityCenterSourceIamSchema, SecurityCenterSourceIamUpdaterProducer, SecurityCenterSourceIdParseFunc),
+			"google_scc_source_iam_member":                                 ResourceIamMember(SecurityCenterSourceIamSchema, SecurityCenterSourceIamUpdaterProducer, SecurityCenterSourceIdParseFunc),
+			"google_scc_source_iam_policy":                                 ResourceIamPolicy(SecurityCenterSourceIamSchema, SecurityCenterSourceIamUpdaterProducer, SecurityCenterSourceIdParseFunc),
 			"google_scc_notification_config":                               resourceSecurityCenterNotificationConfig(),
 			"google_endpoints_service_iam_binding":                         ResourceIamBinding(ServiceManagementServiceIamSchema, ServiceManagementServiceIamUpdaterProducer, ServiceManagementServiceIdParseFunc),
 			"google_endpoints_service_iam_member":                          ResourceIamMember(ServiceManagementServiceIamSchema, ServiceManagementServiceIamUpdaterProducer, ServiceManagementServiceIdParseFunc),

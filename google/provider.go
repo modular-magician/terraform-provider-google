@@ -889,9 +889,9 @@ func Provider() *schema.Provider {
 	return provider
 }
 
-// Generated resources: 234
+// Generated resources: 235
 // Generated IAM resources: 138
-// Total generated resources: 372
+// Total generated resources: 373
 func ResourceMap() map[string]*schema.Resource {
 	resourceMap, _ := ResourceMapWithErrors()
 	return resourceMap
@@ -966,6 +966,7 @@ func ResourceMapWithErrors() (map[string]*schema.Resource, error) {
 			"google_cloud_asset_folder_feed":                               resourceCloudAssetFolderFeed(),
 			"google_cloud_asset_organization_feed":                         resourceCloudAssetOrganizationFeed(),
 			"google_cloudbuild_trigger":                                    resourceCloudBuildTrigger(),
+			"google_cloudbuild_git_hub_enterprise_config":                  resourceCloudBuildGitHubEnterpriseConfig(),
 			"google_cloudfunctions_function_iam_binding":                   ResourceIamBinding(CloudFunctionsCloudFunctionIamSchema, CloudFunctionsCloudFunctionIamUpdaterProducer, CloudFunctionsCloudFunctionIdParseFunc),
 			"google_cloudfunctions_function_iam_member":                    ResourceIamMember(CloudFunctionsCloudFunctionIamSchema, CloudFunctionsCloudFunctionIamUpdaterProducer, CloudFunctionsCloudFunctionIdParseFunc),
 			"google_cloudfunctions_function_iam_policy":                    ResourceIamPolicy(CloudFunctionsCloudFunctionIamSchema, CloudFunctionsCloudFunctionIamUpdaterProducer, CloudFunctionsCloudFunctionIdParseFunc),

@@ -360,6 +360,11 @@ can be specified as values, and you cannot specify a status code more than once.
 								},
 							},
 						},
+						"request_coalescing": {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Description: `If true then Cloud CDN will combine multiple concurrent cache fill requests into a small number of requests to the origin.`,
+						},
 						"serve_while_stale": {
 							Type:        schema.TypeInt,
 							Computed:    true,
@@ -2123,6 +2128,8 @@ func flattenComputeBackendServiceCdnPolicy(v interface{}, d *schema.ResourceData
 		flattenComputeBackendServiceCdnPolicyNegativeCaching(original["negativeCaching"], d, config)
 	transformed["negative_caching_policy"] =
 		flattenComputeBackendServiceCdnPolicyNegativeCachingPolicy(original["negativeCachingPolicy"], d, config)
+	transformed["request_coalescing"] =
+		flattenComputeBackendServiceCdnPolicyRequestCoalescing(original["requestCoalescing"], d, config)
 	transformed["cache_mode"] =
 		flattenComputeBackendServiceCdnPolicyCacheMode(original["cacheMode"], d, config)
 	transformed["serve_while_stale"] =
@@ -2305,6 +2312,10 @@ func flattenComputeBackendServiceCdnPolicyNegativeCachingPolicyTtl(v interface{}
 	}
 
 	return v // let terraform core handle it otherwise
+}
+
+func flattenComputeBackendServiceCdnPolicyRequestCoalescing(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
 }
 
 func flattenComputeBackendServiceCdnPolicyCacheMode(v interface{}, d *schema.ResourceData, config *Config) interface{} {
@@ -3188,6 +3199,13 @@ func expandComputeBackendServiceCdnPolicy(v interface{}, d TerraformResourceData
 		transformed["negativeCachingPolicy"] = transformedNegativeCachingPolicy
 	}
 
+	transformedRequestCoalescing, err := expandComputeBackendServiceCdnPolicyRequestCoalescing(original["request_coalescing"], d, config)
+	if err != nil {
+		return nil, err
+	} else {
+		transformed["requestCoalescing"] = transformedRequestCoalescing
+	}
+
 	transformedCacheMode, err := expandComputeBackendServiceCdnPolicyCacheMode(original["cache_mode"], d, config)
 	if err != nil {
 		return nil, err
@@ -3339,6 +3357,10 @@ func expandComputeBackendServiceCdnPolicyNegativeCachingPolicyCode(v interface{}
 }
 
 func expandComputeBackendServiceCdnPolicyNegativeCachingPolicyTtl(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandComputeBackendServiceCdnPolicyRequestCoalescing(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
 	return v, nil
 }
 

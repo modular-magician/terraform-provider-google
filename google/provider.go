@@ -917,9 +917,9 @@ func Provider() *schema.Provider {
 	return provider
 }
 
-// Generated resources: 246
+// Generated resources: 244
 // Generated IAM resources: 150
-// Total generated resources: 396
+// Total generated resources: 394
 func ResourceMap() map[string]*schema.Resource {
 	resourceMap, _ := ResourceMapWithErrors()
 	return resourceMap
@@ -1143,10 +1143,8 @@ func ResourceMapWithErrors() (map[string]*schema.Resource, error) {
 			"google_dialogflow_cx_agent":                                   resourceDialogflowCXAgent(),
 			"google_dialogflow_cx_intent":                                  resourceDialogflowCXIntent(),
 			"google_dialogflow_cx_flow":                                    resourceDialogflowCXFlow(),
-			"google_dialogflow_cx_version":                                 resourceDialogflowCXVersion(),
 			"google_dialogflow_cx_page":                                    resourceDialogflowCXPage(),
 			"google_dialogflow_cx_entity_type":                             resourceDialogflowCXEntityType(),
-			"google_dialogflow_cx_environment":                             resourceDialogflowCXEnvironment(),
 			"google_dialogflow_cx_webhook":                                 resourceDialogflowCXWebhook(),
 			"google_dns_managed_zone":                                      resourceDNSManagedZone(),
 			"google_dns_policy":                                            resourceDNSPolicy(),
@@ -1345,6 +1343,8 @@ func ResourceMapWithErrors() (map[string]*schema.Resource, error) {
 			"google_dataflow_job":                          resourceDataflowJob(),
 			"google_dataproc_cluster":                      resourceDataprocCluster(),
 			"google_dataproc_job":                          resourceDataprocJob(),
+			"google_dialogflow_cx_version":                 resourceDialogflowCXVersion(),
+			"google_dialogflow_cx_environment":             resourceDialogflowCXEnvironment(),
 			"google_dns_record_set":                        resourceDnsRecordSet(),
 			"google_endpoints_service":                     resourceEndpointsService(),
 			"google_folder":                                resourceGoogleFolder(),

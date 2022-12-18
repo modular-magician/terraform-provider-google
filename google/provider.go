@@ -173,6 +173,14 @@ func Provider() *schema.Provider {
 					"GOOGLE_ACTIVE_DIRECTORY_CUSTOM_ENDPOINT",
 				}, DefaultBasePaths[ActiveDirectoryBasePathKey]),
 			},
+			"alloydb_custom_endpoint": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validateCustomEndpoint,
+				DefaultFunc: schema.MultiEnvDefaultFunc([]string{
+					"GOOGLE_ALLOYDB_CUSTOM_ENDPOINT",
+				}, DefaultBasePaths[AlloydbBasePathKey]),
+			},
 			"apigee_custom_endpoint": {
 				Type:         schema.TypeString,
 				Optional:     true,
@@ -934,9 +942,9 @@ func Provider() *schema.Provider {
 	return provider
 }
 
-// Generated resources: 251
+// Generated resources: 254
 // Generated IAM resources: 156
-// Total generated resources: 407
+// Total generated resources: 410
 func ResourceMap() map[string]*schema.Resource {
 	resourceMap, _ := ResourceMapWithErrors()
 	return resourceMap
@@ -961,6 +969,9 @@ func ResourceMapWithErrors() (map[string]*schema.Resource, error) {
 			"google_access_context_manager_gcp_user_access_binding":        resourceAccessContextManagerGcpUserAccessBinding(),
 			"google_active_directory_domain":                               resourceActiveDirectoryDomain(),
 			"google_active_directory_domain_trust":                         resourceActiveDirectoryDomainTrust(),
+			"google_alloydb_cluster":                                       resourceAlloydbCluster(),
+			"google_alloydb_instance":                                      resourceAlloydbInstance(),
+			"google_alloydb_backup":                                        resourceAlloydbBackup(),
 			"google_apigee_organization":                                   resourceApigeeOrganization(),
 			"google_apigee_instance":                                       resourceApigeeInstance(),
 			"google_apigee_environment":                                    resourceApigeeEnvironment(),
@@ -1565,6 +1576,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	config.AccessApprovalBasePath = d.Get("access_approval_custom_endpoint").(string)
 	config.AccessContextManagerBasePath = d.Get("access_context_manager_custom_endpoint").(string)
 	config.ActiveDirectoryBasePath = d.Get("active_directory_custom_endpoint").(string)
+	config.AlloydbBasePath = d.Get("alloydb_custom_endpoint").(string)
 	config.ApigeeBasePath = d.Get("apigee_custom_endpoint").(string)
 	config.AppEngineBasePath = d.Get("app_engine_custom_endpoint").(string)
 	config.ArtifactRegistryBasePath = d.Get("artifact_registry_custom_endpoint").(string)

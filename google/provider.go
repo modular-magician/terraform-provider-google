@@ -934,9 +934,9 @@ func Provider() *schema.Provider {
 	return provider
 }
 
-// Generated resources: 251
+// Generated resources: 252
 // Generated IAM resources: 156
-// Total generated resources: 407
+// Total generated resources: 408
 func ResourceMap() map[string]*schema.Resource {
 	resourceMap, _ := ResourceMapWithErrors()
 	return resourceMap
@@ -985,6 +985,7 @@ func ResourceMapWithErrors() (map[string]*schema.Resource, error) {
 			"google_artifact_registry_repository_iam_policy":               ResourceIamPolicy(ArtifactRegistryRepositoryIamSchema, ArtifactRegistryRepositoryIamUpdaterProducer, ArtifactRegistryRepositoryIdParseFunc),
 			"google_beyondcorp_app_connector":                              resourceBeyondcorpAppConnector(),
 			"google_beyondcorp_app_gateway":                                resourceBeyondcorpAppGateway(),
+			"google_beyondcorp_app_connection":                             resourceBeyondcorpAppConnection(),
 			"google_bigquery_dataset":                                      resourceBigQueryDataset(),
 			"google_bigquery_dataset_access":                               resourceBigQueryDatasetAccess(),
 			"google_bigquery_job":                                          resourceBigQueryJob(),

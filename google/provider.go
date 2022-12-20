@@ -819,6 +819,7 @@ func Provider() *schema.Provider {
 			"google_client_config":                                dataSourceGoogleClientConfig(),
 			"google_client_openid_userinfo":                       dataSourceGoogleClientOpenIDUserinfo(),
 			"google_cloudfunctions_function":                      dataSourceGoogleCloudFunctionsFunction(),
+			"google_cloudbuild_trigger":                           dataSourceGoogleCloudBuildTrigger(),
 			"google_cloudfunctions2_function":                     dataSourceGoogleCloudFunctions2Function(),
 			"google_cloud_identity_groups":                        dataSourceGoogleCloudIdentityGroups(),
 			"google_cloud_identity_group_memberships":             dataSourceGoogleCloudIdentityGroupMemberships(),

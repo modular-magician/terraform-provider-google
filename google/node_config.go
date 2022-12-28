@@ -1,6 +1,8 @@
 package google
 
 import (
+	"strings"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"google.golang.org/api/container/v1"
@@ -325,8 +327,9 @@ func schemaNodeConfig() *schema.Schema {
 					ForceNew: true,
 					// Legacy config mode allows explicitly defining an empty taint.
 					// See https://www.terraform.io/docs/configuration/attr-as-blocks.html
-					ConfigMode:  schema.SchemaConfigModeAttr,
-					Description: `List of Kubernetes taints to be applied to each node.`,
+					ConfigMode:       schema.SchemaConfigModeAttr,
+					Description:      `List of Kubernetes taints to be applied to each node.`,
+					DiffSuppressFunc: containerNodePoolTaintSuppress,
 					Elem: &schema.Resource{
 						Schema: map[string]*schema.Schema{
 							"key": {
@@ -763,4 +766,89 @@ func flattenWorkloadMetadataConfig(c *container.WorkloadMetadataConfig) []map[st
 		})
 	}
 	return result
+}
+
+// containerNodePoolTaintSuppress builds a map of taints that represents the diff between
+// the existing and new configuration. Then GKE default taints are removed from the diff
+// and if the resulting diff is empty, the diff is suppressed.
+func containerNodePoolTaintSuppress(k, old, new string, d *schema.ResourceData) bool {
+	// Node configs are embedded into multiple resources (container cluster and
+	// container node pool) so we determine the node config key dynamically.
+	idx := strings.Index(k, ".taint.")
+	if idx < 0 {
+		return false
+	}
+
+	root := k[:idx]
+
+	// Pull the entire changeset as a list rather than trying to deal with each
+	// element individually.
+	o, n := d.GetChange(root + ".taint")
+	if o == nil || n == nil {
+		return false
+	}
+
+	type taintType struct {
+		Key, Value, Effect string
+	}
+
+	// Populate a map of existing taints
+	oldTaints := make(map[taintType]struct{})
+	for _, raw := range o.([]interface{}) {
+		data := raw.(map[string]interface{})
+		taint := taintType{
+			Key:    data["key"].(string),
+			Value:  data["value"].(string),
+			Effect: data["effect"].(string),
+		}
+		oldTaints[taint] = struct{}{}
+	}
+
+	// Populate the diff of new taints
+	newTaints := make(map[taintType]struct{})
+	for _, raw := range n.([]interface{}) {
+		data := raw.(map[string]interface{})
+		taint := taintType{
+			Key:    data["key"].(string),
+			Value:  data["value"].(string),
+			Effect: data["effect"].(string),
+		}
+		newTaints[taint] = struct{}{}
+	}
+
+	// Populate the diff of added and removed taints
+	diff := make(map[taintType]struct{})
+	for taint := range newTaints {
+		if _, ok := oldTaints[taint]; !ok {
+			diff[taint] = struct{}{}
+		}
+	}
+	for taint := range oldTaints {
+		if _, ok := newTaints[taint]; !ok {
+			diff[taint] = struct{}{}
+		}
+	}
+
+	gkeDefaultTaints := map[taintType]struct{}{
+		{
+			Key:    "nvidia.com/gpu",
+			Value:  "present",
+			Effect: "NO_SCHEDULE",
+		}: {},
+	}
+
+	// Remove GKE default taints
+	for taint := range diff {
+		if _, ok := gkeDefaultTaints[taint]; ok {
+			delete(diff, taint)
+		}
+	}
+
+	// If, at this point, the set still has elements, the new configuration
+	// added an additional taint.
+	if len(diff) > 0 {
+		return false
+	}
+
+	return true
 }

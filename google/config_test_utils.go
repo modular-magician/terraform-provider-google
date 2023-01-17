@@ -36,6 +36,7 @@ func configureTestBasePaths(c *Config, url string) {
 	c.CertificateManagerBasePath = url
 	c.CloudAssetBasePath = url
 	c.CloudBuildBasePath = url
+	c.CloudDeployBasePath = url
 	c.CloudFunctionsBasePath = url
 	c.Cloudfunctions2BasePath = url
 	c.CloudIdentityBasePath = url

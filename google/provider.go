@@ -293,6 +293,14 @@ func Provider() *schema.Provider {
 					"GOOGLE_CLOUD_BUILD_CUSTOM_ENDPOINT",
 				}, DefaultBasePaths[CloudBuildBasePathKey]),
 			},
+			"cloud_deploy_custom_endpoint": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validateCustomEndpoint,
+				DefaultFunc: schema.MultiEnvDefaultFunc([]string{
+					"GOOGLE_CLOUD_DEPLOY_CUSTOM_ENDPOINT",
+				}, DefaultBasePaths[CloudDeployBasePathKey]),
+			},
 			"cloud_functions_custom_endpoint": {
 				Type:         schema.TypeString,
 				Optional:     true,
@@ -971,9 +979,9 @@ func Provider() *schema.Provider {
 	return provider
 }
 
-// Generated resources: 258
-// Generated IAM resources: 165
-// Total generated resources: 423
+// Generated resources: 259
+// Generated IAM resources: 168
+// Total generated resources: 427
 func ResourceMap() map[string]*schema.Resource {
 	resourceMap, _ := ResourceMapWithErrors()
 	return resourceMap
@@ -1060,6 +1068,10 @@ func ResourceMapWithErrors() (map[string]*schema.Resource, error) {
 			"google_cloud_asset_folder_feed":                               resourceCloudAssetFolderFeed(),
 			"google_cloud_asset_organization_feed":                         resourceCloudAssetOrganizationFeed(),
 			"google_cloudbuild_trigger":                                    resourceCloudBuildTrigger(),
+			"google_clouddeploy_delivery_pipeline":                         resourceCloudDeployDeliveryPipeline(),
+			"google_clouddeploy_delivery_pipeline_iam_binding":             ResourceIamBinding(CloudDeployDeliveryPipelineIamSchema, CloudDeployDeliveryPipelineIamUpdaterProducer, CloudDeployDeliveryPipelineIdParseFunc),
+			"google_clouddeploy_delivery_pipeline_iam_member":              ResourceIamMember(CloudDeployDeliveryPipelineIamSchema, CloudDeployDeliveryPipelineIamUpdaterProducer, CloudDeployDeliveryPipelineIdParseFunc),
+			"google_clouddeploy_delivery_pipeline_iam_policy":              ResourceIamPolicy(CloudDeployDeliveryPipelineIamSchema, CloudDeployDeliveryPipelineIamUpdaterProducer, CloudDeployDeliveryPipelineIdParseFunc),
 			"google_cloudfunctions_function_iam_binding":                   ResourceIamBinding(CloudFunctionsCloudFunctionIamSchema, CloudFunctionsCloudFunctionIamUpdaterProducer, CloudFunctionsCloudFunctionIdParseFunc),
 			"google_cloudfunctions_function_iam_member":                    ResourceIamMember(CloudFunctionsCloudFunctionIamSchema, CloudFunctionsCloudFunctionIamUpdaterProducer, CloudFunctionsCloudFunctionIdParseFunc),
 			"google_cloudfunctions_function_iam_policy":                    ResourceIamPolicy(CloudFunctionsCloudFunctionIamSchema, CloudFunctionsCloudFunctionIamUpdaterProducer, CloudFunctionsCloudFunctionIdParseFunc),
@@ -1633,6 +1645,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	config.CertificateManagerBasePath = d.Get("certificate_manager_custom_endpoint").(string)
 	config.CloudAssetBasePath = d.Get("cloud_asset_custom_endpoint").(string)
 	config.CloudBuildBasePath = d.Get("cloud_build_custom_endpoint").(string)
+	config.CloudDeployBasePath = d.Get("cloud_deploy_custom_endpoint").(string)
 	config.CloudFunctionsBasePath = d.Get("cloud_functions_custom_endpoint").(string)
 	config.Cloudfunctions2BasePath = d.Get("cloudfunctions2_custom_endpoint").(string)
 	config.CloudIdentityBasePath = d.Get("cloud_identity_custom_endpoint").(string)

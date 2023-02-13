@@ -16,7 +16,7 @@ func TestAccDataprocMetastoreService_updateAndImport(t *testing.T) {
 	vcrTest(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckBigqueryReservationReservationDestroyProducer(t),
+		CheckDestroy: testAccCheckDataprocMetastoreServiceDestroyProducer(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDataprocMetastoreService_updateAndImport(name, tier[0]),

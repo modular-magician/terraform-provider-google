@@ -98,6 +98,13 @@ func ResourceComputeForwardingRule() *schema.Resource {
 				Description:      "The IP protocol to which this rule applies. For protocol forwarding, valid options are `TCP`, `UDP`, `ESP`, `AH`, `SCTP` or `ICMP`. For Internal TCP/UDP Load Balancing, the load balancing scheme is `INTERNAL`, and one of `TCP` or `UDP` are valid. For Traffic Director, the load balancing scheme is `INTERNAL_SELF_MANAGED`, and only `TCP`is valid. For Internal HTTP(S) Load Balancing, the load balancing scheme is `INTERNAL_MANAGED`, and only `TCP` is valid. For HTTP(S), SSL Proxy, and TCP Proxy Load Balancing, the load balancing scheme is `EXTERNAL` and only `TCP` is valid. For Network TCP/UDP Load Balancing, the load balancing scheme is `EXTERNAL`, and one of `TCP` or `UDP` is valid.",
 			},
 
+			"ip_version": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Description: "The IP Version that will be used by this forwarding rule. Valid options are `IPV4` or `IPV6`. This can only be specified for an external global forwarding rule. Possible values: UNSPECIFIED_VERSION, IPV4, IPV6",
+			},
+
 			"is_mirroring_collector": {
 				Type:        schema.TypeBool,
 				Optional:    true,
@@ -285,6 +292,7 @@ func resourceComputeForwardingRuleCreate(d *schema.ResourceData, meta interface{
 		Description:                   dcl.String(d.Get("description").(string)),
 		IPAddress:                     dcl.StringOrNil(d.Get("ip_address").(string)),
 		IPProtocol:                    compute.ForwardingRuleIPProtocolEnumRef(d.Get("ip_protocol").(string)),
+		IPVersion:                     compute.ForwardingRuleIPVersionEnumRef(d.Get("ip_version").(string)),
 		IsMirroringCollector:          dcl.Bool(d.Get("is_mirroring_collector").(bool)),
 		Labels:                        checkStringMap(d.Get("labels")),
 		LoadBalancingScheme:           compute.ForwardingRuleLoadBalancingSchemeEnumRef(d.Get("load_balancing_scheme").(string)),
@@ -356,6 +364,7 @@ func resourceComputeForwardingRuleRead(d *schema.ResourceData, meta interface{})
 		Description:                   dcl.String(d.Get("description").(string)),
 		IPAddress:                     dcl.StringOrNil(d.Get("ip_address").(string)),
 		IPProtocol:                    compute.ForwardingRuleIPProtocolEnumRef(d.Get("ip_protocol").(string)),
+		IPVersion:                     compute.ForwardingRuleIPVersionEnumRef(d.Get("ip_version").(string)),
 		IsMirroringCollector:          dcl.Bool(d.Get("is_mirroring_collector").(bool)),
 		Labels:                        checkStringMap(d.Get("labels")),
 		LoadBalancingScheme:           compute.ForwardingRuleLoadBalancingSchemeEnumRef(d.Get("load_balancing_scheme").(string)),
@@ -413,6 +422,9 @@ func resourceComputeForwardingRuleRead(d *schema.ResourceData, meta interface{})
 	}
 	if err = d.Set("ip_protocol", res.IPProtocol); err != nil {
 		return fmt.Errorf("error setting ip_protocol in state: %s", err)
+	}
+	if err = d.Set("ip_version", res.IPVersion); err != nil {
+		return fmt.Errorf("error setting ip_version in state: %s", err)
 	}
 	if err = d.Set("is_mirroring_collector", res.IsMirroringCollector); err != nil {
 		return fmt.Errorf("error setting is_mirroring_collector in state: %s", err)
@@ -493,6 +505,7 @@ func resourceComputeForwardingRuleUpdate(d *schema.ResourceData, meta interface{
 		Description:                   dcl.String(d.Get("description").(string)),
 		IPAddress:                     dcl.StringOrNil(d.Get("ip_address").(string)),
 		IPProtocol:                    compute.ForwardingRuleIPProtocolEnumRef(d.Get("ip_protocol").(string)),
+		IPVersion:                     compute.ForwardingRuleIPVersionEnumRef(d.Get("ip_version").(string)),
 		IsMirroringCollector:          dcl.Bool(d.Get("is_mirroring_collector").(bool)),
 		Labels:                        checkStringMap(d.Get("labels")),
 		LoadBalancingScheme:           compute.ForwardingRuleLoadBalancingSchemeEnumRef(d.Get("load_balancing_scheme").(string)),
@@ -559,6 +572,7 @@ func resourceComputeForwardingRuleDelete(d *schema.ResourceData, meta interface{
 		Description:                   dcl.String(d.Get("description").(string)),
 		IPAddress:                     dcl.StringOrNil(d.Get("ip_address").(string)),
 		IPProtocol:                    compute.ForwardingRuleIPProtocolEnumRef(d.Get("ip_protocol").(string)),
+		IPVersion:                     compute.ForwardingRuleIPVersionEnumRef(d.Get("ip_version").(string)),
 		IsMirroringCollector:          dcl.Bool(d.Get("is_mirroring_collector").(bool)),
 		Labels:                        checkStringMap(d.Get("labels")),
 		LoadBalancingScheme:           compute.ForwardingRuleLoadBalancingSchemeEnumRef(d.Get("load_balancing_scheme").(string)),

@@ -1596,7 +1596,6 @@ func ResourceContainerCluster() *schema.Resource {
 				Type:        schema.TypeList,
 				Optional:    true,
 				MaxItems:    1,
-				ForceNew:    true,
 				Description: `Configuration for Cloud DNS for Kubernetes Engine.`,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -3245,6 +3244,20 @@ func resourceContainerClusterUpdate(d *schema.ResourceData, meta interface{}) er
 
 	if _, err := containerClusterAwaitRestingState(config, project, location, clusterName, userAgent, d.Timeout(schema.TimeoutUpdate)); err != nil {
 		return err
+	}
+
+	if d.HasChange("dns_config") {
+		req := &container.UpdateClusterRequest{
+			Update: &container.ClusterUpdate{
+				DesiredDnsConfig: expandDnsConfig(d.Get("dns_config")),
+			},
+		}
+		updateF := updateFunc(req, "updating GKE cluster DNS Config")
+		if err := lockedCall(lockKey, updateF); err != nil {
+			return err
+		}
+
+		log.Printf("[INFO] GKE cluster %s DNS Config has been updated to %#v", d.Id(), req.Update.DesiredDnsConfig)
 	}
 
 	return resourceContainerClusterRead(d, meta)

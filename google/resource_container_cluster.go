@@ -1250,7 +1250,7 @@ func ResourceContainerCluster() *schema.Resource {
 							Type:         schema.TypeString,
 							Optional:     true,
 							ForceNew:     true,
-							Default:      "IPV4",
+							Computed:     true,
 							ValidateFunc: validation.StringInSlice([]string{"IPV4", "IPV4_IPV6"}, false),
 							Description:  `The IP Stack type of the cluster. Choose between IPV4 and IPV4_IPV6. Default type is IPV4 Only if not set`,
 						},
@@ -3507,7 +3507,6 @@ func expandIPAllocationPolicy(configured interface{}, networkingMode string) (*c
 		return &container.IPAllocationPolicy{
 			UseIpAliases:    false,
 			UseRoutes:       true,
-			StackType:       "IPV4",
 			ForceSendFields: []string{"UseIpAliases"},
 		}, nil
 	}

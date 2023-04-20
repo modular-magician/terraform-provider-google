@@ -140,20 +140,6 @@ func ResourceComputeGlobalForwardingRule() *schema.Resource {
 				Description:      "The project this resource belongs in.",
 			},
 
-			"source_ip_ranges": {
-				Type:        schema.TypeList,
-				Optional:    true,
-				ForceNew:    true,
-				Description: "If not empty, this Forwarding Rule will only forward the traffic when the source IP address matches one of the IP addresses or CIDR ranges set here. Note that a Forwarding Rule can only have up to 64 source IP ranges, and this field can only be used with a regional Forwarding Rule whose scheme is EXTERNAL. Each sourceIpRange entry should be either an IP address (for example, 1.2.3.4) or a CIDR range (for example, 1.2.3.0/24).",
-				Elem:        &schema.Schema{Type: schema.TypeString},
-			},
-
-			"base_forwarding_rule": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "[Output Only] The URL for the corresponding base Forwarding Rule. By base Forwarding Rule, we mean the Forwarding Rule that has the same IP address, protocol, and port settings with the current Forwarding Rule, but without sourceIPRanges specified. Always empty if the current Forwarding Rule does not have sourceIPRanges specified.",
-			},
-
 			"label_fingerprint": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -244,7 +230,6 @@ func resourceComputeGlobalForwardingRuleCreate(d *schema.ResourceData, meta inte
 		Network:             dcl.StringOrNil(d.Get("network").(string)),
 		PortRange:           dcl.String(d.Get("port_range").(string)),
 		Project:             dcl.String(project),
-		SourceIPRanges:      expandStringArray(d.Get("source_ip_ranges")),
 	}
 
 	id, err := obj.ID()
@@ -304,7 +289,6 @@ func resourceComputeGlobalForwardingRuleRead(d *schema.ResourceData, meta interf
 		Network:             dcl.StringOrNil(d.Get("network").(string)),
 		PortRange:           dcl.String(d.Get("port_range").(string)),
 		Project:             dcl.String(project),
-		SourceIPRanges:      expandStringArray(d.Get("source_ip_ranges")),
 	}
 
 	userAgent, err := generateUserAgentString(d, config.UserAgent)
@@ -365,12 +349,6 @@ func resourceComputeGlobalForwardingRuleRead(d *schema.ResourceData, meta interf
 	if err = d.Set("project", res.Project); err != nil {
 		return fmt.Errorf("error setting project in state: %s", err)
 	}
-	if err = d.Set("source_ip_ranges", res.SourceIPRanges); err != nil {
-		return fmt.Errorf("error setting source_ip_ranges in state: %s", err)
-	}
-	if err = d.Set("base_forwarding_rule", res.BaseForwardingRule); err != nil {
-		return fmt.Errorf("error setting base_forwarding_rule in state: %s", err)
-	}
 	if err = d.Set("label_fingerprint", res.LabelFingerprint); err != nil {
 		return fmt.Errorf("error setting label_fingerprint in state: %s", err)
 	}
@@ -406,7 +384,6 @@ func resourceComputeGlobalForwardingRuleUpdate(d *schema.ResourceData, meta inte
 		Network:             dcl.StringOrNil(d.Get("network").(string)),
 		PortRange:           dcl.String(d.Get("port_range").(string)),
 		Project:             dcl.String(project),
-		SourceIPRanges:      expandStringArray(d.Get("source_ip_ranges")),
 	}
 	directive := UpdateDirective
 	userAgent, err := generateUserAgentString(d, config.UserAgent)
@@ -461,7 +438,6 @@ func resourceComputeGlobalForwardingRuleDelete(d *schema.ResourceData, meta inte
 		Network:             dcl.StringOrNil(d.Get("network").(string)),
 		PortRange:           dcl.String(d.Get("port_range").(string)),
 		Project:             dcl.String(project),
-		SourceIPRanges:      expandStringArray(d.Get("source_ip_ranges")),
 	}
 
 	log.Printf("[DEBUG] Deleting ForwardingRule %q", d.Id())

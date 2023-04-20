@@ -277,6 +277,11 @@ func Provider() *schema.Provider {
 				Optional:     true,
 				ValidateFunc: validateCustomEndpoint,
 			},
+			"database_migration_service_custom_endpoint": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validateCustomEndpoint,
+			},
 			"data_catalog_custom_endpoint": {
 				Type:         schema.TypeString,
 				Optional:     true,
@@ -712,9 +717,9 @@ func Provider() *schema.Provider {
 	return provider
 }
 
-// Generated resources: 281
+// Generated resources: 282
 // Generated IAM resources: 186
-// Total generated resources: 467
+// Total generated resources: 468
 func ResourceMap() map[string]*schema.Resource {
 	resourceMap, _ := ResourceMapWithErrors()
 	return resourceMap
@@ -936,6 +941,7 @@ func ResourceMapWithErrors() (map[string]*schema.Resource, error) {
 			"google_container_analysis_note":                               ResourceContainerAnalysisNote(),
 			"google_container_analysis_occurrence":                         ResourceContainerAnalysisOccurrence(),
 			"google_container_attached_cluster":                            ResourceContainerAttachedCluster(),
+			"google_database_migration_service_connection_profile":         ResourceDatabaseMigrationServiceConnectionProfile(),
 			"google_data_catalog_entry":                                    ResourceDataCatalogEntry(),
 			"google_data_catalog_entry_group":                              ResourceDataCatalogEntryGroup(),
 			"google_data_catalog_entry_group_iam_binding":                  ResourceIamBinding(DataCatalogEntryGroupIamSchema, DataCatalogEntryGroupIamUpdaterProducer, DataCatalogEntryGroupIdParseFunc),
@@ -1444,6 +1450,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	config.ComputeBasePath = d.Get("compute_custom_endpoint").(string)
 	config.ContainerAnalysisBasePath = d.Get("container_analysis_custom_endpoint").(string)
 	config.ContainerAttachedBasePath = d.Get("container_attached_custom_endpoint").(string)
+	config.DatabaseMigrationServiceBasePath = d.Get("database_migration_service_custom_endpoint").(string)
 	config.DataCatalogBasePath = d.Get("data_catalog_custom_endpoint").(string)
 	config.DataFusionBasePath = d.Get("data_fusion_custom_endpoint").(string)
 	config.DataLossPreventionBasePath = d.Get("data_loss_prevention_custom_endpoint").(string)

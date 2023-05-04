@@ -1,7 +1,6 @@
 package google
 
 import (
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -136,11 +135,6 @@ type ProviderModel struct {
 	NetworkConnectivityCustomEndpoint  types.String `tfsdk:"network_connectivity_custom_endpoint"`
 	OrgPolicyCustomEndpoint            types.String `tfsdk:"org_policy_custom_endpoint"`
 	RecaptchaEnterpriseCustomEndpoint  types.String `tfsdk:"recaptcha_enterprise_custom_endpoint"`
-}
-
-var ProviderBatchingAttributes = map[string]attr.Type{
-	"send_after":      types.StringType,
-	"enable_batching": types.BoolType,
 }
 
 // ProviderMetaModel describes the provider meta model

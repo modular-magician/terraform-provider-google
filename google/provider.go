@@ -726,8 +726,8 @@ func Provider() *schema.Provider {
 }
 
 // Generated resources: 284
-// Generated IAM resources: 186
-// Total generated resources: 470
+// Generated IAM resources: 189
+// Total generated resources: 473
 func ResourceMap() map[string]*schema.Resource {
 	resourceMap, _ := ResourceMapWithErrors()
 	return resourceMap
@@ -980,6 +980,9 @@ func ResourceMapWithErrors() (map[string]*schema.Resource, error) {
 			"google_dataplex_asset_iam_binding":                            ResourceIamBinding(DataplexAssetIamSchema, DataplexAssetIamUpdaterProducer, DataplexAssetIdParseFunc),
 			"google_dataplex_asset_iam_member":                             ResourceIamMember(DataplexAssetIamSchema, DataplexAssetIamUpdaterProducer, DataplexAssetIdParseFunc),
 			"google_dataplex_asset_iam_policy":                             ResourceIamPolicy(DataplexAssetIamSchema, DataplexAssetIamUpdaterProducer, DataplexAssetIdParseFunc),
+			"google_dataplex_datascan_iam_binding":                         ResourceIamBinding(DataplexDatascanIamSchema, DataplexDatascanIamUpdaterProducer, DataplexDatascanIdParseFunc),
+			"google_dataplex_datascan_iam_member":                          ResourceIamMember(DataplexDatascanIamSchema, DataplexDatascanIamUpdaterProducer, DataplexDatascanIdParseFunc),
+			"google_dataplex_datascan_iam_policy":                          ResourceIamPolicy(DataplexDatascanIamSchema, DataplexDatascanIamUpdaterProducer, DataplexDatascanIdParseFunc),
 			"google_dataplex_lake_iam_binding":                             ResourceIamBinding(DataplexLakeIamSchema, DataplexLakeIamUpdaterProducer, DataplexLakeIdParseFunc),
 			"google_dataplex_lake_iam_member":                              ResourceIamMember(DataplexLakeIamSchema, DataplexLakeIamUpdaterProducer, DataplexLakeIdParseFunc),
 			"google_dataplex_lake_iam_policy":                              ResourceIamPolicy(DataplexLakeIamSchema, DataplexLakeIamUpdaterProducer, DataplexLakeIdParseFunc),

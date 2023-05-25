@@ -102,6 +102,7 @@ type frameworkProvider struct {
 	DialogflowCXBasePath             string
 	DNSBasePath                      string
 	DocumentAIBasePath               string
+	EdgecontainerBasePath            string
 	EssentialContactsBasePath        string
 	FilestoreBasePath                string
 	FirestoreBasePath                string
@@ -488,6 +489,12 @@ func (p *frameworkProvider) Schema(_ context.Context, _ provider.SchemaRequest, 
 				},
 			},
 			"document_ai_custom_endpoint": &schema.StringAttribute{
+				Optional: true,
+				Validators: []validator.String{
+					transport_tpg.CustomEndpointValidator(),
+				},
+			},
+			"edgecontainer_custom_endpoint": &schema.StringAttribute{
 				Optional: true,
 				Validators: []validator.String{
 					transport_tpg.CustomEndpointValidator(),

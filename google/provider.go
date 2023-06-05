@@ -825,9 +825,9 @@ func DatasourceMapWithErrors() (map[string]*schema.Resource, error) {
 		})
 }
 
-// Generated resources: 286
+// Generated resources: 287
 // Generated IAM resources: 189
-// Total generated resources: 475
+// Total generated resources: 476
 func ResourceMap() map[string]*schema.Resource {
 	resourceMap, _ := ResourceMapWithErrors()
 	return resourceMap
@@ -1293,6 +1293,7 @@ func ResourceMapWithErrors() (map[string]*schema.Resource, error) {
 			"google_vertex_ai_featurestore_entitytype":                     ResourceVertexAIFeaturestoreEntitytype(),
 			"google_vertex_ai_featurestore_entitytype_feature":             ResourceVertexAIFeaturestoreEntitytypeFeature(),
 			"google_vertex_ai_index":                                       ResourceVertexAIIndex(),
+			"google_vertex_ai_index_endpoint":                              ResourceVertexAIIndexEndpoint(),
 			"google_vertex_ai_tensorboard":                                 ResourceVertexAITensorboard(),
 			"google_vpc_access_connector":                                  ResourceVPCAccessConnector(),
 			"google_workflows_workflow":                                    ResourceWorkflowsWorkflow(),

@@ -912,6 +912,8 @@ func ResourceComputeInstance() *schema.Resource {
 			},
 		},
 		CustomizeDiff: customdiff.All(
+			tpgresource.DefaultProviderProject,
+			tpgresource.DefaultProviderZone,
 			customdiff.If(
 				func(_ context.Context, d *schema.ResourceDiff, meta interface{}) bool {
 					return d.HasChange("guest_accelerator")

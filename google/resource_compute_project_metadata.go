@@ -7,10 +7,10 @@ import (
 	"log"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
 	transport_tpg "github.com/hashicorp/terraform-provider-google/google/transport"
-
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"google.golang.org/api/compute/v1"
 )
@@ -31,6 +31,10 @@ func ResourceComputeProjectMetadata() *schema.Resource {
 		},
 
 		SchemaVersion: 0,
+
+		CustomizeDiff: customdiff.All(
+			tpgresource.DefaultProviderProject,
+		),
 
 		Schema: map[string]*schema.Schema{
 			"metadata": {

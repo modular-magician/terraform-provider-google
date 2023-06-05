@@ -1,6 +1,3 @@
-// Copyright (c) HashiCorp, Inc.
-// SPDX-License-Identifier: MPL-2.0
-
 // ----------------------------------------------------------------------------
 //
 //     ***     AUTO GENERATED CODE    ***    Type: DCL     ***
@@ -29,7 +26,6 @@ import (
 	dcl "github.com/GoogleCloudPlatform/declarative-resource-client-library/dcl"
 	containeraws "github.com/GoogleCloudPlatform/declarative-resource-client-library/services/google/containeraws"
 
-	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
 	transport_tpg "github.com/hashicorp/terraform-provider-google/google/transport"
 )
 
@@ -545,7 +541,7 @@ func resourceContainerAwsClusterCreate(d *schema.ResourceData, meta interface{})
 		Location:      dcl.String(d.Get("location").(string)),
 		Name:          dcl.String(d.Get("name").(string)),
 		Networking:    expandContainerAwsClusterNetworking(d.Get("networking")),
-		Annotations:   tpgresource.CheckStringMap(d.Get("annotations")),
+		Annotations:   checkStringMap(d.Get("annotations")),
 		Description:   dcl.String(d.Get("description").(string)),
 		Project:       dcl.String(project),
 	}
@@ -556,17 +552,17 @@ func resourceContainerAwsClusterCreate(d *schema.ResourceData, meta interface{})
 	}
 	d.SetId(id)
 	directive := CreateDirective
-	userAgent, err := tpgresource.GenerateUserAgentString(d, config.UserAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
 	billingProject := project
 	// err == nil indicates that the billing_project value was found
-	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
+	if bp, err := getBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 	client := transport_tpg.NewDCLContainerAwsClient(config, userAgent, billingProject, d.Timeout(schema.TimeoutCreate))
-	if bp, err := tpgresource.ReplaceVars(d, config, client.Config.BasePath); err != nil {
+	if bp, err := ReplaceVars(d, config, client.Config.BasePath); err != nil {
 		d.SetId("")
 		return fmt.Errorf("Could not format %q: %w", client.Config.BasePath, err)
 	} else {
@@ -602,22 +598,22 @@ func resourceContainerAwsClusterRead(d *schema.ResourceData, meta interface{}) e
 		Location:      dcl.String(d.Get("location").(string)),
 		Name:          dcl.String(d.Get("name").(string)),
 		Networking:    expandContainerAwsClusterNetworking(d.Get("networking")),
-		Annotations:   tpgresource.CheckStringMap(d.Get("annotations")),
+		Annotations:   checkStringMap(d.Get("annotations")),
 		Description:   dcl.String(d.Get("description").(string)),
 		Project:       dcl.String(project),
 	}
 
-	userAgent, err := tpgresource.GenerateUserAgentString(d, config.UserAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
 	billingProject := project
 	// err == nil indicates that the billing_project value was found
-	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
+	if bp, err := getBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 	client := transport_tpg.NewDCLContainerAwsClient(config, userAgent, billingProject, d.Timeout(schema.TimeoutRead))
-	if bp, err := tpgresource.ReplaceVars(d, config, client.Config.BasePath); err != nil {
+	if bp, err := ReplaceVars(d, config, client.Config.BasePath); err != nil {
 		d.SetId("")
 		return fmt.Errorf("Could not format %q: %w", client.Config.BasePath, err)
 	} else {
@@ -701,23 +697,23 @@ func resourceContainerAwsClusterUpdate(d *schema.ResourceData, meta interface{})
 		Location:      dcl.String(d.Get("location").(string)),
 		Name:          dcl.String(d.Get("name").(string)),
 		Networking:    expandContainerAwsClusterNetworking(d.Get("networking")),
-		Annotations:   tpgresource.CheckStringMap(d.Get("annotations")),
+		Annotations:   checkStringMap(d.Get("annotations")),
 		Description:   dcl.String(d.Get("description").(string)),
 		Project:       dcl.String(project),
 	}
 	directive := UpdateDirective
-	userAgent, err := tpgresource.GenerateUserAgentString(d, config.UserAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
 
 	billingProject := ""
 	// err == nil indicates that the billing_project value was found
-	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
+	if bp, err := getBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 	client := transport_tpg.NewDCLContainerAwsClient(config, userAgent, billingProject, d.Timeout(schema.TimeoutUpdate))
-	if bp, err := tpgresource.ReplaceVars(d, config, client.Config.BasePath); err != nil {
+	if bp, err := ReplaceVars(d, config, client.Config.BasePath); err != nil {
 		d.SetId("")
 		return fmt.Errorf("Could not format %q: %w", client.Config.BasePath, err)
 	} else {
@@ -753,23 +749,23 @@ func resourceContainerAwsClusterDelete(d *schema.ResourceData, meta interface{})
 		Location:      dcl.String(d.Get("location").(string)),
 		Name:          dcl.String(d.Get("name").(string)),
 		Networking:    expandContainerAwsClusterNetworking(d.Get("networking")),
-		Annotations:   tpgresource.CheckStringMap(d.Get("annotations")),
+		Annotations:   checkStringMap(d.Get("annotations")),
 		Description:   dcl.String(d.Get("description").(string)),
 		Project:       dcl.String(project),
 	}
 
 	log.Printf("[DEBUG] Deleting Cluster %q", d.Id())
-	userAgent, err := tpgresource.GenerateUserAgentString(d, config.UserAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
 	billingProject := project
 	// err == nil indicates that the billing_project value was found
-	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
+	if bp, err := getBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 	client := transport_tpg.NewDCLContainerAwsClient(config, userAgent, billingProject, d.Timeout(schema.TimeoutDelete))
-	if bp, err := tpgresource.ReplaceVars(d, config, client.Config.BasePath); err != nil {
+	if bp, err := ReplaceVars(d, config, client.Config.BasePath); err != nil {
 		d.SetId("")
 		return fmt.Errorf("Could not format %q: %w", client.Config.BasePath, err)
 	} else {
@@ -786,7 +782,7 @@ func resourceContainerAwsClusterDelete(d *schema.ResourceData, meta interface{})
 func resourceContainerAwsClusterImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 
-	if err := tpgresource.ParseImportId([]string{
+	if err := ParseImportId([]string{
 		"projects/(?P<project>[^/]+)/locations/(?P<location>[^/]+)/awsClusters/(?P<name>[^/]+)",
 		"(?P<project>[^/]+)/(?P<location>[^/]+)/(?P<name>[^/]+)",
 		"(?P<location>[^/]+)/(?P<name>[^/]+)",
@@ -795,7 +791,7 @@ func resourceContainerAwsClusterImport(d *schema.ResourceData, meta interface{})
 	}
 
 	// Replace import id for the resource id
-	id, err := tpgresource.ReplaceVarsForId(d, config, "projects/{{project}}/locations/{{location}}/awsClusters/{{name}}")
+	id, err := replaceVarsForId(d, config, "projects/{{project}}/locations/{{location}}/awsClusters/{{name}}")
 	if err != nil {
 		return nil, fmt.Errorf("Error constructing id: %s", err)
 	}
@@ -907,7 +903,7 @@ func expandContainerAwsClusterControlPlane(o interface{}) *containeraws.ClusterC
 		RootVolume:                expandContainerAwsClusterControlPlaneRootVolume(obj["root_volume"]),
 		SecurityGroupIds:          expandStringArray(obj["security_group_ids"]),
 		SshConfig:                 expandContainerAwsClusterControlPlaneSshConfig(obj["ssh_config"]),
-		Tags:                      tpgresource.CheckStringMap(obj["tags"]),
+		Tags:                      checkStringMap(obj["tags"]),
 	}
 }
 

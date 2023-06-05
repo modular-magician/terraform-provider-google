@@ -1,5 +1,3 @@
-// Copyright (c) HashiCorp, Inc.
-// SPDX-License-Identifier: MPL-2.0
 package google
 
 import (
@@ -99,7 +97,7 @@ func schemaNodeConfig() *schema.Schema {
 								Type:             schema.TypeString,
 								Required:         true,
 								ForceNew:         true,
-								DiffSuppressFunc: tpgresource.CompareSelfLinkOrResourceName,
+								DiffSuppressFunc: compareSelfLinkOrResourceName,
 								Description:      `The accelerator type resource name.`,
 							},
 							"gpu_partition_size": {
@@ -263,11 +261,11 @@ func schemaNodeConfig() *schema.Schema {
 					Elem: &schema.Schema{
 						Type: schema.TypeString,
 						StateFunc: func(v interface{}) string {
-							return tpgresource.CanonicalizeServiceScope(v.(string))
+							return canonicalizeServiceScope(v.(string))
 						},
 					},
 					DiffSuppressFunc: containerClusterAddedScopesSuppress,
-					Set:              tpgresource.StringScopeHashcode,
+					Set:              stringScopeHashcode,
 				},
 
 				"preemptible": {
@@ -626,7 +624,7 @@ func expandNodeConfig(v interface{}) *container.NodeConfig {
 		scopesSet := scopes.(*schema.Set)
 		scopes := make([]string, scopesSet.Len())
 		for i, scope := range scopesSet.List() {
-			scopes[i] = tpgresource.CanonicalizeServiceScope(scope.(string))
+			scopes[i] = canonicalizeServiceScope(scope.(string))
 		}
 
 		nc.OauthScopes = scopes
@@ -858,7 +856,7 @@ func flattenNodeConfig(c *container.NodeConfig) []map[string]interface{} {
 	})
 
 	if len(c.OauthScopes) > 0 {
-		config[0]["oauth_scopes"] = schema.NewSet(tpgresource.StringScopeHashcode, tpgresource.ConvertStringArrToInterface(c.OauthScopes))
+		config[0]["oauth_scopes"] = schema.NewSet(stringScopeHashcode, convertStringArrToInterface(c.OauthScopes))
 	}
 
 	return config

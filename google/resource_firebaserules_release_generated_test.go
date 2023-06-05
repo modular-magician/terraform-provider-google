@@ -1,6 +1,3 @@
-// Copyright (c) HashiCorp, Inc.
-// SPDX-License-Identifier: MPL-2.0
-
 // ----------------------------------------------------------------------------
 //
 //     ***     AUTO GENERATED CODE    ***    Type: DCL     ***
@@ -32,7 +29,7 @@ import (
 	transport_tpg "github.com/hashicorp/terraform-provider-google/google/transport"
 )
 
-func TestAccFirebaserulesRelease_FirestoreReleaseHandWritten(t *testing.T) {
+func TestAccFirebaserulesRelease_BasicRelease(t *testing.T) {
 	t.Parallel()
 
 	context := map[string]interface{}{
@@ -46,7 +43,7 @@ func TestAccFirebaserulesRelease_FirestoreReleaseHandWritten(t *testing.T) {
 		CheckDestroy:             testAccCheckFirebaserulesReleaseDestroyProducer(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccFirebaserulesRelease_FirestoreReleaseHandWritten(context),
+				Config: testAccFirebaserulesRelease_BasicRelease(context),
 			},
 			{
 				ResourceName:      "google_firebaserules_release.primary",
@@ -54,7 +51,31 @@ func TestAccFirebaserulesRelease_FirestoreReleaseHandWritten(t *testing.T) {
 				ImportStateVerify: true,
 			},
 			{
-				Config: testAccFirebaserulesRelease_FirestoreReleaseHandWrittenUpdate0(context),
+				Config: testAccFirebaserulesRelease_BasicReleaseUpdate0(context),
+			},
+			{
+				ResourceName:      "google_firebaserules_release.primary",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+func TestAccFirebaserulesRelease_MinimalRelease(t *testing.T) {
+	t.Parallel()
+
+	context := map[string]interface{}{
+		"project_name":  acctest.GetTestProjectFromEnv(),
+		"random_suffix": RandString(t, 10),
+	}
+
+	VcrTest(t, resource.TestCase{
+		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
+		ProtoV5ProviderFactories: ProtoV5ProviderFactories(t),
+		CheckDestroy:             testAccCheckFirebaserulesReleaseDestroyProducer(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccFirebaserulesRelease_MinimalRelease(context),
 			},
 			{
 				ResourceName:      "google_firebaserules_release.primary",
@@ -65,21 +86,29 @@ func TestAccFirebaserulesRelease_FirestoreReleaseHandWritten(t *testing.T) {
 	})
 }
 
-func testAccFirebaserulesRelease_FirestoreReleaseHandWritten(context map[string]interface{}) string {
+func testAccFirebaserulesRelease_BasicRelease(context map[string]interface{}) string {
 	return Nprintf(`
 resource "google_firebaserules_release" "primary" {
-  name         = "cloud.firestore"
-  ruleset_name = "projects/%{project_name}/rulesets/${google_firebaserules_ruleset.firestore.name}"
+  name         = "tf-test-release%{random_suffix}"
+  ruleset_name = "projects/%{project_name}/rulesets/${google_firebaserules_ruleset.basic.name}"
   project      = "%{project_name}"
-
-  lifecycle {
-    replace_triggered_by = [
-      google_firebaserules_ruleset.firestore
-    ]
-  }
 }
 
-resource "google_firebaserules_ruleset" "firestore" {
+resource "google_firebaserules_ruleset" "basic" {
+  source {
+    files {
+      content     = "service cloud.firestore {match /databases/{database}/documents { match /{document=**} { allow read, write: if false; } } }"
+      name        = "firestore.rules"
+      fingerprint = ""
+    }
+
+    language = ""
+  }
+
+  project = "%{project_name}"
+}
+
+resource "google_firebaserules_ruleset" "minimal" {
   source {
     files {
       content = "service cloud.firestore {match /databases/{database}/documents { match /{document=**} { allow read, write: if false; } } }"
@@ -90,33 +119,66 @@ resource "google_firebaserules_ruleset" "firestore" {
   project = "%{project_name}"
 }
 
+
 `, context)
 }
 
-func testAccFirebaserulesRelease_FirestoreReleaseHandWrittenUpdate0(context map[string]interface{}) string {
+func testAccFirebaserulesRelease_BasicReleaseUpdate0(context map[string]interface{}) string {
 	return Nprintf(`
 resource "google_firebaserules_release" "primary" {
-  name         = "cloud.firestore"
-  ruleset_name = "projects/%{project_name}/rulesets/${google_firebaserules_ruleset.firestore.name}"
+  name         = "tf-test-release%{random_suffix}"
+  ruleset_name = "projects/%{project_name}/rulesets/${google_firebaserules_ruleset.minimal.name}"
   project      = "%{project_name}"
-
-  lifecycle {
-    replace_triggered_by = [
-      google_firebaserules_ruleset.firestore
-    ]
-  }
 }
 
-resource "google_firebaserules_ruleset" "firestore" {
+resource "google_firebaserules_ruleset" "basic" {
   source {
     files {
-      content = "service cloud.firestore {match /databases/{database}/documents { match /{document=**} { allow read, write: if request.auth != null; } } }"
+      content     = "service cloud.firestore {match /databases/{database}/documents { match /{document=**} { allow read, write: if false; } } }"
+      name        = "firestore.rules"
+      fingerprint = ""
+    }
+
+    language = ""
+  }
+
+  project = "%{project_name}"
+}
+
+resource "google_firebaserules_ruleset" "minimal" {
+  source {
+    files {
+      content = "service cloud.firestore {match /databases/{database}/documents { match /{document=**} { allow read, write: if false; } } }"
       name    = "firestore.rules"
     }
   }
 
   project = "%{project_name}"
 }
+
+
+`, context)
+}
+
+func testAccFirebaserulesRelease_MinimalRelease(context map[string]interface{}) string {
+	return Nprintf(`
+resource "google_firebaserules_release" "primary" {
+  name         = "prod/tf-test-release%{random_suffix}"
+  ruleset_name = "projects/%{project_name}/rulesets/${google_firebaserules_ruleset.minimal.name}"
+  project      = "%{project_name}"
+}
+
+resource "google_firebaserules_ruleset" "minimal" {
+  source {
+    files {
+      content = "service cloud.firestore {match /databases/{database}/documents { match /{document=**} { allow read, write: if false; } } }"
+      name    = "firestore.rules"
+    }
+  }
+
+  project = "%{project_name}"
+}
+
 
 `, context)
 }

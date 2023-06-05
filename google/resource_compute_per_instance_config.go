@@ -1,6 +1,3 @@
-// Copyright (c) HashiCorp, Inc.
-// SPDX-License-Identifier: MPL-2.0
-
 // ----------------------------------------------------------------------------
 //
 //     ***     AUTO GENERATED CODE    ***    Type: MMv1     ***
@@ -24,8 +21,6 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-
-	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
 	transport_tpg "github.com/hashicorp/terraform-provider-google/google/transport"
 	"github.com/hashicorp/terraform-provider-google/google/verify"
 )
@@ -170,7 +165,7 @@ deleted from the instance group. Default value: "NEVER" Possible values: ["NEVER
 
 func resourceComputePerInstanceConfigCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*transport_tpg.Config)
-	userAgent, err := tpgresource.GenerateUserAgentString(d, config.UserAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -179,13 +174,13 @@ func resourceComputePerInstanceConfigCreate(d *schema.ResourceData, meta interfa
 	nameProp, err := expandNestedComputePerInstanceConfigName(d.Get("name"), d, config)
 	if err != nil {
 		return err
-	} else if v, ok := d.GetOkExists("name"); !tpgresource.IsEmptyValue(reflect.ValueOf(nameProp)) && (ok || !reflect.DeepEqual(v, nameProp)) {
+	} else if v, ok := d.GetOkExists("name"); !isEmptyValue(reflect.ValueOf(nameProp)) && (ok || !reflect.DeepEqual(v, nameProp)) {
 		obj["name"] = nameProp
 	}
 	preservedStateProp, err := expandNestedComputePerInstanceConfigPreservedState(d.Get("preserved_state"), d, config)
 	if err != nil {
 		return err
-	} else if v, ok := d.GetOkExists("preserved_state"); !tpgresource.IsEmptyValue(reflect.ValueOf(preservedStateProp)) && (ok || !reflect.DeepEqual(v, preservedStateProp)) {
+	} else if v, ok := d.GetOkExists("preserved_state"); !isEmptyValue(reflect.ValueOf(preservedStateProp)) && (ok || !reflect.DeepEqual(v, preservedStateProp)) {
 		obj["preservedState"] = preservedStateProp
 	}
 
@@ -194,14 +189,14 @@ func resourceComputePerInstanceConfigCreate(d *schema.ResourceData, meta interfa
 		return err
 	}
 
-	lockName, err := tpgresource.ReplaceVars(d, config, "instanceGroupManager/{{project}}/{{zone}}/{{instance_group_manager}}")
+	lockName, err := ReplaceVars(d, config, "instanceGroupManager/{{project}}/{{zone}}/{{instance_group_manager}}")
 	if err != nil {
 		return err
 	}
-	transport_tpg.MutexStore.Lock(lockName)
-	defer transport_tpg.MutexStore.Unlock(lockName)
+	mutexKV.Lock(lockName)
+	defer mutexKV.Unlock(lockName)
 
-	url, err := tpgresource.ReplaceVars(d, config, "{{ComputeBasePath}}projects/{{project}}/zones/{{zone}}/instanceGroupManagers/{{instance_group_manager}}/createInstances")
+	url, err := ReplaceVars(d, config, "{{ComputeBasePath}}projects/{{project}}/zones/{{zone}}/instanceGroupManagers/{{instance_group_manager}}/createInstances")
 	if err != nil {
 		return err
 	}
@@ -209,32 +204,24 @@ func resourceComputePerInstanceConfigCreate(d *schema.ResourceData, meta interfa
 	log.Printf("[DEBUG] Creating new PerInstanceConfig: %#v", obj)
 	billingProject := ""
 
-	project, err := tpgresource.GetProject(d, config)
+	project, err := getProject(d, config)
 	if err != nil {
 		return fmt.Errorf("Error fetching project for PerInstanceConfig: %s", err)
 	}
 	billingProject = project
 
 	// err == nil indicates that the billing_project value was found
-	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
+	if bp, err := getBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
-	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-		Config:    config,
-		Method:    "POST",
-		Project:   billingProject,
-		RawURL:    url,
-		UserAgent: userAgent,
-		Body:      obj,
-		Timeout:   d.Timeout(schema.TimeoutCreate),
-	})
+	res, err := transport_tpg.SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating PerInstanceConfig: %s", err)
 	}
 
 	// Store the ID now
-	id, err := tpgresource.ReplaceVars(d, config, "{{project}}/{{zone}}/{{instance_group_manager}}/{{name}}")
+	id, err := ReplaceVars(d, config, "{{project}}/{{zone}}/{{instance_group_manager}}/{{name}}")
 	if err != nil {
 		return fmt.Errorf("Error constructing id: %s", err)
 	}
@@ -257,36 +244,30 @@ func resourceComputePerInstanceConfigCreate(d *schema.ResourceData, meta interfa
 
 func resourceComputePerInstanceConfigRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*transport_tpg.Config)
-	userAgent, err := tpgresource.GenerateUserAgentString(d, config.UserAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
 
-	url, err := tpgresource.ReplaceVars(d, config, "{{ComputeBasePath}}projects/{{project}}/zones/{{zone}}/instanceGroupManagers/{{instance_group_manager}}/listPerInstanceConfigs")
+	url, err := ReplaceVars(d, config, "{{ComputeBasePath}}projects/{{project}}/zones/{{zone}}/instanceGroupManagers/{{instance_group_manager}}/listPerInstanceConfigs")
 	if err != nil {
 		return err
 	}
 
 	billingProject := ""
 
-	project, err := tpgresource.GetProject(d, config)
+	project, err := getProject(d, config)
 	if err != nil {
 		return fmt.Errorf("Error fetching project for PerInstanceConfig: %s", err)
 	}
 	billingProject = project
 
 	// err == nil indicates that the billing_project value was found
-	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
+	if bp, err := getBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
-	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-		Config:    config,
-		Method:    "POST",
-		Project:   billingProject,
-		RawURL:    url,
-		UserAgent: userAgent,
-	})
+	res, err := transport_tpg.SendRequest(config, "POST", billingProject, url, userAgent, nil)
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("ComputePerInstanceConfig %q", d.Id()))
 	}
@@ -335,14 +316,14 @@ func resourceComputePerInstanceConfigRead(d *schema.ResourceData, meta interface
 
 func resourceComputePerInstanceConfigUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*transport_tpg.Config)
-	userAgent, err := tpgresource.GenerateUserAgentString(d, config.UserAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
 
 	billingProject := ""
 
-	project, err := tpgresource.GetProject(d, config)
+	project, err := getProject(d, config)
 	if err != nil {
 		return fmt.Errorf("Error fetching project for PerInstanceConfig: %s", err)
 	}
@@ -352,13 +333,13 @@ func resourceComputePerInstanceConfigUpdate(d *schema.ResourceData, meta interfa
 	nameProp, err := expandNestedComputePerInstanceConfigName(d.Get("name"), d, config)
 	if err != nil {
 		return err
-	} else if v, ok := d.GetOkExists("name"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, nameProp)) {
+	} else if v, ok := d.GetOkExists("name"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, nameProp)) {
 		obj["name"] = nameProp
 	}
 	preservedStateProp, err := expandNestedComputePerInstanceConfigPreservedState(d.Get("preserved_state"), d, config)
 	if err != nil {
 		return err
-	} else if v, ok := d.GetOkExists("preserved_state"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, preservedStateProp)) {
+	} else if v, ok := d.GetOkExists("preserved_state"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, preservedStateProp)) {
 		obj["preservedState"] = preservedStateProp
 	}
 
@@ -367,14 +348,14 @@ func resourceComputePerInstanceConfigUpdate(d *schema.ResourceData, meta interfa
 		return err
 	}
 
-	lockName, err := tpgresource.ReplaceVars(d, config, "instanceGroupManager/{{project}}/{{zone}}/{{instance_group_manager}}")
+	lockName, err := ReplaceVars(d, config, "instanceGroupManager/{{project}}/{{zone}}/{{instance_group_manager}}")
 	if err != nil {
 		return err
 	}
-	transport_tpg.MutexStore.Lock(lockName)
-	defer transport_tpg.MutexStore.Unlock(lockName)
+	mutexKV.Lock(lockName)
+	defer mutexKV.Unlock(lockName)
 
-	url, err := tpgresource.ReplaceVars(d, config, "{{ComputeBasePath}}projects/{{project}}/zones/{{zone}}/instanceGroupManagers/{{instance_group_manager}}/updatePerInstanceConfigs")
+	url, err := ReplaceVars(d, config, "{{ComputeBasePath}}projects/{{project}}/zones/{{zone}}/instanceGroupManagers/{{instance_group_manager}}/updatePerInstanceConfigs")
 	if err != nil {
 		return err
 	}
@@ -382,19 +363,11 @@ func resourceComputePerInstanceConfigUpdate(d *schema.ResourceData, meta interfa
 	log.Printf("[DEBUG] Updating PerInstanceConfig %q: %#v", d.Id(), obj)
 
 	// err == nil indicates that the billing_project value was found
-	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
+	if bp, err := getBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
-	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-		Config:    config,
-		Method:    "POST",
-		Project:   billingProject,
-		RawURL:    url,
-		UserAgent: userAgent,
-		Body:      obj,
-		Timeout:   d.Timeout(schema.TimeoutUpdate),
-	})
+	res, err := transport_tpg.SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
 
 	if err != nil {
 		return fmt.Errorf("Error updating PerInstanceConfig %q: %s", d.Id(), err)
@@ -411,7 +384,7 @@ func resourceComputePerInstanceConfigUpdate(d *schema.ResourceData, meta interfa
 	}
 
 	// Instance name in applyUpdatesToInstances request must include zone
-	instanceName, err := tpgresource.ReplaceVars(d, config, "zones/{{zone}}/instances/{{name}}")
+	instanceName, err := ReplaceVars(d, config, "zones/{{zone}}/instances/{{name}}")
 	if err != nil {
 		return err
 	}
@@ -426,26 +399,18 @@ func resourceComputePerInstanceConfigUpdate(d *schema.ResourceData, meta interfa
 	obj["minimalAction"] = minAction
 
 	mostDisruptiveAction := d.Get("most_disruptive_allowed_action")
-	if tpgresource.IsEmptyValue(reflect.ValueOf(mostDisruptiveAction)) {
+	if isEmptyValue(reflect.ValueOf(mostDisruptiveAction)) {
 		mostDisruptiveAction = "REPLACE"
 	}
 	obj["mostDisruptiveAllowedAction"] = mostDisruptiveAction
 
-	url, err = tpgresource.ReplaceVars(d, config, "{{ComputeBasePath}}projects/{{project}}/zones/{{zone}}/instanceGroupManagers/{{instance_group_manager}}/applyUpdatesToInstances")
+	url, err = ReplaceVars(d, config, "{{ComputeBasePath}}projects/{{project}}/zones/{{zone}}/instanceGroupManagers/{{instance_group_manager}}/applyUpdatesToInstances")
 	if err != nil {
 		return err
 	}
 
 	log.Printf("[DEBUG] Applying updates to PerInstanceConfig %q: %#v", d.Id(), obj)
-	res, err = transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-		Config:    config,
-		Method:    "POST",
-		Project:   project,
-		RawURL:    url,
-		UserAgent: userAgent,
-		Body:      obj,
-		Timeout:   d.Timeout(schema.TimeoutUpdate),
-	})
+	res, err = transport_tpg.SendRequestWithTimeout(config, "POST", project, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
 
 	if err != nil {
 		return fmt.Errorf("Error updating PerInstanceConfig %q: %s", d.Id(), err)
@@ -463,24 +428,24 @@ func resourceComputePerInstanceConfigUpdate(d *schema.ResourceData, meta interfa
 
 func resourceComputePerInstanceConfigDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*transport_tpg.Config)
-	userAgent, err := tpgresource.GenerateUserAgentString(d, config.UserAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
 
-	project, err := tpgresource.GetProject(d, config)
+	project, err := getProject(d, config)
 	if err != nil {
 		return err
 	}
 
-	lockName, err := tpgresource.ReplaceVars(d, config, "instanceGroupManager/{{project}}/{{zone}}/{{instance_group_manager}}")
+	lockName, err := ReplaceVars(d, config, "instanceGroupManager/{{project}}/{{zone}}/{{instance_group_manager}}")
 	if err != nil {
 		return err
 	}
-	transport_tpg.MutexStore.Lock(lockName)
-	defer transport_tpg.MutexStore.Unlock(lockName)
+	mutexKV.Lock(lockName)
+	defer mutexKV.Unlock(lockName)
 
-	url, err := tpgresource.ReplaceVars(d, config, "{{ComputeBasePath}}projects/{{project}}/zones/{{zone}}/instanceGroupManagers/{{instance_group_manager}}/deletePerInstanceConfigs")
+	url, err := ReplaceVars(d, config, "{{ComputeBasePath}}projects/{{project}}/zones/{{zone}}/instanceGroupManagers/{{instance_group_manager}}/deletePerInstanceConfigs")
 	if err != nil {
 		return err
 	}
@@ -491,15 +456,7 @@ func resourceComputePerInstanceConfigDelete(d *schema.ResourceData, meta interfa
 	}
 	log.Printf("[DEBUG] Deleting PerInstanceConfig %q", d.Id())
 
-	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-		Config:    config,
-		Method:    "POST",
-		Project:   project,
-		RawURL:    url,
-		UserAgent: userAgent,
-		Body:      obj,
-		Timeout:   d.Timeout(schema.TimeoutDelete),
-	})
+	res, err := transport_tpg.SendRequestWithTimeout(config, "POST", project, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "PerInstanceConfig")
 	}
@@ -515,7 +472,7 @@ func resourceComputePerInstanceConfigDelete(d *schema.ResourceData, meta interfa
 	// Potentially delete the state managed by this config
 	if d.Get("remove_instance_state_on_destroy").(bool) {
 		// Instance name in applyUpdatesToInstances request must include zone
-		instanceName, err := tpgresource.ReplaceVars(d, config, "zones/{{zone}}/instances/{{name}}")
+		instanceName, err := ReplaceVars(d, config, "zones/{{zone}}/instances/{{name}}")
 		if err != nil {
 			return err
 		}
@@ -524,21 +481,13 @@ func resourceComputePerInstanceConfigDelete(d *schema.ResourceData, meta interfa
 		obj["instances"] = []string{instanceName}
 
 		// The deletion must be applied to the instance after the PerInstanceConfig is deleted
-		url, err = tpgresource.ReplaceVars(d, config, "{{ComputeBasePath}}projects/{{project}}/zones/{{zone}}/instanceGroupManagers/{{instance_group_manager}}/applyUpdatesToInstances")
+		url, err = ReplaceVars(d, config, "{{ComputeBasePath}}projects/{{project}}/zones/{{zone}}/instanceGroupManagers/{{instance_group_manager}}/applyUpdatesToInstances")
 		if err != nil {
 			return err
 		}
 
 		log.Printf("[DEBUG] Applying updates to PerInstanceConfig %q: %#v", d.Id(), obj)
-		res, err = transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-			Config:    config,
-			Method:    "POST",
-			Project:   project,
-			RawURL:    url,
-			UserAgent: userAgent,
-			Body:      obj,
-			Timeout:   d.Timeout(schema.TimeoutUpdate),
-		})
+		res, err = transport_tpg.SendRequestWithTimeout(config, "POST", project, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
 
 		if err != nil {
 			return fmt.Errorf("Error deleting PerInstanceConfig %q: %s", d.Id(), err)
@@ -564,7 +513,7 @@ func resourceComputePerInstanceConfigDelete(d *schema.ResourceData, meta interfa
 
 func resourceComputePerInstanceConfigImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
-	if err := tpgresource.ParseImportId([]string{
+	if err := ParseImportId([]string{
 		"projects/(?P<project>[^/]+)/zones/(?P<zone>[^/]+)/instanceGroupManagers/(?P<instance_group_manager>[^/]+)/(?P<name>[^/]+)",
 		"(?P<project>[^/]+)/(?P<zone>[^/]+)/(?P<instance_group_manager>[^/]+)/(?P<name>[^/]+)",
 		"(?P<zone>[^/]+)/(?P<instance_group_manager>[^/]+)/(?P<name>[^/]+)",
@@ -574,7 +523,7 @@ func resourceComputePerInstanceConfigImport(d *schema.ResourceData, meta interfa
 	}
 
 	// Replace import id for the resource id
-	id, err := tpgresource.ReplaceVars(d, config, "{{project}}/{{zone}}/{{instance_group_manager}}/{{name}}")
+	id, err := ReplaceVars(d, config, "{{project}}/{{zone}}/{{instance_group_manager}}/{{name}}")
 	if err != nil {
 		return nil, fmt.Errorf("Error constructing id: %s", err)
 	}
@@ -625,7 +574,7 @@ func flattenNestedComputePerInstanceConfigPreservedStateDisk(v interface{}, d *s
 	transformed := make([]interface{}, 0, len(disks))
 	for devName, deleteRuleRaw := range disks {
 		diskObj := deleteRuleRaw.(map[string]interface{})
-		source, err := tpgresource.GetRelativePath(diskObj["source"].(string))
+		source, err := getRelativePath(diskObj["source"].(string))
 		if err != nil {
 			source = diskObj["source"].(string)
 		}
@@ -639,11 +588,11 @@ func flattenNestedComputePerInstanceConfigPreservedStateDisk(v interface{}, d *s
 	return transformed
 }
 
-func expandNestedComputePerInstanceConfigName(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+func expandNestedComputePerInstanceConfigName(v interface{}, d TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 
-func expandNestedComputePerInstanceConfigPreservedState(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+func expandNestedComputePerInstanceConfigPreservedState(v interface{}, d TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
@@ -655,21 +604,21 @@ func expandNestedComputePerInstanceConfigPreservedState(v interface{}, d tpgreso
 	transformedMetadata, err := expandNestedComputePerInstanceConfigPreservedStateMetadata(original["metadata"], d, config)
 	if err != nil {
 		return nil, err
-	} else if val := reflect.ValueOf(transformedMetadata); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+	} else if val := reflect.ValueOf(transformedMetadata); val.IsValid() && !isEmptyValue(val) {
 		transformed["metadata"] = transformedMetadata
 	}
 
 	transformedDisk, err := expandNestedComputePerInstanceConfigPreservedStateDisk(original["disk"], d, config)
 	if err != nil {
 		return nil, err
-	} else if val := reflect.ValueOf(transformedDisk); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+	} else if val := reflect.ValueOf(transformedDisk); val.IsValid() && !isEmptyValue(val) {
 		transformed["disks"] = transformedDisk
 	}
 
 	return transformed, nil
 }
 
-func expandNestedComputePerInstanceConfigPreservedStateMetadata(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
+func expandNestedComputePerInstanceConfigPreservedStateMetadata(v interface{}, d TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
 	if v == nil {
 		return map[string]string{}, nil
 	}
@@ -680,7 +629,7 @@ func expandNestedComputePerInstanceConfigPreservedStateMetadata(v interface{}, d
 	return m, nil
 }
 
-func expandNestedComputePerInstanceConfigPreservedStateDisk(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+func expandNestedComputePerInstanceConfigPreservedStateDisk(v interface{}, d TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	if v == nil {
 		return map[string]interface{}{}, nil
 	}
@@ -766,8 +715,8 @@ func resourceComputePerInstanceConfigFindNestedObjectInList(d *schema.ResourceDa
 		item := itemRaw.(map[string]interface{})
 
 		itemName := flattenNestedComputePerInstanceConfigName(item["name"], d, meta.(*transport_tpg.Config))
-		// IsEmptyValue check so that if one is nil and the other is "", that's considered a match
-		if !(tpgresource.IsEmptyValue(reflect.ValueOf(itemName)) && tpgresource.IsEmptyValue(reflect.ValueOf(expectedFlattenedName))) && !reflect.DeepEqual(itemName, expectedFlattenedName) {
+		// isEmptyValue check so that if one is nil and the other is "", that's considered a match
+		if !(isEmptyValue(reflect.ValueOf(itemName)) && isEmptyValue(reflect.ValueOf(expectedFlattenedName))) && !reflect.DeepEqual(itemName, expectedFlattenedName) {
 			log.Printf("[DEBUG] Skipping item with name= %#v, looking for %#v)", itemName, expectedFlattenedName)
 			continue
 		}

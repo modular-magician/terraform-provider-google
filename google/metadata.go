@@ -1,5 +1,3 @@
-// Copyright (c) HashiCorp, Inc.
-// SPDX-License-Identifier: MPL-2.0
 package google
 
 import (
@@ -8,7 +6,6 @@ import (
 
 	"google.golang.org/api/compute/v1"
 
-	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
 	transport_tpg "github.com/hashicorp/terraform-provider-google/google/transport"
 )
 
@@ -124,7 +121,7 @@ func flattenMetadata(metadata *compute.Metadata) map[string]interface{} {
 	return metadataMap
 }
 
-func resourceInstanceMetadata(d tpgresource.TerraformResourceData) (*compute.Metadata, error) {
+func resourceInstanceMetadata(d TerraformResourceData) (*compute.Metadata, error) {
 	m := &compute.Metadata{}
 	mdMap := d.Get("metadata").(map[string]interface{})
 	if v, ok := d.GetOk("metadata_startup_script"); ok && v.(string) != "" {

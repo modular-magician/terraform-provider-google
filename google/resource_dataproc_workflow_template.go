@@ -1,6 +1,3 @@
-// Copyright (c) HashiCorp, Inc.
-// SPDX-License-Identifier: MPL-2.0
-
 // ----------------------------------------------------------------------------
 //
 //     ***     AUTO GENERATED CODE    ***    Type: DCL     ***
@@ -29,7 +26,6 @@ import (
 	dcl "github.com/GoogleCloudPlatform/declarative-resource-client-library/dcl"
 	dataproc "github.com/GoogleCloudPlatform/declarative-resource-client-library/services/google/dataproc"
 
-	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
 	transport_tpg "github.com/hashicorp/terraform-provider-google/google/transport"
 )
 
@@ -2089,7 +2085,7 @@ func resourceDataprocWorkflowTemplateCreate(d *schema.ResourceData, meta interfa
 		Name:       dcl.String(d.Get("name").(string)),
 		Placement:  expandDataprocWorkflowTemplatePlacement(d.Get("placement")),
 		DagTimeout: dcl.String(d.Get("dag_timeout").(string)),
-		Labels:     tpgresource.CheckStringMap(d.Get("labels")),
+		Labels:     checkStringMap(d.Get("labels")),
 		Parameters: expandDataprocWorkflowTemplateParametersArray(d.Get("parameters")),
 		Project:    dcl.String(project),
 		Version:    dcl.Int64OrNil(int64(d.Get("version").(int))),
@@ -2101,17 +2097,17 @@ func resourceDataprocWorkflowTemplateCreate(d *schema.ResourceData, meta interfa
 	}
 	d.SetId(id)
 	directive := CreateDirective
-	userAgent, err := tpgresource.GenerateUserAgentString(d, config.UserAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
 	billingProject := project
 	// err == nil indicates that the billing_project value was found
-	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
+	if bp, err := getBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 	client := transport_tpg.NewDCLDataprocClient(config, userAgent, billingProject, d.Timeout(schema.TimeoutCreate))
-	if bp, err := tpgresource.ReplaceVars(d, config, client.Config.BasePath); err != nil {
+	if bp, err := ReplaceVars(d, config, client.Config.BasePath); err != nil {
 		d.SetId("")
 		return fmt.Errorf("Could not format %q: %w", client.Config.BasePath, err)
 	} else {
@@ -2145,23 +2141,23 @@ func resourceDataprocWorkflowTemplateRead(d *schema.ResourceData, meta interface
 		Name:       dcl.String(d.Get("name").(string)),
 		Placement:  expandDataprocWorkflowTemplatePlacement(d.Get("placement")),
 		DagTimeout: dcl.String(d.Get("dag_timeout").(string)),
-		Labels:     tpgresource.CheckStringMap(d.Get("labels")),
+		Labels:     checkStringMap(d.Get("labels")),
 		Parameters: expandDataprocWorkflowTemplateParametersArray(d.Get("parameters")),
 		Project:    dcl.String(project),
 		Version:    dcl.Int64OrNil(int64(d.Get("version").(int))),
 	}
 
-	userAgent, err := tpgresource.GenerateUserAgentString(d, config.UserAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
 	billingProject := project
 	// err == nil indicates that the billing_project value was found
-	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
+	if bp, err := getBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 	client := transport_tpg.NewDCLDataprocClient(config, userAgent, billingProject, d.Timeout(schema.TimeoutRead))
-	if bp, err := tpgresource.ReplaceVars(d, config, client.Config.BasePath); err != nil {
+	if bp, err := ReplaceVars(d, config, client.Config.BasePath); err != nil {
 		d.SetId("")
 		return fmt.Errorf("Could not format %q: %w", client.Config.BasePath, err)
 	} else {
@@ -2223,24 +2219,24 @@ func resourceDataprocWorkflowTemplateDelete(d *schema.ResourceData, meta interfa
 		Name:       dcl.String(d.Get("name").(string)),
 		Placement:  expandDataprocWorkflowTemplatePlacement(d.Get("placement")),
 		DagTimeout: dcl.String(d.Get("dag_timeout").(string)),
-		Labels:     tpgresource.CheckStringMap(d.Get("labels")),
+		Labels:     checkStringMap(d.Get("labels")),
 		Parameters: expandDataprocWorkflowTemplateParametersArray(d.Get("parameters")),
 		Project:    dcl.String(project),
 		Version:    dcl.Int64OrNil(int64(d.Get("version").(int))),
 	}
 
 	log.Printf("[DEBUG] Deleting WorkflowTemplate %q", d.Id())
-	userAgent, err := tpgresource.GenerateUserAgentString(d, config.UserAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
 	billingProject := project
 	// err == nil indicates that the billing_project value was found
-	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
+	if bp, err := getBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 	client := transport_tpg.NewDCLDataprocClient(config, userAgent, billingProject, d.Timeout(schema.TimeoutDelete))
-	if bp, err := tpgresource.ReplaceVars(d, config, client.Config.BasePath); err != nil {
+	if bp, err := ReplaceVars(d, config, client.Config.BasePath); err != nil {
 		d.SetId("")
 		return fmt.Errorf("Could not format %q: %w", client.Config.BasePath, err)
 	} else {
@@ -2257,7 +2253,7 @@ func resourceDataprocWorkflowTemplateDelete(d *schema.ResourceData, meta interfa
 func resourceDataprocWorkflowTemplateImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 
-	if err := tpgresource.ParseImportId([]string{
+	if err := ParseImportId([]string{
 		"projects/(?P<project>[^/]+)/locations/(?P<location>[^/]+)/workflowTemplates/(?P<name>[^/]+)",
 		"(?P<project>[^/]+)/(?P<location>[^/]+)/(?P<name>[^/]+)",
 		"(?P<location>[^/]+)/(?P<name>[^/]+)",
@@ -2266,7 +2262,7 @@ func resourceDataprocWorkflowTemplateImport(d *schema.ResourceData, meta interfa
 	}
 
 	// Replace import id for the resource id
-	id, err := tpgresource.ReplaceVarsForId(d, config, "projects/{{project}}/locations/{{location}}/workflowTemplates/{{name}}")
+	id, err := replaceVarsForId(d, config, "projects/{{project}}/locations/{{location}}/workflowTemplates/{{name}}")
 	if err != nil {
 		return nil, fmt.Errorf("Error constructing id: %s", err)
 	}
@@ -2304,7 +2300,7 @@ func expandDataprocWorkflowTemplateJobs(o interface{}) *dataproc.WorkflowTemplat
 		StepId:              dcl.String(obj["step_id"].(string)),
 		HadoopJob:           expandDataprocWorkflowTemplateJobsHadoopJob(obj["hadoop_job"]),
 		HiveJob:             expandDataprocWorkflowTemplateJobsHiveJob(obj["hive_job"]),
-		Labels:              tpgresource.CheckStringMap(obj["labels"]),
+		Labels:              checkStringMap(obj["labels"]),
 		PigJob:              expandDataprocWorkflowTemplateJobsPigJob(obj["pig_job"]),
 		PrerequisiteStepIds: expandStringArray(obj["prerequisite_step_ids"]),
 		PrestoJob:           expandDataprocWorkflowTemplateJobsPrestoJob(obj["presto_job"]),
@@ -2370,7 +2366,7 @@ func expandDataprocWorkflowTemplateJobsHadoopJob(o interface{}) *dataproc.Workfl
 		LoggingConfig:  expandDataprocWorkflowTemplateJobsHadoopJobLoggingConfig(obj["logging_config"]),
 		MainClass:      dcl.String(obj["main_class"].(string)),
 		MainJarFileUri: dcl.String(obj["main_jar_file_uri"].(string)),
-		Properties:     tpgresource.CheckStringMap(obj["properties"]),
+		Properties:     checkStringMap(obj["properties"]),
 	}
 }
 
@@ -2403,7 +2399,7 @@ func expandDataprocWorkflowTemplateJobsHadoopJobLoggingConfig(o interface{}) *da
 	}
 	obj := objArr[0].(map[string]interface{})
 	return &dataproc.WorkflowTemplateJobsHadoopJobLoggingConfig{
-		DriverLogLevels: tpgresource.CheckStringMap(obj["driver_log_levels"]),
+		DriverLogLevels: checkStringMap(obj["driver_log_levels"]),
 	}
 }
 
@@ -2431,10 +2427,10 @@ func expandDataprocWorkflowTemplateJobsHiveJob(o interface{}) *dataproc.Workflow
 	return &dataproc.WorkflowTemplateJobsHiveJob{
 		ContinueOnFailure: dcl.Bool(obj["continue_on_failure"].(bool)),
 		JarFileUris:       expandStringArray(obj["jar_file_uris"]),
-		Properties:        tpgresource.CheckStringMap(obj["properties"]),
+		Properties:        checkStringMap(obj["properties"]),
 		QueryFileUri:      dcl.String(obj["query_file_uri"].(string)),
 		QueryList:         expandDataprocWorkflowTemplateJobsHiveJobQueryList(obj["query_list"]),
-		ScriptVariables:   tpgresource.CheckStringMap(obj["script_variables"]),
+		ScriptVariables:   checkStringMap(obj["script_variables"]),
 	}
 }
 
@@ -2494,10 +2490,10 @@ func expandDataprocWorkflowTemplateJobsPigJob(o interface{}) *dataproc.WorkflowT
 		ContinueOnFailure: dcl.Bool(obj["continue_on_failure"].(bool)),
 		JarFileUris:       expandStringArray(obj["jar_file_uris"]),
 		LoggingConfig:     expandDataprocWorkflowTemplateJobsPigJobLoggingConfig(obj["logging_config"]),
-		Properties:        tpgresource.CheckStringMap(obj["properties"]),
+		Properties:        checkStringMap(obj["properties"]),
 		QueryFileUri:      dcl.String(obj["query_file_uri"].(string)),
 		QueryList:         expandDataprocWorkflowTemplateJobsPigJobQueryList(obj["query_list"]),
-		ScriptVariables:   tpgresource.CheckStringMap(obj["script_variables"]),
+		ScriptVariables:   checkStringMap(obj["script_variables"]),
 	}
 }
 
@@ -2529,7 +2525,7 @@ func expandDataprocWorkflowTemplateJobsPigJobLoggingConfig(o interface{}) *datap
 	}
 	obj := objArr[0].(map[string]interface{})
 	return &dataproc.WorkflowTemplateJobsPigJobLoggingConfig{
-		DriverLogLevels: tpgresource.CheckStringMap(obj["driver_log_levels"]),
+		DriverLogLevels: checkStringMap(obj["driver_log_levels"]),
 	}
 }
 
@@ -2585,7 +2581,7 @@ func expandDataprocWorkflowTemplateJobsPrestoJob(o interface{}) *dataproc.Workfl
 		ContinueOnFailure: dcl.Bool(obj["continue_on_failure"].(bool)),
 		LoggingConfig:     expandDataprocWorkflowTemplateJobsPrestoJobLoggingConfig(obj["logging_config"]),
 		OutputFormat:      dcl.String(obj["output_format"].(string)),
-		Properties:        tpgresource.CheckStringMap(obj["properties"]),
+		Properties:        checkStringMap(obj["properties"]),
 		QueryFileUri:      dcl.String(obj["query_file_uri"].(string)),
 		QueryList:         expandDataprocWorkflowTemplateJobsPrestoJobQueryList(obj["query_list"]),
 	}
@@ -2619,7 +2615,7 @@ func expandDataprocWorkflowTemplateJobsPrestoJobLoggingConfig(o interface{}) *da
 	}
 	obj := objArr[0].(map[string]interface{})
 	return &dataproc.WorkflowTemplateJobsPrestoJobLoggingConfig{
-		DriverLogLevels: tpgresource.CheckStringMap(obj["driver_log_levels"]),
+		DriverLogLevels: checkStringMap(obj["driver_log_levels"]),
 	}
 }
 
@@ -2677,7 +2673,7 @@ func expandDataprocWorkflowTemplateJobsPysparkJob(o interface{}) *dataproc.Workf
 		FileUris:          expandStringArray(obj["file_uris"]),
 		JarFileUris:       expandStringArray(obj["jar_file_uris"]),
 		LoggingConfig:     expandDataprocWorkflowTemplateJobsPysparkJobLoggingConfig(obj["logging_config"]),
-		Properties:        tpgresource.CheckStringMap(obj["properties"]),
+		Properties:        checkStringMap(obj["properties"]),
 		PythonFileUris:    expandStringArray(obj["python_file_uris"]),
 	}
 }
@@ -2711,7 +2707,7 @@ func expandDataprocWorkflowTemplateJobsPysparkJobLoggingConfig(o interface{}) *d
 	}
 	obj := objArr[0].(map[string]interface{})
 	return &dataproc.WorkflowTemplateJobsPysparkJobLoggingConfig{
-		DriverLogLevels: tpgresource.CheckStringMap(obj["driver_log_levels"]),
+		DriverLogLevels: checkStringMap(obj["driver_log_levels"]),
 	}
 }
 
@@ -2772,7 +2768,7 @@ func expandDataprocWorkflowTemplateJobsSparkJob(o interface{}) *dataproc.Workflo
 		LoggingConfig:  expandDataprocWorkflowTemplateJobsSparkJobLoggingConfig(obj["logging_config"]),
 		MainClass:      dcl.String(obj["main_class"].(string)),
 		MainJarFileUri: dcl.String(obj["main_jar_file_uri"].(string)),
-		Properties:     tpgresource.CheckStringMap(obj["properties"]),
+		Properties:     checkStringMap(obj["properties"]),
 	}
 }
 
@@ -2805,7 +2801,7 @@ func expandDataprocWorkflowTemplateJobsSparkJobLoggingConfig(o interface{}) *dat
 	}
 	obj := objArr[0].(map[string]interface{})
 	return &dataproc.WorkflowTemplateJobsSparkJobLoggingConfig{
-		DriverLogLevels: tpgresource.CheckStringMap(obj["driver_log_levels"]),
+		DriverLogLevels: checkStringMap(obj["driver_log_levels"]),
 	}
 }
 
@@ -2836,7 +2832,7 @@ func expandDataprocWorkflowTemplateJobsSparkRJob(o interface{}) *dataproc.Workfl
 		Args:          expandStringArray(obj["args"]),
 		FileUris:      expandStringArray(obj["file_uris"]),
 		LoggingConfig: expandDataprocWorkflowTemplateJobsSparkRJobLoggingConfig(obj["logging_config"]),
-		Properties:    tpgresource.CheckStringMap(obj["properties"]),
+		Properties:    checkStringMap(obj["properties"]),
 	}
 }
 
@@ -2867,7 +2863,7 @@ func expandDataprocWorkflowTemplateJobsSparkRJobLoggingConfig(o interface{}) *da
 	}
 	obj := objArr[0].(map[string]interface{})
 	return &dataproc.WorkflowTemplateJobsSparkRJobLoggingConfig{
-		DriverLogLevels: tpgresource.CheckStringMap(obj["driver_log_levels"]),
+		DriverLogLevels: checkStringMap(obj["driver_log_levels"]),
 	}
 }
 
@@ -2895,10 +2891,10 @@ func expandDataprocWorkflowTemplateJobsSparkSqlJob(o interface{}) *dataproc.Work
 	return &dataproc.WorkflowTemplateJobsSparkSqlJob{
 		JarFileUris:     expandStringArray(obj["jar_file_uris"]),
 		LoggingConfig:   expandDataprocWorkflowTemplateJobsSparkSqlJobLoggingConfig(obj["logging_config"]),
-		Properties:      tpgresource.CheckStringMap(obj["properties"]),
+		Properties:      checkStringMap(obj["properties"]),
 		QueryFileUri:    dcl.String(obj["query_file_uri"].(string)),
 		QueryList:       expandDataprocWorkflowTemplateJobsSparkSqlJobQueryList(obj["query_list"]),
-		ScriptVariables: tpgresource.CheckStringMap(obj["script_variables"]),
+		ScriptVariables: checkStringMap(obj["script_variables"]),
 	}
 }
 
@@ -2929,7 +2925,7 @@ func expandDataprocWorkflowTemplateJobsSparkSqlJobLoggingConfig(o interface{}) *
 	}
 	obj := objArr[0].(map[string]interface{})
 	return &dataproc.WorkflowTemplateJobsSparkSqlJobLoggingConfig{
-		DriverLogLevels: tpgresource.CheckStringMap(obj["driver_log_levels"]),
+		DriverLogLevels: checkStringMap(obj["driver_log_levels"]),
 	}
 }
 
@@ -3009,7 +3005,7 @@ func expandDataprocWorkflowTemplatePlacementClusterSelector(o interface{}) *data
 	}
 	obj := objArr[0].(map[string]interface{})
 	return &dataproc.WorkflowTemplatePlacementClusterSelector{
-		ClusterLabels: tpgresource.CheckStringMap(obj["cluster_labels"]),
+		ClusterLabels: checkStringMap(obj["cluster_labels"]),
 		Zone:          dcl.StringOrNil(obj["zone"].(string)),
 	}
 }
@@ -3039,7 +3035,7 @@ func expandDataprocWorkflowTemplatePlacementManagedCluster(o interface{}) *datap
 	return &dataproc.WorkflowTemplatePlacementManagedCluster{
 		ClusterName: dcl.String(obj["cluster_name"].(string)),
 		Config:      expandDataprocWorkflowTemplatePlacementManagedClusterConfig(obj["config"]),
-		Labels:      tpgresource.CheckStringMap(obj["labels"]),
+		Labels:      checkStringMap(obj["labels"]),
 	}
 }
 
@@ -3197,7 +3193,7 @@ func expandDataprocWorkflowTemplatePlacementManagedClusterConfigGceClusterConfig
 	obj := objArr[0].(map[string]interface{})
 	return &dataproc.WorkflowTemplatePlacementManagedClusterConfigGceClusterConfig{
 		InternalIPOnly:          dcl.Bool(obj["internal_ip_only"].(bool)),
-		Metadata:                tpgresource.CheckStringMap(obj["metadata"]),
+		Metadata:                checkStringMap(obj["metadata"]),
 		Network:                 dcl.String(obj["network"].(string)),
 		NodeGroupAffinity:       expandDataprocWorkflowTemplatePlacementManagedClusterConfigGceClusterConfigNodeGroupAffinity(obj["node_group_affinity"]),
 		PrivateIPv6GoogleAccess: dataproc.WorkflowTemplatePlacementManagedClusterConfigGceClusterConfigPrivateIPv6GoogleAccessEnumRef(obj["private_ipv6_google_access"].(string)),
@@ -3782,7 +3778,7 @@ func expandDataprocWorkflowTemplatePlacementManagedClusterConfigSoftwareConfig(o
 	return &dataproc.WorkflowTemplatePlacementManagedClusterConfigSoftwareConfig{
 		ImageVersion:       dcl.String(obj["image_version"].(string)),
 		OptionalComponents: expandDataprocWorkflowTemplatePlacementManagedClusterConfigSoftwareConfigOptionalComponentsArray(obj["optional_components"]),
-		Properties:         tpgresource.CheckStringMap(obj["properties"]),
+		Properties:         checkStringMap(obj["properties"]),
 	}
 }
 

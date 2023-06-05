@@ -1,6 +1,3 @@
-// Copyright (c) HashiCorp, Inc.
-// SPDX-License-Identifier: MPL-2.0
-
 // ----------------------------------------------------------------------------
 //
 //     ***     AUTO GENERATED CODE    ***    Type: DCL     ***
@@ -29,7 +26,6 @@ import (
 	dcl "github.com/GoogleCloudPlatform/declarative-resource-client-library/dcl"
 	clouddeploy "github.com/GoogleCloudPlatform/declarative-resource-client-library/services/google/clouddeploy"
 
-	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
 	transport_tpg "github.com/hashicorp/terraform-provider-google/google/transport"
 )
 
@@ -306,9 +302,9 @@ func resourceClouddeployDeliveryPipelineCreate(d *schema.ResourceData, meta inte
 	obj := &clouddeploy.DeliveryPipeline{
 		Location:       dcl.String(d.Get("location").(string)),
 		Name:           dcl.String(d.Get("name").(string)),
-		Annotations:    tpgresource.CheckStringMap(d.Get("annotations")),
+		Annotations:    checkStringMap(d.Get("annotations")),
 		Description:    dcl.String(d.Get("description").(string)),
-		Labels:         tpgresource.CheckStringMap(d.Get("labels")),
+		Labels:         checkStringMap(d.Get("labels")),
 		Project:        dcl.String(project),
 		SerialPipeline: expandClouddeployDeliveryPipelineSerialPipeline(d.Get("serial_pipeline")),
 		Suspended:      dcl.Bool(d.Get("suspended").(bool)),
@@ -320,17 +316,17 @@ func resourceClouddeployDeliveryPipelineCreate(d *schema.ResourceData, meta inte
 	}
 	d.SetId(id)
 	directive := CreateDirective
-	userAgent, err := tpgresource.GenerateUserAgentString(d, config.UserAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
 	billingProject := project
 	// err == nil indicates that the billing_project value was found
-	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
+	if bp, err := getBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 	client := transport_tpg.NewDCLClouddeployClient(config, userAgent, billingProject, d.Timeout(schema.TimeoutCreate))
-	if bp, err := tpgresource.ReplaceVars(d, config, client.Config.BasePath); err != nil {
+	if bp, err := ReplaceVars(d, config, client.Config.BasePath); err != nil {
 		d.SetId("")
 		return fmt.Errorf("Could not format %q: %w", client.Config.BasePath, err)
 	} else {
@@ -361,25 +357,25 @@ func resourceClouddeployDeliveryPipelineRead(d *schema.ResourceData, meta interf
 	obj := &clouddeploy.DeliveryPipeline{
 		Location:       dcl.String(d.Get("location").(string)),
 		Name:           dcl.String(d.Get("name").(string)),
-		Annotations:    tpgresource.CheckStringMap(d.Get("annotations")),
+		Annotations:    checkStringMap(d.Get("annotations")),
 		Description:    dcl.String(d.Get("description").(string)),
-		Labels:         tpgresource.CheckStringMap(d.Get("labels")),
+		Labels:         checkStringMap(d.Get("labels")),
 		Project:        dcl.String(project),
 		SerialPipeline: expandClouddeployDeliveryPipelineSerialPipeline(d.Get("serial_pipeline")),
 		Suspended:      dcl.Bool(d.Get("suspended").(bool)),
 	}
 
-	userAgent, err := tpgresource.GenerateUserAgentString(d, config.UserAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
 	billingProject := project
 	// err == nil indicates that the billing_project value was found
-	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
+	if bp, err := getBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 	client := transport_tpg.NewDCLClouddeployClient(config, userAgent, billingProject, d.Timeout(schema.TimeoutRead))
-	if bp, err := tpgresource.ReplaceVars(d, config, client.Config.BasePath); err != nil {
+	if bp, err := ReplaceVars(d, config, client.Config.BasePath); err != nil {
 		d.SetId("")
 		return fmt.Errorf("Could not format %q: %w", client.Config.BasePath, err)
 	} else {
@@ -443,26 +439,26 @@ func resourceClouddeployDeliveryPipelineUpdate(d *schema.ResourceData, meta inte
 	obj := &clouddeploy.DeliveryPipeline{
 		Location:       dcl.String(d.Get("location").(string)),
 		Name:           dcl.String(d.Get("name").(string)),
-		Annotations:    tpgresource.CheckStringMap(d.Get("annotations")),
+		Annotations:    checkStringMap(d.Get("annotations")),
 		Description:    dcl.String(d.Get("description").(string)),
-		Labels:         tpgresource.CheckStringMap(d.Get("labels")),
+		Labels:         checkStringMap(d.Get("labels")),
 		Project:        dcl.String(project),
 		SerialPipeline: expandClouddeployDeliveryPipelineSerialPipeline(d.Get("serial_pipeline")),
 		Suspended:      dcl.Bool(d.Get("suspended").(bool)),
 	}
 	directive := UpdateDirective
-	userAgent, err := tpgresource.GenerateUserAgentString(d, config.UserAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
 
 	billingProject := ""
 	// err == nil indicates that the billing_project value was found
-	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
+	if bp, err := getBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 	client := transport_tpg.NewDCLClouddeployClient(config, userAgent, billingProject, d.Timeout(schema.TimeoutUpdate))
-	if bp, err := tpgresource.ReplaceVars(d, config, client.Config.BasePath); err != nil {
+	if bp, err := ReplaceVars(d, config, client.Config.BasePath); err != nil {
 		d.SetId("")
 		return fmt.Errorf("Could not format %q: %w", client.Config.BasePath, err)
 	} else {
@@ -493,26 +489,26 @@ func resourceClouddeployDeliveryPipelineDelete(d *schema.ResourceData, meta inte
 	obj := &clouddeploy.DeliveryPipeline{
 		Location:       dcl.String(d.Get("location").(string)),
 		Name:           dcl.String(d.Get("name").(string)),
-		Annotations:    tpgresource.CheckStringMap(d.Get("annotations")),
+		Annotations:    checkStringMap(d.Get("annotations")),
 		Description:    dcl.String(d.Get("description").(string)),
-		Labels:         tpgresource.CheckStringMap(d.Get("labels")),
+		Labels:         checkStringMap(d.Get("labels")),
 		Project:        dcl.String(project),
 		SerialPipeline: expandClouddeployDeliveryPipelineSerialPipeline(d.Get("serial_pipeline")),
 		Suspended:      dcl.Bool(d.Get("suspended").(bool)),
 	}
 
 	log.Printf("[DEBUG] Deleting DeliveryPipeline %q", d.Id())
-	userAgent, err := tpgresource.GenerateUserAgentString(d, config.UserAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
 	billingProject := project
 	// err == nil indicates that the billing_project value was found
-	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
+	if bp, err := getBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 	client := transport_tpg.NewDCLClouddeployClient(config, userAgent, billingProject, d.Timeout(schema.TimeoutDelete))
-	if bp, err := tpgresource.ReplaceVars(d, config, client.Config.BasePath); err != nil {
+	if bp, err := ReplaceVars(d, config, client.Config.BasePath); err != nil {
 		d.SetId("")
 		return fmt.Errorf("Could not format %q: %w", client.Config.BasePath, err)
 	} else {
@@ -529,7 +525,7 @@ func resourceClouddeployDeliveryPipelineDelete(d *schema.ResourceData, meta inte
 func resourceClouddeployDeliveryPipelineImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 
-	if err := tpgresource.ParseImportId([]string{
+	if err := ParseImportId([]string{
 		"projects/(?P<project>[^/]+)/locations/(?P<location>[^/]+)/deliveryPipelines/(?P<name>[^/]+)",
 		"(?P<project>[^/]+)/(?P<location>[^/]+)/(?P<name>[^/]+)",
 		"(?P<location>[^/]+)/(?P<name>[^/]+)",
@@ -538,7 +534,7 @@ func resourceClouddeployDeliveryPipelineImport(d *schema.ResourceData, meta inte
 	}
 
 	// Replace import id for the resource id
-	id, err := tpgresource.ReplaceVarsForId(d, config, "projects/{{project}}/locations/{{location}}/deliveryPipelines/{{name}}")
+	id, err := replaceVarsForId(d, config, "projects/{{project}}/locations/{{location}}/deliveryPipelines/{{name}}")
 	if err != nil {
 		return nil, fmt.Errorf("Error constructing id: %s", err)
 	}

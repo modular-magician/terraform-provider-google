@@ -1337,6 +1337,17 @@ func testAccCheckComputeInstanceTemplateHasMinCpuPlatform(instanceTemplate *comp
 	}
 }
 
+func testAccCheckComputeInstanceTemplateHasNetworkAttachment(instanceTemplate *compute.InstanceTemplate, networkAttachmentName string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		for _, networkInterface := range instanceTemplate.Properties.NetworkInterfaces {
+			if networkInterface.NetworkAttachment != "" && networkInterface.NetworkAttachment == networkAttachmentName {
+				return nil
+			}
+		}
+		return fmt.Errorf("Network Attachment %s, was not found in the instance template", networkAttachmentName)
+	}
+}
+
 func testAccCheckComputeInstanceTemplateHasInstanceResourcePolicies(instanceTemplate *compute.InstanceTemplate, resourcePolicy string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		resourcePolicyActual := instanceTemplate.Properties.ResourcePolicies[0]

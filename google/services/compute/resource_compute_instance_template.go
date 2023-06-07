@@ -382,7 +382,6 @@ Google Cloud KMS.`,
 							DiffSuppressFunc: tpgresource.CompareSelfLinkOrResourceName,
 							Description:      `The name or self_link of the network to attach this interface to. Use network attribute for Legacy or Auto subnetted networks and subnetwork for custom subnetted networks.`,
 						},
-
 						"subnetwork": {
 							Type:             schema.TypeString,
 							Optional:         true,

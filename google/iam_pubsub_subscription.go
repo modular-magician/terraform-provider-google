@@ -7,7 +7,6 @@ import (
 
 	"github.com/hashicorp/errwrap"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	tpgpubsub "github.com/hashicorp/terraform-provider-google/google/services/pubsub"
 	"github.com/hashicorp/terraform-provider-google/google/tpgiamresource"
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
 	transport_tpg "github.com/hashicorp/terraform-provider-google/google/transport"
@@ -42,7 +41,7 @@ func NewPubsubSubscriptionIamUpdater(d tpgresource.TerraformResourceData, config
 		return nil, err
 	}
 
-	subscription := tpgpubsub.GetComputedSubscriptionName(project, d.Get("subscription").(string))
+	subscription := getComputedSubscriptionName(project, d.Get("subscription").(string))
 
 	return &PubsubSubscriptionIamUpdater{
 		subscription: subscription,

@@ -59,7 +59,7 @@ func TestAccApigeeEnvironment_apigeeEnvironmentBasicTestExample(t *testing.T) {
 }
 
 func testAccApigeeEnvironment_apigeeEnvironmentBasicTestExample(context map[string]interface{}) string {
-	return tpgresource.Nprintf(`
+	return Nprintf(`
 resource "google_project" "project" {
   project_id      = "tf-test%{random_suffix}"
   name            = "tf-test%{random_suffix}"
@@ -154,7 +154,7 @@ func TestAccApigeeEnvironment_apigeeEnvironmentBasicDeploymentApiproxyTypeTestEx
 }
 
 func testAccApigeeEnvironment_apigeeEnvironmentBasicDeploymentApiproxyTypeTestExample(context map[string]interface{}) string {
-	return tpgresource.Nprintf(`
+	return Nprintf(`
 resource "google_project" "project" {
   project_id      = "tf-test%{random_suffix}"
   name            = "tf-test%{random_suffix}"

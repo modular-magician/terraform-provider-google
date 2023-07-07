@@ -113,6 +113,7 @@ type FrameworkProviderConfig struct {
 	MLEngineBasePath                 string
 	MonitoringBasePath               string
 	NetworkManagementBasePath        string
+	NetworkSecurityBasePath          string
 	NetworkServicesBasePath          string
 	NotebooksBasePath                string
 	OSConfigBasePath                 string
@@ -245,6 +246,7 @@ func (p *FrameworkProviderConfig) LoadAndValidateFramework(ctx context.Context, 
 	p.MLEngineBasePath = data.MLEngineCustomEndpoint.ValueString()
 	p.MonitoringBasePath = data.MonitoringCustomEndpoint.ValueString()
 	p.NetworkManagementBasePath = data.NetworkManagementCustomEndpoint.ValueString()
+	p.NetworkSecurityBasePath = data.NetworkSecurityCustomEndpoint.ValueString()
 	p.NetworkServicesBasePath = data.NetworkServicesCustomEndpoint.ValueString()
 	p.NotebooksBasePath = data.NotebooksCustomEndpoint.ValueString()
 	p.OSConfigBasePath = data.OSConfigCustomEndpoint.ValueString()
@@ -909,6 +911,14 @@ func (p *FrameworkProviderConfig) HandleDefaults(ctx context.Context, data *fwmo
 		}, transport_tpg.DefaultBasePaths[transport_tpg.NetworkManagementBasePathKey])
 		if customEndpoint != nil {
 			data.NetworkManagementCustomEndpoint = types.StringValue(customEndpoint.(string))
+		}
+	}
+	if data.NetworkSecurityCustomEndpoint.IsNull() {
+		customEndpoint := transport_tpg.MultiEnvDefault([]string{
+			"GOOGLE_NETWORK_SECURITY_CUSTOM_ENDPOINT",
+		}, transport_tpg.DefaultBasePaths[transport_tpg.NetworkSecurityBasePathKey])
+		if customEndpoint != nil {
+			data.NetworkSecurityCustomEndpoint = types.StringValue(customEndpoint.(string))
 		}
 	}
 	if data.NetworkServicesCustomEndpoint.IsNull() {

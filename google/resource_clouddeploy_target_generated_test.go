@@ -103,8 +103,7 @@ resource "google_clouddeploy_target" "primary" {
     my_second_annotation = "example-annotation-2"
   }
 
-  deploy_parameters = {}
-  description       = "basic description"
+  description = "basic description"
 
   gke {
     cluster = "projects/%{project_name}/locations/%{region}/clusters/example-cluster-name"
@@ -136,8 +135,7 @@ resource "google_clouddeploy_target" "primary" {
     my_third_annotation = "example-annotation-3"
   }
 
-  deploy_parameters = {}
-  description       = "updated description"
+  description = "updated description"
 
   gke {
     cluster     = "projects/%{project_name}/locations/%{region}/clusters/different-example-cluster-name"
@@ -170,8 +168,7 @@ resource "google_clouddeploy_target" "primary" {
     my_third_annotation = "example-annotation-3"
   }
 
-  deploy_parameters = {}
-  description       = "updated description"
+  description = "updated description"
 
   execution_configs {
     usages           = ["RENDER", "DEPLOY"]
@@ -210,8 +207,7 @@ resource "google_clouddeploy_target" "primary" {
     my_third_annotation = "example-annotation-3"
   }
 
-  deploy_parameters = {}
-  description       = "updated description"
+  description = "updated description"
 
   execution_configs {
     usages           = ["RENDER"]
@@ -257,8 +253,7 @@ resource "google_clouddeploy_target" "primary" {
     my_third_annotation = "example-annotation-3"
   }
 
-  deploy_parameters = {}
-  description       = "updated description"
+  description = "updated description"
 
   execution_configs {
     usages           = ["RENDER"]

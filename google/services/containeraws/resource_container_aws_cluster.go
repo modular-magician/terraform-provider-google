@@ -101,6 +101,7 @@ func ResourceContainerAwsCluster() *schema.Resource {
 			"networking": {
 				Type:        schema.TypeList,
 				Required:    true,
+				ForceNew:    true,
 				Description: "Cluster-wide networking configuration.",
 				MaxItems:    1,
 				Elem:        ContainerAwsClusterNetworkingSchema(),
@@ -382,14 +383,6 @@ func ContainerAwsClusterControlPlaneMainVolumeSchema() *schema.Resource {
 				Description: "Optional. The size of the volume, in GiBs. When unspecified, a default value is provided. See the specific reference in the parent resource.",
 			},
 
-			"throughput": {
-				Type:        schema.TypeInt,
-				Computed:    true,
-				Optional:    true,
-				ForceNew:    true,
-				Description: "Optional. The throughput to provision for the volume, in MiB/s. Only valid if the volume type is GP3.",
-			},
-
 			"volume_type": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -440,13 +433,6 @@ func ContainerAwsClusterControlPlaneRootVolumeSchema() *schema.Resource {
 				Computed:    true,
 				Optional:    true,
 				Description: "Optional. The size of the volume, in GiBs. When unspecified, a default value is provided. See the specific reference in the parent resource.",
-			},
-
-			"throughput": {
-				Type:        schema.TypeInt,
-				Computed:    true,
-				Optional:    true,
-				Description: "Optional. The throughput to provision for the volume, in MiB/s. Only valid if the volume type is GP3.",
 			},
 
 			"volume_type": {
@@ -516,12 +502,6 @@ func ContainerAwsClusterNetworkingSchema() *schema.Resource {
 				Required:    true,
 				ForceNew:    true,
 				Description: "The VPC associated with the cluster. All component clusters (i.e. control plane and node pools) run on a single VPC. This field cannot be changed after creation.",
-			},
-
-			"per_node_pool_sg_rules_disabled": {
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Description: "Disable the per node pool subnet security group rules on the control plane security group. When set to true, you must also provide one or more security groups that ensure node pools are able to send requests to the control plane on TCP/443 and TCP/8132. Failure to do so may result in unavailable node pools.",
 			},
 		},
 	}
@@ -1049,7 +1029,6 @@ func expandContainerAwsClusterControlPlaneMainVolume(o interface{}) *containeraw
 		Iops:       dcl.Int64OrNil(int64(obj["iops"].(int))),
 		KmsKeyArn:  dcl.String(obj["kms_key_arn"].(string)),
 		SizeGib:    dcl.Int64OrNil(int64(obj["size_gib"].(int))),
-		Throughput: dcl.Int64OrNil(int64(obj["throughput"].(int))),
 		VolumeType: containeraws.ClusterControlPlaneMainVolumeVolumeTypeEnumRef(obj["volume_type"].(string)),
 	}
 }
@@ -1062,7 +1041,6 @@ func flattenContainerAwsClusterControlPlaneMainVolume(obj *containeraws.ClusterC
 		"iops":        obj.Iops,
 		"kms_key_arn": obj.KmsKeyArn,
 		"size_gib":    obj.SizeGib,
-		"throughput":  obj.Throughput,
 		"volume_type": obj.VolumeType,
 	}
 
@@ -1111,7 +1089,6 @@ func expandContainerAwsClusterControlPlaneRootVolume(o interface{}) *containeraw
 		Iops:       dcl.Int64OrNil(int64(obj["iops"].(int))),
 		KmsKeyArn:  dcl.String(obj["kms_key_arn"].(string)),
 		SizeGib:    dcl.Int64OrNil(int64(obj["size_gib"].(int))),
-		Throughput: dcl.Int64OrNil(int64(obj["throughput"].(int))),
 		VolumeType: containeraws.ClusterControlPlaneRootVolumeVolumeTypeEnumRef(obj["volume_type"].(string)),
 	}
 }
@@ -1124,7 +1101,6 @@ func flattenContainerAwsClusterControlPlaneRootVolume(obj *containeraws.ClusterC
 		"iops":        obj.Iops,
 		"kms_key_arn": obj.KmsKeyArn,
 		"size_gib":    obj.SizeGib,
-		"throughput":  obj.Throughput,
 		"volume_type": obj.VolumeType,
 	}
 
@@ -1195,10 +1171,9 @@ func expandContainerAwsClusterNetworking(o interface{}) *containeraws.ClusterNet
 	}
 	obj := objArr[0].(map[string]interface{})
 	return &containeraws.ClusterNetworking{
-		PodAddressCidrBlocks:       tpgdclresource.ExpandStringArray(obj["pod_address_cidr_blocks"]),
-		ServiceAddressCidrBlocks:   tpgdclresource.ExpandStringArray(obj["service_address_cidr_blocks"]),
-		VPCId:                      dcl.String(obj["vpc_id"].(string)),
-		PerNodePoolSgRulesDisabled: dcl.Bool(obj["per_node_pool_sg_rules_disabled"].(bool)),
+		PodAddressCidrBlocks:     tpgdclresource.ExpandStringArray(obj["pod_address_cidr_blocks"]),
+		ServiceAddressCidrBlocks: tpgdclresource.ExpandStringArray(obj["service_address_cidr_blocks"]),
+		VPCId:                    dcl.String(obj["vpc_id"].(string)),
 	}
 }
 
@@ -1207,10 +1182,9 @@ func flattenContainerAwsClusterNetworking(obj *containeraws.ClusterNetworking) i
 		return nil
 	}
 	transformed := map[string]interface{}{
-		"pod_address_cidr_blocks":         obj.PodAddressCidrBlocks,
-		"service_address_cidr_blocks":     obj.ServiceAddressCidrBlocks,
-		"vpc_id":                          obj.VPCId,
-		"per_node_pool_sg_rules_disabled": obj.PerNodePoolSgRulesDisabled,
+		"pod_address_cidr_blocks":     obj.PodAddressCidrBlocks,
+		"service_address_cidr_blocks": obj.ServiceAddressCidrBlocks,
+		"vpc_id":                      obj.VPCId,
 	}
 
 	return []interface{}{transformed}

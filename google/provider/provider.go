@@ -939,9 +939,9 @@ func DatasourceMapWithErrors() (map[string]*schema.Resource, error) {
 		})
 }
 
-// Generated resources: 300
+// Generated resources: 301
 // Generated IAM resources: 198
-// Total generated resources: 498
+// Total generated resources: 499
 func ResourceMap() map[string]*schema.Resource {
 	resourceMap, _ := ResourceMapWithErrors()
 	return resourceMap
@@ -1368,6 +1368,7 @@ func ResourceMapWithErrors() (map[string]*schema.Resource, error) {
 			"google_privateca_certificate_template_iam_binding":              tpgiamresource.ResourceIamBinding(privateca.PrivatecaCertificateTemplateIamSchema, privateca.PrivatecaCertificateTemplateIamUpdaterProducer, privateca.PrivatecaCertificateTemplateIdParseFunc),
 			"google_privateca_certificate_template_iam_member":               tpgiamresource.ResourceIamMember(privateca.PrivatecaCertificateTemplateIamSchema, privateca.PrivatecaCertificateTemplateIamUpdaterProducer, privateca.PrivatecaCertificateTemplateIdParseFunc),
 			"google_privateca_certificate_template_iam_policy":               tpgiamresource.ResourceIamPolicy(privateca.PrivatecaCertificateTemplateIamSchema, privateca.PrivatecaCertificateTemplateIamUpdaterProducer, privateca.PrivatecaCertificateTemplateIdParseFunc),
+			"google_public_ca_acme_registration":                             publicca.ResourcePublicCAAcmeRegistration(),
 			"google_public_ca_external_account_key":                          publicca.ResourcePublicCAExternalAccountKey(),
 			"google_pubsub_schema":                                           pubsub.ResourcePubsubSchema(),
 			"google_pubsub_subscription":                                     pubsub.ResourcePubsubSubscription(),

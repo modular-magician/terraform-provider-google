@@ -56,13 +56,11 @@ var services = mapOf(
         "essentialcontacts" to "Essentialcontacts",
         "filestore" to "Filestore",
         "firebase" to "Firebase",
-        "firebasehosting" to "Firebasehosting",
         "firestore" to "Firestore",
         "gameservices" to "Gameservices",
         "gkebackup" to "Gkebackup",
         "gkehub" to "Gkehub",
         "gkehub2" to "Gkehub2",
-        "gkeonprem" to "Gkeonprem",
         "healthcare" to "Healthcare",
         "iam2" to "Iam2",
         "iambeta" to "Iambeta",
@@ -100,7 +98,6 @@ var services = mapOf(
         "tags" to "Tags",
         "tpu" to "Tpu",
         "vertexai" to "Vertexai",
-        "vmwareengine" to "Vmwareengine",
         "vpcaccess" to "Vpcaccess",
         "workflows" to "Workflows"
 )

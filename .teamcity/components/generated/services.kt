@@ -40,7 +40,6 @@ var services = mapOf(
         "containerazure" to "Containerazure",
         "databasemigrationservice" to "Databasemigrationservice",
         "datacatalog" to "Datacatalog",
-        "dataflow" to "Dataflow",
         "datafusion" to "Datafusion",
         "datalossprevention" to "Datalossprevention",
         "dataplex" to "Dataplex",
@@ -62,7 +61,6 @@ var services = mapOf(
         "gkebackup" to "Gkebackup",
         "gkehub" to "Gkehub",
         "gkehub2" to "Gkehub2",
-        "gkeonprem" to "Gkeonprem",
         "healthcare" to "Healthcare",
         "iam2" to "Iam2",
         "iambeta" to "Iambeta",
@@ -100,7 +98,6 @@ var services = mapOf(
         "tags" to "Tags",
         "tpu" to "Tpu",
         "vertexai" to "Vertexai",
-        "vmwareengine" to "Vmwareengine",
         "vpcaccess" to "Vpcaccess",
         "workflows" to "Workflows"
 )

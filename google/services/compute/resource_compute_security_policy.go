@@ -650,6 +650,7 @@ func resourceComputeSecurityPolicyUpdate(d *schema.ResourceData, meta interface{
 			nPriorities[priority] = true
 			if !oPriorities[priority] {
 				client := config.NewComputeClient(userAgent)
+
 				// If the rule is in new and its priority does not exist in old, then add it.
 				op, err := client.SecurityPolicies.AddRule(project, sp, expandSecurityPolicyRule(rule)).Do()
 

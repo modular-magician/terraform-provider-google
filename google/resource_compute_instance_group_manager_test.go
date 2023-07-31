@@ -662,9 +662,6 @@ resource "google_compute_instance_group_manager" "igm-update" {
     port = 8080
   }
 
-  instance_lifecycle_policy {
-    force_update_on_repair = "YES"
-  }
 }
 `, template, target, description, igm)
 }
@@ -758,9 +755,6 @@ resource "google_compute_instance_group_manager" "igm-update" {
   }
 
 
-  instance_lifecycle_policy {
-    force_update_on_repair = "NO"
-  }
 }
 `, template1, target1, target2, template2, description, igm)
 }
@@ -1738,9 +1732,6 @@ resource "google_compute_instance_group_manager" "igm-basic" {
     replacement_method      = "RECREATE"
     max_surge_fixed         = 0
     max_unavailable_percent = 50
-  }
-  instance_lifecycle_policy {
-    force_update_on_repair = "YES"
   }
   wait_for_instances = true
   wait_for_instances_status = "UPDATED"

@@ -30,44 +30,64 @@ import (
 	transport_tpg "github.com/hashicorp/terraform-provider-google/google/transport"
 )
 
-func TestAccGameServicesGameServerDeployment_gameServiceDeploymentBasicExample(t *testing.T) {
+func TestAccNetworkConnectivityServiceConnectionPolicy_networkConnectivityPolicyBasicExample(t *testing.T) {
 	t.Parallel()
 
 	context := map[string]interface{}{
-		"random_suffix": acctest.RandString(t, 10),
+		"service_class_name": "gcp-memorystore-redis",
+		"random_suffix":      acctest.RandString(t, 10),
 	}
 
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),
-		CheckDestroy:             testAccCheckGameServicesGameServerDeploymentDestroyProducer(t),
+		CheckDestroy:             testAccCheckNetworkConnectivityServiceConnectionPolicyDestroyProducer(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccGameServicesGameServerDeployment_gameServiceDeploymentBasicExample(context),
+				Config: testAccNetworkConnectivityServiceConnectionPolicy_networkConnectivityPolicyBasicExample(context),
 			},
 			{
-				ResourceName:            "google_game_services_game_server_deployment.default",
+				ResourceName:            "google_network_connectivity_service_connection_policy.default",
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"deployment_id", "location"},
+				ImportStateVerifyIgnore: []string{"name", "location"},
 			},
 		},
 	})
 }
 
-func testAccGameServicesGameServerDeployment_gameServiceDeploymentBasicExample(context map[string]interface{}) string {
+func testAccNetworkConnectivityServiceConnectionPolicy_networkConnectivityPolicyBasicExample(context map[string]interface{}) string {
 	return acctest.Nprintf(`
-resource "google_game_services_game_server_deployment" "default" {
-  deployment_id  = "tf-test-tf-test-deployment%{random_suffix}"
-  description = "a deployment description"
+resource "google_compute_network" "producer_net" {
+  name                    = "tf-test-producer-net%{random_suffix}"
+  auto_create_subnetworks = false
+}
+
+resource "google_compute_subnetwork" "producer_subnet" {
+  name          = "tf-test-producer-subnet%{random_suffix}"
+  ip_cidr_range = "10.0.0.0/16"
+  region        = "us-central1"
+  network       = google_compute_network.producer_net.id
+}
+
+resource "google_network_connectivity_service_connection_policy" "default" {
+  name = "tf-test-my-network-connectivity-policy%{random_suffix}"
+  location = "us-central1"
+  service_class = "%{service_class_name}"
+  description   = "my basic service connection policy"
+  network = google_compute_network.producer_net.id
+  psc_config {
+    subnetworks = [google_compute_subnetwork.producer_subnet.id]
+    limit = 2
+  }
 }
 `, context)
 }
 
-func testAccCheckGameServicesGameServerDeploymentDestroyProducer(t *testing.T) func(s *terraform.State) error {
+func testAccCheckNetworkConnectivityServiceConnectionPolicyDestroyProducer(t *testing.T) func(s *terraform.State) error {
 	return func(s *terraform.State) error {
 		for name, rs := range s.RootModule().Resources {
-			if rs.Type != "google_game_services_game_server_deployment" {
+			if rs.Type != "google_network_connectivity_service_connection_policy" {
 				continue
 			}
 			if strings.HasPrefix(name, "data.") {
@@ -76,7 +96,7 @@ func testAccCheckGameServicesGameServerDeploymentDestroyProducer(t *testing.T) f
 
 			config := acctest.GoogleProviderConfig(t)
 
-			url, err := tpgresource.ReplaceVarsForTest(config, rs, "{{GameServicesBasePath}}projects/{{project}}/locations/{{location}}/gameServerDeployments/{{deployment_id}}")
+			url, err := tpgresource.ReplaceVarsForTest(config, rs, "{{NetworkConnectivityBasePath}}projects/{{project}}/locations/{{location}}/serviceConnectionPolicies/{{name}}")
 			if err != nil {
 				return err
 			}
@@ -95,7 +115,7 @@ func testAccCheckGameServicesGameServerDeploymentDestroyProducer(t *testing.T) f
 				UserAgent: config.UserAgent,
 			})
 			if err == nil {
-				return fmt.Errorf("GameServicesGameServerDeployment still exists at %s", url)
+				return fmt.Errorf("NetworkConnectivityServiceConnectionPolicy still exists at %s", url)
 			}
 		}
 

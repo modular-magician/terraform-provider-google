@@ -32,7 +32,6 @@ import (
 	clouddeploy "github.com/GoogleCloudPlatform/declarative-resource-client-library/services/google/clouddeploy"
 	cloudresourcemanager "github.com/GoogleCloudPlatform/declarative-resource-client-library/services/google/cloudresourcemanager"
 	compute "github.com/GoogleCloudPlatform/declarative-resource-client-library/services/google/compute"
-	containeraws "github.com/GoogleCloudPlatform/declarative-resource-client-library/services/google/containeraws"
 	containerazure "github.com/GoogleCloudPlatform/declarative-resource-client-library/services/google/containerazure"
 	dataplex "github.com/GoogleCloudPlatform/declarative-resource-client-library/services/google/dataplex"
 	dataproc "github.com/GoogleCloudPlatform/declarative-resource-client-library/services/google/dataproc"
@@ -226,29 +225,6 @@ func NewDCLComputeClient(config *Config, userAgent, billingProject string, timeo
 
 	dclConfig := dcl.NewConfig(configOptions...)
 	return compute.NewClient(dclConfig)
-}
-
-func NewDCLContainerAwsClient(config *Config, userAgent, billingProject string, timeout time.Duration) *containeraws.Client {
-	configOptions := []dcl.ConfigOption{
-		dcl.WithHTTPClient(config.Client),
-		dcl.WithUserAgent(userAgent),
-		dcl.WithLogger(dclLogger{}),
-		dcl.WithBasePath(config.ContainerAwsBasePath),
-	}
-
-	if timeout != 0 {
-		configOptions = append(configOptions, dcl.WithTimeout(timeout))
-	}
-
-	if config.UserProjectOverride {
-		configOptions = append(configOptions, dcl.WithUserProjectOverride())
-		if billingProject != "" {
-			configOptions = append(configOptions, dcl.WithBillingProject(billingProject))
-		}
-	}
-
-	dclConfig := dcl.NewConfig(configOptions...)
-	return containeraws.NewClient(dclConfig)
 }
 
 func NewDCLContainerAzureClient(config *Config, userAgent, billingProject string, timeout time.Duration) *containerazure.Client {

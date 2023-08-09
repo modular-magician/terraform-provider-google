@@ -15,6 +15,7 @@ var services = mapOf(
         "appengine" to "Appengine",
         "artifactregistry" to "Artifactregistry",
         "assuredworkloads" to "Assuredworkloads",
+        "backupdr" to "Backupdr",
         "beyondcorp" to "Beyondcorp",
         "bigquery" to "Bigquery",
         "bigqueryanalyticshub" to "Bigqueryanalyticshub",

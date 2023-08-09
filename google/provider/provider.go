@@ -19,6 +19,7 @@ import (
 	"github.com/hashicorp/terraform-provider-google/google/services/apigee"
 	"github.com/hashicorp/terraform-provider-google/google/services/appengine"
 	"github.com/hashicorp/terraform-provider-google/google/services/artifactregistry"
+	"github.com/hashicorp/terraform-provider-google/google/services/backupdr"
 	"github.com/hashicorp/terraform-provider-google/google/services/beyondcorp"
 	"github.com/hashicorp/terraform-provider-google/google/services/bigquery"
 	"github.com/hashicorp/terraform-provider-google/google/services/bigqueryanalyticshub"
@@ -252,6 +253,11 @@ func Provider() *schema.Provider {
 				ValidateFunc: transport_tpg.ValidateCustomEndpoint,
 			},
 			"artifact_registry_custom_endpoint": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: transport_tpg.ValidateCustomEndpoint,
+			},
+			"backup_dr_custom_endpoint": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ValidateFunc: transport_tpg.ValidateCustomEndpoint,
@@ -965,9 +971,9 @@ func DatasourceMapWithErrors() (map[string]*schema.Resource, error) {
 		})
 }
 
-// Generated resources: 307
+// Generated resources: 308
 // Generated IAM resources: 204
-// Total generated resources: 511
+// Total generated resources: 512
 func ResourceMap() map[string]*schema.Resource {
 	resourceMap, _ := ResourceMapWithErrors()
 	return resourceMap
@@ -1027,6 +1033,7 @@ func ResourceMapWithErrors() (map[string]*schema.Resource, error) {
 			"google_artifact_registry_repository_iam_binding":                tpgiamresource.ResourceIamBinding(artifactregistry.ArtifactRegistryRepositoryIamSchema, artifactregistry.ArtifactRegistryRepositoryIamUpdaterProducer, artifactregistry.ArtifactRegistryRepositoryIdParseFunc),
 			"google_artifact_registry_repository_iam_member":                 tpgiamresource.ResourceIamMember(artifactregistry.ArtifactRegistryRepositoryIamSchema, artifactregistry.ArtifactRegistryRepositoryIamUpdaterProducer, artifactregistry.ArtifactRegistryRepositoryIdParseFunc),
 			"google_artifact_registry_repository_iam_policy":                 tpgiamresource.ResourceIamPolicy(artifactregistry.ArtifactRegistryRepositoryIamSchema, artifactregistry.ArtifactRegistryRepositoryIamUpdaterProducer, artifactregistry.ArtifactRegistryRepositoryIdParseFunc),
+			"google_backup_dr_management_server":                             backupdr.ResourceBackupDRManagementServer(),
 			"google_beyondcorp_app_connection":                               beyondcorp.ResourceBeyondcorpAppConnection(),
 			"google_beyondcorp_app_connector":                                beyondcorp.ResourceBeyondcorpAppConnector(),
 			"google_beyondcorp_app_gateway":                                  beyondcorp.ResourceBeyondcorpAppGateway(),
@@ -1718,6 +1725,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	config.ApigeeBasePath = d.Get("apigee_custom_endpoint").(string)
 	config.AppEngineBasePath = d.Get("app_engine_custom_endpoint").(string)
 	config.ArtifactRegistryBasePath = d.Get("artifact_registry_custom_endpoint").(string)
+	config.BackupDRBasePath = d.Get("backup_dr_custom_endpoint").(string)
 	config.BeyondcorpBasePath = d.Get("beyondcorp_custom_endpoint").(string)
 	config.BigQueryBasePath = d.Get("big_query_custom_endpoint").(string)
 	config.BigqueryAnalyticsHubBasePath = d.Get("bigquery_analytics_hub_custom_endpoint").(string)

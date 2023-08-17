@@ -966,8 +966,8 @@ func DatasourceMapWithErrors() (map[string]*schema.Resource, error) {
 }
 
 // Generated resources: 308
-// Generated IAM resources: 204
-// Total generated resources: 512
+// Generated IAM resources: 207
+// Total generated resources: 515
 func ResourceMap() map[string]*schema.Resource {
 	resourceMap, _ := ResourceMapWithErrors()
 	return resourceMap

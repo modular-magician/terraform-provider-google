@@ -222,6 +222,68 @@ resource "google_healthcare_dataset" "dataset" {
 `, context)
 }
 
+func TestAccHealthcareFhirStore_healthcareFhirStoreNotificationConfigsExample(t *testing.T) {
+	t.Parallel()
+
+	context := map[string]interface{}{
+		"random_suffix": acctest.RandString(t, 10),
+	}
+
+	acctest.VcrTest(t, resource.TestCase{
+		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),
+		CheckDestroy:             testAccCheckHealthcareFhirStoreDestroyProducer(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccHealthcareFhirStore_healthcareFhirStoreNotificationConfigsExample(context),
+			},
+			{
+				ResourceName:            "google_healthcare_fhir_store.default",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"self_link", "dataset"},
+			},
+		},
+	})
+}
+
+func testAccHealthcareFhirStore_healthcareFhirStoreNotificationConfigsExample(context map[string]interface{}) string {
+	return acctest.Nprintf(`
+resource "google_healthcare_fhir_store" "default" {
+  provider = google-beta
+  name     = "tf-test-example-fhir-store%{random_suffix}"
+  dataset  = google_healthcare_dataset.dataset.id
+  version  = "R4"
+
+  enable_update_create          = false
+  disable_referential_integrity = false
+  disable_resource_versioning   = false
+  enable_history_import         = false
+
+  labels = {
+    label1 = "labelvalue1"
+  }
+
+  notification_configs {
+    pubsub_topic                     = "${google_pubsub_topic.topic.id}"
+    send_full_resource               = true
+    send_previous_resource_on_delete = true
+  }
+}
+
+resource "google_pubsub_topic" "topic" {
+  provider = google-beta
+  name     = "tf-test-fhir-notifications%{random_suffix}"
+}
+
+resource "google_healthcare_dataset" "dataset" {
+  provider = google-beta
+  name     = "tf-test-example-dataset%{random_suffix}"
+  location = "us-central1"
+}
+`, context)
+}
+
 func testAccCheckHealthcareFhirStoreDestroyProducer(t *testing.T) func(s *terraform.State) error {
 	return func(s *terraform.State) error {
 		for name, rs := range s.RootModule().Resources {

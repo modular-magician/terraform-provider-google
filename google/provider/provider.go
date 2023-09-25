@@ -994,9 +994,9 @@ func DatasourceMapWithErrors() (map[string]*schema.Resource, error) {
 		})
 }
 
-// Generated resources: 326
+// Generated resources: 328
 // Generated IAM resources: 210
-// Total generated resources: 536
+// Total generated resources: 538
 func ResourceMap() map[string]*schema.Resource {
 	resourceMap, _ := ResourceMapWithErrors()
 	return resourceMap
@@ -1039,6 +1039,8 @@ func ResourceMapWithErrors() (map[string]*schema.Resource, error) {
 			"google_apigee_environment_iam_binding":                          tpgiamresource.ResourceIamBinding(apigee.ApigeeEnvironmentIamSchema, apigee.ApigeeEnvironmentIamUpdaterProducer, apigee.ApigeeEnvironmentIdParseFunc),
 			"google_apigee_environment_iam_member":                           tpgiamresource.ResourceIamMember(apigee.ApigeeEnvironmentIamSchema, apigee.ApigeeEnvironmentIamUpdaterProducer, apigee.ApigeeEnvironmentIdParseFunc),
 			"google_apigee_environment_iam_policy":                           tpgiamresource.ResourceIamPolicy(apigee.ApigeeEnvironmentIamSchema, apigee.ApigeeEnvironmentIamUpdaterProducer, apigee.ApigeeEnvironmentIdParseFunc),
+			"google_apigee_environment_keyvaluemaps":                         apigee.ResourceApigeeEnvironmentKeyvaluemaps(),
+			"google_apigee_environment_keyvaluemaps_entries":                 apigee.ResourceApigeeEnvironmentKeyvaluemapsEntries(),
 			"google_apigee_instance":                                         apigee.ResourceApigeeInstance(),
 			"google_apigee_instance_attachment":                              apigee.ResourceApigeeInstanceAttachment(),
 			"google_apigee_keystores_aliases_self_signed_cert":               apigee.ResourceApigeeKeystoresAliasesSelfSignedCert(),

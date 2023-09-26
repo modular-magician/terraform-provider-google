@@ -994,9 +994,9 @@ func DatasourceMapWithErrors() (map[string]*schema.Resource, error) {
 		})
 }
 
-// Generated resources: 327
+// Generated resources: 328
 // Generated IAM resources: 210
-// Total generated resources: 537
+// Total generated resources: 538
 func ResourceMap() map[string]*schema.Resource {
 	resourceMap, _ := ResourceMapWithErrors()
 	return resourceMap
@@ -1349,6 +1349,7 @@ func ResourceMapWithErrors() (map[string]*schema.Resource, error) {
 			"google_gke_hub_feature_iam_binding":                             tpgiamresource.ResourceIamBinding(gkehub2.GKEHub2FeatureIamSchema, gkehub2.GKEHub2FeatureIamUpdaterProducer, gkehub2.GKEHub2FeatureIdParseFunc),
 			"google_gke_hub_feature_iam_member":                              tpgiamresource.ResourceIamMember(gkehub2.GKEHub2FeatureIamSchema, gkehub2.GKEHub2FeatureIamUpdaterProducer, gkehub2.GKEHub2FeatureIdParseFunc),
 			"google_gke_hub_feature_iam_policy":                              tpgiamresource.ResourceIamPolicy(gkehub2.GKEHub2FeatureIamSchema, gkehub2.GKEHub2FeatureIamUpdaterProducer, gkehub2.GKEHub2FeatureIdParseFunc),
+			"google_gke_hub_fleet":                                           gkehub2.ResourceGKEHub2Fleet(),
 			"google_gke_hub_membership_binding":                              gkehub2.ResourceGKEHub2MembershipBinding(),
 			"google_gke_hub_namespace":                                       gkehub2.ResourceGKEHub2Namespace(),
 			"google_gke_hub_scope":                                           gkehub2.ResourceGKEHub2Scope(),

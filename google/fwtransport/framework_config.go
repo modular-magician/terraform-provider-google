@@ -120,6 +120,7 @@ type FrameworkProviderConfig struct {
 	MemcacheBasePath                 string
 	MLEngineBasePath                 string
 	MonitoringBasePath               string
+	NetappBasePath                   string
 	NetworkConnectivityBasePath      string
 	NetworkManagementBasePath        string
 	NetworkSecurityBasePath          string
@@ -257,6 +258,7 @@ func (p *FrameworkProviderConfig) LoadAndValidateFramework(ctx context.Context, 
 	p.MemcacheBasePath = data.MemcacheCustomEndpoint.ValueString()
 	p.MLEngineBasePath = data.MLEngineCustomEndpoint.ValueString()
 	p.MonitoringBasePath = data.MonitoringCustomEndpoint.ValueString()
+	p.NetappBasePath = data.NetappCustomEndpoint.ValueString()
 	p.NetworkConnectivityBasePath = data.NetworkConnectivityCustomEndpoint.ValueString()
 	p.NetworkManagementBasePath = data.NetworkManagementCustomEndpoint.ValueString()
 	p.NetworkSecurityBasePath = data.NetworkSecurityCustomEndpoint.ValueString()
@@ -968,6 +970,14 @@ func (p *FrameworkProviderConfig) HandleDefaults(ctx context.Context, data *fwmo
 		}, transport_tpg.DefaultBasePaths[transport_tpg.MonitoringBasePathKey])
 		if customEndpoint != nil {
 			data.MonitoringCustomEndpoint = types.StringValue(customEndpoint.(string))
+		}
+	}
+	if data.NetappCustomEndpoint.IsNull() {
+		customEndpoint := transport_tpg.MultiEnvDefault([]string{
+			"GOOGLE_NETAPP_CUSTOM_ENDPOINT",
+		}, transport_tpg.DefaultBasePaths[transport_tpg.NetappBasePathKey])
+		if customEndpoint != nil {
+			data.NetappCustomEndpoint = types.StringValue(customEndpoint.(string))
 		}
 	}
 	if data.NetworkConnectivityCustomEndpoint.IsNull() {

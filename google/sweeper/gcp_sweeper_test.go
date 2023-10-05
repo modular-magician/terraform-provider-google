@@ -77,6 +77,7 @@ import (
 	_ "github.com/hashicorp/terraform-provider-google/google/services/memcache"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/mlengine"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/monitoring"
+	_ "github.com/hashicorp/terraform-provider-google/google/services/netapp"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/networkconnectivity"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/networkmanagement"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/networksecurity"

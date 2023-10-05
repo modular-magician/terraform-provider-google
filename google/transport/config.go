@@ -253,6 +253,7 @@ type Config struct {
 	MemcacheBasePath                 string
 	MLEngineBasePath                 string
 	MonitoringBasePath               string
+	NetappBasePath                   string
 	NetworkConnectivityBasePath      string
 	NetworkManagementBasePath        string
 	NetworkSecurityBasePath          string
@@ -372,6 +373,7 @@ const LookerBasePathKey = "Looker"
 const MemcacheBasePathKey = "Memcache"
 const MLEngineBasePathKey = "MLEngine"
 const MonitoringBasePathKey = "Monitoring"
+const NetappBasePathKey = "Netapp"
 const NetworkConnectivityBasePathKey = "NetworkConnectivity"
 const NetworkManagementBasePathKey = "NetworkManagement"
 const NetworkSecurityBasePathKey = "NetworkSecurity"
@@ -485,6 +487,7 @@ var DefaultBasePaths = map[string]string{
 	MemcacheBasePathKey:                 "https://memcache.googleapis.com/v1/",
 	MLEngineBasePathKey:                 "https://ml.googleapis.com/v1/",
 	MonitoringBasePathKey:               "https://monitoring.googleapis.com/",
+	NetappBasePathKey:                   "https://netapp.googleapis.com/v1/",
 	NetworkConnectivityBasePathKey:      "https://networkconnectivity.googleapis.com/v1/",
 	NetworkManagementBasePathKey:        "https://networkmanagement.googleapis.com/v1/",
 	NetworkSecurityBasePathKey:          "https://networksecurity.googleapis.com/v1/",
@@ -940,6 +943,11 @@ func HandleSDKDefaults(d *schema.ResourceData) error {
 		d.Set("monitoring_custom_endpoint", MultiEnvDefault([]string{
 			"GOOGLE_MONITORING_CUSTOM_ENDPOINT",
 		}, DefaultBasePaths[MonitoringBasePathKey]))
+	}
+	if d.Get("netapp_custom_endpoint") == "" {
+		d.Set("netapp_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_NETAPP_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[NetappBasePathKey]))
 	}
 	if d.Get("network_connectivity_custom_endpoint") == "" {
 		d.Set("network_connectivity_custom_endpoint", MultiEnvDefault([]string{
@@ -1991,6 +1999,7 @@ func ConfigureBasePaths(c *Config) {
 	c.MemcacheBasePath = DefaultBasePaths[MemcacheBasePathKey]
 	c.MLEngineBasePath = DefaultBasePaths[MLEngineBasePathKey]
 	c.MonitoringBasePath = DefaultBasePaths[MonitoringBasePathKey]
+	c.NetappBasePath = DefaultBasePaths[NetappBasePathKey]
 	c.NetworkConnectivityBasePath = DefaultBasePaths[NetworkConnectivityBasePathKey]
 	c.NetworkManagementBasePath = DefaultBasePaths[NetworkManagementBasePathKey]
 	c.NetworkSecurityBasePath = DefaultBasePaths[NetworkSecurityBasePathKey]

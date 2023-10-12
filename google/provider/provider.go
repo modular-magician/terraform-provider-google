@@ -70,6 +70,7 @@ import (
 	"github.com/hashicorp/terraform-provider-google/google/services/gkebackup"
 	"github.com/hashicorp/terraform-provider-google/google/services/gkehub"
 	"github.com/hashicorp/terraform-provider-google/google/services/gkehub2"
+	"github.com/hashicorp/terraform-provider-google/google/services/gkeonprem"
 	"github.com/hashicorp/terraform-provider-google/google/services/healthcare"
 	"github.com/hashicorp/terraform-provider-google/google/services/iam2"
 	"github.com/hashicorp/terraform-provider-google/google/services/iambeta"
@@ -525,6 +526,11 @@ func Provider() *schema.Provider {
 				Optional:     true,
 				ValidateFunc: transport_tpg.ValidateCustomEndpoint,
 			},
+			"gkeonprem_custom_endpoint": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: transport_tpg.ValidateCustomEndpoint,
+			},
 			"healthcare_custom_endpoint": {
 				Type:         schema.TypeString,
 				Optional:     true,
@@ -818,6 +824,7 @@ func DatasourceMapWithErrors() (map[string]*schema.Resource, error) {
 		"google_compute_instance_template":                    compute.DataSourceGoogleComputeInstanceTemplate(),
 		"google_compute_lb_ip_ranges":                         compute.DataSourceGoogleComputeLbIpRanges(),
 		"google_compute_network":                              compute.DataSourceGoogleComputeNetwork(),
+		"google_compute_networks":                             compute.DataSourceGoogleComputeNetworks(),
 		"google_compute_network_endpoint_group":               compute.DataSourceGoogleComputeNetworkEndpointGroup(),
 		"google_compute_network_peering":                      compute.DataSourceComputeNetworkPeering(),
 		"google_compute_node_types":                           compute.DataSourceGoogleComputeNodeTypes(),
@@ -1003,9 +1010,9 @@ func DatasourceMapWithErrors() (map[string]*schema.Resource, error) {
 		})
 }
 
-// Generated resources: 332
+// Generated resources: 337
 // Generated IAM resources: 207
-// Total generated resources: 539
+// Total generated resources: 544
 func ResourceMap() map[string]*schema.Resource {
 	resourceMap, _ := ResourceMapWithErrors()
 	return resourceMap
@@ -1364,6 +1371,11 @@ func ResourceMapWithErrors() (map[string]*schema.Resource, error) {
 			"google_gke_hub_scope_iam_member":                                tpgiamresource.ResourceIamMember(gkehub2.GKEHub2ScopeIamSchema, gkehub2.GKEHub2ScopeIamUpdaterProducer, gkehub2.GKEHub2ScopeIdParseFunc),
 			"google_gke_hub_scope_iam_policy":                                tpgiamresource.ResourceIamPolicy(gkehub2.GKEHub2ScopeIamSchema, gkehub2.GKEHub2ScopeIamUpdaterProducer, gkehub2.GKEHub2ScopeIdParseFunc),
 			"google_gke_hub_scope_rbac_role_binding":                         gkehub2.ResourceGKEHub2ScopeRBACRoleBinding(),
+			"google_gkeonprem_bare_metal_admin_cluster":                      gkeonprem.ResourceGkeonpremBareMetalAdminCluster(),
+			"google_gkeonprem_bare_metal_cluster":                            gkeonprem.ResourceGkeonpremBareMetalCluster(),
+			"google_gkeonprem_bare_metal_node_pool":                          gkeonprem.ResourceGkeonpremBareMetalNodePool(),
+			"google_gkeonprem_vmware_cluster":                                gkeonprem.ResourceGkeonpremVmwareCluster(),
+			"google_gkeonprem_vmware_node_pool":                              gkeonprem.ResourceGkeonpremVmwareNodePool(),
 			"google_healthcare_consent_store":                                healthcare.ResourceHealthcareConsentStore(),
 			"google_healthcare_consent_store_iam_binding":                    tpgiamresource.ResourceIamBinding(healthcare.HealthcareConsentStoreIamSchema, healthcare.HealthcareConsentStoreIamUpdaterProducer, healthcare.HealthcareConsentStoreIdParseFunc),
 			"google_healthcare_consent_store_iam_member":                     tpgiamresource.ResourceIamMember(healthcare.HealthcareConsentStoreIamSchema, healthcare.HealthcareConsentStoreIamUpdaterProducer, healthcare.HealthcareConsentStoreIdParseFunc),
@@ -1841,6 +1853,7 @@ func ProviderConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	config.GKEBackupBasePath = d.Get("gke_backup_custom_endpoint").(string)
 	config.GKEHubBasePath = d.Get("gke_hub_custom_endpoint").(string)
 	config.GKEHub2BasePath = d.Get("gke_hub2_custom_endpoint").(string)
+	config.GkeonpremBasePath = d.Get("gkeonprem_custom_endpoint").(string)
 	config.HealthcareBasePath = d.Get("healthcare_custom_endpoint").(string)
 	config.IAM2BasePath = d.Get("iam2_custom_endpoint").(string)
 	config.IAMBetaBasePath = d.Get("iam_beta_custom_endpoint").(string)

@@ -163,6 +163,46 @@ resource "google_compute_resource_policy" "baz" {
 `, context)
 }
 
+func TestAccComputeResourcePolicy_resourcePolicyPlacementPolicyMaxDistanceExample(t *testing.T) {
+	t.Parallel()
+
+	context := map[string]interface{}{
+		"random_suffix": acctest.RandString(t, 10),
+	}
+
+	acctest.VcrTest(t, resource.TestCase{
+		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),
+		CheckDestroy:             testAccCheckComputeResourcePolicyDestroyProducer(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccComputeResourcePolicy_resourcePolicyPlacementPolicyMaxDistanceExample(context),
+			},
+			{
+				ResourceName:            "google_compute_resource_policy.baz",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"region"},
+			},
+		},
+	})
+}
+
+func testAccComputeResourcePolicy_resourcePolicyPlacementPolicyMaxDistanceExample(context map[string]interface{}) string {
+	return acctest.Nprintf(`
+resource "google_compute_resource_policy" "baz" {
+  name   = "tf-test-gce-policy%{random_suffix}"
+  region = "us-central1"
+  provider = google
+  group_placement_policy {
+    vm_count = 2
+    collocation = "COLLOCATED"
+    max_distance = 2
+  }
+}
+`, context)
+}
+
 func TestAccComputeResourcePolicy_resourcePolicyInstanceSchedulePolicyExample(t *testing.T) {
 	t.Parallel()
 

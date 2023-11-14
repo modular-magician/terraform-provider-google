@@ -22,13 +22,12 @@ import (
 // the error.
 func TestAccCloudIdentityGroup(t *testing.T) {
 	testCases := map[string]func(t *testing.T){
-		"basic":                        testAccCloudIdentityGroup_cloudIdentityGroupsBasicExampleTest,
-		"update":                       testAccCloudIdentityGroup_updateTest,
-		"membership_basic":             testAccCloudIdentityGroupMembership_cloudIdentityGroupMembershipExampleTest,
-		"membership_update":            testAccCloudIdentityGroupMembership_updateTest,
-		"membership_import":            testAccCloudIdentityGroupMembership_importTest,
-		"membership_dne":               testAccCloudIdentityGroupMembership_membershipDoesNotExistTest,
-		"membership_user":              testAccCloudIdentityGroupMembership_cloudIdentityGroupMembershipUserExampleTest,
+		"basic":             testAccCloudIdentityGroup_cloudIdentityGroupsBasicExampleTest,
+		"update":            testAccCloudIdentityGroup_updateTest,
+		"membership_basic":  testAccCloudIdentityGroupMembership_cloudIdentityGroupMembershipExampleTest,
+		"membership_update": testAccCloudIdentityGroupMembership_updateTest,
+		"membership_import": testAccCloudIdentityGroupMembership_importTest,
+		"membership_dne":    testAccCloudIdentityGroupMembership_membershipDoesNotExistTest, "membership_user": testAccCloudIdentityGroupMembership_cloudIdentityGroupMembershipUserExampleTest,
 		"data_source_basic":            testAccDataSourceCloudIdentityGroups_basicTest,
 		"data_source_membership_basic": testAccDataSourceCloudIdentityGroupMemberships_basicTest,
 		"data_source_group_lookup":     testAccDataSourceCloudIdentityGroupLookup_basicTest,

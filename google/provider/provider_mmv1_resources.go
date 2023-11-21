@@ -104,6 +104,7 @@ import (
 	"github.com/hashicorp/terraform-provider-google/google/services/tags"
 	"github.com/hashicorp/terraform-provider-google/google/services/tpu"
 	"github.com/hashicorp/terraform-provider-google/google/services/vertexai"
+	"github.com/hashicorp/terraform-provider-google/google/services/vmwareengine"
 	"github.com/hashicorp/terraform-provider-google/google/services/vpcaccess"
 	"github.com/hashicorp/terraform-provider-google/google/services/workflows"
 
@@ -255,6 +256,7 @@ var handwrittenDatasources = map[string]*schema.Resource{
 	"google_vpc_access_connector":                         vpcaccess.DataSourceVPCAccessConnector(),
 	"google_redis_instance":                               redis.DataSourceGoogleRedisInstance(),
 	"google_vertex_ai_index":                              vertexai.DataSourceVertexAIIndex(),
+	"google_vmwareengine_network":                         vmwareengine.DataSourceVmwareengineNetwork(),
 	// ####### END handwritten datasources ###########
 }
 
@@ -353,9 +355,9 @@ var handwrittenIAMDatasources = map[string]*schema.Resource{
 }
 
 // Resources
-// Generated resources: 340
+// Generated resources: 341
 // Generated IAM resources: 213
-// Total generated resources: 553
+// Total generated resources: 554
 var generatedResources = map[string]*schema.Resource{
 	"google_folder_access_approval_settings":                         accessapproval.ResourceAccessApprovalFolderSettings(),
 	"google_organization_access_approval_settings":                   accessapproval.ResourceAccessApprovalOrganizationSettings(),
@@ -890,6 +892,7 @@ var generatedResources = map[string]*schema.Resource{
 	"google_vertex_ai_index":                                         vertexai.ResourceVertexAIIndex(),
 	"google_vertex_ai_index_endpoint":                                vertexai.ResourceVertexAIIndexEndpoint(),
 	"google_vertex_ai_tensorboard":                                   vertexai.ResourceVertexAITensorboard(),
+	"google_vmwareengine_network":                                    vmwareengine.ResourceVmwareengineNetwork(),
 	"google_vpc_access_connector":                                    vpcaccess.ResourceVPCAccessConnector(),
 	"google_workflows_workflow":                                      workflows.ResourceWorkflowsWorkflow(),
 }

@@ -266,6 +266,7 @@ var handwrittenDatasources = map[string]*schema.Resource{
 	"google_vmwareengine_network_policy":                  vmwareengine.DataSourceVmwareengineNetworkPolicy(),
 	"google_vmwareengine_nsx_credentials":                 vmwareengine.DataSourceVmwareengineNsxCredentials(),
 	"google_vmwareengine_private_cloud":                   vmwareengine.DataSourceVmwareenginePrivateCloud(),
+	"google_vmwareengine_subnet":                          vmwareengine.DataSourceVmwareengineSubnet(),
 
 	// ####### END handwritten datasources ###########
 }
@@ -366,9 +367,9 @@ var handwrittenIAMDatasources = map[string]*schema.Resource{
 }
 
 // Resources
-// Generated resources: 346
+// Generated resources: 347
 // Generated IAM resources: 216
-// Total generated resources: 562
+// Total generated resources: 563
 var generatedResources = map[string]*schema.Resource{
 	"google_folder_access_approval_settings":                         accessapproval.ResourceAccessApprovalFolderSettings(),
 	"google_organization_access_approval_settings":                   accessapproval.ResourceAccessApprovalOrganizationSettings(),
@@ -912,6 +913,7 @@ var generatedResources = map[string]*schema.Resource{
 	"google_vmwareengine_network_peering":                            vmwareengine.ResourceVmwareengineNetworkPeering(),
 	"google_vmwareengine_network_policy":                             vmwareengine.ResourceVmwareengineNetworkPolicy(),
 	"google_vmwareengine_private_cloud":                              vmwareengine.ResourceVmwareenginePrivateCloud(),
+	"google_vmwareengine_subnet":                                     vmwareengine.ResourceVmwareengineSubnet(),
 	"google_vpc_access_connector":                                    vpcaccess.ResourceVPCAccessConnector(),
 	"google_workflows_workflow":                                      workflows.ResourceWorkflowsWorkflow(),
 }

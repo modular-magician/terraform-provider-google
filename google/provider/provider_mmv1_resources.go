@@ -373,9 +373,9 @@ var handwrittenIAMDatasources = map[string]*schema.Resource{
 }
 
 // Resources
-// Generated resources: 356
+// Generated resources: 358
 // Generated IAM resources: 219
-// Total generated resources: 575
+// Total generated resources: 577
 var generatedResources = map[string]*schema.Resource{
 	"google_folder_access_approval_settings":                         accessapproval.ResourceAccessApprovalFolderSettings(),
 	"google_organization_access_approval_settings":                   accessapproval.ResourceAccessApprovalOrganizationSettings(),
@@ -810,6 +810,7 @@ var generatedResources = map[string]*schema.Resource{
 	"google_monitoring_custom_service":                               monitoring.ResourceMonitoringService(),
 	"google_monitoring_slo":                                          monitoring.ResourceMonitoringSlo(),
 	"google_monitoring_uptime_check_config":                          monitoring.ResourceMonitoringUptimeCheckConfig(),
+	"google_netapp_active_directory":                                 netapp.ResourceNetappactiveDirectory(),
 	"google_netapp_storage_pool":                                     netapp.ResourceNetappstoragePool(),
 	"google_network_connectivity_policy_based_route":                 networkconnectivity.ResourceNetworkConnectivityPolicyBasedRoute(),
 	"google_network_connectivity_service_connection_policy":          networkconnectivity.ResourceNetworkConnectivityServiceConnectionPolicy(),
@@ -914,6 +915,7 @@ var generatedResources = map[string]*schema.Resource{
 	"google_tpu_node":                                                tpu.ResourceTPUNode(),
 	"google_vertex_ai_dataset":                                       vertexai.ResourceVertexAIDataset(),
 	"google_vertex_ai_endpoint":                                      vertexai.ResourceVertexAIEndpoint(),
+	"google_vertex_ai_feature_group":                                 vertexai.ResourceVertexAIFeatureGroup(),
 	"google_vertex_ai_feature_online_store":                          vertexai.ResourceVertexAIFeatureOnlineStore(),
 	"google_vertex_ai_featurestore":                                  vertexai.ResourceVertexAIFeaturestore(),
 	"google_vertex_ai_featurestore_entitytype":                       vertexai.ResourceVertexAIFeaturestoreEntitytype(),

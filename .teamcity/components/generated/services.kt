@@ -541,6 +541,11 @@ var services = mapOf(
         "displayName" to "Runtimeconfig",
         "path" to "./google/services/runtimeconfig"
     ),
+    "searchandconversation" to mapOf(
+        "name" to "searchandconversation",
+        "displayName" to "Searchandconversation",
+        "path" to "./google/services/searchandconversation"
+    ),
     "secretmanager" to mapOf(
         "name" to "secretmanager",
         "displayName" to "Secretmanager",

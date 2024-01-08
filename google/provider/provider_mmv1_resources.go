@@ -93,6 +93,7 @@ import (
 	"github.com/hashicorp/terraform-provider-google/google/services/pubsublite"
 	"github.com/hashicorp/terraform-provider-google/google/services/redis"
 	"github.com/hashicorp/terraform-provider-google/google/services/resourcemanager"
+	"github.com/hashicorp/terraform-provider-google/google/services/searchandconversation"
 	"github.com/hashicorp/terraform-provider-google/google/services/secretmanager"
 	"github.com/hashicorp/terraform-provider-google/google/services/securesourcemanager"
 	"github.com/hashicorp/terraform-provider-google/google/services/securitycenter"
@@ -376,9 +377,9 @@ var handwrittenIAMDatasources = map[string]*schema.Resource{
 }
 
 // Resources
-// Generated resources: 361
+// Generated resources: 363
 // Generated IAM resources: 219
-// Total generated resources: 580
+// Total generated resources: 582
 var generatedResources = map[string]*schema.Resource{
 	"google_folder_access_approval_settings":                         accessapproval.ResourceAccessApprovalFolderSettings(),
 	"google_organization_access_approval_settings":                   accessapproval.ResourceAccessApprovalOrganizationSettings(),
@@ -865,6 +866,8 @@ var generatedResources = map[string]*schema.Resource{
 	"google_redis_cluster":                                           redis.ResourceRedisCluster(),
 	"google_redis_instance":                                          redis.ResourceRedisInstance(),
 	"google_resource_manager_lien":                                   resourcemanager.ResourceResourceManagerLien(),
+	"google_search_and_conversation_app":                             searchandconversation.ResourceSearchAndConversationApp(),
+	"google_search_and_conversation_data_store":                      searchandconversation.ResourceSearchAndConversationDataStore(),
 	"google_secret_manager_secret":                                   secretmanager.ResourceSecretManagerSecret(),
 	"google_secret_manager_secret_iam_binding":                       tpgiamresource.ResourceIamBinding(secretmanager.SecretManagerSecretIamSchema, secretmanager.SecretManagerSecretIamUpdaterProducer, secretmanager.SecretManagerSecretIdParseFunc),
 	"google_secret_manager_secret_iam_member":                        tpgiamresource.ResourceIamMember(secretmanager.SecretManagerSecretIamSchema, secretmanager.SecretManagerSecretIamUpdaterProducer, secretmanager.SecretManagerSecretIdParseFunc),

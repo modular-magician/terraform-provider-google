@@ -375,9 +375,9 @@ var handwrittenIAMDatasources = map[string]*schema.Resource{
 }
 
 // Resources
-// Generated resources: 360
+// Generated resources: 361
 // Generated IAM resources: 219
-// Total generated resources: 579
+// Total generated resources: 580
 var generatedResources = map[string]*schema.Resource{
 	"google_folder_access_approval_settings":                         accessapproval.ResourceAccessApprovalFolderSettings(),
 	"google_organization_access_approval_settings":                   accessapproval.ResourceAccessApprovalOrganizationSettings(),
@@ -802,6 +802,7 @@ var generatedResources = map[string]*schema.Resource{
 	"google_looker_instance":                                         looker.ResourceLookerInstance(),
 	"google_memcache_instance":                                       memcache.ResourceMemcacheInstance(),
 	"google_migration_center_group":                                  migrationcenter.ResourceMigrationCenterGroup(),
+	"google_migration_center_preference_set":                         migrationcenter.ResourceMigrationCenterPreferenceSet(),
 	"google_ml_engine_model":                                         mlengine.ResourceMLEngineModel(),
 	"google_monitoring_alert_policy":                                 monitoring.ResourceMonitoringAlertPolicy(),
 	"google_monitoring_service":                                      monitoring.ResourceMonitoringGenericService(),

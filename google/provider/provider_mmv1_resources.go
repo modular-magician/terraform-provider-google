@@ -380,9 +380,9 @@ var handwrittenIAMDatasources = map[string]*schema.Resource{
 }
 
 // Resources
-// Generated resources: 370
+// Generated resources: 371
 // Generated IAM resources: 222
-// Total generated resources: 592
+// Total generated resources: 593
 var generatedResources = map[string]*schema.Resource{
 	"google_folder_access_approval_settings":                         accessapproval.ResourceAccessApprovalFolderSettings(),
 	"google_organization_access_approval_settings":                   accessapproval.ResourceAccessApprovalOrganizationSettings(),
@@ -488,6 +488,7 @@ var generatedResources = map[string]*schema.Resource{
 	"google_cloud_asset_project_feed":                                cloudasset.ResourceCloudAssetProjectFeed(),
 	"google_cloudbuild_bitbucket_server_config":                      cloudbuild.ResourceCloudBuildBitbucketServerConfig(),
 	"google_cloudbuild_trigger":                                      cloudbuild.ResourceCloudBuildTrigger(),
+	"google_cloudbuildv2_connection":                                 cloudbuildv2.ResourceCloudbuildv2Connection(),
 	"google_cloudbuildv2_connection_iam_binding":                     tpgiamresource.ResourceIamBinding(cloudbuildv2.Cloudbuildv2ConnectionIamSchema, cloudbuildv2.Cloudbuildv2ConnectionIamUpdaterProducer, cloudbuildv2.Cloudbuildv2ConnectionIdParseFunc),
 	"google_cloudbuildv2_connection_iam_member":                      tpgiamresource.ResourceIamMember(cloudbuildv2.Cloudbuildv2ConnectionIamSchema, cloudbuildv2.Cloudbuildv2ConnectionIamUpdaterProducer, cloudbuildv2.Cloudbuildv2ConnectionIdParseFunc),
 	"google_cloudbuildv2_connection_iam_policy":                      tpgiamresource.ResourceIamPolicy(cloudbuildv2.Cloudbuildv2ConnectionIamSchema, cloudbuildv2.Cloudbuildv2ConnectionIamUpdaterProducer, cloudbuildv2.Cloudbuildv2ConnectionIdParseFunc),

@@ -385,9 +385,9 @@ var handwrittenIAMDatasources = map[string]*schema.Resource{
 }
 
 // Resources
-// Generated resources: 379
+// Generated resources: 380
 // Generated IAM resources: 225
-// Total generated resources: 604
+// Total generated resources: 605
 var generatedResources = map[string]*schema.Resource{
 	"google_folder_access_approval_settings":                         accessapproval.ResourceAccessApprovalFolderSettings(),
 	"google_organization_access_approval_settings":                   accessapproval.ResourceAccessApprovalOrganizationSettings(),
@@ -852,6 +852,7 @@ var generatedResources = map[string]*schema.Resource{
 	"google_network_security_address_group_iam_binding":              tpgiamresource.ResourceIamBinding(networksecurity.NetworkSecurityProjectAddressGroupIamSchema, networksecurity.NetworkSecurityProjectAddressGroupIamUpdaterProducer, networksecurity.NetworkSecurityProjectAddressGroupIdParseFunc),
 	"google_network_security_address_group_iam_member":               tpgiamresource.ResourceIamMember(networksecurity.NetworkSecurityProjectAddressGroupIamSchema, networksecurity.NetworkSecurityProjectAddressGroupIamUpdaterProducer, networksecurity.NetworkSecurityProjectAddressGroupIdParseFunc),
 	"google_network_security_address_group_iam_policy":               tpgiamresource.ResourceIamPolicy(networksecurity.NetworkSecurityProjectAddressGroupIamSchema, networksecurity.NetworkSecurityProjectAddressGroupIamUpdaterProducer, networksecurity.NetworkSecurityProjectAddressGroupIdParseFunc),
+	"google_network_security_tls_inspection_policy":                  networksecurity.ResourceNetworkSecurityTlsInspectionPolicy(),
 	"google_network_security_url_lists":                              networksecurity.ResourceNetworkSecurityUrlLists(),
 	"google_network_services_edge_cache_keyset":                      networkservices.ResourceNetworkServicesEdgeCacheKeyset(),
 	"google_network_services_edge_cache_origin":                      networkservices.ResourceNetworkServicesEdgeCacheOrigin(),

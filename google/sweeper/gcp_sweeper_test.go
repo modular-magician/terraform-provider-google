@@ -38,6 +38,7 @@ import (
 	_ "github.com/hashicorp/terraform-provider-google/google/services/cloudids"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/cloudrun"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/cloudrunv2"
+	_ "github.com/hashicorp/terraform-provider-google/google/services/cloudrunv3"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/cloudscheduler"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/cloudtasks"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/compute"

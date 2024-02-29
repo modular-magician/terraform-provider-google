@@ -1174,7 +1174,7 @@ resource "google_composer_environment" "test" {
       }
     }
     software_config {
-      image_version = "composer-1-airflow-2.3"
+      image_version = "composer-2.6.2-airflow-2.5.3"
     }
   }
 }

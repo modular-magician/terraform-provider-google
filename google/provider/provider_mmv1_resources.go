@@ -125,6 +125,8 @@ import (
 	"github.com/hashicorp/terraform-provider-google/google/services/dataflow"
 	"github.com/hashicorp/terraform-provider-google/google/services/servicenetworking"
 	"github.com/hashicorp/terraform-provider-google/google/tpgiamresource"
+	// https://github.com/hashicorp/terraform-provider-google/issues/15633 for details
+	"github.com/hashicorp/terraform-provider-google/google/services/cloudquotas"
 )
 
 // Datasources
@@ -153,6 +155,7 @@ var handwrittenDatasources = map[string]*schema.Resource{
 	"google_cloud_identity_groups":                        cloudidentity.DataSourceGoogleCloudIdentityGroups(),
 	"google_cloud_identity_group_memberships":             cloudidentity.DataSourceGoogleCloudIdentityGroupMemberships(),
 	"google_cloud_identity_group_lookup":                  cloudidentity.DataSourceGoogleCloudIdentityGroupLookup(),
+	"google_cloud_quotas_quota_info":                      cloudquotas.DataSourceGoogleCloudQuotasQuotaInfo(),
 	"google_cloud_run_locations":                          cloudrun.DataSourceGoogleCloudRunLocations(),
 	"google_cloud_run_service":                            cloudrun.DataSourceGoogleCloudRunService(),
 	"google_cloud_run_v2_job":                             cloudrunv2.DataSourceGoogleCloudRunV2Job(),
@@ -392,9 +395,9 @@ var handwrittenIAMDatasources = map[string]*schema.Resource{
 }
 
 // Resources
-// Generated resources: 392
+// Generated resources: 394
 // Generated IAM resources: 234
-// Total generated resources: 626
+// Total generated resources: 628
 var generatedResources = map[string]*schema.Resource{
 	"google_folder_access_approval_settings":                         accessapproval.ResourceAccessApprovalFolderSettings(),
 	"google_organization_access_approval_settings":                   accessapproval.ResourceAccessApprovalOrganizationSettings(),
@@ -446,7 +449,9 @@ var generatedResources = map[string]*schema.Resource{
 	"google_app_engine_service_split_traffic":                        appengine.ResourceAppEngineServiceSplitTraffic(),
 	"google_app_engine_standard_app_version":                         appengine.ResourceAppEngineStandardAppVersion(),
 	"google_apphub_application":                                      apphub.ResourceApphubApplication(),
+	"google_apphub_service":                                          apphub.ResourceApphubService(),
 	"google_apphub_service_project_attachment":                       apphub.ResourceApphubServiceProjectAttachment(),
+	"google_apphub_workload":                                         apphub.ResourceApphubWorkload(),
 	"google_artifact_registry_repository":                            artifactregistry.ResourceArtifactRegistryRepository(),
 	"google_artifact_registry_repository_iam_binding":                tpgiamresource.ResourceIamBinding(artifactregistry.ArtifactRegistryRepositoryIamSchema, artifactregistry.ArtifactRegistryRepositoryIamUpdaterProducer, artifactregistry.ArtifactRegistryRepositoryIdParseFunc),
 	"google_artifact_registry_repository_iam_member":                 tpgiamresource.ResourceIamMember(artifactregistry.ArtifactRegistryRepositoryIamSchema, artifactregistry.ArtifactRegistryRepositoryIamUpdaterProducer, artifactregistry.ArtifactRegistryRepositoryIdParseFunc),

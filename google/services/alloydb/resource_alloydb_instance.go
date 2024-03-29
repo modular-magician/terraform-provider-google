@@ -253,6 +253,11 @@ Please refer to the field 'effective_labels' for all of the labels present on th
 				Computed:    true,
 				Description: `The name of the instance resource.`,
 			},
+			"public_ip_address": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: `The public IP address for the Instance, if 'network_config.enable_public_ip' is set to true.`,
+			},
 			"reconciling": {
 				Type:        schema.TypeBool,
 				Computed:    true,
@@ -493,6 +498,9 @@ func resourceAlloydbInstanceRead(d *schema.ResourceData, meta interface{}) error
 		return fmt.Errorf("Error reading Instance: %s", err)
 	}
 	if err := d.Set("client_connection_config", flattenAlloydbInstanceClientConnectionConfig(res["clientConnectionConfig"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Instance: %s", err)
+	}
+	if err := d.Set("public_ip_address", flattenAlloydbInstancePublicIpAddress(res["publicIpAddress"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Instance: %s", err)
 	}
 	if err := d.Set("terraform_labels", flattenAlloydbInstanceTerraformLabels(res["labels"], d, config)); err != nil {
@@ -984,6 +992,10 @@ func flattenAlloydbInstanceClientConnectionConfigSslConfig(v interface{}, d *sch
 	return []interface{}{transformed}
 }
 func flattenAlloydbInstanceClientConnectionConfigSslConfigSslMode(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenAlloydbInstancePublicIpAddress(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 

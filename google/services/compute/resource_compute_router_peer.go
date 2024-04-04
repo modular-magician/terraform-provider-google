@@ -33,6 +33,15 @@ func ipv6RepresentationDiffSuppress(_, old, new string, d *schema.ResourceData) 
 	return oldIp.Equal(newIp)
 }
 
+func isIPv4Address(input string) bool {
+	ip := net.ParseIP(input)
+	return ip != nil && ip.To4() != nil
+}
+
+func interfaceToString(value interface{}) string {
+	return fmt.Sprintf("%v", value)
+}
+
 func ResourceComputeRouterBgpPeer() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceComputeRouterBgpPeerCreate,

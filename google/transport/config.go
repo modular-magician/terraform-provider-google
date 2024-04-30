@@ -283,6 +283,7 @@ type Config struct {
 	PubsubLiteBasePath               string
 	RedisBasePath                    string
 	ResourceManagerBasePath          string
+	SecLMBasePath                    string
 	SecretManagerBasePath            string
 	SecureSourceManagerBasePath      string
 	SecurityCenterBasePath           string
@@ -419,6 +420,7 @@ const PubsubBasePathKey = "Pubsub"
 const PubsubLiteBasePathKey = "PubsubLite"
 const RedisBasePathKey = "Redis"
 const ResourceManagerBasePathKey = "ResourceManager"
+const SecLMBasePathKey = "SecLM"
 const SecretManagerBasePathKey = "SecretManager"
 const SecureSourceManagerBasePathKey = "SecureSourceManager"
 const SecurityCenterBasePathKey = "SecurityCenter"
@@ -549,6 +551,7 @@ var DefaultBasePaths = map[string]string{
 	PubsubLiteBasePathKey:               "https://{{region}}-pubsublite.googleapis.com/v1/admin/",
 	RedisBasePathKey:                    "https://redis.googleapis.com/v1/",
 	ResourceManagerBasePathKey:          "https://cloudresourcemanager.googleapis.com/v1/",
+	SecLMBasePathKey:                    "https://seclm.googleapis.com/v1/",
 	SecretManagerBasePathKey:            "https://secretmanager.googleapis.com/v1/",
 	SecureSourceManagerBasePathKey:      "https://securesourcemanager.googleapis.com/v1/",
 	SecurityCenterBasePathKey:           "https://securitycenter.googleapis.com/v1/",
@@ -1133,6 +1136,11 @@ func SetEndpointDefaults(d *schema.ResourceData) error {
 		d.Set("resource_manager_custom_endpoint", MultiEnvDefault([]string{
 			"GOOGLE_RESOURCE_MANAGER_CUSTOM_ENDPOINT",
 		}, DefaultBasePaths[ResourceManagerBasePathKey]))
+	}
+	if d.Get("sec_lm_custom_endpoint") == "" {
+		d.Set("sec_lm_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_SEC_LM_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[SecLMBasePathKey]))
 	}
 	if d.Get("secret_manager_custom_endpoint") == "" {
 		d.Set("secret_manager_custom_endpoint", MultiEnvDefault([]string{
@@ -2185,6 +2193,7 @@ func ConfigureBasePaths(c *Config) {
 	c.PubsubLiteBasePath = DefaultBasePaths[PubsubLiteBasePathKey]
 	c.RedisBasePath = DefaultBasePaths[RedisBasePathKey]
 	c.ResourceManagerBasePath = DefaultBasePaths[ResourceManagerBasePathKey]
+	c.SecLMBasePath = DefaultBasePaths[SecLMBasePathKey]
 	c.SecretManagerBasePath = DefaultBasePaths[SecretManagerBasePathKey]
 	c.SecureSourceManagerBasePath = DefaultBasePaths[SecureSourceManagerBasePathKey]
 	c.SecurityCenterBasePath = DefaultBasePaths[SecurityCenterBasePathKey]

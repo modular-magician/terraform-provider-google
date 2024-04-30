@@ -101,6 +101,7 @@ import (
 	"github.com/hashicorp/terraform-provider-google/google/services/pubsublite"
 	"github.com/hashicorp/terraform-provider-google/google/services/redis"
 	"github.com/hashicorp/terraform-provider-google/google/services/resourcemanager"
+	"github.com/hashicorp/terraform-provider-google/google/services/seclm"
 	"github.com/hashicorp/terraform-provider-google/google/services/secretmanager"
 	"github.com/hashicorp/terraform-provider-google/google/services/securesourcemanager"
 	"github.com/hashicorp/terraform-provider-google/google/services/securitycenter"
@@ -405,9 +406,9 @@ var handwrittenIAMDatasources = map[string]*schema.Resource{
 }
 
 // Resources
-// Generated resources: 403
+// Generated resources: 404
 // Generated IAM resources: 234
-// Total generated resources: 637
+// Total generated resources: 638
 var generatedResources = map[string]*schema.Resource{
 	"google_folder_access_approval_settings":                           accessapproval.ResourceAccessApprovalFolderSettings(),
 	"google_organization_access_approval_settings":                     accessapproval.ResourceAccessApprovalOrganizationSettings(),
@@ -947,6 +948,7 @@ var generatedResources = map[string]*schema.Resource{
 	"google_redis_cluster":                                             redis.ResourceRedisCluster(),
 	"google_redis_instance":                                            redis.ResourceRedisInstance(),
 	"google_resource_manager_lien":                                     resourcemanager.ResourceResourceManagerLien(),
+	"google_sec_lm_workbench":                                          seclm.ResourceSecLMWorkbench(),
 	"google_secret_manager_secret":                                     secretmanager.ResourceSecretManagerSecret(),
 	"google_secret_manager_secret_iam_binding":                         tpgiamresource.ResourceIamBinding(secretmanager.SecretManagerSecretIamSchema, secretmanager.SecretManagerSecretIamUpdaterProducer, secretmanager.SecretManagerSecretIdParseFunc),
 	"google_secret_manager_secret_iam_member":                          tpgiamresource.ResourceIamMember(secretmanager.SecretManagerSecretIamSchema, secretmanager.SecretManagerSecretIamUpdaterProducer, secretmanager.SecretManagerSecretIdParseFunc),

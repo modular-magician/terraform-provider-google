@@ -1297,3 +1297,19 @@ resource "google_compute_network" "default" {
 data "google_project" "project" {}
 `, context)
 }
+
+func testAccAlloydbCluster_withPSC(context map[string]interface{}) string {
+	return acctest.Nprintf(`
+resource "google_alloydb_cluster" "default" {
+  provider   = google-beta
+  cluster_id = "tf-test-alloydb-cluster%{random_suffix}"
+  location   = "us-central1"
+  psc_config {
+    psc_enabled = true
+  }
+}
+data "google_project" "project" {
+  provider = google-beta
+}
+`, context)
+}

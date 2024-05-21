@@ -331,6 +331,7 @@ var generatedIAMDatasources = map[string]*schema.Resource{
 	"google_compute_instance_iam_policy":                     tpgiamresource.DataSourceIamPolicy(compute.ComputeInstanceIamSchema, compute.ComputeInstanceIamUpdaterProducer),
 	"google_compute_region_disk_iam_policy":                  tpgiamresource.DataSourceIamPolicy(compute.ComputeRegionDiskIamSchema, compute.ComputeRegionDiskIamUpdaterProducer),
 	"google_compute_snapshot_iam_policy":                     tpgiamresource.DataSourceIamPolicy(compute.ComputeSnapshotIamSchema, compute.ComputeSnapshotIamUpdaterProducer),
+	"google_compute_storage_pool_iam_policy":                 tpgiamresource.DataSourceIamPolicy(compute.ComputeStoragePoolIamSchema, compute.ComputeStoragePoolIamUpdaterProducer),
 	"google_compute_subnetwork_iam_policy":                   tpgiamresource.DataSourceIamPolicy(compute.ComputeSubnetworkIamSchema, compute.ComputeSubnetworkIamUpdaterProducer),
 	"google_container_analysis_note_iam_policy":              tpgiamresource.DataSourceIamPolicy(containeranalysis.ContainerAnalysisNoteIamSchema, containeranalysis.ContainerAnalysisNoteIamUpdaterProducer),
 	"google_data_catalog_entry_group_iam_policy":             tpgiamresource.DataSourceIamPolicy(datacatalog.DataCatalogEntryGroupIamSchema, datacatalog.DataCatalogEntryGroupIamUpdaterProducer),
@@ -410,9 +411,9 @@ var handwrittenIAMDatasources = map[string]*schema.Resource{
 }
 
 // Resources
-// Generated resources: 416
-// Generated IAM resources: 243
-// Total generated resources: 659
+// Generated resources: 417
+// Generated IAM resources: 246
+// Total generated resources: 663
 var generatedResources = map[string]*schema.Resource{
 	"google_folder_access_approval_settings":                           accessapproval.ResourceAccessApprovalFolderSettings(),
 	"google_organization_access_approval_settings":                     accessapproval.ResourceAccessApprovalOrganizationSettings(),
@@ -649,6 +650,10 @@ var generatedResources = map[string]*schema.Resource{
 	"google_compute_snapshot_iam_policy":                               tpgiamresource.ResourceIamPolicy(compute.ComputeSnapshotIamSchema, compute.ComputeSnapshotIamUpdaterProducer, compute.ComputeSnapshotIdParseFunc),
 	"google_compute_ssl_certificate":                                   compute.ResourceComputeSslCertificate(),
 	"google_compute_ssl_policy":                                        compute.ResourceComputeSslPolicy(),
+	"google_compute_storage_pool":                                      compute.ResourceComputeStoragePool(),
+	"google_compute_storage_pool_iam_binding":                          tpgiamresource.ResourceIamBinding(compute.ComputeStoragePoolIamSchema, compute.ComputeStoragePoolIamUpdaterProducer, compute.ComputeStoragePoolIdParseFunc),
+	"google_compute_storage_pool_iam_member":                           tpgiamresource.ResourceIamMember(compute.ComputeStoragePoolIamSchema, compute.ComputeStoragePoolIamUpdaterProducer, compute.ComputeStoragePoolIdParseFunc),
+	"google_compute_storage_pool_iam_policy":                           tpgiamresource.ResourceIamPolicy(compute.ComputeStoragePoolIamSchema, compute.ComputeStoragePoolIamUpdaterProducer, compute.ComputeStoragePoolIdParseFunc),
 	"google_compute_subnetwork":                                        compute.ResourceComputeSubnetwork(),
 	"google_compute_subnetwork_iam_binding":                            tpgiamresource.ResourceIamBinding(compute.ComputeSubnetworkIamSchema, compute.ComputeSubnetworkIamUpdaterProducer, compute.ComputeSubnetworkIdParseFunc),
 	"google_compute_subnetwork_iam_member":                             tpgiamresource.ResourceIamMember(compute.ComputeSubnetworkIamSchema, compute.ComputeSubnetworkIamUpdaterProducer, compute.ComputeSubnetworkIdParseFunc),

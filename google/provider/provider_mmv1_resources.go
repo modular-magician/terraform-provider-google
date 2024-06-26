@@ -415,9 +415,9 @@ var handwrittenIAMDatasources = map[string]*schema.Resource{
 }
 
 // Resources
-// Generated resources: 428
+// Generated resources: 429
 // Generated IAM resources: 249
-// Total generated resources: 677
+// Total generated resources: 678
 var generatedResources = map[string]*schema.Resource{
 	"google_folder_access_approval_settings":                                     accessapproval.ResourceAccessApprovalFolderSettings(),
 	"google_organization_access_approval_settings":                               accessapproval.ResourceAccessApprovalOrganizationSettings(),
@@ -510,6 +510,7 @@ var generatedResources = map[string]*schema.Resource{
 	"google_bigquery_bi_reservation":                                             bigqueryreservation.ResourceBigqueryReservationBiReservation(),
 	"google_bigquery_capacity_commitment":                                        bigqueryreservation.ResourceBigqueryReservationCapacityCommitment(),
 	"google_bigquery_reservation":                                                bigqueryreservation.ResourceBigqueryReservationReservation(),
+	"google_bigquery_reservation_assignment":                                     bigqueryreservation.ResourceBigqueryReservationReservationAssignment(),
 	"google_bigtable_app_profile":                                                bigtable.ResourceBigtableAppProfile(),
 	"google_billing_budget":                                                      billing.ResourceBillingBudget(),
 	"google_binary_authorization_attestor":                                       binaryauthorization.ResourceBinaryAuthorizationAttestor(),

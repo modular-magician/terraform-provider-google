@@ -117,6 +117,16 @@ Only networks that are in the distributed mode can have subnetworks.`,
 you create the resource. This field can be set only at resource
 creation time.`,
 			},
+			"enable_flow_logs": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				ForceNew: true,
+				Description: `Whether to enable flow logging for this subnetwork.
+If this field is not explicitly set, it will not appear in get listings.
+If not set the default behavior is determined by the org policy, if there is no org
+policy specified, then it will default to disabled. This field isn't supported if the subnet
+purpose field is set to REGIONAL_MANAGED_PROXY.`,
+			},
 			"external_ipv6_prefix": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -462,6 +472,12 @@ func resourceComputeSubnetworkCreate(d *schema.ResourceData, meta interface{}) e
 	} else if v, ok := d.GetOkExists("external_ipv6_prefix"); !tpgresource.IsEmptyValue(reflect.ValueOf(externalIpv6PrefixProp)) && (ok || !reflect.DeepEqual(v, externalIpv6PrefixProp)) {
 		obj["externalIpv6Prefix"] = externalIpv6PrefixProp
 	}
+	enableFlowLogsProp, err := expandComputeSubnetworkEnableFlowLogs(d.Get("enable_flow_logs"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("enable_flow_logs"); !tpgresource.IsEmptyValue(reflect.ValueOf(enableFlowLogsProp)) && (ok || !reflect.DeepEqual(v, enableFlowLogsProp)) {
+		obj["enableFlowLogs"] = enableFlowLogsProp
+	}
 
 	url, err := tpgresource.ReplaceVars(d, config, "{{ComputeBasePath}}projects/{{project}}/regions/{{region}}/subnetworks")
 	if err != nil {
@@ -613,6 +629,9 @@ func resourceComputeSubnetworkRead(d *schema.ResourceData, meta interface{}) err
 		return fmt.Errorf("Error reading Subnetwork: %s", err)
 	}
 	if err := d.Set("external_ipv6_prefix", flattenComputeSubnetworkExternalIpv6Prefix(res["externalIpv6Prefix"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Subnetwork: %s", err)
+	}
+	if err := d.Set("enable_flow_logs", flattenComputeSubnetworkEnableFlowLogs(res["enableFlowLogs"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Subnetwork: %s", err)
 	}
 	if err := d.Set("self_link", tpgresource.ConvertSelfLinkToV1(res["selfLink"].(string))); err != nil {
@@ -1226,6 +1245,10 @@ func flattenComputeSubnetworkExternalIpv6Prefix(v interface{}, d *schema.Resourc
 	return v
 }
 
+func flattenComputeSubnetworkEnableFlowLogs(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
 func expandComputeSubnetworkDescription(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
@@ -1347,5 +1370,9 @@ func expandComputeSubnetworkIpv6AccessType(v interface{}, d tpgresource.Terrafor
 }
 
 func expandComputeSubnetworkExternalIpv6Prefix(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandComputeSubnetworkEnableFlowLogs(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }

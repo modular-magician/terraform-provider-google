@@ -49,7 +49,7 @@ func TestAccCloudRunV2Service_cloudrunv2ServiceBasicExample(t *testing.T) {
 				ResourceName:            "google_cloud_run_v2_service.default",
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"annotations", "deletion_protection", "labels", "location", "name", "terraform_labels"},
+				ImportStateVerifyIgnore: []string{"annotations", "labels", "location", "name", "terraform_labels"},
 			},
 		},
 	})
@@ -60,7 +60,6 @@ func testAccCloudRunV2Service_cloudrunv2ServiceBasicExample(context map[string]i
 resource "google_cloud_run_v2_service" "default" {
   name     = "tf-test-cloudrun-service%{random_suffix}"
   location = "us-central1"
-  deletion_protection = false
   ingress = "INGRESS_TRAFFIC_ALL"
   
   template {
@@ -91,7 +90,7 @@ func TestAccCloudRunV2Service_cloudrunv2ServiceLimitsExample(t *testing.T) {
 				ResourceName:            "google_cloud_run_v2_service.default",
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"annotations", "deletion_protection", "labels", "location", "name", "terraform_labels"},
+				ImportStateVerifyIgnore: []string{"annotations", "labels", "location", "name", "terraform_labels"},
 			},
 		},
 	})
@@ -102,7 +101,6 @@ func testAccCloudRunV2Service_cloudrunv2ServiceLimitsExample(context map[string]
 resource "google_cloud_run_v2_service" "default" {
   name     = "tf-test-cloudrun-service%{random_suffix}"
   location = "us-central1"
-  deletion_protection = false
   ingress = "INGRESS_TRAFFIC_ALL"
 
   template {
@@ -140,7 +138,7 @@ func TestAccCloudRunV2Service_cloudrunv2ServiceSqlExample(t *testing.T) {
 				ResourceName:            "google_cloud_run_v2_service.default",
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"annotations", "deletion_protection", "labels", "location", "name", "terraform_labels"},
+				ImportStateVerifyIgnore: []string{"annotations", "labels", "location", "name", "terraform_labels"},
 			},
 		},
 	})
@@ -151,7 +149,6 @@ func testAccCloudRunV2Service_cloudrunv2ServiceSqlExample(context map[string]int
 resource "google_cloud_run_v2_service" "default" {
   name     = "tf-test-cloudrun-service%{random_suffix}"
   location = "us-central1"
-  deletion_protection = false
   ingress = "INGRESS_TRAFFIC_ALL"
   
   template {
@@ -250,7 +247,7 @@ func TestAccCloudRunV2Service_cloudrunv2ServiceVpcaccessExample(t *testing.T) {
 				ResourceName:            "google_cloud_run_v2_service.default",
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"annotations", "deletion_protection", "labels", "location", "name", "terraform_labels"},
+				ImportStateVerifyIgnore: []string{"annotations", "labels", "location", "name", "terraform_labels"},
 			},
 		},
 	})
@@ -261,7 +258,6 @@ func testAccCloudRunV2Service_cloudrunv2ServiceVpcaccessExample(context map[stri
 resource "google_cloud_run_v2_service" "default" {
   name     = "tf-test-cloudrun-service%{random_suffix}"
   location = "us-central1"
-  deletion_protection = false
 
   template {
     containers {
@@ -316,7 +312,7 @@ func TestAccCloudRunV2Service_cloudrunv2ServiceDirectvpcExample(t *testing.T) {
 				ResourceName:            "google_cloud_run_v2_service.default",
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"annotations", "deletion_protection", "labels", "location", "name", "terraform_labels"},
+				ImportStateVerifyIgnore: []string{"annotations", "labels", "location", "name", "terraform_labels"},
 			},
 		},
 	})
@@ -327,7 +323,6 @@ func testAccCloudRunV2Service_cloudrunv2ServiceDirectvpcExample(context map[stri
 resource "google_cloud_run_v2_service" "default" {
   name     = "tf-test-cloudrun-service%{random_suffix}"
   location = "us-central1"
-  deletion_protection = false
   launch_stage = "GA"
   template {
     containers {
@@ -364,7 +359,7 @@ func TestAccCloudRunV2Service_cloudrunv2ServiceProbesExample(t *testing.T) {
 				ResourceName:            "google_cloud_run_v2_service.default",
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"annotations", "deletion_protection", "labels", "location", "name", "terraform_labels"},
+				ImportStateVerifyIgnore: []string{"annotations", "labels", "location", "name", "terraform_labels"},
 			},
 		},
 	})
@@ -375,7 +370,6 @@ func testAccCloudRunV2Service_cloudrunv2ServiceProbesExample(context map[string]
 resource "google_cloud_run_v2_service" "default" {
   name     = "tf-test-cloudrun-service%{random_suffix}"
   location = "us-central1"
-  deletion_protection = false
 
   template {
     containers {
@@ -419,7 +413,7 @@ func TestAccCloudRunV2Service_cloudrunv2ServiceSecretExample(t *testing.T) {
 				ResourceName:            "google_cloud_run_v2_service.default",
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"annotations", "deletion_protection", "labels", "location", "name", "terraform_labels"},
+				ImportStateVerifyIgnore: []string{"annotations", "labels", "location", "name", "terraform_labels"},
 			},
 		},
 	})
@@ -430,7 +424,6 @@ func testAccCloudRunV2Service_cloudrunv2ServiceSecretExample(context map[string]
 resource "google_cloud_run_v2_service" "default" {
   name     = "tf-test-cloudrun-service%{random_suffix}"
   location = "us-central1"
-  deletion_protection = false
   ingress = "INGRESS_TRAFFIC_ALL"
 
   template {
@@ -481,7 +474,6 @@ resource "google_secret_manager_secret_iam_member" "secret-access" {
 }
 
 func TestAccCloudRunV2Service_cloudrunv2ServiceMountGcsExample(t *testing.T) {
-	acctest.SkipIfVcr(t)
 	t.Parallel()
 
 	context := map[string]interface{}{
@@ -500,7 +492,7 @@ func TestAccCloudRunV2Service_cloudrunv2ServiceMountGcsExample(t *testing.T) {
 				ResourceName:            "google_cloud_run_v2_service.default",
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"annotations", "deletion_protection", "labels", "location", "name", "terraform_labels"},
+				ImportStateVerifyIgnore: []string{"annotations", "labels", "location", "name", "terraform_labels"},
 			},
 		},
 	})
@@ -512,7 +504,6 @@ resource "google_cloud_run_v2_service" "default" {
   name     = "tf-test-cloudrun-service%{random_suffix}"
 
   location     = "us-central1"
-  deletion_protection = false
   launch_stage = "BETA"
 
   template {
@@ -544,7 +535,6 @@ resource "google_storage_bucket" "default" {
 }
 
 func TestAccCloudRunV2Service_cloudrunv2ServiceMountNfsExample(t *testing.T) {
-	acctest.SkipIfVcr(t)
 	t.Parallel()
 
 	context := map[string]interface{}{
@@ -563,7 +553,7 @@ func TestAccCloudRunV2Service_cloudrunv2ServiceMountNfsExample(t *testing.T) {
 				ResourceName:            "google_cloud_run_v2_service.default",
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"annotations", "deletion_protection", "labels", "location", "name", "terraform_labels"},
+				ImportStateVerifyIgnore: []string{"annotations", "labels", "location", "name", "terraform_labels"},
 			},
 		},
 	})
@@ -575,7 +565,6 @@ resource "google_cloud_run_v2_service" "default" {
   name     = "tf-test-cloudrun-service%{random_suffix}"
 
   location     = "us-central1"
-  deletion_protection = false
   ingress      = "INGRESS_TRAFFIC_ALL"
   launch_stage = "BETA"
 

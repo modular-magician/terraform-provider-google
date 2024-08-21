@@ -205,7 +205,6 @@ resource "google_project" "acceptance" {
   project_id = "%s"
   name       = "%s"
   org_id     = "%s"
-  deletion_policy = "DELETE"
 }
 
 resource "google_project_service" "test" {
@@ -227,7 +226,6 @@ resource "google_project" "acceptance" {
   name            = "%s"
   org_id          = "%s"
   billing_account = "%s"
-  deletion_policy = "DELETE"
 }
 
 resource "google_project_service" "test" {
@@ -250,7 +248,6 @@ resource "google_project" "acceptance" {
   name            = "%s"
   org_id          = "%s"
   billing_account = "%s"
-  deletion_policy = "DELETE"
 }
 
 resource "google_project_service" "test" {
@@ -266,7 +263,6 @@ resource "google_project" "acceptance" {
   project_id = "%s"
   name       = "%s"
   org_id     = "%s"
-  deletion_policy = "DELETE"
 }
 
 resource "google_project_service" "test" {
@@ -289,7 +285,6 @@ resource "google_project" "acceptance" {
   project_id = "%s"
   name       = "%s"
   org_id     = "%s"
-  deletion_policy = "DELETE"
 }
 
 // by passing through locals, we break the dependency chain
@@ -320,7 +315,6 @@ resource "google_project" "acceptance" {
   project_id = "%s"
   name       = "%s"
   org_id     = "%s"
-  deletion_policy = "DELETE"
 }
 
 resource "google_project_service" "test" {

@@ -6154,7 +6154,6 @@ resource "google_project" "host_project" {
   project_id      = "%s-host"
   org_id          = "%s"
   billing_account = "%s"
-  deletion_policy = "DELETE"
 }
 
 resource "google_project_service" "host_project" {
@@ -6171,7 +6170,6 @@ resource "google_project" "service_project" {
   project_id      = "%s-service"
   org_id          = "%s"
   billing_account = "%s"
-  deletion_policy = "DELETE"
 }
 
 resource "google_project_service" "service_project" {

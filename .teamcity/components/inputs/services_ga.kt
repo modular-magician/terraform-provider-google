@@ -301,6 +301,11 @@ var ServicesListGa = mapOf(
         "displayName" to "Dataprocmetastore",
         "path" to "./google/services/dataprocmetastore"
     ),
+    "datastore" to mapOf(
+        "name" to "datastore",
+        "displayName" to "Datastore",
+        "path" to "./google/services/datastore"
+    ),
     "datastream" to mapOf(
         "name" to "datastream",
         "displayName" to "Datastream",

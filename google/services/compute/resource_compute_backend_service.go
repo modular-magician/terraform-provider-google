@@ -1271,6 +1271,15 @@ either maxRate or maxRatePerInstance must be set.`,
 				Description: `Used when balancingMode is UTILIZATION. This ratio defines the
 CPU utilization target for the group. Valid range is [0.0, 1.0].`,
 			},
+			"preference": {
+				Type:         schema.TypeString,
+				Computed:     true,
+				Optional:     true,
+				ValidateFunc: verify.ValidateEnum([]string{"PREFERRED", "DEFAULT", ""}),
+				Description: `Indicates whether this backend should be fully utilized before
+sending traffic to backends with default preference. The possible
+values are PREFERRED and DEFAULT. Possible values: ["PREFERRED", "DEFAULT"]`,
+			},
 		},
 	}
 }
@@ -2101,6 +2110,7 @@ func flattenComputeBackendServiceBackend(v interface{}, d *schema.ResourceData, 
 			"max_rate_per_instance":        flattenComputeBackendServiceBackendMaxRatePerInstance(original["maxRatePerInstance"], d, config),
 			"max_rate_per_endpoint":        flattenComputeBackendServiceBackendMaxRatePerEndpoint(original["maxRatePerEndpoint"], d, config),
 			"max_utilization":              flattenComputeBackendServiceBackendMaxUtilization(original["maxUtilization"], d, config),
+			"preference":                   flattenComputeBackendServiceBackendPreference(original["preference"], d, config),
 		})
 	}
 	return transformed
@@ -2201,6 +2211,10 @@ func flattenComputeBackendServiceBackendMaxRatePerEndpoint(v interface{}, d *sch
 }
 
 func flattenComputeBackendServiceBackendMaxUtilization(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenComputeBackendServiceBackendPreference(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 
@@ -3377,6 +3391,13 @@ func expandComputeBackendServiceBackend(v interface{}, d tpgresource.TerraformRe
 			transformed["maxUtilization"] = transformedMaxUtilization
 		}
 
+		transformedPreference, err := expandComputeBackendServiceBackendPreference(original["preference"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedPreference); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["preference"] = transformedPreference
+		}
+
 		req = append(req, transformed)
 	}
 	return req, nil
@@ -3423,6 +3444,10 @@ func expandComputeBackendServiceBackendMaxRatePerEndpoint(v interface{}, d tpgre
 }
 
 func expandComputeBackendServiceBackendMaxUtilization(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandComputeBackendServiceBackendPreference(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 

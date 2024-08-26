@@ -93,7 +93,6 @@ func schemaGcfsConfig(forceNew bool) *schema.Schema {
 				"enabled": {
 					Type:        schema.TypeBool,
 					Required:    true,
-					ForceNew:    forceNew,
 					Description: `Whether or not GCFS is enabled`,
 				},
 			},

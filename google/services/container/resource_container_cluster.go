@@ -1921,6 +1921,11 @@ func ResourceContainerCluster() *schema.Resource {
 				Description:      `Configuration for Cloud DNS for Kubernetes Engine.`,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
+						"additive_vpc_scope_dns_domain": {
+							Type:        schema.TypeString,
+							Description: `Enable additive VPC scope DNS in a GKE cluster.`,
+							Optional:    true,
+						},
 						"cluster_dns": {
 							Type:         schema.TypeString,
 							Default:      "PROVIDER_UNSPECIFIED",
@@ -4923,9 +4928,10 @@ func expandDnsConfig(configured interface{}) *container.DNSConfig {
 
 	config := l[0].(map[string]interface{})
 	return &container.DNSConfig{
-		ClusterDns:       config["cluster_dns"].(string),
-		ClusterDnsScope:  config["cluster_dns_scope"].(string),
-		ClusterDnsDomain: config["cluster_dns_domain"].(string),
+		AdditiveVpcScopeDnsDomain: config["additive_vpc_scope_dns_domain"].(string),
+		ClusterDns:                config["cluster_dns"].(string),
+		ClusterDnsScope:           config["cluster_dns_scope"].(string),
+		ClusterDnsDomain:          config["cluster_dns_domain"].(string),
 	}
 }
 
@@ -5725,9 +5731,10 @@ func flattenDnsConfig(c *container.DNSConfig) []map[string]interface{} {
 	}
 	return []map[string]interface{}{
 		{
-			"cluster_dns":        c.ClusterDns,
-			"cluster_dns_scope":  c.ClusterDnsScope,
-			"cluster_dns_domain": c.ClusterDnsDomain,
+			"additive_vpc_scope_dns_domain": c.AdditiveVpcScopeDnsDomain,
+			"cluster_dns":                   c.ClusterDns,
+			"cluster_dns_scope":             c.ClusterDnsScope,
+			"cluster_dns_domain":            c.ClusterDnsDomain,
 		},
 	}
 }

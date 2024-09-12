@@ -432,9 +432,9 @@ var handwrittenIAMDatasources = map[string]*schema.Resource{
 }
 
 // Resources
-// Generated resources: 456
+// Generated resources: 458
 // Generated IAM resources: 261
-// Total generated resources: 717
+// Total generated resources: 719
 var generatedResources = map[string]*schema.Resource{
 	"google_folder_access_approval_settings":                                     accessapproval.ResourceAccessApprovalFolderSettings(),
 	"google_organization_access_approval_settings":                               accessapproval.ResourceAccessApprovalOrganizationSettings(),
@@ -1044,8 +1044,10 @@ var generatedResources = map[string]*schema.Resource{
 	"google_scc_mute_config":                                                     securitycenter.ResourceSecurityCenterMuteConfig(),
 	"google_scc_notification_config":                                             securitycenter.ResourceSecurityCenterNotificationConfig(),
 	"google_scc_organization_custom_module":                                      securitycenter.ResourceSecurityCenterOrganizationCustomModule(),
+	"google_scc_organization_scc_big_query_export":                               securitycenter.ResourceSecurityCenterOrganizationSccBigQueryExport(),
 	"google_scc_project_custom_module":                                           securitycenter.ResourceSecurityCenterProjectCustomModule(),
 	"google_scc_project_notification_config":                                     securitycenter.ResourceSecurityCenterProjectNotificationConfig(),
+	"google_scc_project_scc_big_query_export":                                    securitycenter.ResourceSecurityCenterProjectSccBigQueryExport(),
 	"google_scc_source":                                                          securitycenter.ResourceSecurityCenterSource(),
 	"google_scc_source_iam_binding":                                              tpgiamresource.ResourceIamBinding(securitycenter.SecurityCenterSourceIamSchema, securitycenter.SecurityCenterSourceIamUpdaterProducer, securitycenter.SecurityCenterSourceIdParseFunc),
 	"google_scc_source_iam_member":                                               tpgiamresource.ResourceIamMember(securitycenter.SecurityCenterSourceIamSchema, securitycenter.SecurityCenterSourceIamUpdaterProducer, securitycenter.SecurityCenterSourceIdParseFunc),

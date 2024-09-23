@@ -432,9 +432,9 @@ var handwrittenIAMDatasources = map[string]*schema.Resource{
 }
 
 // Resources
-// Generated resources: 463
+// Generated resources: 464
 // Generated IAM resources: 261
-// Total generated resources: 724
+// Total generated resources: 725
 var generatedResources = map[string]*schema.Resource{
 	"google_folder_access_approval_settings":                                     accessapproval.ResourceAccessApprovalFolderSettings(),
 	"google_organization_access_approval_settings":                               accessapproval.ResourceAccessApprovalOrganizationSettings(),
@@ -763,6 +763,7 @@ var generatedResources = map[string]*schema.Resource{
 	"google_dataproc_autoscaling_policy_iam_binding":                             tpgiamresource.ResourceIamBinding(dataproc.DataprocAutoscalingPolicyIamSchema, dataproc.DataprocAutoscalingPolicyIamUpdaterProducer, dataproc.DataprocAutoscalingPolicyIdParseFunc),
 	"google_dataproc_autoscaling_policy_iam_member":                              tpgiamresource.ResourceIamMember(dataproc.DataprocAutoscalingPolicyIamSchema, dataproc.DataprocAutoscalingPolicyIamUpdaterProducer, dataproc.DataprocAutoscalingPolicyIdParseFunc),
 	"google_dataproc_autoscaling_policy_iam_policy":                              tpgiamresource.ResourceIamPolicy(dataproc.DataprocAutoscalingPolicyIamSchema, dataproc.DataprocAutoscalingPolicyIamUpdaterProducer, dataproc.DataprocAutoscalingPolicyIdParseFunc),
+	"google_dataproc_batch":                                                      dataproc.ResourceDataprocBatch(),
 	"google_dataproc_metastore_federation":                                       dataprocmetastore.ResourceDataprocMetastoreFederation(),
 	"google_dataproc_metastore_federation_iam_binding":                           tpgiamresource.ResourceIamBinding(dataprocmetastore.DataprocMetastoreFederationIamSchema, dataprocmetastore.DataprocMetastoreFederationIamUpdaterProducer, dataprocmetastore.DataprocMetastoreFederationIdParseFunc),
 	"google_dataproc_metastore_federation_iam_member":                            tpgiamresource.ResourceIamMember(dataprocmetastore.DataprocMetastoreFederationIamSchema, dataprocmetastore.DataprocMetastoreFederationIamUpdaterProducer, dataprocmetastore.DataprocMetastoreFederationIdParseFunc),

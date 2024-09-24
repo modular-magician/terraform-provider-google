@@ -93,7 +93,6 @@ type FrameworkProviderConfig struct {
 	CloudRunV2BasePath               string
 	CloudSchedulerBasePath           string
 	CloudTasksBasePath               string
-	ComposerBasePath                 string
 	ComputeBasePath                  string
 	ContainerAnalysisBasePath        string
 	ContainerAttachedBasePath        string
@@ -162,7 +161,6 @@ type FrameworkProviderConfig struct {
 	SecurityCenterManagementBasePath string
 	SecurityCenterV2BasePath         string
 	SecuritypostureBasePath          string
-	ServiceManagementBasePath        string
 	ServiceNetworkingBasePath        string
 	ServiceUsageBasePath             string
 	SiteVerificationBasePath         string
@@ -253,7 +251,6 @@ func (p *FrameworkProviderConfig) LoadAndValidateFramework(ctx context.Context, 
 	p.CloudRunV2BasePath = data.CloudRunV2CustomEndpoint.ValueString()
 	p.CloudSchedulerBasePath = data.CloudSchedulerCustomEndpoint.ValueString()
 	p.CloudTasksBasePath = data.CloudTasksCustomEndpoint.ValueString()
-	p.ComposerBasePath = data.ComposerCustomEndpoint.ValueString()
 	p.ComputeBasePath = data.ComputeCustomEndpoint.ValueString()
 	p.ContainerAnalysisBasePath = data.ContainerAnalysisCustomEndpoint.ValueString()
 	p.ContainerAttachedBasePath = data.ContainerAttachedCustomEndpoint.ValueString()
@@ -322,7 +319,6 @@ func (p *FrameworkProviderConfig) LoadAndValidateFramework(ctx context.Context, 
 	p.SecurityCenterManagementBasePath = data.SecurityCenterManagementCustomEndpoint.ValueString()
 	p.SecurityCenterV2BasePath = data.SecurityCenterV2CustomEndpoint.ValueString()
 	p.SecuritypostureBasePath = data.SecuritypostureCustomEndpoint.ValueString()
-	p.ServiceManagementBasePath = data.ServiceManagementCustomEndpoint.ValueString()
 	p.ServiceNetworkingBasePath = data.ServiceNetworkingCustomEndpoint.ValueString()
 	p.ServiceUsageBasePath = data.ServiceUsageCustomEndpoint.ValueString()
 	p.SiteVerificationBasePath = data.SiteVerificationCustomEndpoint.ValueString()
@@ -751,14 +747,6 @@ func (p *FrameworkProviderConfig) HandleDefaults(ctx context.Context, data *fwmo
 		}, transport_tpg.DefaultBasePaths[transport_tpg.CloudTasksBasePathKey])
 		if customEndpoint != nil {
 			data.CloudTasksCustomEndpoint = types.StringValue(customEndpoint.(string))
-		}
-	}
-	if data.ComposerCustomEndpoint.IsNull() {
-		customEndpoint := transport_tpg.MultiEnvDefault([]string{
-			"GOOGLE_COMPOSER_CUSTOM_ENDPOINT",
-		}, transport_tpg.DefaultBasePaths[transport_tpg.ComposerBasePathKey])
-		if customEndpoint != nil {
-			data.ComposerCustomEndpoint = types.StringValue(customEndpoint.(string))
 		}
 	}
 	if data.ComputeCustomEndpoint.IsNull() {
@@ -1303,14 +1291,6 @@ func (p *FrameworkProviderConfig) HandleDefaults(ctx context.Context, data *fwmo
 		}, transport_tpg.DefaultBasePaths[transport_tpg.SecuritypostureBasePathKey])
 		if customEndpoint != nil {
 			data.SecuritypostureCustomEndpoint = types.StringValue(customEndpoint.(string))
-		}
-	}
-	if data.ServiceManagementCustomEndpoint.IsNull() {
-		customEndpoint := transport_tpg.MultiEnvDefault([]string{
-			"GOOGLE_SERVICE_MANAGEMENT_CUSTOM_ENDPOINT",
-		}, transport_tpg.DefaultBasePaths[transport_tpg.ServiceManagementBasePathKey])
-		if customEndpoint != nil {
-			data.ServiceManagementCustomEndpoint = types.StringValue(customEndpoint.(string))
 		}
 	}
 	if data.ServiceNetworkingCustomEndpoint.IsNull() {

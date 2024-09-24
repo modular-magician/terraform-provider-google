@@ -107,7 +107,6 @@ import (
 	"github.com/hashicorp/terraform-provider-google/google/services/securitycentermanagement"
 	"github.com/hashicorp/terraform-provider-google/google/services/securitycenterv2"
 	"github.com/hashicorp/terraform-provider-google/google/services/securityposture"
-	"github.com/hashicorp/terraform-provider-google/google/services/servicemanagement"
 	"github.com/hashicorp/terraform-provider-google/google/services/servicenetworking"
 	"github.com/hashicorp/terraform-provider-google/google/services/siteverification"
 	"github.com/hashicorp/terraform-provider-google/google/services/sourcerepo"
@@ -396,8 +395,6 @@ var generatedIAMDatasources = map[string]*schema.Resource{
 	"google_secure_source_manager_repository_iam_policy":     tpgiamresource.DataSourceIamPolicy(securesourcemanager.SecureSourceManagerRepositoryIamSchema, securesourcemanager.SecureSourceManagerRepositoryIamUpdaterProducer),
 	"google_scc_source_iam_policy":                           tpgiamresource.DataSourceIamPolicy(securitycenter.SecurityCenterSourceIamSchema, securitycenter.SecurityCenterSourceIamUpdaterProducer),
 	"google_scc_v2_organization_source_iam_policy":           tpgiamresource.DataSourceIamPolicy(securitycenterv2.SecurityCenterV2OrganizationSourceIamSchema, securitycenterv2.SecurityCenterV2OrganizationSourceIamUpdaterProducer),
-	"google_endpoints_service_iam_policy":                    tpgiamresource.DataSourceIamPolicy(servicemanagement.ServiceManagementServiceIamSchema, servicemanagement.ServiceManagementServiceIamUpdaterProducer),
-	"google_endpoints_service_consumers_iam_policy":          tpgiamresource.DataSourceIamPolicy(servicemanagement.ServiceManagementServiceConsumersIamSchema, servicemanagement.ServiceManagementServiceConsumersIamUpdaterProducer),
 	"google_sourcerepo_repository_iam_policy":                tpgiamresource.DataSourceIamPolicy(sourcerepo.SourceRepoRepositoryIamSchema, sourcerepo.SourceRepoRepositoryIamUpdaterProducer),
 	"google_storage_bucket_iam_policy":                       tpgiamresource.DataSourceIamPolicy(storage.StorageBucketIamSchema, storage.StorageBucketIamUpdaterProducer),
 	"google_tags_tag_key_iam_policy":                         tpgiamresource.DataSourceIamPolicy(tags.TagsTagKeyIamSchema, tags.TagsTagKeyIamUpdaterProducer),
@@ -433,8 +430,8 @@ var handwrittenIAMDatasources = map[string]*schema.Resource{
 
 // Resources
 // Generated resources: 463
-// Generated IAM resources: 261
-// Total generated resources: 724
+// Generated IAM resources: 255
+// Total generated resources: 718
 var generatedResources = map[string]*schema.Resource{
 	"google_folder_access_approval_settings":                                     accessapproval.ResourceAccessApprovalFolderSettings(),
 	"google_organization_access_approval_settings":                               accessapproval.ResourceAccessApprovalOrganizationSettings(),
@@ -1076,12 +1073,6 @@ var generatedResources = map[string]*schema.Resource{
 	"google_scc_v2_project_scc_big_query_export":                                 securitycenterv2.ResourceSecurityCenterV2ProjectSccBigQueryExport(),
 	"google_securityposture_posture":                                             securityposture.ResourceSecurityposturePosture(),
 	"google_securityposture_posture_deployment":                                  securityposture.ResourceSecurityposturePostureDeployment(),
-	"google_endpoints_service_iam_binding":                                       tpgiamresource.ResourceIamBinding(servicemanagement.ServiceManagementServiceIamSchema, servicemanagement.ServiceManagementServiceIamUpdaterProducer, servicemanagement.ServiceManagementServiceIdParseFunc),
-	"google_endpoints_service_iam_member":                                        tpgiamresource.ResourceIamMember(servicemanagement.ServiceManagementServiceIamSchema, servicemanagement.ServiceManagementServiceIamUpdaterProducer, servicemanagement.ServiceManagementServiceIdParseFunc),
-	"google_endpoints_service_iam_policy":                                        tpgiamresource.ResourceIamPolicy(servicemanagement.ServiceManagementServiceIamSchema, servicemanagement.ServiceManagementServiceIamUpdaterProducer, servicemanagement.ServiceManagementServiceIdParseFunc),
-	"google_endpoints_service_consumers_iam_binding":                             tpgiamresource.ResourceIamBinding(servicemanagement.ServiceManagementServiceConsumersIamSchema, servicemanagement.ServiceManagementServiceConsumersIamUpdaterProducer, servicemanagement.ServiceManagementServiceConsumersIdParseFunc),
-	"google_endpoints_service_consumers_iam_member":                              tpgiamresource.ResourceIamMember(servicemanagement.ServiceManagementServiceConsumersIamSchema, servicemanagement.ServiceManagementServiceConsumersIamUpdaterProducer, servicemanagement.ServiceManagementServiceConsumersIdParseFunc),
-	"google_endpoints_service_consumers_iam_policy":                              tpgiamresource.ResourceIamPolicy(servicemanagement.ServiceManagementServiceConsumersIamSchema, servicemanagement.ServiceManagementServiceConsumersIamUpdaterProducer, servicemanagement.ServiceManagementServiceConsumersIdParseFunc),
 	"google_service_networking_vpc_service_controls":                             servicenetworking.ResourceServiceNetworkingVPCServiceControls(),
 	"google_site_verification_web_resource":                                      siteverification.ResourceSiteVerificationWebResource(),
 	"google_sourcerepo_repository":                                               sourcerepo.ResourceSourceRepoRepository(),

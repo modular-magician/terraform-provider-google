@@ -320,11 +320,6 @@ func Provider() *schema.Provider {
 				Optional:     true,
 				ValidateFunc: transport_tpg.ValidateCustomEndpoint,
 			},
-			"composer_custom_endpoint": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				ValidateFunc: transport_tpg.ValidateCustomEndpoint,
-			},
 			"compute_custom_endpoint": {
 				Type:         schema.TypeString,
 				Optional:     true,
@@ -665,11 +660,6 @@ func Provider() *schema.Provider {
 				Optional:     true,
 				ValidateFunc: transport_tpg.ValidateCustomEndpoint,
 			},
-			"service_management_custom_endpoint": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				ValidateFunc: transport_tpg.ValidateCustomEndpoint,
-			},
 			"service_networking_custom_endpoint": {
 				Type:         schema.TypeString,
 				Optional:     true,
@@ -976,7 +966,6 @@ func ProviderConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	config.CloudRunV2BasePath = d.Get("cloud_run_v2_custom_endpoint").(string)
 	config.CloudSchedulerBasePath = d.Get("cloud_scheduler_custom_endpoint").(string)
 	config.CloudTasksBasePath = d.Get("cloud_tasks_custom_endpoint").(string)
-	config.ComposerBasePath = d.Get("composer_custom_endpoint").(string)
 	config.ComputeBasePath = d.Get("compute_custom_endpoint").(string)
 	config.ContainerAnalysisBasePath = d.Get("container_analysis_custom_endpoint").(string)
 	config.ContainerAttachedBasePath = d.Get("container_attached_custom_endpoint").(string)
@@ -1045,7 +1034,6 @@ func ProviderConfigure(ctx context.Context, d *schema.ResourceData, p *schema.Pr
 	config.SecurityCenterManagementBasePath = d.Get("security_center_management_custom_endpoint").(string)
 	config.SecurityCenterV2BasePath = d.Get("security_center_v2_custom_endpoint").(string)
 	config.SecuritypostureBasePath = d.Get("securityposture_custom_endpoint").(string)
-	config.ServiceManagementBasePath = d.Get("service_management_custom_endpoint").(string)
 	config.ServiceNetworkingBasePath = d.Get("service_networking_custom_endpoint").(string)
 	config.ServiceUsageBasePath = d.Get("service_usage_custom_endpoint").(string)
 	config.SiteVerificationBasePath = d.Get("site_verification_custom_endpoint").(string)

@@ -223,7 +223,6 @@ type Config struct {
 	CloudRunV2BasePath               string
 	CloudSchedulerBasePath           string
 	CloudTasksBasePath               string
-	ComposerBasePath                 string
 	ComputeBasePath                  string
 	ContainerAnalysisBasePath        string
 	ContainerAttachedBasePath        string
@@ -292,7 +291,6 @@ type Config struct {
 	SecurityCenterManagementBasePath string
 	SecurityCenterV2BasePath         string
 	SecuritypostureBasePath          string
-	ServiceManagementBasePath        string
 	ServiceNetworkingBasePath        string
 	ServiceUsageBasePath             string
 	SiteVerificationBasePath         string
@@ -363,7 +361,6 @@ const CloudRunBasePathKey = "CloudRun"
 const CloudRunV2BasePathKey = "CloudRunV2"
 const CloudSchedulerBasePathKey = "CloudScheduler"
 const CloudTasksBasePathKey = "CloudTasks"
-const ComposerBasePathKey = "Composer"
 const ComputeBasePathKey = "Compute"
 const ContainerAnalysisBasePathKey = "ContainerAnalysis"
 const ContainerAttachedBasePathKey = "ContainerAttached"
@@ -432,7 +429,6 @@ const SecurityCenterBasePathKey = "SecurityCenter"
 const SecurityCenterManagementBasePathKey = "SecurityCenterManagement"
 const SecurityCenterV2BasePathKey = "SecurityCenterV2"
 const SecuritypostureBasePathKey = "Securityposture"
-const ServiceManagementBasePathKey = "ServiceManagement"
 const ServiceNetworkingBasePathKey = "ServiceNetworking"
 const ServiceUsageBasePathKey = "ServiceUsage"
 const SiteVerificationBasePathKey = "SiteVerification"
@@ -497,7 +493,6 @@ var DefaultBasePaths = map[string]string{
 	CloudRunV2BasePathKey:               "https://run.googleapis.com/v2/",
 	CloudSchedulerBasePathKey:           "https://cloudscheduler.googleapis.com/v1/",
 	CloudTasksBasePathKey:               "https://cloudtasks.googleapis.com/v2/",
-	ComposerBasePathKey:                 "https://composer.googleapis.com/v1/",
 	ComputeBasePathKey:                  "https://compute.googleapis.com/compute/v1/",
 	ContainerAnalysisBasePathKey:        "https://containeranalysis.googleapis.com/v1/",
 	ContainerAttachedBasePathKey:        "https://{{location}}-gkemulticloud.googleapis.com/v1/",
@@ -566,7 +561,6 @@ var DefaultBasePaths = map[string]string{
 	SecurityCenterManagementBasePathKey: "https://securitycentermanagement.googleapis.com/v1/",
 	SecurityCenterV2BasePathKey:         "https://securitycenter.googleapis.com/v2/",
 	SecuritypostureBasePathKey:          "https://securityposture.googleapis.com/v1/",
-	ServiceManagementBasePathKey:        "https://servicemanagement.googleapis.com/v1/",
 	ServiceNetworkingBasePathKey:        "https://servicenetworking.googleapis.com/v1/",
 	ServiceUsageBasePathKey:             "https://serviceusage.googleapis.com/v1/",
 	SiteVerificationBasePathKey:         "https://www.googleapis.com/siteVerification/v1/",
@@ -841,11 +835,6 @@ func SetEndpointDefaults(d *schema.ResourceData) error {
 		d.Set("cloud_tasks_custom_endpoint", MultiEnvDefault([]string{
 			"GOOGLE_CLOUD_TASKS_CUSTOM_ENDPOINT",
 		}, DefaultBasePaths[CloudTasksBasePathKey]))
-	}
-	if d.Get("composer_custom_endpoint") == "" {
-		d.Set("composer_custom_endpoint", MultiEnvDefault([]string{
-			"GOOGLE_COMPOSER_CUSTOM_ENDPOINT",
-		}, DefaultBasePaths[ComposerBasePathKey]))
 	}
 	if d.Get("compute_custom_endpoint") == "" {
 		d.Set("compute_custom_endpoint", MultiEnvDefault([]string{
@@ -1186,11 +1175,6 @@ func SetEndpointDefaults(d *schema.ResourceData) error {
 		d.Set("securityposture_custom_endpoint", MultiEnvDefault([]string{
 			"GOOGLE_SECURITYPOSTURE_CUSTOM_ENDPOINT",
 		}, DefaultBasePaths[SecuritypostureBasePathKey]))
-	}
-	if d.Get("service_management_custom_endpoint") == "" {
-		d.Set("service_management_custom_endpoint", MultiEnvDefault([]string{
-			"GOOGLE_SERVICE_MANAGEMENT_CUSTOM_ENDPOINT",
-		}, DefaultBasePaths[ServiceManagementBasePathKey]))
 	}
 	if d.Get("service_networking_custom_endpoint") == "" {
 		d.Set("service_networking_custom_endpoint", MultiEnvDefault([]string{
@@ -2214,7 +2198,6 @@ func ConfigureBasePaths(c *Config) {
 	c.CloudRunV2BasePath = DefaultBasePaths[CloudRunV2BasePathKey]
 	c.CloudSchedulerBasePath = DefaultBasePaths[CloudSchedulerBasePathKey]
 	c.CloudTasksBasePath = DefaultBasePaths[CloudTasksBasePathKey]
-	c.ComposerBasePath = DefaultBasePaths[ComposerBasePathKey]
 	c.ComputeBasePath = DefaultBasePaths[ComputeBasePathKey]
 	c.ContainerAnalysisBasePath = DefaultBasePaths[ContainerAnalysisBasePathKey]
 	c.ContainerAttachedBasePath = DefaultBasePaths[ContainerAttachedBasePathKey]
@@ -2283,7 +2266,6 @@ func ConfigureBasePaths(c *Config) {
 	c.SecurityCenterManagementBasePath = DefaultBasePaths[SecurityCenterManagementBasePathKey]
 	c.SecurityCenterV2BasePath = DefaultBasePaths[SecurityCenterV2BasePathKey]
 	c.SecuritypostureBasePath = DefaultBasePaths[SecuritypostureBasePathKey]
-	c.ServiceManagementBasePath = DefaultBasePaths[ServiceManagementBasePathKey]
 	c.ServiceNetworkingBasePath = DefaultBasePaths[ServiceNetworkingBasePathKey]
 	c.ServiceUsageBasePath = DefaultBasePaths[ServiceUsageBasePathKey]
 	c.SiteVerificationBasePath = DefaultBasePaths[SiteVerificationBasePathKey]

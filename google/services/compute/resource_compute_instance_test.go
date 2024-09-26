@@ -7647,7 +7647,6 @@ resource "google_compute_instance" "foobar2" {
 
 }
 
-
 `, instance, confidentialInstanceType, instance)
 }
 

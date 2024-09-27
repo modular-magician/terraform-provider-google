@@ -2041,6 +2041,13 @@ func TestAccComputeInstanceConfidentialInstanceConfigMain(t *testing.T) {
 					testAccCheckComputeInstanceHasConfidentialInstanceConfig(&instance2, false, "SEV_SNP"),
 				),
 			},
+			{
+				Config: testAccComputeInstanceConfidentialInstanceConfigEnableTdx(instanceName, "TDX"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckComputeInstanceExists(t, "google_compute_instance.foobar5", &instance),
+					testAccCheckComputeInstanceHasConfidentialInstanceConfig(&instance, false, "TDX"),
+				),
+			},
 		},
 	})
 }
@@ -7093,7 +7100,7 @@ resource "google_compute_instance" "foobar" {
   network_interface {
     subnetwork = google_compute_subnetwork.inst-test-subnetwork.self_link
     alias_ip_range {
-      subnetwork_range_name = "inst-test-secondary"  
+      subnetwork_range_name = "inst-test-secondary"
       ip_cidr_range = "172.16.1.0/24"
     }
     alias_ip_range {
@@ -7712,6 +7719,40 @@ resource "google_compute_instance" "foobar6" {
 
 }
 `, instance, minCpuPlatform, confidentialInstanceType, instance, minCpuPlatform, confidentialInstanceType)
+}
+
+func testAccComputeInstanceConfidentialInstanceConfigEnableTdx(instance string, confidentialInstanceType string) string {
+	return fmt.Sprintf(`
+data "google_compute_image" "my_image3" {
+  family    = "ubuntu-2204-lts"
+  project   = "tdx-guest-images"
+}
+
+resource "google_compute_instance" "foobar5" {
+  name         = "%s"
+  machine_type = "c3-standard-4"
+  zone         = "us-central1-a"
+
+  boot_disk {
+    initialize_params {
+      image = data.google_compute_image.my_image3.self_link
+    }
+  }
+
+  network_interface {
+    network = "default"
+  }
+
+  confidential_instance_config {
+    confidential_instance_type = %q
+  }
+
+  scheduling {
+    on_host_maintenance = "TERMINATE"
+  }
+
+}
+`, instance, confidentialInstanceType)
 }
 
 func testAccComputeInstance_attributionLabelCreate(instance, add, strategy string) string {
@@ -8839,7 +8880,7 @@ resource "google_compute_instance" "foobar" {
 			storage_pool = "%s"
 		}
 	}
-	
+
 	network_interface {
 		network = "default"
 	}
@@ -8912,7 +8953,7 @@ resource "google_compute_instance" "foobar" {
   	attached_disk {
               source = google_compute_disk.foorbarattach.self_link
   	}
-	
+
 	network_interface {
 		network = "default"
         }

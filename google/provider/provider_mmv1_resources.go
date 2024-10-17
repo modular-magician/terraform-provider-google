@@ -71,6 +71,7 @@ import (
 	"github.com/hashicorp/terraform-provider-google/google/services/gkeonprem"
 	"github.com/hashicorp/terraform-provider-google/google/services/healthcare"
 	"github.com/hashicorp/terraform-provider-google/google/services/iam2"
+	"github.com/hashicorp/terraform-provider-google/google/services/iam3"
 	"github.com/hashicorp/terraform-provider-google/google/services/iambeta"
 	"github.com/hashicorp/terraform-provider-google/google/services/iamworkforcepool"
 	"github.com/hashicorp/terraform-provider-google/google/services/iap"
@@ -447,9 +448,9 @@ var handwrittenIAMDatasources = map[string]*schema.Resource{
 }
 
 // Resources
-// Generated resources: 478
+// Generated resources: 479
 // Generated IAM resources: 261
-// Total generated resources: 739
+// Total generated resources: 740
 var generatedResources = map[string]*schema.Resource{
 	"google_folder_access_approval_settings":                                     accessapproval.ResourceAccessApprovalFolderSettings(),
 	"google_organization_access_approval_settings":                               accessapproval.ResourceAccessApprovalOrganizationSettings(),
@@ -887,6 +888,7 @@ var generatedResources = map[string]*schema.Resource{
 	"google_healthcare_workspace":                                                healthcare.ResourceHealthcareWorkspace(),
 	"google_iam_access_boundary_policy":                                          iam2.ResourceIAM2AccessBoundaryPolicy(),
 	"google_iam_deny_policy":                                                     iam2.ResourceIAM2DenyPolicy(),
+	"google_iam3_principal_access_boundary_policy":                               iam3.ResourceIAM3PrincipalAccessBoundaryPolicy(),
 	"google_iam_workload_identity_pool":                                          iambeta.ResourceIAMBetaWorkloadIdentityPool(),
 	"google_iam_workload_identity_pool_provider":                                 iambeta.ResourceIAMBetaWorkloadIdentityPoolProvider(),
 	"google_iam_workforce_pool":                                                  iamworkforcepool.ResourceIAMWorkforcePoolWorkforcePool(),

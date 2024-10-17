@@ -268,6 +268,7 @@ var handwrittenDatasources = map[string]*schema.Resource{
 	"google_oracle_database_db_servers":                    oracledatabase.DataSourceOracleDatabaseDbServers(),
 	"google_oracle_database_cloud_exadata_infrastructures": oracledatabase.DataSourceOracleDatabaseCloudExadataInfrastructures(),
 	"google_oracle_database_cloud_exadata_infrastructure":  oracledatabase.DataSourceOracleDatabaseCloudExadataInfrastructure(),
+	"google_oracle_database_cloud_vm_clusters":             oracledatabase.DataSourceOracleDatabaseCloudVmClusters(),
 	"google_oracle_database_cloud_vm_cluster":              oracledatabase.DataSourceOracleDatabaseCloudVmCluster(),
 	"google_organization":                                  resourcemanager.DataSourceGoogleOrganization(),
 	"google_privateca_certificate_authority":               privateca.DataSourcePrivatecaCertificateAuthority(),
@@ -444,9 +445,9 @@ var handwrittenIAMDatasources = map[string]*schema.Resource{
 }
 
 // Resources
-// Generated resources: 476
+// Generated resources: 477
 // Generated IAM resources: 261
-// Total generated resources: 737
+// Total generated resources: 738
 var generatedResources = map[string]*schema.Resource{
 	"google_folder_access_approval_settings":                                     accessapproval.ResourceAccessApprovalFolderSettings(),
 	"google_organization_access_approval_settings":                               accessapproval.ResourceAccessApprovalOrganizationSettings(),
@@ -974,6 +975,7 @@ var generatedResources = map[string]*schema.Resource{
 	"google_netapp_volume_replication":                                           netapp.ResourceNetappVolumeReplication(),
 	"google_netapp_volume_snapshot":                                              netapp.ResourceNetappVolumeSnapshot(),
 	"google_netapp_kmsconfig":                                                    netapp.ResourceNetappkmsconfig(),
+	"google_network_connectivity_group":                                          networkconnectivity.ResourceNetworkConnectivityGroup(),
 	"google_network_connectivity_hub":                                            networkconnectivity.ResourceNetworkConnectivityHub(),
 	"google_network_connectivity_internal_range":                                 networkconnectivity.ResourceNetworkConnectivityInternalRange(),
 	"google_network_connectivity_policy_based_route":                             networkconnectivity.ResourceNetworkConnectivityPolicyBasedRoute(),

@@ -81,6 +81,7 @@ import (
 	"github.com/hashicorp/terraform-provider-google/google/services/logging"
 	"github.com/hashicorp/terraform-provider-google/google/services/looker"
 	"github.com/hashicorp/terraform-provider-google/google/services/memcache"
+	"github.com/hashicorp/terraform-provider-google/google/services/memorystore"
 	"github.com/hashicorp/terraform-provider-google/google/services/migrationcenter"
 	"github.com/hashicorp/terraform-provider-google/google/services/mlengine"
 	"github.com/hashicorp/terraform-provider-google/google/services/monitoring"
@@ -447,9 +448,9 @@ var handwrittenIAMDatasources = map[string]*schema.Resource{
 }
 
 // Resources
-// Generated resources: 481
+// Generated resources: 482
 // Generated IAM resources: 261
-// Total generated resources: 742
+// Total generated resources: 743
 var generatedResources = map[string]*schema.Resource{
 	"google_folder_access_approval_settings":                                     accessapproval.ResourceAccessApprovalFolderSettings(),
 	"google_organization_access_approval_settings":                               accessapproval.ResourceAccessApprovalOrganizationSettings(),
@@ -960,6 +961,7 @@ var generatedResources = map[string]*schema.Resource{
 	"google_logging_organization_settings":                                       logging.ResourceLoggingOrganizationSettings(),
 	"google_looker_instance":                                                     looker.ResourceLookerInstance(),
 	"google_memcache_instance":                                                   memcache.ResourceMemcacheInstance(),
+	"google_memorystore_instance":                                                memorystore.ResourceMemorystoreInstance(),
 	"google_migration_center_group":                                              migrationcenter.ResourceMigrationCenterGroup(),
 	"google_migration_center_preference_set":                                     migrationcenter.ResourceMigrationCenterPreferenceSet(),
 	"google_ml_engine_model":                                                     mlengine.ResourceMLEngineModel(),

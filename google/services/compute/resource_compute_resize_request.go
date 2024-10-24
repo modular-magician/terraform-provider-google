@@ -97,7 +97,7 @@ Authorization requires the following IAM permission on the specified resource in
 							Type:        schema.TypeString,
 							Required:    true,
 							ForceNew:    true,
-							Description: `Span of time at a resolution of a second. Must be from 0 to 315,576,000,000 inclusive. Note: these bounds are computed from: 60 sec/min * 60 min/hr * 24 hr/day * 365.25 days/year * 10000 years`,
+							Description: `Span of time at a resolution of a second. Must be from 600 to 604800 inclusive. Note: minimum and maximum allowed range for requestedRunDuration is 10 minutes (600 seconds) and 7 days(604800 seconds) correspondingly.`,
 						},
 						"nanos": {
 							Type:        schema.TypeInt,
@@ -116,41 +116,41 @@ Authorization requires the following IAM permission on the specified resource in
 			"state": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: `[Output only] Current state of the request.`,
+				Description: `Current state of the request.`,
 			},
 			"status": {
 				Type:        schema.TypeList,
 				Computed:    true,
-				Description: `[Output only] Status of the request.`,
+				Description: `Status of the request.`,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"error": {
 							Type:        schema.TypeList,
 							Computed:    true,
-							Description: `[Output only] Fatal errors encountered during the queueing or provisioning phases of the ResizeRequest that caused the transition to the FAILED state. Contrary to the lastAttempt errors, this field is final and errors are never removed from here, as the ResizeRequest is not going to retry.`,
+							Description: `Fatal errors encountered during the queueing or provisioning phases of the ResizeRequest that caused the transition to the FAILED state. Contrary to the lastAttempt errors, this field is final and errors are never removed from here, as the ResizeRequest is not going to retry.`,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"errors": {
 										Type:        schema.TypeList,
 										Computed:    true,
-										Description: `[Output Only] The array of errors encountered while processing this operation.`,
+										Description: `The array of errors encountered while processing this operation.`,
 										Elem: &schema.Resource{
 											Schema: map[string]*schema.Schema{
 												"code": {
 													Type:        schema.TypeString,
 													Computed:    true,
-													Description: `[Output Only] The error type identifier for this error.`,
+													Description: `The error type identifier for this error.`,
 												},
 												"error_details": {
 													Type:        schema.TypeList,
 													Computed:    true,
-													Description: `[Output Only] An optional list of messages that contain the error details. There is a set of defined message types to use for providing details.The syntax depends on the error code. For example, QuotaExceededInfo will have details when the error code is QUOTA_EXCEEDED.`,
+													Description: `An array of messages that contain the error details. There is a set of defined message types to use for providing details.The syntax depends on the error code. For example, QuotaExceededInfo will have details when the error code is QUOTA_EXCEEDED.`,
 													Elem: &schema.Resource{
 														Schema: map[string]*schema.Schema{
 															"error_info": {
 																Type:        schema.TypeList,
 																Computed:    true,
-																Description: `[Output Only]`,
+																Description: `A nested object resource`,
 																Elem: &schema.Resource{
 																	Schema: map[string]*schema.Schema{
 																		"domain": {
@@ -176,13 +176,13 @@ Keys must match /[a-z][a-zA-Z0-9-_]+/ but should ideally be lowerCamelCase. Also
 															"help": {
 																Type:        schema.TypeList,
 																Computed:    true,
-																Description: `[Output Only]`,
+																Description: `A nested object resource`,
 																Elem: &schema.Resource{
 																	Schema: map[string]*schema.Schema{
 																		"links": {
 																			Type:        schema.TypeList,
 																			Computed:    true,
-																			Description: `[Output Only]`,
+																			Description: `A nested object resource`,
 																			Elem: &schema.Resource{
 																				Schema: map[string]*schema.Schema{
 																					"description": {
@@ -204,7 +204,7 @@ Keys must match /[a-z][a-zA-Z0-9-_]+/ but should ideally be lowerCamelCase. Also
 															"localized_message": {
 																Type:        schema.TypeList,
 																Computed:    true,
-																Description: `[Output Only]`,
+																Description: `A nested object resource`,
 																Elem: &schema.Resource{
 																	Schema: map[string]*schema.Schema{
 																		"locale": {
@@ -223,7 +223,7 @@ Keys must match /[a-z][a-zA-Z0-9-_]+/ but should ideally be lowerCamelCase. Also
 															"quota_info": {
 																Type:        schema.TypeList,
 																Computed:    true,
-																Description: `[Output Only]`,
+																Description: `A nested object resource`,
 																Elem: &schema.Resource{
 																	Schema: map[string]*schema.Schema{
 																		"dimensions": {
@@ -266,12 +266,12 @@ Keys must match /[a-z][a-zA-Z0-9-_]+/ but should ideally be lowerCamelCase. Also
 												"location": {
 													Type:        schema.TypeString,
 													Computed:    true,
-													Description: `Output Only] Indicates the field in the request that caused the error. This property is optional.`,
+													Description: `Indicates the field in the request that caused the error. This property is optional.`,
 												},
 												"message": {
 													Type:        schema.TypeString,
 													Computed:    true,
-													Description: `[Output Only] An optional, human-readable error message.`,
+													Description: `An optional, human-readable error message.`,
 												},
 											},
 										},
@@ -282,36 +282,36 @@ Keys must match /[a-z][a-zA-Z0-9-_]+/ but should ideally be lowerCamelCase. Also
 						"last_attempt": {
 							Type:        schema.TypeList,
 							Computed:    true,
-							Description: `[Output only] Information about the last attempt to fulfill the request. The value is temporary since the ResizeRequest can retry, as long as it's still active and the last attempt value can either be cleared or replaced with a different error. Since ResizeRequest retries infrequently, the value may be stale and no longer show an active problem. The value is cleared when ResizeRequest transitions to the final state (becomes inactive). If the final state is FAILED the error describing it will be storred in the "error" field only.`,
+							Description: `Information about the last attempt to fulfill the request. The value is temporary since the ResizeRequest can retry, as long as it's still active and the last attempt value can either be cleared or replaced with a different error. Since ResizeRequest retries infrequently, the value may be stale and no longer show an active problem. The value is cleared when ResizeRequest transitions to the final state (becomes inactive). If the final state is FAILED the error describing it will be storred in the "error" field only.`,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"error": {
 										Type:        schema.TypeList,
 										Computed:    true,
-										Description: `[Output only] Fatal errors encountered during the queueing or provisioning phases of the ResizeRequest that caused the transition to the FAILED state. Contrary to the lastAttempt errors, this field is final and errors are never removed from here, as the ResizeRequest is not going to retry.`,
+										Description: `Fatal errors encountered during the queueing or provisioning phases of the ResizeRequest that caused the transition to the FAILED state. Contrary to the lastAttempt errors, this field is final and errors are never removed from here, as the ResizeRequest is not going to retry.`,
 										Elem: &schema.Resource{
 											Schema: map[string]*schema.Schema{
 												"errors": {
 													Type:        schema.TypeList,
 													Computed:    true,
-													Description: `[Output Only] The array of errors encountered while processing this operation.`,
+													Description: `The array of errors encountered while processing this operation.`,
 													Elem: &schema.Resource{
 														Schema: map[string]*schema.Schema{
 															"code": {
 																Type:        schema.TypeString,
 																Computed:    true,
-																Description: `[Output Only] The error type identifier for this error.`,
+																Description: `The error type identifier for this error.`,
 															},
 															"error_details": {
 																Type:        schema.TypeList,
 																Computed:    true,
-																Description: `[Output Only] An optional list of messages that contain the error details. There is a set of defined message types to use for providing details.The syntax depends on the error code. For example, QuotaExceededInfo will have details when the error code is QUOTA_EXCEEDED.`,
+																Description: `An array of messages that contain the error details. There is a set of defined message types to use for providing details.The syntax depends on the error code. For example, QuotaExceededInfo will have details when the error code is QUOTA_EXCEEDED.`,
 																Elem: &schema.Resource{
 																	Schema: map[string]*schema.Schema{
 																		"error_info": {
 																			Type:        schema.TypeList,
 																			Computed:    true,
-																			Description: `[Output Only]`,
+																			Description: `A nested object resource`,
 																			Elem: &schema.Resource{
 																				Schema: map[string]*schema.Schema{
 																					"domain": {
@@ -337,13 +337,13 @@ Keys must match /[a-z][a-zA-Z0-9-_]+/ but should ideally be lowerCamelCase. Also
 																		"help": {
 																			Type:        schema.TypeList,
 																			Computed:    true,
-																			Description: `[Output Only]`,
+																			Description: `A nested object resource`,
 																			Elem: &schema.Resource{
 																				Schema: map[string]*schema.Schema{
 																					"links": {
 																						Type:        schema.TypeList,
 																						Computed:    true,
-																						Description: `[Output Only]`,
+																						Description: `A nested object resource`,
 																						Elem: &schema.Resource{
 																							Schema: map[string]*schema.Schema{
 																								"description": {
@@ -365,7 +365,7 @@ Keys must match /[a-z][a-zA-Z0-9-_]+/ but should ideally be lowerCamelCase. Also
 																		"localized_message": {
 																			Type:        schema.TypeList,
 																			Computed:    true,
-																			Description: `[Output Only]`,
+																			Description: `A nested object resource`,
 																			Elem: &schema.Resource{
 																				Schema: map[string]*schema.Schema{
 																					"locale": {
@@ -384,7 +384,7 @@ Keys must match /[a-z][a-zA-Z0-9-_]+/ but should ideally be lowerCamelCase. Also
 																		"quota_info": {
 																			Type:        schema.TypeList,
 																			Computed:    true,
-																			Description: `[Output Only]`,
+																			Description: `A nested object resource`,
 																			Elem: &schema.Resource{
 																				Schema: map[string]*schema.Schema{
 																					"dimensions": {
@@ -427,12 +427,12 @@ Keys must match /[a-z][a-zA-Z0-9-_]+/ but should ideally be lowerCamelCase. Also
 															"location": {
 																Type:        schema.TypeString,
 																Computed:    true,
-																Description: `Output Only] Indicates the field in the request that caused the error. This property is optional.`,
+																Description: `Indicates the field in the request that caused the error. This property is optional.`,
 															},
 															"message": {
 																Type:        schema.TypeString,
 																Computed:    true,
-																Description: `[Output Only] An optional, human-readable error message.`,
+																Description: `An optional, human-readable error message.`,
 															},
 														},
 													},
@@ -641,8 +641,8 @@ func resourceComputeResizeRequestDelete(d *schema.ResourceData, meta interface{}
 		return err
 	}
 
-	// Get current state (accepted or not) and delete
-	if d.Get("state") == "ACCEPTED" {
+	// Either cancel and delete the request based on current state or delete
+	if d.Get("state") == "CREATING" || d.Get("state") == "ACCEPTED" {
 		// cancel resize request
 		res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 			Config:    config,
@@ -677,7 +677,7 @@ func resourceComputeResizeRequestDelete(d *schema.ResourceData, meta interface{}
 	})
 
 	err = ComputeOperationWaitTime(
-		config, res, project, "Cancelling the resize request", userAgent,
+		config, res, project, "Deleting the resize request", userAgent,
 		d.Timeout(schema.TimeoutDelete))
 
 	if err != nil {
@@ -807,22 +807,24 @@ func flattenComputeResizeRequestStatusError(v interface{}, d *schema.ResourceDat
 }
 func flattenComputeResizeRequestStatusErrorErrors(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	if v == nil {
-		return nil
+		return v
 	}
-	original := v.(map[string]interface{})
-	if len(original) == 0 {
-		return nil
+	l := v.([]interface{})
+	transformed := make([]interface{}, 0, len(l))
+	for _, raw := range l {
+		original := raw.(map[string]interface{})
+		if len(original) < 1 {
+			// Do not include empty json objects coming back from the api
+			continue
+		}
+		transformed = append(transformed, map[string]interface{}{
+			"code":          flattenComputeResizeRequestStatusErrorErrorsCode(original["code"], d, config),
+			"location":      flattenComputeResizeRequestStatusErrorErrorsLocation(original["location"], d, config),
+			"message":       flattenComputeResizeRequestStatusErrorErrorsMessage(original["message"], d, config),
+			"error_details": flattenComputeResizeRequestStatusErrorErrorsErrorDetails(original["errorDetails"], d, config),
+		})
 	}
-	transformed := make(map[string]interface{})
-	transformed["code"] =
-		flattenComputeResizeRequestStatusErrorErrorsCode(original["code"], d, config)
-	transformed["location"] =
-		flattenComputeResizeRequestStatusErrorErrorsLocation(original["location"], d, config)
-	transformed["message"] =
-		flattenComputeResizeRequestStatusErrorErrorsMessage(original["message"], d, config)
-	transformed["error_details"] =
-		flattenComputeResizeRequestStatusErrorErrorsErrorDetails(original["errorDetails"], d, config)
-	return []interface{}{transformed}
+	return transformed
 }
 func flattenComputeResizeRequestStatusErrorErrorsCode(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
@@ -838,22 +840,24 @@ func flattenComputeResizeRequestStatusErrorErrorsMessage(v interface{}, d *schem
 
 func flattenComputeResizeRequestStatusErrorErrorsErrorDetails(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	if v == nil {
-		return nil
+		return v
 	}
-	original := v.(map[string]interface{})
-	if len(original) == 0 {
-		return nil
+	l := v.([]interface{})
+	transformed := make([]interface{}, 0, len(l))
+	for _, raw := range l {
+		original := raw.(map[string]interface{})
+		if len(original) < 1 {
+			// Do not include empty json objects coming back from the api
+			continue
+		}
+		transformed = append(transformed, map[string]interface{}{
+			"error_info":        flattenComputeResizeRequestStatusErrorErrorsErrorDetailsErrorInfo(original["errorInfo"], d, config),
+			"quota_info":        flattenComputeResizeRequestStatusErrorErrorsErrorDetailsQuotaInfo(original["quotaInfo"], d, config),
+			"help":              flattenComputeResizeRequestStatusErrorErrorsErrorDetailsHelp(original["help"], d, config),
+			"localized_message": flattenComputeResizeRequestStatusErrorErrorsErrorDetailsLocalizedMessage(original["localizedMessage"], d, config),
+		})
 	}
-	transformed := make(map[string]interface{})
-	transformed["error_info"] =
-		flattenComputeResizeRequestStatusErrorErrorsErrorDetailsErrorInfo(original["errorInfo"], d, config)
-	transformed["quota_info"] =
-		flattenComputeResizeRequestStatusErrorErrorsErrorDetailsQuotaInfo(original["quotaInfo"], d, config)
-	transformed["help"] =
-		flattenComputeResizeRequestStatusErrorErrorsErrorDetailsHelp(original["help"], d, config)
-	transformed["localized_message"] =
-		flattenComputeResizeRequestStatusErrorErrorsErrorDetailsLocalizedMessage(original["localizedMessage"], d, config)
-	return []interface{}{transformed}
+	return transformed
 }
 func flattenComputeResizeRequestStatusErrorErrorsErrorDetailsErrorInfo(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	if v == nil {
@@ -1044,22 +1048,24 @@ func flattenComputeResizeRequestStatusLastAttemptError(v interface{}, d *schema.
 }
 func flattenComputeResizeRequestStatusLastAttemptErrorErrors(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	if v == nil {
-		return nil
+		return v
 	}
-	original := v.(map[string]interface{})
-	if len(original) == 0 {
-		return nil
+	l := v.([]interface{})
+	transformed := make([]interface{}, 0, len(l))
+	for _, raw := range l {
+		original := raw.(map[string]interface{})
+		if len(original) < 1 {
+			// Do not include empty json objects coming back from the api
+			continue
+		}
+		transformed = append(transformed, map[string]interface{}{
+			"code":          flattenComputeResizeRequestStatusLastAttemptErrorErrorsCode(original["code"], d, config),
+			"location":      flattenComputeResizeRequestStatusLastAttemptErrorErrorsLocation(original["location"], d, config),
+			"message":       flattenComputeResizeRequestStatusLastAttemptErrorErrorsMessage(original["message"], d, config),
+			"error_details": flattenComputeResizeRequestStatusLastAttemptErrorErrorsErrorDetails(original["errorDetails"], d, config),
+		})
 	}
-	transformed := make(map[string]interface{})
-	transformed["code"] =
-		flattenComputeResizeRequestStatusLastAttemptErrorErrorsCode(original["code"], d, config)
-	transformed["location"] =
-		flattenComputeResizeRequestStatusLastAttemptErrorErrorsLocation(original["location"], d, config)
-	transformed["message"] =
-		flattenComputeResizeRequestStatusLastAttemptErrorErrorsMessage(original["message"], d, config)
-	transformed["error_details"] =
-		flattenComputeResizeRequestStatusLastAttemptErrorErrorsErrorDetails(original["errorDetails"], d, config)
-	return []interface{}{transformed}
+	return transformed
 }
 func flattenComputeResizeRequestStatusLastAttemptErrorErrorsCode(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
@@ -1075,22 +1081,24 @@ func flattenComputeResizeRequestStatusLastAttemptErrorErrorsMessage(v interface{
 
 func flattenComputeResizeRequestStatusLastAttemptErrorErrorsErrorDetails(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	if v == nil {
-		return nil
+		return v
 	}
-	original := v.(map[string]interface{})
-	if len(original) == 0 {
-		return nil
+	l := v.([]interface{})
+	transformed := make([]interface{}, 0, len(l))
+	for _, raw := range l {
+		original := raw.(map[string]interface{})
+		if len(original) < 1 {
+			// Do not include empty json objects coming back from the api
+			continue
+		}
+		transformed = append(transformed, map[string]interface{}{
+			"error_info":        flattenComputeResizeRequestStatusLastAttemptErrorErrorsErrorDetailsErrorInfo(original["errorInfo"], d, config),
+			"quota_info":        flattenComputeResizeRequestStatusLastAttemptErrorErrorsErrorDetailsQuotaInfo(original["quotaInfo"], d, config),
+			"help":              flattenComputeResizeRequestStatusLastAttemptErrorErrorsErrorDetailsHelp(original["help"], d, config),
+			"localized_message": flattenComputeResizeRequestStatusLastAttemptErrorErrorsErrorDetailsLocalizedMessage(original["localizedMessage"], d, config),
+		})
 	}
-	transformed := make(map[string]interface{})
-	transformed["error_info"] =
-		flattenComputeResizeRequestStatusLastAttemptErrorErrorsErrorDetailsErrorInfo(original["errorInfo"], d, config)
-	transformed["quota_info"] =
-		flattenComputeResizeRequestStatusLastAttemptErrorErrorsErrorDetailsQuotaInfo(original["quotaInfo"], d, config)
-	transformed["help"] =
-		flattenComputeResizeRequestStatusLastAttemptErrorErrorsErrorDetailsHelp(original["help"], d, config)
-	transformed["localized_message"] =
-		flattenComputeResizeRequestStatusLastAttemptErrorErrorsErrorDetailsLocalizedMessage(original["localizedMessage"], d, config)
-	return []interface{}{transformed}
+	return transformed
 }
 func flattenComputeResizeRequestStatusLastAttemptErrorErrorsErrorDetailsErrorInfo(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	if v == nil {

@@ -19,7 +19,6 @@ import (
 	"github.com/hashicorp/terraform-provider-google/google/envvar"
 	tpgcompute "github.com/hashicorp/terraform-provider-google/google/services/compute"
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
-	"github.com/stretchr/testify/assert"
 
 	"google.golang.org/api/compute/v1"
 )
@@ -89,60 +88,6 @@ func TestMinCpuPlatformDiffSuppress(t *testing.T) {
 		if tpgcompute.ComputeInstanceMinCpuPlatformEmptyOrAutomaticDiffSuppress("min_cpu_platform", tc.Old, tc.New, nil) != tc.ExpectDiffSuppress {
 			t.Errorf("bad: %s, %q => %q expect DiffSuppress to return %t", tn, tc.Old, tc.New, tc.ExpectDiffSuppress)
 		}
-	}
-}
-
-func TestCheckForCommonAliasIp(t *testing.T) {
-	type testCase struct {
-		old, new []*compute.AliasIpRange
-		expected []*compute.AliasIpRange
-	}
-
-	testCases := []testCase{
-		{
-			old: []*compute.AliasIpRange{
-				{IpCidrRange: "10.0.0.0/24"},
-				{IpCidrRange: "10.0.1.0/24"},
-			},
-			new: []*compute.AliasIpRange{
-				{IpCidrRange: "10.0.0.0/24"},
-				{IpCidrRange: "10.0.2.0/24"},
-			},
-			expected: []*compute.AliasIpRange{
-				{IpCidrRange: "10.0.0.0/24"},
-			},
-		},
-		{
-			old: []*compute.AliasIpRange{
-				{IpCidrRange: "172.16.0.0/24"},
-				{IpCidrRange: "10.0.1.0/24"},
-			},
-			new: []*compute.AliasIpRange{
-				{IpCidrRange: "172.16.0.0/24"},
-				{IpCidrRange: "10.0.2.0/24"},
-			},
-			expected: []*compute.AliasIpRange{
-				{IpCidrRange: "172.16.0.0/24"},
-			},
-		},
-		{
-			old: []*compute.AliasIpRange{
-				{IpCidrRange: "10.0.0.0/24"},
-				{IpCidrRange: "10.0.1.0/24"},
-			},
-			new: []*compute.AliasIpRange{
-				{IpCidrRange: "192.168.0.0/24"},
-				{IpCidrRange: "172.17.0.0/24"},
-			},
-			expected: []*compute.AliasIpRange{},
-		},
-	}
-
-	for _, tc := range testCases {
-		oldInterface := &compute.NetworkInterface{AliasIpRanges: tc.old}
-		newInterface := &compute.NetworkInterface{AliasIpRanges: tc.new}
-		result := tpgcompute.CheckForCommonAliasIp(oldInterface, newInterface)
-		assert.Equal(t, tc.expected, result)
 	}
 }
 
@@ -2010,7 +1955,7 @@ func TestAccComputeInstance_secondaryAliasIpRange(t *testing.T) {
 					testAccCheckComputeInstanceHasAliasIpRange(&instance, "inst-test-secondary", "172.16.0.0/24"),
 				),
 			},
-			computeInstanceImportStep("us-east1-d", instanceName, []string{"network_interface.0.alias_ip_range.0.ip_cidr_range", "network_interface.0.alias_ip_range.0.subnetwork_range_name", "network_interface.0.alias_ip_range.1.ip_cidr_range", "network_interface.0.alias_ip_range.1.subnetwork_range_name"}),
+			computeInstanceImportStep("us-east1-d", instanceName, []string{}),
 			{
 				Config: testAccComputeInstance_secondaryAliasIpRangeUpdate(networkName, subnetName, instanceName),
 				Check: resource.ComposeTestCheckFunc(
@@ -2018,7 +1963,7 @@ func TestAccComputeInstance_secondaryAliasIpRange(t *testing.T) {
 					testAccCheckComputeInstanceHasAliasIpRange(&instance, "", "10.0.1.0/24"),
 				),
 			},
-			computeInstanceImportStep("us-east1-d", instanceName, []string{"network_interface.0.alias_ip_range.0.ip_cidr_range", "network_interface.0.alias_ip_range.0.subnetwork_range_name", "network_interface.0.alias_ip_range.1.ip_cidr_range", "network_interface.0.alias_ip_range.1.subnetwork_range_name"}),
+			computeInstanceImportStep("us-east1-d", instanceName, []string{}),
 		},
 	})
 }
@@ -2062,7 +2007,7 @@ func TestAccComputeInstance_aliasIpRangeCommonAddresses(t *testing.T) {
 					testAccCheckComputeInstanceHasAliasIpRange(&instance, "inst-test-tertiary", "10.1.3.0/24"),
 				),
 			},
-			computeInstanceImportStep("us-east1-d", instanceName, []string{"network_interface.0.alias_ip_range.0.ip_cidr_range", "network_interface.0.alias_ip_range.0.subnetwork_range_name", "network_interface.0.alias_ip_range.1.ip_cidr_range", "network_interface.0.alias_ip_range.1.subnetwork_range_name"}),
+			computeInstanceImportStep("us-east1-d", instanceName, []string{}),
 		},
 	})
 }
@@ -2895,15 +2840,15 @@ func TestAccComputeInstance_subnetworkUpdate(t *testing.T) {
 			{
 				Config: testAccComputeInstance_subnetworkUpdate(suffix, instanceName),
 			},
-			computeInstanceImportStep("us-east1-d", instanceName, []string{"allow_stopping_for_update", "network_interface.0.alias_ip_range.0.ip_cidr_range", "network_interface.0.alias_ip_range.0.subnetwork_range_name", "network_interface.0.alias_ip_range.1.ip_cidr_range", "network_interface.0.alias_ip_range.1.subnetwork_range_name"}),
+			computeInstanceImportStep("us-east1-d", instanceName, []string{"allow_stopping_for_update"}),
 			{
 				Config: testAccComputeInstance_subnetworkUpdateTwo(suffix, instanceName),
 			},
-			computeInstanceImportStep("us-east1-d", instanceName, []string{"allow_stopping_for_update", "network_interface.0.alias_ip_range.0.ip_cidr_range", "network_interface.0.alias_ip_range.0.subnetwork_range_name", "network_interface.0.alias_ip_range.1.ip_cidr_range", "network_interface.0.alias_ip_range.1.subnetwork_range_name"}),
+			computeInstanceImportStep("us-east1-d", instanceName, []string{"allow_stopping_for_update"}),
 			{
 				Config: testAccComputeInstance_subnetworkUpdate(suffix, instanceName),
 			},
-			computeInstanceImportStep("us-east1-d", instanceName, []string{"allow_stopping_for_update", "network_interface.0.alias_ip_range.0.ip_cidr_range", "network_interface.0.alias_ip_range.0.subnetwork_range_name", "network_interface.0.alias_ip_range.1.ip_cidr_range", "network_interface.0.alias_ip_range.1.subnetwork_range_name"}),
+			computeInstanceImportStep("us-east1-d", instanceName, []string{"allow_stopping_for_update"}),
 		},
 	})
 }

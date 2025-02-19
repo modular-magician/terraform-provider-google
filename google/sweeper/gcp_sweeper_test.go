@@ -3,14 +3,12 @@
 package sweeper_test
 
 import (
-	"testing"
-
-	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/accessapproval"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/accesscontextmanager"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/activedirectory"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/alloydb"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/apigee"
+	_ "github.com/hashicorp/terraform-provider-google/google/services/apihub"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/appengine"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/apphub"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/artifactregistry"
@@ -42,6 +40,7 @@ import (
 	_ "github.com/hashicorp/terraform-provider-google/google/services/cloudrunv2"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/cloudscheduler"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/cloudtasks"
+	_ "github.com/hashicorp/terraform-provider-google/google/services/colab"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/composer"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/compute"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/containeranalysis"
@@ -58,6 +57,7 @@ import (
 	_ "github.com/hashicorp/terraform-provider-google/google/services/dataprocmetastore"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/datastream"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/deploymentmanager"
+	_ "github.com/hashicorp/terraform-provider-google/google/services/developerconnect"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/dialogflow"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/dialogflowcx"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/discoveryengine"
@@ -67,9 +67,12 @@ import (
 	_ "github.com/hashicorp/terraform-provider-google/google/services/edgecontainer"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/edgenetwork"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/essentialcontacts"
+	_ "github.com/hashicorp/terraform-provider-google/google/services/eventarc"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/filestore"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/firebaseappcheck"
+	_ "github.com/hashicorp/terraform-provider-google/google/services/firebasedataconnect"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/firestore"
+	_ "github.com/hashicorp/terraform-provider-google/google/services/gemini"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/gkebackup"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/gkehub"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/gkehub2"
@@ -135,6 +138,7 @@ import (
 	_ "github.com/hashicorp/terraform-provider-google/google/services/vpcaccess"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/workbench"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/workflows"
+	"testing"
 
 	// Manually add the services for DCL resource and handwritten resource sweepers if they are not in the above list
 	_ "github.com/hashicorp/terraform-provider-google/google/services/apikeys"
@@ -149,8 +153,14 @@ import (
 	_ "github.com/hashicorp/terraform-provider-google/google/services/firebaserules"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/networkconnectivity"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/recaptchaenterprise"
+
+	// TODO: remove dependency on hashicorp flags
+	// need to blank import hashicorp sweeper code to maintain the flags declared in their package
+	_ "github.com/hashicorp/terraform-plugin-testing/helper/resource"
+
+	"github.com/hashicorp/terraform-provider-google/google/sweeper"
 )
 
-func TestMain(m *testing.M) {
-	resource.TestMain(m)
+func TestAccExecuteSweepers(t *testing.T) {
+	sweeper.ExecuteSweepers(t)
 }

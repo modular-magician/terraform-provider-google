@@ -415,9 +415,9 @@ func testAccBigLakeManagedTable(bucketName, connectionID, datasetID, tableID, sc
 			  file_format = "PARQUET"
 			  table_format = "ICEBERG"
 			}
-		
+
 			schema = jsonencode(%s)
-		
+
 			depends_on = [
 			  google_project_iam_member.test
 			]
@@ -904,7 +904,7 @@ func TestAccBigQueryExternalDataTable_queryAcceleration(t *testing.T) {
 	connectionID := fmt.Sprintf("tf_test_%s", acctest.RandString(t, 10))
 
 	metadataCacheMode := "AUTOMATIC"
-	// including an optional field. Should work without specifiying.
+	// including an optional field. Should work without specifying.
 	// Has to follow google sql IntervalValue encoding
 	maxStaleness := "0-0 0 10:0:0"
 
@@ -929,7 +929,7 @@ func TestAccBigQueryExternalDataTable_objectTable(t *testing.T) {
 	datasetID := fmt.Sprintf("tf_test_%s", acctest.RandString(t, 10))
 	tableID := fmt.Sprintf("tf_test_%s", acctest.RandString(t, 10))
 	connectionID := fmt.Sprintf("tf_test_%s", acctest.RandString(t, 10))
-	// including an optional field. Should work without specifiying.
+	// including an optional field. Should work without specifying.
 	// Has to follow google sql IntervalValue encoding
 	maxStaleness := "0-0 0 10:0:0"
 
@@ -1815,7 +1815,6 @@ func TestAccBigQueryTable_ResourceTags(t *testing.T) {
 		},
 	})
 }
-
 func testAccCheckBigQueryExtData(t *testing.T, expectedQuoteChar string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		for _, rs := range s.RootModule().Resources {
@@ -2163,6 +2162,14 @@ resource "google_bigquery_table" "test" {
   {
     "name": "some_int",
     "type": "INTEGER"
+  },
+  {
+    "name": "reserved_word_for",
+    "type": "STRING"
+  },
+  {
+    "name": "flexible-column-name-dash",
+    "type": "STRING"
   }
 ]
 EOH
@@ -3071,7 +3078,7 @@ resource "google_bigquery_table" "test" {
   # Depends on Iceberg Table Files
   depends_on = [
 	google_storage_bucket_object.empty_data_folder,
-	google_storage_bucket_object.metadata, 
+	google_storage_bucket_object.metadata,
   ]
 }
 `, datasetID, bucketName, tableID)
@@ -3099,7 +3106,7 @@ resource "google_storage_bucket_object" "datafile" {
 
 # Upload Metadata file
 resource "google_storage_bucket_object" "manifest" {
-	name = "%s" 
+	name = "%s"
 	content = "gs://${google_storage_bucket.test.name}/${google_storage_bucket_object.datafile.name}"
 	bucket = google_storage_bucket.test.name
 }

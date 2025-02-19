@@ -193,6 +193,7 @@ type Config struct {
 	ActiveDirectoryBasePath          string
 	AlloydbBasePath                  string
 	ApigeeBasePath                   string
+	ApihubBasePath                   string
 	AppEngineBasePath                string
 	ApphubBasePath                   string
 	ArtifactRegistryBasePath         string
@@ -224,6 +225,7 @@ type Config struct {
 	CloudRunV2BasePath               string
 	CloudSchedulerBasePath           string
 	CloudTasksBasePath               string
+	ColabBasePath                    string
 	ComposerBasePath                 string
 	ComputeBasePath                  string
 	ContainerAnalysisBasePath        string
@@ -240,6 +242,7 @@ type Config struct {
 	DataprocMetastoreBasePath        string
 	DatastreamBasePath               string
 	DeploymentManagerBasePath        string
+	DeveloperConnectBasePath         string
 	DialogflowBasePath               string
 	DialogflowCXBasePath             string
 	DiscoveryEngineBasePath          string
@@ -249,9 +252,12 @@ type Config struct {
 	EdgecontainerBasePath            string
 	EdgenetworkBasePath              string
 	EssentialContactsBasePath        string
+	EventarcBasePath                 string
 	FilestoreBasePath                string
 	FirebaseAppCheckBasePath         string
+	FirebaseDataConnectBasePath      string
 	FirestoreBasePath                string
+	GeminiBasePath                   string
 	GKEBackupBasePath                string
 	GKEHubBasePath                   string
 	GKEHub2BasePath                  string
@@ -341,6 +347,7 @@ const AccessContextManagerBasePathKey = "AccessContextManager"
 const ActiveDirectoryBasePathKey = "ActiveDirectory"
 const AlloydbBasePathKey = "Alloydb"
 const ApigeeBasePathKey = "Apigee"
+const ApihubBasePathKey = "Apihub"
 const AppEngineBasePathKey = "AppEngine"
 const ApphubBasePathKey = "Apphub"
 const ArtifactRegistryBasePathKey = "ArtifactRegistry"
@@ -372,6 +379,7 @@ const CloudRunBasePathKey = "CloudRun"
 const CloudRunV2BasePathKey = "CloudRunV2"
 const CloudSchedulerBasePathKey = "CloudScheduler"
 const CloudTasksBasePathKey = "CloudTasks"
+const ColabBasePathKey = "Colab"
 const ComposerBasePathKey = "Composer"
 const ComputeBasePathKey = "Compute"
 const ContainerAnalysisBasePathKey = "ContainerAnalysis"
@@ -388,6 +396,7 @@ const DataprocGdcBasePathKey = "DataprocGdc"
 const DataprocMetastoreBasePathKey = "DataprocMetastore"
 const DatastreamBasePathKey = "Datastream"
 const DeploymentManagerBasePathKey = "DeploymentManager"
+const DeveloperConnectBasePathKey = "DeveloperConnect"
 const DialogflowBasePathKey = "Dialogflow"
 const DialogflowCXBasePathKey = "DialogflowCX"
 const DiscoveryEngineBasePathKey = "DiscoveryEngine"
@@ -397,9 +406,12 @@ const DocumentAIWarehouseBasePathKey = "DocumentAIWarehouse"
 const EdgecontainerBasePathKey = "Edgecontainer"
 const EdgenetworkBasePathKey = "Edgenetwork"
 const EssentialContactsBasePathKey = "EssentialContacts"
+const EventarcBasePathKey = "Eventarc"
 const FilestoreBasePathKey = "Filestore"
 const FirebaseAppCheckBasePathKey = "FirebaseAppCheck"
+const FirebaseDataConnectBasePathKey = "FirebaseDataConnect"
 const FirestoreBasePathKey = "Firestore"
+const GeminiBasePathKey = "Gemini"
 const GKEBackupBasePathKey = "GKEBackup"
 const GKEHubBasePathKey = "GKEHub"
 const GKEHub2BasePathKey = "GKEHub2"
@@ -483,6 +495,7 @@ var DefaultBasePaths = map[string]string{
 	ActiveDirectoryBasePathKey:          "https://managedidentities.googleapis.com/v1/",
 	AlloydbBasePathKey:                  "https://alloydb.googleapis.com/v1/",
 	ApigeeBasePathKey:                   "https://apigee.googleapis.com/v1/",
+	ApihubBasePathKey:                   "https://apihub.googleapis.com/v1/",
 	AppEngineBasePathKey:                "https://appengine.googleapis.com/v1/",
 	ApphubBasePathKey:                   "https://apphub.googleapis.com/v1/",
 	ArtifactRegistryBasePathKey:         "https://artifactregistry.googleapis.com/v1/",
@@ -514,6 +527,7 @@ var DefaultBasePaths = map[string]string{
 	CloudRunV2BasePathKey:               "https://run.googleapis.com/v2/",
 	CloudSchedulerBasePathKey:           "https://cloudscheduler.googleapis.com/v1/",
 	CloudTasksBasePathKey:               "https://cloudtasks.googleapis.com/v2/",
+	ColabBasePathKey:                    "https://{{region}}-aiplatform.googleapis.com/v1/",
 	ComposerBasePathKey:                 "https://composer.googleapis.com/v1/",
 	ComputeBasePathKey:                  "https://compute.googleapis.com/compute/v1/",
 	ContainerAnalysisBasePathKey:        "https://containeranalysis.googleapis.com/v1/",
@@ -530,6 +544,7 @@ var DefaultBasePaths = map[string]string{
 	DataprocMetastoreBasePathKey:        "https://metastore.googleapis.com/v1/",
 	DatastreamBasePathKey:               "https://datastream.googleapis.com/v1/",
 	DeploymentManagerBasePathKey:        "https://www.googleapis.com/deploymentmanager/v2/",
+	DeveloperConnectBasePathKey:         "https://developerconnect.googleapis.com/v1/",
 	DialogflowBasePathKey:               "https://dialogflow.googleapis.com/v2/",
 	DialogflowCXBasePathKey:             "https://{{location}}-dialogflow.googleapis.com/v3/",
 	DiscoveryEngineBasePathKey:          "https://{{location}}-discoveryengine.googleapis.com/v1/",
@@ -539,9 +554,12 @@ var DefaultBasePaths = map[string]string{
 	EdgecontainerBasePathKey:            "https://edgecontainer.googleapis.com/v1/",
 	EdgenetworkBasePathKey:              "https://edgenetwork.googleapis.com/v1/",
 	EssentialContactsBasePathKey:        "https://essentialcontacts.googleapis.com/v1/",
+	EventarcBasePathKey:                 "https://eventarc.googleapis.com/v1/",
 	FilestoreBasePathKey:                "https://file.googleapis.com/v1/",
 	FirebaseAppCheckBasePathKey:         "https://firebaseappcheck.googleapis.com/v1/",
+	FirebaseDataConnectBasePathKey:      "https://firebasedataconnect.googleapis.com/v1/",
 	FirestoreBasePathKey:                "https://firestore.googleapis.com/v1/",
+	GeminiBasePathKey:                   "https://cloudaicompanion.googleapis.com/v1/",
 	GKEBackupBasePathKey:                "https://gkebackup.googleapis.com/v1/",
 	GKEHubBasePathKey:                   "https://gkehub.googleapis.com/v1/",
 	GKEHub2BasePathKey:                  "https://gkehub.googleapis.com/v1/",
@@ -716,6 +734,11 @@ func SetEndpointDefaults(d *schema.ResourceData) error {
 			"GOOGLE_APIGEE_CUSTOM_ENDPOINT",
 		}, DefaultBasePaths[ApigeeBasePathKey]))
 	}
+	if d.Get("apihub_custom_endpoint") == "" {
+		d.Set("apihub_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_APIHUB_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[ApihubBasePathKey]))
+	}
 	if d.Get("app_engine_custom_endpoint") == "" {
 		d.Set("app_engine_custom_endpoint", MultiEnvDefault([]string{
 			"GOOGLE_APP_ENGINE_CUSTOM_ENDPOINT",
@@ -871,6 +894,11 @@ func SetEndpointDefaults(d *schema.ResourceData) error {
 			"GOOGLE_CLOUD_TASKS_CUSTOM_ENDPOINT",
 		}, DefaultBasePaths[CloudTasksBasePathKey]))
 	}
+	if d.Get("colab_custom_endpoint") == "" {
+		d.Set("colab_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_COLAB_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[ColabBasePathKey]))
+	}
 	if d.Get("composer_custom_endpoint") == "" {
 		d.Set("composer_custom_endpoint", MultiEnvDefault([]string{
 			"GOOGLE_COMPOSER_CUSTOM_ENDPOINT",
@@ -951,6 +979,11 @@ func SetEndpointDefaults(d *schema.ResourceData) error {
 			"GOOGLE_DEPLOYMENT_MANAGER_CUSTOM_ENDPOINT",
 		}, DefaultBasePaths[DeploymentManagerBasePathKey]))
 	}
+	if d.Get("developer_connect_custom_endpoint") == "" {
+		d.Set("developer_connect_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_DEVELOPER_CONNECT_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[DeveloperConnectBasePathKey]))
+	}
 	if d.Get("dialogflow_custom_endpoint") == "" {
 		d.Set("dialogflow_custom_endpoint", MultiEnvDefault([]string{
 			"GOOGLE_DIALOGFLOW_CUSTOM_ENDPOINT",
@@ -996,6 +1029,11 @@ func SetEndpointDefaults(d *schema.ResourceData) error {
 			"GOOGLE_ESSENTIAL_CONTACTS_CUSTOM_ENDPOINT",
 		}, DefaultBasePaths[EssentialContactsBasePathKey]))
 	}
+	if d.Get("eventarc_custom_endpoint") == "" {
+		d.Set("eventarc_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_EVENTARC_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[EventarcBasePathKey]))
+	}
 	if d.Get("filestore_custom_endpoint") == "" {
 		d.Set("filestore_custom_endpoint", MultiEnvDefault([]string{
 			"GOOGLE_FILESTORE_CUSTOM_ENDPOINT",
@@ -1006,10 +1044,20 @@ func SetEndpointDefaults(d *schema.ResourceData) error {
 			"GOOGLE_FIREBASE_APP_CHECK_CUSTOM_ENDPOINT",
 		}, DefaultBasePaths[FirebaseAppCheckBasePathKey]))
 	}
+	if d.Get("firebase_data_connect_custom_endpoint") == "" {
+		d.Set("firebase_data_connect_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_FIREBASE_DATA_CONNECT_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[FirebaseDataConnectBasePathKey]))
+	}
 	if d.Get("firestore_custom_endpoint") == "" {
 		d.Set("firestore_custom_endpoint", MultiEnvDefault([]string{
 			"GOOGLE_FIRESTORE_CUSTOM_ENDPOINT",
 		}, DefaultBasePaths[FirestoreBasePathKey]))
+	}
+	if d.Get("gemini_custom_endpoint") == "" {
+		d.Set("gemini_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_GEMINI_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[GeminiBasePathKey]))
 	}
 	if d.Get("gke_backup_custom_endpoint") == "" {
 		d.Set("gke_backup_custom_endpoint", MultiEnvDefault([]string{
@@ -1419,11 +1467,20 @@ func (c *Config) LoadAndValidate(ctx context.Context) error {
 	}
 
 	c.TokenSource = tokenSource
-
 	cleanCtx := context.WithValue(ctx, oauth2.HTTPClient, cleanhttp.DefaultClient())
+	clientOptions := []option.ClientOption{option.WithTokenSource(tokenSource)}
+
+	// The client libraries allow setting the GOOGLE_CLOUD_QUOTA_PROJECT environment variable
+	// directly, which unintentionally takes precedence over provider settings. Ensure that
+	// provider settings take precedence by applying to the client library's client directly
+	// b/360405077#comment8 - go/tpg-issue/17882
+	if c.UserProjectOverride && c.BillingProject != "" {
+		quotaProject := c.BillingProject
+		clientOptions = append(clientOptions, option.WithQuotaProject(quotaProject))
+	}
 
 	// 1. MTLS TRANSPORT/CLIENT - sets up proper auth headers
-	client, _, err := transport.NewHTTPClient(cleanCtx, option.WithTokenSource(tokenSource))
+	client, _, err := transport.NewHTTPClient(cleanCtx, clientOptions...)
 	if err != nil {
 		return err
 	}
@@ -1452,6 +1509,10 @@ func (c *Config) LoadAndValidate(ctx context.Context) error {
 
 	// Ensure $userProject is set for all HTTP requests using the client if specified by the provider config
 	// See https://cloud.google.com/apis/docs/system-parameters
+	// option.WithQuotaProject automatically sets the quota project in the client.
+	// However, this setting won't appear in our request logs since our logging
+	// transport sits above the Google client's internal transport. To ensure
+	// visibility in debug logging, we explicitly set the quota project here as well.
 	if c.UserProjectOverride && c.BillingProject != "" {
 		headerTransport.Set("X-Goog-User-Project", c.BillingProject)
 	}
@@ -2248,6 +2309,7 @@ func ConfigureBasePaths(c *Config) {
 	c.ActiveDirectoryBasePath = DefaultBasePaths[ActiveDirectoryBasePathKey]
 	c.AlloydbBasePath = DefaultBasePaths[AlloydbBasePathKey]
 	c.ApigeeBasePath = DefaultBasePaths[ApigeeBasePathKey]
+	c.ApihubBasePath = DefaultBasePaths[ApihubBasePathKey]
 	c.AppEngineBasePath = DefaultBasePaths[AppEngineBasePathKey]
 	c.ApphubBasePath = DefaultBasePaths[ApphubBasePathKey]
 	c.ArtifactRegistryBasePath = DefaultBasePaths[ArtifactRegistryBasePathKey]
@@ -2279,6 +2341,7 @@ func ConfigureBasePaths(c *Config) {
 	c.CloudRunV2BasePath = DefaultBasePaths[CloudRunV2BasePathKey]
 	c.CloudSchedulerBasePath = DefaultBasePaths[CloudSchedulerBasePathKey]
 	c.CloudTasksBasePath = DefaultBasePaths[CloudTasksBasePathKey]
+	c.ColabBasePath = DefaultBasePaths[ColabBasePathKey]
 	c.ComposerBasePath = DefaultBasePaths[ComposerBasePathKey]
 	c.ComputeBasePath = DefaultBasePaths[ComputeBasePathKey]
 	c.ContainerAnalysisBasePath = DefaultBasePaths[ContainerAnalysisBasePathKey]
@@ -2295,6 +2358,7 @@ func ConfigureBasePaths(c *Config) {
 	c.DataprocMetastoreBasePath = DefaultBasePaths[DataprocMetastoreBasePathKey]
 	c.DatastreamBasePath = DefaultBasePaths[DatastreamBasePathKey]
 	c.DeploymentManagerBasePath = DefaultBasePaths[DeploymentManagerBasePathKey]
+	c.DeveloperConnectBasePath = DefaultBasePaths[DeveloperConnectBasePathKey]
 	c.DialogflowBasePath = DefaultBasePaths[DialogflowBasePathKey]
 	c.DialogflowCXBasePath = DefaultBasePaths[DialogflowCXBasePathKey]
 	c.DiscoveryEngineBasePath = DefaultBasePaths[DiscoveryEngineBasePathKey]
@@ -2304,9 +2368,12 @@ func ConfigureBasePaths(c *Config) {
 	c.EdgecontainerBasePath = DefaultBasePaths[EdgecontainerBasePathKey]
 	c.EdgenetworkBasePath = DefaultBasePaths[EdgenetworkBasePathKey]
 	c.EssentialContactsBasePath = DefaultBasePaths[EssentialContactsBasePathKey]
+	c.EventarcBasePath = DefaultBasePaths[EventarcBasePathKey]
 	c.FilestoreBasePath = DefaultBasePaths[FilestoreBasePathKey]
 	c.FirebaseAppCheckBasePath = DefaultBasePaths[FirebaseAppCheckBasePathKey]
+	c.FirebaseDataConnectBasePath = DefaultBasePaths[FirebaseDataConnectBasePathKey]
 	c.FirestoreBasePath = DefaultBasePaths[FirestoreBasePathKey]
+	c.GeminiBasePath = DefaultBasePaths[GeminiBasePathKey]
 	c.GKEBackupBasePath = DefaultBasePaths[GKEBackupBasePathKey]
 	c.GKEHubBasePath = DefaultBasePaths[GKEHubBasePathKey]
 	c.GKEHub2BasePath = DefaultBasePaths[GKEHub2BasePathKey]

@@ -144,6 +144,9 @@ func expandScheduling(v interface{}) (*compute.Scheduling, error) {
 		scheduling.InstanceTerminationAction = v.(string)
 		scheduling.ForceSendFields = append(scheduling.ForceSendFields, "InstanceTerminationAction")
 	}
+	if v, ok := original["availability_domain"]; ok && v != nil {
+		scheduling.AvailabilityDomain = int64(v.(int))
+	}
 	if v, ok := original["max_run_duration"]; ok {
 		transformedMaxRunDuration, err := expandComputeMaxRunDuration(v)
 		if err != nil {
@@ -264,6 +267,7 @@ func flattenScheduling(resp *compute.Scheduling) []map[string]interface{} {
 		"min_node_cpus":               resp.MinNodeCpus,
 		"provisioning_model":          resp.ProvisioningModel,
 		"instance_termination_action": resp.InstanceTerminationAction,
+		"availability_domain":         resp.AvailabilityDomain,
 	}
 
 	if resp.AutomaticRestart != nil {
@@ -681,6 +685,9 @@ func schedulingHasChangeWithoutReboot(d *schema.ResourceData) bool {
 	if oScheduling["instance_termination_action"] != newScheduling["instance_termination_action"] {
 		return true
 	}
+	if oScheduling["availability_domain"] != newScheduling["availability_domain"] {
+		return true
+	}
 
 	return false
 }
@@ -812,6 +819,92 @@ func flattenNetworkPerformanceConfig(c *compute.NetworkPerformanceConfig) []map[
 	return []map[string]interface{}{
 		{
 			"total_egress_bandwidth_tier": c.TotalEgressBandwidthTier,
+		},
+	}
+}
+
+func flattenComputeInstanceGuestOsFeatures(v interface{}) []interface{} {
+	if v == nil {
+		return nil
+	}
+	features, ok := v.([]*compute.GuestOsFeature)
+	if !ok {
+		return nil
+	}
+	var result []interface{}
+	for _, feature := range features {
+		if feature != nil && feature.Type != "" {
+			result = append(result, feature.Type)
+		}
+	}
+	return result
+}
+
+func expandComputeInstanceGuestOsFeatures(v interface{}) []*compute.GuestOsFeature {
+	if v == nil {
+		return nil
+	}
+	var result []*compute.GuestOsFeature
+	for _, feature := range v.([]interface{}) {
+		result = append(result, &compute.GuestOsFeature{Type: feature.(string)})
+	}
+	return result
+}
+
+func expandComputeInstanceEncryptionKey(d tpgresource.TerraformResourceData) *compute.CustomerEncryptionKey {
+	iek, ok := d.GetOk("instance_encryption_key")
+	if !ok {
+		return nil
+	}
+
+	iekRes := iek.([]interface{})[0].(map[string]interface{})
+	return &compute.CustomerEncryptionKey{
+		KmsKeyName:           iekRes["kms_key_self_link"].(string),
+		Sha256:               iekRes["sha256"].(string),
+		KmsKeyServiceAccount: iekRes["kms_key_service_account"].(string),
+	}
+}
+
+func flattenComputeInstanceEncryptionKey(v *compute.CustomerEncryptionKey) []map[string]interface{} {
+	if v == nil {
+		return nil
+	}
+	return []map[string]interface{}{
+		{
+			"kms_key_self_link":       v.KmsKeyName,
+			"sha256":                  v.Sha256,
+			"kms_key_service_account": v.KmsKeyServiceAccount,
+		},
+	}
+}
+
+func expandComputeInstanceSourceEncryptionKey(d tpgresource.TerraformResourceData, field string) *compute.CustomerEncryptionKey {
+	cek, ok := d.GetOk(field)
+	if !ok {
+		return nil
+	}
+
+	cekRes := cek.([]interface{})[0].(map[string]interface{})
+	return &compute.CustomerEncryptionKey{
+		RsaEncryptedKey:      cekRes["rsa_encrypted_key"].(string),
+		RawKey:               cekRes["raw_key"].(string),
+		KmsKeyName:           cekRes["kms_key_self_link"].(string),
+		Sha256:               cekRes["sha256"].(string),
+		KmsKeyServiceAccount: cekRes["kms_key_service_account"].(string),
+	}
+}
+
+func flattenComputeInstanceSourceEncryptionKey(v *compute.CustomerEncryptionKey) []map[string]interface{} {
+	if v == nil {
+		return nil
+	}
+	return []map[string]interface{}{
+		{
+			"rsa_encrypted_key":       v.RsaEncryptedKey,
+			"raw_key":                 v.RawKey,
+			"kms_key_self_link":       v.KmsKeyName,
+			"sha256":                  v.Sha256,
+			"kms_key_service_account": v.KmsKeyServiceAccount,
 		},
 	}
 }

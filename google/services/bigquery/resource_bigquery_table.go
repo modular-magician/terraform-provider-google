@@ -97,7 +97,6 @@ func jsonCompareWithMapKeyOverride(key string, a, b interface{}, compareMapKeyVa
 		for subKey := range objectB {
 			unionOfKeys[subKey] = true
 		}
-
 		for subKey := range unionOfKeys {
 			eq := compareMapKeyVal(subKey, objectA, objectB)
 			if !eq {
@@ -183,9 +182,9 @@ func bigQueryTableSchemaDiffSuppress(name, old, new string, _ *schema.ResourceDa
 
 func bigQueryTableConnectionIdSuppress(name, old, new string, _ *schema.ResourceData) bool {
 	// API accepts connectionId in below two formats
-	// "{{project}}.{{location}}.{{connection_id}}" or
-	// "projects/{{project}}/locations/{{location}}/connections/{{connection_id}}".
-	// but always returns "{{project}}.{{location}}.{{connection_id}}"
+	// "<project>.<location>.<connection_id>" or
+	// "projects/<project}>locations/<location>/connections/<connection_id>".
+	// but always returns "<project>.<location>.<connection_id>"
 
 	if tpgresource.IsEmptyValue(reflect.ValueOf(old)) || tpgresource.IsEmptyValue(reflect.ValueOf(new)) {
 		return false
@@ -863,13 +862,13 @@ func ResourceBigQueryTable() *schema.Resource {
 						// ConnectionId: [Optional] The connection specifying the credentials
 						// to be used to read external storage, such as Azure Blob,
 						// Cloud Storage, or S3. The connectionId can have the form
-						// "{{project}}.{{location}}.{{connection_id}}" or
-						// "projects/{{project}}/locations/{{location}}/connections/{{connection_id}}".
+						// "<project>.<location>.<connection_id>" or
+						// "projects/<project>/locations/<location>/connections/<connection_id>".
 						"connection_id": {
 							Type:             schema.TypeString,
 							Optional:         true,
 							DiffSuppressFunc: bigQueryTableConnectionIdSuppress,
-							Description:      `The connection specifying the credentials to be used to read external storage, such as Azure Blob, Cloud Storage, or S3. The connectionId can have the form "{{project}}.{{location}}.{{connection_id}}" or "projects/{{project}}/locations/{{location}}/connections/{{connection_id}}".`,
+							Description:      `The connection specifying the credentials to be used to read external storage, such as Azure Blob, Cloud Storage, or S3. The connectionId can have the form "<project>.<location>.<connection_id>" or "projects/<project>/locations/<location>/connections/<connection_id>".`,
 						},
 						"reference_file_schema_uri": {
 							Type:        schema.TypeString,
@@ -1542,7 +1541,6 @@ func resourceTable(d *schema.ResourceData, meta interface{}) (*bigquery.Table, e
 		}
 		table.Schema = schema
 	}
-
 	if v, ok := d.GetOk("time_partitioning"); ok {
 		table.TimePartitioning = expandTimePartitioning(v)
 	}
@@ -1577,7 +1575,6 @@ func resourceTable(d *schema.ResourceData, meta interface{}) (*bigquery.Table, e
 	}
 
 	table.ResourceTags = tpgresource.ExpandStringMap(d, "resource_tags")
-
 	return table, nil
 }
 
@@ -1894,7 +1891,6 @@ func resourceBigQueryTableRead(d *schema.ResourceData, meta interface{}) error {
 			return fmt.Errorf("Error setting table replication info: %s", err)
 		}
 	}
-
 	return nil
 }
 
@@ -1984,7 +1980,11 @@ func resourceBigQueryTableColumnDrop(config *transport_tpg.Config, userAgent str
 	}
 
 	if len(droppedColumns) > 0 {
-		droppedColumnsString := strings.Join(droppedColumns, ", DROP COLUMN ")
+		backquotedDroppedColumns := []string{}
+		for _, column := range droppedColumns {
+			backquotedDroppedColumns = append(backquotedDroppedColumns, fmt.Sprintf("`%s`", column))
+		}
+		droppedColumnsString := strings.Join(backquotedDroppedColumns, ", DROP COLUMN ")
 
 		dropColumnsDDL := fmt.Sprintf("ALTER TABLE `%s.%s.%s` DROP COLUMN %s", tableReference.project, tableReference.datasetID, tableReference.tableID, droppedColumnsString)
 		log.Printf("[INFO] Dropping columns in-place: %s", dropColumnsDDL)
@@ -2628,7 +2628,6 @@ func schemaHasRequiredFields(schema *bigquery.TableSchema) bool {
 	}
 	return false
 }
-
 func expandTimePartitioning(configured interface{}) *bigquery.TimePartitioning {
 	raw := configured.([]interface{})[0].(map[string]interface{})
 	tp := &bigquery.TimePartitioning{Type: raw["type"].(string)}
@@ -3034,7 +3033,6 @@ func flattenTableReplicationInfo(tableReplicationInfo map[string]interface{}) []
 
 	return []map[string]interface{}{result}
 }
-
 func resourceBigQueryTableImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*transport_tpg.Config)
 	if err := tpgresource.ParseImportId([]string{

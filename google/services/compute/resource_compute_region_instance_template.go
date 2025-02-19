@@ -121,6 +121,14 @@ func ResourceComputeRegionInstanceTemplate() *schema.Resource {
 							Description: `Name of the disk. When not provided, this defaults to the name of the instance.`,
 						},
 
+						"architecture": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							ForceNew:    true,
+							Computed:    true,
+							Description: `The architecture of the image. Allowed values are ARM64 or X86_64.`,
+						},
+
 						"disk_size_gb": {
 							Type:        schema.TypeInt,
 							Optional:    true,
@@ -172,6 +180,16 @@ func ResourceComputeRegionInstanceTemplate() *schema.Resource {
 							Description: `A map of resource manager tags. Resource manager tag keys and values have the same definition as resource manager tags. Keys must be in the format tagKeys/{tag_key_id}, and values are in the format tagValues/456. The field is ignored (both PUT & PATCH) when empty.`,
 						},
 
+						"guest_os_features": {
+							Type:        schema.TypeList,
+							Optional:    true,
+							ForceNew:    true,
+							Description: `A list of features to enable on the guest operating system. Applicable only for bootable images.`,
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+
 						"source_image": {
 							Type:        schema.TypeString,
 							Optional:    true,
@@ -194,6 +212,20 @@ images are encrypted with your own keys.`,
 							MaxItems: 1,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
+									"raw_key": {
+										Type:        schema.TypeString,
+										Optional:    true,
+										ForceNew:    true,
+										Description: `Specifies a 256-bit customer-supplied encryption key, encoded in RFC 4648 base64 to either encrypt or decrypt this resource.  Only one of kms_key_self_link, rsa_encrypted_key and raw_key may be set.`,
+										Sensitive:   true,
+									},
+									"rsa_encrypted_key": {
+										Type:        schema.TypeString,
+										Optional:    true,
+										ForceNew:    true,
+										Description: `Specifies an RFC 4648 base64 encoded, RSA-wrapped 2048-bit customer-supplied encryption key to either encrypt or decrypt this resource.  Only one of kms_key_self_link, rsa_encrypted_key and raw_key may be set.`,
+										Sensitive:   true,
+									},
 									"kms_key_service_account": {
 										Type:     schema.TypeString,
 										Optional: true,
@@ -204,10 +236,10 @@ Engine default service account is used.`,
 									},
 									"kms_key_self_link": {
 										Type:     schema.TypeString,
-										Required: true,
+										Optional: true,
 										ForceNew: true,
 										Description: `The self link of the encryption key that is stored in
-Google Cloud KMS.`,
+Google Cloud KMS. Only one of kms_key_self_link, rsa_encrypted_key and raw_key may be set.`,
 									},
 								},
 							},
@@ -229,6 +261,21 @@ required except for local SSD.`,
 							MaxItems:    1,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
+									"raw_key": {
+										Type:        schema.TypeString,
+										Optional:    true,
+										ForceNew:    true,
+										Description: `Specifies a 256-bit customer-supplied encryption key, encoded in RFC 4648 base64 to either encrypt or decrypt this resource. Only one of kms_key_self_link, rsa_encrypted_key and raw_key may be set.`,
+										Sensitive:   true,
+									},
+
+									"rsa_encrypted_key": {
+										Type:        schema.TypeString,
+										Optional:    true,
+										ForceNew:    true,
+										Description: `Specifies an RFC 4648 base64 encoded, RSA-wrapped 2048-bit customer-supplied encryption key to either encrypt or decrypt this resource.  Only one of kms_key_self_link, rsa_encrypted_key and raw_key may be set.`,
+										Sensitive:   true,
+									},
 									"kms_key_service_account": {
 										Type:     schema.TypeString,
 										Optional: true,
@@ -239,10 +286,10 @@ Engine default service account is used.`,
 									},
 									"kms_key_self_link": {
 										Type:     schema.TypeString,
-										Required: true,
+										Optional: true,
 										ForceNew: true,
 										Description: `The self link of the encryption key that is stored in
-Google Cloud KMS.`,
+Google Cloud KMS. Only one of kms_key_self_link, rsa_encrypted_key and raw_key may be set.`,
 									},
 								},
 							},
@@ -287,9 +334,15 @@ Google Cloud KMS.`,
 							Description: `Encrypts or decrypts a disk using a customer-supplied encryption key.`,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
+									"kms_key_service_account": {
+										Type:        schema.TypeString,
+										Optional:    true,
+										ForceNew:    true,
+										Description: `The service account being used for the encryption request for the given KMS key. If absent, the Compute Engine default service account is used.`,
+									},
 									"kms_key_self_link": {
 										Type:             schema.TypeString,
-										Required:         true,
+										Optional:         true,
 										ForceNew:         true,
 										DiffSuppressFunc: tpgresource.CompareSelfLinkRelativePaths,
 										Description:      `The self link of the encryption key that is stored in Google Cloud KMS.`,
@@ -432,8 +485,8 @@ Google Cloud KMS.`,
 							Type:         schema.TypeString,
 							Optional:     true,
 							ForceNew:     true,
-							ValidateFunc: validation.StringInSlice([]string{"GVNIC", "VIRTIO_NET"}, false),
-							Description:  `The type of vNIC to be used on this interface. Possible values:GVNIC, VIRTIO_NET`,
+							ValidateFunc: validation.StringInSlice([]string{"GVNIC", "VIRTIO_NET", "MRDMA", "IRDMA"}, false),
+							Description:  `The type of vNIC to be used on this interface. Possible values:GVNIC, VIRTIO_NET, MRDMA, and IRDMA`,
 						},
 						"access_config": {
 							Type:        schema.TypeList,
@@ -496,7 +549,7 @@ Google Cloud KMS.`,
 							Optional:     true,
 							Computed:     true,
 							ForceNew:     true,
-							ValidateFunc: validation.StringInSlice([]string{"IPV4_ONLY", "IPV4_IPV6", ""}, false),
+							ValidateFunc: validation.StringInSlice([]string{"IPV4_ONLY", "IPV4_IPV6", "IPV6_ONLY", ""}, false),
 							Description:  `The stack type for this network interface to identify whether the IPv6 feature is enabled or not. If not specified, IPV4_ONLY will be used.`,
 						},
 
@@ -510,6 +563,7 @@ Google Cloud KMS.`,
 						"ipv6_access_config": {
 							Type:        schema.TypeList,
 							Optional:    true,
+							Computed:    true,
 							ForceNew:    true,
 							Description: `An array of IPv6 access configurations for this interface. Currently, only one IPv6 access config, DIRECT_IPV6, is supported. If there is no ipv6AccessConfig specified, then this instance will have no external IPv6 Internet access.`,
 							Elem: &schema.Resource{
@@ -658,6 +712,13 @@ Google Cloud KMS.`,
 							ForceNew:     true,
 							AtLeastOneOf: schedulingInstTemplateKeys,
 							Description:  `Specifies the action GCE should take when SPOT VM is preempted.`,
+						},
+						"availability_domain": {
+							Type:         schema.TypeInt,
+							Optional:     true,
+							ForceNew:     true,
+							AtLeastOneOf: schedulingInstTemplateKeys,
+							Description:  `Specifies the availability domain, which this instance should be scheduled on.`,
 						},
 						"max_run_duration": {
 							Type:        schema.TypeList,
@@ -1329,6 +1390,7 @@ func resourceComputeRegionInstanceTemplateRead(d *schema.ResourceData, meta inte
 	}
 	if instanceProperties.Scheduling != nil {
 		scheduling := flattenScheduling(instanceProperties.Scheduling)
+
 		if err = d.Set("scheduling", scheduling); err != nil {
 			return fmt.Errorf("Error setting scheduling: %s", err)
 		}

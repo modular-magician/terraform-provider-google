@@ -499,9 +499,9 @@ var handwrittenIAMDatasources = map[string]*schema.Resource{
 }
 
 // Resources
-// Generated resources: 564
+// Generated resources: 565
 // Generated IAM resources: 279
-// Total generated resources: 843
+// Total generated resources: 844
 var generatedResources = map[string]*schema.Resource{
 	"google_folder_access_approval_settings":                                     accessapproval.ResourceAccessApprovalFolderSettings(),
 	"google_organization_access_approval_settings":                               accessapproval.ResourceAccessApprovalOrganizationSettings(),
@@ -1094,6 +1094,7 @@ var generatedResources = map[string]*schema.Resource{
 	"google_managed_kafka_topic":                                                 managedkafka.ResourceManagedKafkaTopic(),
 	"google_memcache_instance":                                                   memcache.ResourceMemcacheInstance(),
 	"google_memorystore_instance":                                                memorystore.ResourceMemorystoreInstance(),
+	"google_memorystore_instance_desired_user_created_endpoints":                 memorystore.ResourceMemorystoreInstanceDesiredUserCreatedEndpoints(),
 	"google_migration_center_group":                                              migrationcenter.ResourceMigrationCenterGroup(),
 	"google_migration_center_preference_set":                                     migrationcenter.ResourceMigrationCenterPreferenceSet(),
 	"google_ml_engine_model":                                                     mlengine.ResourceMLEngineModel(),

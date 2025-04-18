@@ -4854,6 +4854,8 @@ func TestAccContainerNodePool_defaultDriverInstallation(t *testing.T) {
 
 	cluster := fmt.Sprintf("tf-test-cluster-%s", acctest.RandString(t, 10))
 	np := fmt.Sprintf("tf-test-nodepool-%s", acctest.RandString(t, 10))
+	networkName := acctest.BootstrapSharedTestNetwork(t, "gke-cluster")
+	subnetworkName := acctest.BootstrapSubnet(t, "gke-cluster", networkName)
 
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
@@ -4861,7 +4863,7 @@ func TestAccContainerNodePool_defaultDriverInstallation(t *testing.T) {
 		CheckDestroy:             testAccCheckContainerNodePoolDestroyProducer(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccContainerNodePool_defaultDriverInstallation(cluster, np),
+				Config: testAccContainerNodePool_defaultDriverInstallation(cluster, networkName, subnetworkName, np),
 			},
 			{
 				ResourceName:      "google_container_node_pool.np",
@@ -4872,7 +4874,7 @@ func TestAccContainerNodePool_defaultDriverInstallation(t *testing.T) {
 	})
 }
 
-func testAccContainerNodePool_defaultDriverInstallation(cluster, np string) string {
+func testAccContainerNodePool_defaultDriverInstallation(cluster, networkName, subnetworkName, np string) string {
 	return fmt.Sprintf(`
 data "google_container_engine_versions" "central1a" {
   location = "us-central1-a"
@@ -4888,6 +4890,8 @@ resource "google_container_cluster" "cluster" {
   release_channel {
     channel = "RAPID"
   }
+  network    = "%s"
+  subnetwork = "%s"
 }
 
 resource "google_container_node_pool" "np" {
@@ -4910,7 +4914,7 @@ resource "google_container_node_pool" "np" {
     }
   }
 }
-`, cluster, np)
+`, cluster, networkName, subnetworkName, np)
 }
 
 func TestAccContainerNodePool_storagePools(t *testing.T) {

@@ -1,21 +1,5 @@
 // Copyright (c) HashiCorp, Inc.
 // SPDX-License-Identifier: MPL-2.0
-
-// ----------------------------------------------------------------------------
-//
-//     ***     AUTO GENERATED CODE    ***    Type: DCL     ***
-//
-// ----------------------------------------------------------------------------
-//
-//     This file is managed by Magic Modules (https://github.com/GoogleCloudPlatform/magic-modules)
-//     and is based on the DCL (https://github.com/GoogleCloudPlatform/declarative-resource-client-library).
-//     Changes will need to be made to the DCL or Magic Modules instead of here.
-//
-//     We are not currently able to accept contributions to this file. If changes
-//     are required, please file an issue at https://github.com/hashicorp/terraform-provider-google/issues/new/choose
-//
-// ----------------------------------------------------------------------------
-
 package assuredworkloads_test
 
 import (
@@ -46,7 +30,10 @@ func TestAccAssuredWorkloadsWorkload_BasicHandWritten(t *testing.T) {
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),
-		CheckDestroy:             testAccCheckAssuredWorkloadsWorkloadDestroyProducer(t),
+		ExternalProviders: map[string]resource.ExternalProvider{
+			"time": {},
+		},
+		CheckDestroy: testAccCheckAssuredWorkloadsWorkloadDestroyProducer(t),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccAssuredWorkloadsWorkload_BasicHandWritten(context),
@@ -69,6 +56,7 @@ func TestAccAssuredWorkloadsWorkload_BasicHandWritten(t *testing.T) {
 		},
 	})
 }
+
 func TestAccAssuredWorkloadsWorkload_FullHandWritten(t *testing.T) {
 	t.Parallel()
 
@@ -82,6 +70,9 @@ func TestAccAssuredWorkloadsWorkload_FullHandWritten(t *testing.T) {
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),
+		ExternalProviders: map[string]resource.ExternalProvider{
+			"time": {},
+		},
 		CheckDestroy:             testAccCheckAssuredWorkloadsWorkloadDestroyProducer(t),
 		Steps: []resource.TestStep{
 			{
@@ -117,12 +108,18 @@ resource "google_assured_workloads_workload" "primary" {
     display_name = "folder-display-name"
   }
   violation_notifications_enabled = true
+  depends_on = [time_sleep.wait_120_seconds]
 }
 
 resource "google_folder" "folder1" {
   display_name = "tf-test-name%{random_suffix}"
   parent       = "organizations/%{org_id}"
   deletion_protection = false
+}
+
+resource "time_sleep" "wait_120_seconds" {
+  create_duration = "120s"
+  depends_on = [google_folder.folder1]
 }
 `, context)
 }
@@ -144,12 +141,18 @@ resource "google_assured_workloads_workload" "primary" {
     display_name = "folder-display-name"
   }
   violation_notifications_enabled = true
+  depends_on = [time_sleep.wait_120_seconds]
 }
 
 resource "google_folder" "folder1" {
   display_name = "tf-test-name%{random_suffix}"
   parent       = "organizations/%{org_id}"
   deletion_protection = false
+}
+
+resource "time_sleep" "wait_120_seconds" {
+  create_duration = "120s"
+  depends_on = [google_folder.folder1]
 }
 `, context)
 }
@@ -167,6 +170,7 @@ resource "google_assured_workloads_workload" "primary" {
     rotation_period = "864000s"
   }
   provisioned_resources_parent = google_folder.folder1.name
+  depends_on = [time_sleep.wait_120_seconds]
 }
 
 resource "google_folder" "folder1" {
@@ -175,6 +179,10 @@ resource "google_folder" "folder1" {
   deletion_protection = false
 }
 
+resource "time_sleep" "wait_120_seconds" {
+  create_duration = "120s"
+  depends_on = [google_folder.folder1]
+}
 `, context)
 }
 

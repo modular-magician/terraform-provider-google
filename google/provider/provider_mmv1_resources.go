@@ -378,6 +378,7 @@ var handwrittenDatasources = map[string]*schema.Resource{
 	"google_tpu_tensorflow_versions":                             tpu.DataSourceTpuTensorflowVersions(),
 	"google_vpc_access_connector":                                vpcaccess.DataSourceVPCAccessConnector(),
 	"google_memorystore_instance":                                memorystore.DataSourceMemorystoreInstance(),
+	"google_memcache_instance":                                   memcache.DataSourceMemcacheInstance(),
 	"google_redis_instance":                                      redis.DataSourceGoogleRedisInstance(),
 	"google_vertex_ai_index":                                     vertexai.DataSourceVertexAIIndex(),
 	"google_vmwareengine_cluster":                                vmwareengine.DataSourceVmwareengineCluster(),
@@ -516,9 +517,9 @@ var handwrittenIAMDatasources = map[string]*schema.Resource{
 }
 
 // Resources
-// Generated resources: 590
+// Generated resources: 593
 // Generated IAM resources: 297
-// Total generated resources: 887
+// Total generated resources: 890
 var generatedResources = map[string]*schema.Resource{
 	"google_folder_access_approval_settings":                                     accessapproval.ResourceAccessApprovalFolderSettings(),
 	"google_organization_access_approval_settings":                               accessapproval.ResourceAccessApprovalOrganizationSettings(),
@@ -570,6 +571,7 @@ var generatedResources = map[string]*schema.Resource{
 	"google_apigee_keystores_aliases_self_signed_cert":                           apigee.ResourceApigeeKeystoresAliasesSelfSignedCert(),
 	"google_apigee_nat_address":                                                  apigee.ResourceApigeeNatAddress(),
 	"google_apigee_organization":                                                 apigee.ResourceApigeeOrganization(),
+	"google_apigee_security_profile_v2":                                          apigee.ResourceApigeeSecurityProfileV2(),
 	"google_apigee_sync_authorization":                                           apigee.ResourceApigeeSyncAuthorization(),
 	"google_apigee_target_server":                                                apigee.ResourceApigeeTargetServer(),
 	"google_apihub_api_hub_instance":                                             apihub.ResourceApihubApiHubInstance(),
@@ -637,6 +639,8 @@ var generatedResources = map[string]*schema.Resource{
 	"google_bigquery_reservation":                                                bigqueryreservation.ResourceBigqueryReservationReservation(),
 	"google_bigquery_reservation_assignment":                                     bigqueryreservation.ResourceBigqueryReservationReservationAssignment(),
 	"google_bigtable_app_profile":                                                bigtable.ResourceBigtableAppProfile(),
+	"google_bigtable_logical_view":                                               bigtable.ResourceBigtableLogicalView(),
+	"google_bigtable_materialized_view":                                          bigtable.ResourceBigtableMaterializedView(),
 	"google_billing_budget":                                                      billing.ResourceBillingBudget(),
 	"google_binary_authorization_attestor":                                       binaryauthorization.ResourceBinaryAuthorizationAttestor(),
 	"google_binary_authorization_attestor_iam_binding":                           tpgiamresource.ResourceIamBinding(binaryauthorization.BinaryAuthorizationAttestorIamSchema, binaryauthorization.BinaryAuthorizationAttestorIamUpdaterProducer, binaryauthorization.BinaryAuthorizationAttestorIdParseFunc),

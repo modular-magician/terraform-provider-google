@@ -44,6 +44,7 @@ fields:
     provider_only: true
   - field: 'observed_generation'
   - field: 'reconciling'
+  - field: 'tags'
   - field: 'template.annotations'
   - field: 'template.labels'
   - field: 'template.parallelism'

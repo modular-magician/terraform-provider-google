@@ -688,7 +688,7 @@ var DefaultBasePaths = map[string]string{
 	SiteVerificationBasePathKey:         "https://www.googleapis.com/siteVerification/v1/",
 	SourceRepoBasePathKey:               "https://sourcerepo.googleapis.com/v1/",
 	SpannerBasePathKey:                  "https://spanner.googleapis.com/v1/",
-	SQLBasePathKey:                      "https://sqladmin.googleapis.com/sql/v1beta4/",
+	SQLBasePathKey:                      "https://sqladmin.googleapis.com/sql/v1/",
 	StorageBasePathKey:                  "https://storage.googleapis.com/storage/v1/",
 	StorageBatchOperationsBasePathKey:   "https://storagebatchoperations.googleapis.com/v1/",
 	StorageControlBasePathKey:           "https://storage.googleapis.com/v2/",

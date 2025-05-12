@@ -120,7 +120,7 @@ func listAndActionSQLSourceRepresentationInstance(action sweeper.ResourceAction)
 		}
 
 		// Prepare list URL
-		listTemplate := strings.Split("https://sqladmin.googleapis.com/sql/v1beta4/projects/{{project}}/instances", "?")[0]
+		listTemplate := strings.Split("https://sqladmin.googleapis.com/sql/v1/projects/{{project}}/instances", "?")[0]
 		listUrl, err := tpgresource.ReplaceVars(mockConfig, config, listTemplate)
 		if err != nil {
 			log.Printf("[INFO][SWEEPER_LOG] error preparing sweeper list url: %s", err)
@@ -198,7 +198,7 @@ func deleteResourceSQLSourceRepresentationInstance(config *transport_tpg.Config,
 		return nil
 	}
 
-	deleteTemplate := "https://sqladmin.googleapis.com/sql/v1beta4/projects/{{project}}/instances/{{name}}"
+	deleteTemplate := "https://sqladmin.googleapis.com/sql/v1/projects/{{project}}/instances/{{name}}"
 
 	url, err := tpgresource.ReplaceVars(d, config, deleteTemplate)
 	if err != nil {

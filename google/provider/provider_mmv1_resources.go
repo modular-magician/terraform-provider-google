@@ -517,9 +517,9 @@ var handwrittenIAMDatasources = map[string]*schema.Resource{
 }
 
 // Resources
-// Generated resources: 596
+// Generated resources: 597
 // Generated IAM resources: 297
-// Total generated resources: 893
+// Total generated resources: 894
 var generatedResources = map[string]*schema.Resource{
 	"google_folder_access_approval_settings":                                     accessapproval.ResourceAccessApprovalFolderSettings(),
 	"google_organization_access_approval_settings":                               accessapproval.ResourceAccessApprovalOrganizationSettings(),
@@ -903,6 +903,7 @@ var generatedResources = map[string]*schema.Resource{
 	"google_dataplex_task_iam_binding":                                           tpgiamresource.ResourceIamBinding(dataplex.DataplexTaskIamSchema, dataplex.DataplexTaskIamUpdaterProducer, dataplex.DataplexTaskIdParseFunc),
 	"google_dataplex_task_iam_member":                                            tpgiamresource.ResourceIamMember(dataplex.DataplexTaskIamSchema, dataplex.DataplexTaskIamUpdaterProducer, dataplex.DataplexTaskIdParseFunc),
 	"google_dataplex_task_iam_policy":                                            tpgiamresource.ResourceIamPolicy(dataplex.DataplexTaskIamSchema, dataplex.DataplexTaskIamUpdaterProducer, dataplex.DataplexTaskIdParseFunc),
+	"google_dataplex_term":                                                       dataplex.ResourceDataplexTerm(),
 	"google_dataplex_zone_iam_binding":                                           tpgiamresource.ResourceIamBinding(dataplex.DataplexZoneIamSchema, dataplex.DataplexZoneIamUpdaterProducer, dataplex.DataplexZoneIdParseFunc),
 	"google_dataplex_zone_iam_member":                                            tpgiamresource.ResourceIamMember(dataplex.DataplexZoneIamSchema, dataplex.DataplexZoneIamUpdaterProducer, dataplex.DataplexZoneIdParseFunc),
 	"google_dataplex_zone_iam_policy":                                            tpgiamresource.ResourceIamPolicy(dataplex.DataplexZoneIamSchema, dataplex.DataplexZoneIamUpdaterProducer, dataplex.DataplexZoneIdParseFunc),

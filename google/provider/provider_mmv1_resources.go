@@ -261,8 +261,6 @@ var handwrittenDatasources = map[string]*schema.Resource{
 	"google_container_attached_install_manifest":                 containerattached.DataSourceGoogleContainerAttachedInstallManifest(),
 	"google_container_cluster":                                   container.DataSourceGoogleContainerCluster(),
 	"google_container_engine_versions":                           container.DataSourceGoogleContainerEngineVersions(),
-	"google_container_registry_image":                            containeranalysis.DataSourceGoogleContainerImage(),
-	"google_container_registry_repository":                       containeranalysis.DataSourceGoogleContainerRepo(),
 	"google_dataproc_metastore_service":                          dataprocmetastore.DataSourceDataprocMetastoreService(),
 	"google_datastream_static_ips":                               datastream.DataSourceGoogleDatastreamStaticIps(),
 	"google_dns_keys":                                            dns.DataSourceDNSKeys(),
@@ -518,9 +516,9 @@ var handwrittenIAMDatasources = map[string]*schema.Resource{
 }
 
 // Resources
-// Generated resources: 596
+// Generated resources: 600
 // Generated IAM resources: 300
-// Total generated resources: 896
+// Total generated resources: 900
 var generatedResources = map[string]*schema.Resource{
 	"google_folder_access_approval_settings":                                     accessapproval.ResourceAccessApprovalFolderSettings(),
 	"google_organization_access_approval_settings":                               accessapproval.ResourceAccessApprovalOrganizationSettings(),
@@ -1183,6 +1181,10 @@ var generatedResources = map[string]*schema.Resource{
 	"google_network_security_firewall_endpoint_association":                      networksecurity.ResourceNetworkSecurityFirewallEndpointAssociation(),
 	"google_network_security_gateway_security_policy":                            networksecurity.ResourceNetworkSecurityGatewaySecurityPolicy(),
 	"google_network_security_gateway_security_policy_rule":                       networksecurity.ResourceNetworkSecurityGatewaySecurityPolicyRule(),
+	"google_network_security_intercept_deployment":                               networksecurity.ResourceNetworkSecurityInterceptDeployment(),
+	"google_network_security_intercept_deployment_group":                         networksecurity.ResourceNetworkSecurityInterceptDeploymentGroup(),
+	"google_network_security_intercept_endpoint_group":                           networksecurity.ResourceNetworkSecurityInterceptEndpointGroup(),
+	"google_network_security_intercept_endpoint_group_association":               networksecurity.ResourceNetworkSecurityInterceptEndpointGroupAssociation(),
 	"google_network_security_mirroring_deployment":                               networksecurity.ResourceNetworkSecurityMirroringDeployment(),
 	"google_network_security_mirroring_deployment_group":                         networksecurity.ResourceNetworkSecurityMirroringDeploymentGroup(),
 	"google_network_security_mirroring_endpoint_group":                           networksecurity.ResourceNetworkSecurityMirroringEndpointGroup(),
@@ -1429,7 +1431,6 @@ var handwrittenResources = map[string]*schema.Resource{
 	"google_compute_target_pool":                    compute.ResourceComputeTargetPool(),
 	"google_container_cluster":                      container.ResourceContainerCluster(),
 	"google_container_node_pool":                    container.ResourceContainerNodePool(),
-	"google_container_registry":                     containeranalysis.ResourceContainerRegistry(),
 	"google_dataflow_job":                           dataflow.ResourceDataflowJob(),
 	"google_dataproc_cluster":                       dataproc.ResourceDataprocCluster(),
 	"google_dataproc_job":                           dataproc.ResourceDataprocJob(),

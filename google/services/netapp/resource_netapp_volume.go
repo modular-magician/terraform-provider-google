@@ -1098,7 +1098,8 @@ func resourceNetappVolumeUpdate(d *schema.ResourceData, meta interface{}) error 
 
 	if d.HasChange("tiering_policy") {
 		updateMask = append(updateMask, "tiering_policy.cooling_threshold_days",
-			"tiering_policy.tier_action")
+			"tiering_policy.tier_action",
+			"tiering_policy.hot_tier_bypass_mode_enabled")
 	}
 
 	if d.HasChange("effective_labels") {

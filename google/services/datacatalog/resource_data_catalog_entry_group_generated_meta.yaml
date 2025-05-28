@@ -12,3 +12,4 @@ fields:
   - field: 'name'
   - field: 'region'
     provider_only: true
+  - field: 'transferred_to_dataplex'

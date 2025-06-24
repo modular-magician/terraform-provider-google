@@ -2647,6 +2647,9 @@ func expandAppEngineFlexibleAppVersionResourcesMemoryGb(v interface{}, d tpgreso
 }
 
 func expandAppEngineFlexibleAppVersionResourcesVolumes(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	req := make([]interface{}, 0, len(l))
 	for _, raw := range l {
@@ -2840,6 +2843,9 @@ func expandAppEngineFlexibleAppVersionHandlersRedirectHttpResponseCode(v interfa
 }
 
 func expandAppEngineFlexibleAppVersionHandlersScript(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
@@ -2863,6 +2869,9 @@ func expandAppEngineFlexibleAppVersionHandlersScriptScriptPath(v interface{}, d 
 }
 
 func expandAppEngineFlexibleAppVersionHandlersStaticFiles(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
@@ -3271,6 +3280,9 @@ func expandAppEngineFlexibleAppVersionDeployment(v interface{}, d tpgresource.Te
 }
 
 func expandAppEngineFlexibleAppVersionDeploymentZip(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
@@ -3345,6 +3357,9 @@ func expandAppEngineFlexibleAppVersionDeploymentFilesSourceUrl(v interface{}, d 
 }
 
 func expandAppEngineFlexibleAppVersionDeploymentContainer(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
@@ -3368,6 +3383,9 @@ func expandAppEngineFlexibleAppVersionDeploymentContainerImage(v interface{}, d 
 }
 
 func expandAppEngineFlexibleAppVersionDeploymentCloudBuildOptions(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
@@ -3604,6 +3622,9 @@ func expandAppEngineFlexibleAppVersionAutomaticScalingCoolDownPeriod(v interface
 }
 
 func expandAppEngineFlexibleAppVersionAutomaticScalingCpuUtilization(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
@@ -3666,6 +3687,9 @@ func expandAppEngineFlexibleAppVersionAutomaticScalingMinPendingLatency(v interf
 }
 
 func expandAppEngineFlexibleAppVersionAutomaticScalingRequestUtilization(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
@@ -3700,6 +3724,9 @@ func expandAppEngineFlexibleAppVersionAutomaticScalingRequestUtilizationTargetCo
 }
 
 func expandAppEngineFlexibleAppVersionAutomaticScalingDiskUtilization(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
@@ -3756,6 +3783,9 @@ func expandAppEngineFlexibleAppVersionAutomaticScalingDiskUtilizationTargetReadO
 }
 
 func expandAppEngineFlexibleAppVersionAutomaticScalingNetworkUtilization(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil

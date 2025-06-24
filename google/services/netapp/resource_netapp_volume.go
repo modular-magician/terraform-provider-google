@@ -2018,6 +2018,9 @@ func expandNetappVolumeExportPolicy(v interface{}, d tpgresource.TerraformResour
 }
 
 func expandNetappVolumeExportPolicyRules(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	req := make([]interface{}, 0, len(l))
 	for _, raw := range l {
@@ -2271,6 +2274,9 @@ func expandNetappVolumeSnapshotPolicyEnabled(v interface{}, d tpgresource.Terraf
 }
 
 func expandNetappVolumeSnapshotPolicyHourlySchedule(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
@@ -2305,6 +2311,9 @@ func expandNetappVolumeSnapshotPolicyHourlyScheduleMinute(v interface{}, d tpgre
 }
 
 func expandNetappVolumeSnapshotPolicyDailySchedule(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
@@ -2350,6 +2359,9 @@ func expandNetappVolumeSnapshotPolicyDailyScheduleHour(v interface{}, d tpgresou
 }
 
 func expandNetappVolumeSnapshotPolicyWeeklySchedule(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
@@ -2406,6 +2418,9 @@ func expandNetappVolumeSnapshotPolicyWeeklyScheduleDay(v interface{}, d tpgresou
 }
 
 func expandNetappVolumeSnapshotPolicyMonthlySchedule(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil

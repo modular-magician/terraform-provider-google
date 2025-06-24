@@ -1524,6 +1524,9 @@ func expandComputeFirewallPolicyWithRulesRulePriority(v interface{}, d tpgresour
 }
 
 func expandComputeFirewallPolicyWithRulesRuleMatch(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
@@ -1653,6 +1656,9 @@ func expandComputeFirewallPolicyWithRulesRuleMatchDestThreatIntelligences(v inte
 }
 
 func expandComputeFirewallPolicyWithRulesRuleMatchLayer4Config(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	req := make([]interface{}, 0, len(l))
 	for _, raw := range l {

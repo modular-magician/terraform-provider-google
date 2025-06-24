@@ -2605,6 +2605,9 @@ func expandCloudRunV2JobTemplateTaskCount(v interface{}, d tpgresource.Terraform
 }
 
 func expandCloudRunV2JobTemplateTemplate(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
@@ -2673,6 +2676,9 @@ func expandCloudRunV2JobTemplateTemplate(v interface{}, d tpgresource.TerraformR
 }
 
 func expandCloudRunV2JobTemplateTemplateContainers(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	req := make([]interface{}, 0, len(l))
 	for _, raw := range l {
@@ -2782,6 +2788,9 @@ func expandCloudRunV2JobTemplateTemplateContainersArgs(v interface{}, d tpgresou
 
 func expandCloudRunV2JobTemplateTemplateContainersEnv(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	v = v.(*schema.Set).List()
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	req := make([]interface{}, 0, len(l))
 	for _, raw := range l {
@@ -2826,6 +2835,9 @@ func expandCloudRunV2JobTemplateTemplateContainersEnvValue(v interface{}, d tpgr
 }
 
 func expandCloudRunV2JobTemplateTemplateContainersEnvValueSource(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
@@ -2845,6 +2857,9 @@ func expandCloudRunV2JobTemplateTemplateContainersEnvValueSource(v interface{}, 
 }
 
 func expandCloudRunV2JobTemplateTemplateContainersEnvValueSourceSecretKeyRef(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
@@ -2879,6 +2894,9 @@ func expandCloudRunV2JobTemplateTemplateContainersEnvValueSourceSecretKeyRefVers
 }
 
 func expandCloudRunV2JobTemplateTemplateContainersResources(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
@@ -2909,6 +2927,9 @@ func expandCloudRunV2JobTemplateTemplateContainersResourcesLimits(v interface{},
 }
 
 func expandCloudRunV2JobTemplateTemplateContainersPorts(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	req := make([]interface{}, 0, len(l))
 	for _, raw := range l {
@@ -2946,6 +2967,9 @@ func expandCloudRunV2JobTemplateTemplateContainersPortsContainerPort(v interface
 }
 
 func expandCloudRunV2JobTemplateTemplateContainersVolumeMounts(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	req := make([]interface{}, 0, len(l))
 	for _, raw := range l {
@@ -2991,6 +3015,9 @@ func expandCloudRunV2JobTemplateTemplateContainersDependsOn(v interface{}, d tpg
 }
 
 func expandCloudRunV2JobTemplateTemplateContainersStartupProbe(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
@@ -3068,6 +3095,9 @@ func expandCloudRunV2JobTemplateTemplateContainersStartupProbeFailureThreshold(v
 }
 
 func expandCloudRunV2JobTemplateTemplateContainersStartupProbeTcpSocket(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 {
 		return nil, nil
@@ -3096,6 +3126,9 @@ func expandCloudRunV2JobTemplateTemplateContainersStartupProbeTcpSocketPort(v in
 }
 
 func expandCloudRunV2JobTemplateTemplateContainersStartupProbeHttpGet(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 {
 		return nil, nil
@@ -3142,6 +3175,9 @@ func expandCloudRunV2JobTemplateTemplateContainersStartupProbeHttpGetPort(v inte
 }
 
 func expandCloudRunV2JobTemplateTemplateContainersStartupProbeHttpGetHttpHeaders(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	req := make([]interface{}, 0, len(l))
 	for _, raw := range l {
@@ -3179,6 +3215,9 @@ func expandCloudRunV2JobTemplateTemplateContainersStartupProbeHttpGetHttpHeaders
 }
 
 func expandCloudRunV2JobTemplateTemplateContainersStartupProbeGrpc(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 {
 		return nil, nil
@@ -3218,6 +3257,9 @@ func expandCloudRunV2JobTemplateTemplateContainersStartupProbeGrpcService(v inte
 }
 
 func expandCloudRunV2JobTemplateTemplateVolumes(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	req := make([]interface{}, 0, len(l))
 	for _, raw := range l {
@@ -3279,6 +3321,9 @@ func expandCloudRunV2JobTemplateTemplateVolumesName(v interface{}, d tpgresource
 }
 
 func expandCloudRunV2JobTemplateTemplateVolumesSecret(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
@@ -3320,6 +3365,9 @@ func expandCloudRunV2JobTemplateTemplateVolumesSecretDefaultMode(v interface{}, 
 }
 
 func expandCloudRunV2JobTemplateTemplateVolumesSecretItems(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	req := make([]interface{}, 0, len(l))
 	for _, raw := range l {
@@ -3368,6 +3416,9 @@ func expandCloudRunV2JobTemplateTemplateVolumesSecretItemsMode(v interface{}, d 
 }
 
 func expandCloudRunV2JobTemplateTemplateVolumesCloudSqlInstance(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
@@ -3391,6 +3442,9 @@ func expandCloudRunV2JobTemplateTemplateVolumesCloudSqlInstanceInstances(v inter
 }
 
 func expandCloudRunV2JobTemplateTemplateVolumesEmptyDir(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
@@ -3425,6 +3479,9 @@ func expandCloudRunV2JobTemplateTemplateVolumesEmptyDirSizeLimit(v interface{}, 
 }
 
 func expandCloudRunV2JobTemplateTemplateVolumesGcs(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
@@ -3459,6 +3516,9 @@ func expandCloudRunV2JobTemplateTemplateVolumesGcsReadOnly(v interface{}, d tpgr
 }
 
 func expandCloudRunV2JobTemplateTemplateVolumesNfs(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
@@ -3520,6 +3580,9 @@ func expandCloudRunV2JobTemplateTemplateEncryptionKey(v interface{}, d tpgresour
 }
 
 func expandCloudRunV2JobTemplateTemplateVpcAccess(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
@@ -3561,6 +3624,9 @@ func expandCloudRunV2JobTemplateTemplateVpcAccessEgress(v interface{}, d tpgreso
 }
 
 func expandCloudRunV2JobTemplateTemplateVpcAccessNetworkInterfaces(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	req := make([]interface{}, 0, len(l))
 	for _, raw := range l {

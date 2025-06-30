@@ -15,7 +15,7 @@
 //
 // ----------------------------------------------------------------------------
 
-package contactcenterinsights_test
+package tpu_test
 
 import (
 	"fmt"
@@ -30,7 +30,7 @@ import (
 	transport_tpg "github.com/hashicorp/terraform-provider-google/google/transport"
 )
 
-func TestAccContactCenterInsightsView_contactCenterInsightsViewBasicExample(t *testing.T) {
+func TestAccTPUNode_tpuNodeBasicExample(t *testing.T) {
 	t.Parallel()
 
 	context := map[string]interface{}{
@@ -40,70 +40,97 @@ func TestAccContactCenterInsightsView_contactCenterInsightsViewBasicExample(t *t
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),
-		CheckDestroy:             testAccCheckContactCenterInsightsViewDestroyProducer(t),
+		CheckDestroy:             testAccCheckTPUNodeDestroyProducer(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccContactCenterInsightsView_contactCenterInsightsViewBasicExample(context),
+				Config: testAccTPUNode_tpuNodeBasicExample(context),
 			},
 			{
-				ResourceName:            "google_contact_center_insights_view.basic_view",
+				ResourceName:            "google_tpu_node.tpu",
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"location"},
+				ImportStateVerifyIgnore: []string{"labels", "terraform_labels", "zone"},
 			},
 		},
 	})
 }
 
-func testAccContactCenterInsightsView_contactCenterInsightsViewBasicExample(context map[string]interface{}) string {
+func testAccTPUNode_tpuNodeBasicExample(context map[string]interface{}) string {
 	return acctest.Nprintf(`
-resource "google_contact_center_insights_view" "basic_view" {
-  location = "us-central1"
-  display_name = "view-display-name"
-  value    = "medium=\"CHAT\""
+data "google_tpu_tensorflow_versions" "available" {
+}
+
+resource "google_tpu_node" "tpu" {
+  name = "tf-test-test-tpu%{random_suffix}"
+  zone = "us-central1-b"
+
+  accelerator_type   = "v3-8"
+  tensorflow_version = data.google_tpu_tensorflow_versions.available.versions[0]
+  cidr_block         = "10.2.0.0/29"
 }
 `, context)
 }
 
-func TestAccContactCenterInsightsView_contactCenterInsightsViewFullExample(t *testing.T) {
+func TestAccTPUNode_tpuNodeFullTestExample(t *testing.T) {
 	t.Parallel()
 
 	context := map[string]interface{}{
+		"network_name":  acctest.BootstrapSharedServiceNetworkingConnection(t, "vpc-network-1"),
 		"random_suffix": acctest.RandString(t, 10),
 	}
 
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),
-		CheckDestroy:             testAccCheckContactCenterInsightsViewDestroyProducer(t),
+		CheckDestroy:             testAccCheckTPUNodeDestroyProducer(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccContactCenterInsightsView_contactCenterInsightsViewFullExample(context),
+				Config: testAccTPUNode_tpuNodeFullTestExample(context),
 			},
 			{
-				ResourceName:            "google_contact_center_insights_view.full_view",
+				ResourceName:            "google_tpu_node.tpu",
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"location"},
+				ImportStateVerifyIgnore: []string{"labels", "terraform_labels", "zone"},
 			},
 		},
 	})
 }
 
-func testAccContactCenterInsightsView_contactCenterInsightsViewFullExample(context map[string]interface{}) string {
+func testAccTPUNode_tpuNodeFullTestExample(context map[string]interface{}) string {
 	return acctest.Nprintf(`
-resource "google_contact_center_insights_view" "full_view" {
-  location = "us-central1"
-  display_name = "view-display-name"
-  value    = "medium=\"PHONE_CALL\""
+resource "google_tpu_node" "tpu" {
+  name = "tf-test-test-tpu%{random_suffix}"
+  zone = "us-central1-b"
+
+  accelerator_type = "v3-8"
+
+  tensorflow_version = "2.10.0"
+
+  description = "Terraform Google Provider test TPU"
+  use_service_networking = true
+
+  network = data.google_compute_network.network.id
+
+  labels = {
+    foo = "bar"
+  }
+
+  scheduling_config {
+    preemptible = true
+  }
+}
+
+data "google_compute_network" "network" {
+  name = "%{network_name}"
 }
 `, context)
 }
 
-func testAccCheckContactCenterInsightsViewDestroyProducer(t *testing.T) func(s *terraform.State) error {
+func testAccCheckTPUNodeDestroyProducer(t *testing.T) func(s *terraform.State) error {
 	return func(s *terraform.State) error {
 		for name, rs := range s.RootModule().Resources {
-			if rs.Type != "google_contact_center_insights_view" {
+			if rs.Type != "google_tpu_node" {
 				continue
 			}
 			if strings.HasPrefix(name, "data.") {
@@ -112,7 +139,7 @@ func testAccCheckContactCenterInsightsViewDestroyProducer(t *testing.T) func(s *
 
 			config := acctest.GoogleProviderConfig(t)
 
-			url, err := tpgresource.ReplaceVarsForTest(config, rs, "{{ContactCenterInsightsBasePath}}projects/{{project}}/locations/{{location}}/views/{{name}}")
+			url, err := tpgresource.ReplaceVarsForTest(config, rs, "{{TPUBasePath}}projects/{{project}}/locations/{{zone}}/nodes/{{name}}")
 			if err != nil {
 				return err
 			}
@@ -131,7 +158,7 @@ func testAccCheckContactCenterInsightsViewDestroyProducer(t *testing.T) func(s *
 				UserAgent: config.UserAgent,
 			})
 			if err == nil {
-				return fmt.Errorf("ContactCenterInsightsView still exists at %s", url)
+				return fmt.Errorf("TPUNode still exists at %s", url)
 			}
 		}
 

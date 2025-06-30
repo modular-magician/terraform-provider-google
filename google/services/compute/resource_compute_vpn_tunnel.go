@@ -1025,7 +1025,7 @@ func flattenComputeVpnTunnelRegion(v interface{}, d *schema.ResourceData, config
 	if v == nil {
 		return v
 	}
-	return tpgresource.GetResourceNameFromSelfLink(v.(string))
+	return tpgresource.NameFromSelfLinkStateFunc(v)
 }
 
 func expandComputeVpnTunnelName(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {

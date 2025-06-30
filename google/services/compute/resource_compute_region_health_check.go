@@ -1563,7 +1563,7 @@ func flattenComputeRegionHealthCheckRegion(v interface{}, d *schema.ResourceData
 	if v == nil {
 		return v
 	}
-	return tpgresource.GetResourceNameFromSelfLink(v.(string))
+	return tpgresource.NameFromSelfLinkStateFunc(v)
 }
 
 func expandComputeRegionHealthCheckCheckIntervalSec(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {

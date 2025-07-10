@@ -376,6 +376,7 @@ type Config struct {
 	PubsubLiteBasePath               string
 	RedisBasePath                    string
 	ResourceManagerBasePath          string
+	SaasBasePath                     string
 	SecretManagerBasePath            string
 	SecretManagerRegionalBasePath    string
 	SecureSourceManagerBasePath      string
@@ -540,6 +541,7 @@ const PubsubBasePathKey = "Pubsub"
 const PubsubLiteBasePathKey = "PubsubLite"
 const RedisBasePathKey = "Redis"
 const ResourceManagerBasePathKey = "ResourceManager"
+const SaasBasePathKey = "Saas"
 const SecretManagerBasePathKey = "SecretManager"
 const SecretManagerRegionalBasePathKey = "SecretManagerRegional"
 const SecureSourceManagerBasePathKey = "SecureSourceManager"
@@ -698,6 +700,7 @@ var DefaultBasePaths = map[string]string{
 	PubsubLiteBasePathKey:               "https://{{region}}-pubsublite.googleapis.com/v1/admin/",
 	RedisBasePathKey:                    "https://redis.googleapis.com/v1/",
 	ResourceManagerBasePathKey:          "https://cloudresourcemanager.googleapis.com/v1/",
+	SaasBasePathKey:                     "https://saasservicemgmt.googleapis.com/v1beta1/",
 	SecretManagerBasePathKey:            "https://secretmanager.googleapis.com/v1/",
 	SecretManagerRegionalBasePathKey:    "https://secretmanager.{{location}}.rep.googleapis.com/v1/",
 	SecureSourceManagerBasePathKey:      "https://securesourcemanager.googleapis.com/v1/",
@@ -1398,6 +1401,11 @@ func SetEndpointDefaults(d *schema.ResourceData) error {
 		d.Set("resource_manager_custom_endpoint", MultiEnvDefault([]string{
 			"GOOGLE_RESOURCE_MANAGER_CUSTOM_ENDPOINT",
 		}, DefaultBasePaths[ResourceManagerBasePathKey]))
+	}
+	if d.Get("saas_custom_endpoint") == "" {
+		d.Set("saas_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_SAAS_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[SaasBasePathKey]))
 	}
 	if d.Get("secret_manager_custom_endpoint") == "" {
 		d.Set("secret_manager_custom_endpoint", MultiEnvDefault([]string{
@@ -2645,6 +2653,7 @@ func ConfigureBasePaths(c *Config) {
 	c.PubsubLiteBasePath = DefaultBasePaths[PubsubLiteBasePathKey]
 	c.RedisBasePath = DefaultBasePaths[RedisBasePathKey]
 	c.ResourceManagerBasePath = DefaultBasePaths[ResourceManagerBasePathKey]
+	c.SaasBasePath = DefaultBasePaths[SaasBasePathKey]
 	c.SecretManagerBasePath = DefaultBasePaths[SecretManagerBasePathKey]
 	c.SecretManagerRegionalBasePath = DefaultBasePaths[SecretManagerRegionalBasePathKey]
 	c.SecureSourceManagerBasePath = DefaultBasePaths[SecureSourceManagerBasePathKey]

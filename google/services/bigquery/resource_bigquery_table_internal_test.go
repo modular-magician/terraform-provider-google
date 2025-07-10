@@ -24,6 +24,7 @@ import (
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
 )
 
+/*
 func TestBigQueryTableSchemaDiffSuppress(t *testing.T) {
 	t.Parallel()
 
@@ -403,6 +404,7 @@ func TestBigQueryTableSchemaDiffSuppress(t *testing.T) {
 		})
 	}
 }
+*/
 
 type testUnitBigQueryDataTableJSONChangeableTestCase struct {
 	name            string

@@ -550,9 +550,9 @@ var handwrittenIAMDatasources = map[string]*schema.Resource{
 }
 
 // Resources
-// Generated resources: 633
+// Generated resources: 634
 // Generated IAM resources: 309
-// Total generated resources: 942
+// Total generated resources: 943
 var generatedResources = map[string]*schema.Resource{
 	"google_folder_access_approval_settings":                                     accessapproval.ResourceAccessApprovalFolderSettings(),
 	"google_organization_access_approval_settings":                               accessapproval.ResourceAccessApprovalOrganizationSettings(),
@@ -1441,6 +1441,7 @@ var generatedResources = map[string]*schema.Resource{
 	"google_vertex_ai_dataset":                                                   vertexai.ResourceVertexAIDataset(),
 	"google_vertex_ai_deployment_resource_pool":                                  vertexai.ResourceVertexAIDeploymentResourcePool(),
 	"google_vertex_ai_endpoint":                                                  vertexai.ResourceVertexAIEndpoint(),
+	"google_vertex_ai_endpoint_deployed_model":                                   vertexai.ResourceVertexAIEndpointDeployedModel(),
 	"google_vertex_ai_feature_group":                                             vertexai.ResourceVertexAIFeatureGroup(),
 	"google_vertex_ai_feature_group_feature":                                     vertexai.ResourceVertexAIFeatureGroupFeature(),
 	"google_vertex_ai_feature_online_store":                                      vertexai.ResourceVertexAIFeatureOnlineStore(),

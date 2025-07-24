@@ -7717,6 +7717,9 @@ resource "google_container_cluster" "with_node_config" {
     labels = {
       foo = "bar"
     }
+    resource_labels = {
+      foo = "bar"
+    }
     tags             = ["foo", "bar"]
     preemptible      = true
     min_cpu_platform = "Intel Broadwell"

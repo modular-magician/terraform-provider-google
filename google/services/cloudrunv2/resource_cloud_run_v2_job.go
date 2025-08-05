@@ -340,6 +340,7 @@ Must be smaller than periodSeconds.`,
 									},
 									"gpu_zonal_redundancy_disabled": {
 										Type:        schema.TypeBool,
+										Computed:    true,
 										Optional:    true,
 										Description: `True if GPU zonal redundancy is disabled on this execution.`,
 									},
@@ -2724,7 +2725,7 @@ func expandCloudRunV2JobTemplateTemplate(v interface{}, d tpgresource.TerraformR
 	transformedGpuZonalRedundancyDisabled, err := expandCloudRunV2JobTemplateTemplateGpuZonalRedundancyDisabled(original["gpu_zonal_redundancy_disabled"], d, config)
 	if err != nil {
 		return nil, err
-	} else if val := reflect.ValueOf(transformedGpuZonalRedundancyDisabled); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+	} else {
 		transformed["gpuZonalRedundancyDisabled"] = transformedGpuZonalRedundancyDisabled
 	}
 

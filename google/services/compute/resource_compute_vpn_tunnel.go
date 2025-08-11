@@ -172,14 +172,6 @@ must be a lowercase letter, and all following characters must
 be a dash, lowercase letter, or digit,
 except the last character, which cannot be a dash.`,
 			},
-			"shared_secret": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-				Description: `Shared secret used to set the secure session between the Cloud VPN
-gateway and the peer VPN gateway.`,
-				Sensitive: true,
-			},
 			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
@@ -280,6 +272,30 @@ Only IPv4 is supported.`,
 				DiffSuppressFunc: tpgresource.CompareSelfLinkOrResourceName,
 				Description:      `URL of router resource to be used for dynamic routing.`,
 			},
+			"shared_secret": {
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+				Description: `Shared secret used to set the secure session between the Cloud VPN
+gateway and the peer VPN gateway.`,
+				Sensitive: true,
+			},
+			"shared_secret_wo": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Description: `Shared secret used to set the secure session between the Cloud VPN
+gateway and the peer VPN gateway.
+ Note: This property is write-only and will not be read from the API. For more info see [updating write-only attributes](/docs/providers/google/guides/using_write_only_attributes.html#updating-write-only-attributes)`,
+				WriteOnly:    true,
+				ExactlyOneOf: []string{"shared_secret", "shared_secret_wo"},
+				RequiredWith: []string{"shared_secret_wo_version"},
+			},
+			"shared_secret_wo_version": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Description:  `Triggers update of shared_secret_wo write-only. For more info see [updating write-only attributes](/docs/providers/google/guides/using_write_only_attributes.html#updating-write-only-attributes)`,
+				RequiredWith: []string{"shared_secret_wo"},
+			},
 			"target_vpn_gateway": {
 				Type:             schema.TypeString,
 				Optional:         true,
@@ -355,6 +371,13 @@ internally during updates.`,
 		},
 		UseJSONNumber: true,
 	}
+}
+
+func resourceComputeVpnTunnelGetRawConfigAttributeAsString(d *schema.ResourceData, key string) string {
+	if v := d.GetRawConfig().GetAttr(key); !v.IsNull() {
+		return v.AsString()
+	}
+	return ""
 }
 
 func resourceComputeVpnTunnelCreate(d *schema.ResourceData, meta interface{}) error {
@@ -455,6 +478,12 @@ func resourceComputeVpnTunnelCreate(d *schema.ResourceData, meta interface{}) er
 	} else if v, ok := d.GetOkExists("label_fingerprint"); !tpgresource.IsEmptyValue(reflect.ValueOf(labelFingerprintProp)) && (ok || !reflect.DeepEqual(v, labelFingerprintProp)) {
 		obj["labelFingerprint"] = labelFingerprintProp
 	}
+	sharedSecretWoProp, err := expandComputeVpnTunnelSharedSecretWo(resourceComputeVpnTunnelGetRawConfigAttributeAsString(d, "shared_secret_wo"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("shared_secret_wo"); !tpgresource.IsEmptyValue(reflect.ValueOf(sharedSecretWoProp)) && (ok || !reflect.DeepEqual(v, sharedSecretWoProp)) {
+		obj["sharedSecret"] = sharedSecretWoProp
+	}
 	labelsProp, err := expandComputeVpnTunnelEffectiveLabels(d.Get("effective_labels"), d, config)
 	if err != nil {
 		return err
@@ -525,7 +554,7 @@ func resourceComputeVpnTunnelCreate(d *schema.ResourceData, meta interface{}) er
 	}
 
 	if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
-		labels := d.Get("labels")
+		userLabels := d.Get("labels")
 		terraformLables := d.Get("terraform_labels")
 
 		// Labels cannot be set in a create.  We'll have to set them here.
@@ -569,7 +598,7 @@ func resourceComputeVpnTunnelCreate(d *schema.ResourceData, meta interface{}) er
 		}
 
 		// Set back the labels field, as it is needed to decide the value of "labels" in the state in the read function.
-		if err := d.Set("labels", labels); err != nil {
+		if err := d.Set("labels", userLabels); err != nil {
 			return fmt.Errorf("Error setting back labels: %s", err)
 		}
 
@@ -686,6 +715,9 @@ func resourceComputeVpnTunnelRead(d *schema.ResourceData, meta interface{}) erro
 		return fmt.Errorf("Error reading VpnTunnel: %s", err)
 	}
 	if err := d.Set("detailed_status", flattenComputeVpnTunnelDetailedStatus(res["detailedStatus"], d, config)); err != nil {
+		return fmt.Errorf("Error reading VpnTunnel: %s", err)
+	}
+	if err := d.Set("shared_secret_wo_version", flattenComputeVpnTunnelSharedSecretWoVersion(res["sharedSecretWoVersion"], d, config)); err != nil {
 		return fmt.Errorf("Error reading VpnTunnel: %s", err)
 	}
 	if err := d.Set("terraform_labels", flattenComputeVpnTunnelTerraformLabels(res["labels"], d, config)); err != nil {
@@ -1002,6 +1034,10 @@ func flattenComputeVpnTunnelDetailedStatus(v interface{}, d *schema.ResourceData
 	return v
 }
 
+func flattenComputeVpnTunnelSharedSecretWoVersion(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return d.Get("shared_secret_wo_version")
+}
+
 func flattenComputeVpnTunnelTerraformLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	if v == nil {
 		return v
@@ -1116,6 +1152,10 @@ func expandComputeVpnTunnelRemoteTrafficSelector(v interface{}, d tpgresource.Te
 }
 
 func expandComputeVpnTunnelLabelFingerprint(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandComputeVpnTunnelSharedSecretWo(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 

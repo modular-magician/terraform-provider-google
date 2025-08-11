@@ -200,6 +200,13 @@ To explicitly set a timezone to the cron tab, apply a prefix in the cron tab: "C
 	}
 }
 
+func resourceVertexAIFeatureOnlineStoreFeatureviewGetRawConfigAttributeAsString(d *schema.ResourceData, key string) string {
+	if v := d.GetRawConfig().GetAttr(key); !v.IsNull() {
+		return v.AsString()
+	}
+	return ""
+}
+
 func resourceVertexAIFeatureOnlineStoreFeatureviewCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*transport_tpg.Config)
 	userAgent, err := tpgresource.GenerateUserAgentString(d, config.UserAgent)

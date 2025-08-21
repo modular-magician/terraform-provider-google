@@ -74,11 +74,6 @@ and hyphens (-). Cannot begin or end with underscore or hyphen. Must consist of 
 				Description:  `The database type that the Metastore service stores its data. Default value: "MYSQL" Possible values: ["MYSQL", "SPANNER"]`,
 				Default:      "MYSQL",
 			},
-			"deletion_protection": {
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Description: `Indicates if the dataproc metastore should be protected against accidental deletions.`,
-			},
 			"encryption_config": {
 				Type:     schema.TypeList,
 				Optional: true,
@@ -495,6 +490,14 @@ There must be at least one IP address available in the subnet's primary range. T
 				Computed:    true,
 				Description: `Output only. The time when the metastore service was last updated.`,
 			},
+			"deletion_protection": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Description: `Whether Terraform will be prevented from destroying the service. Defaults to true.
+When a 'terraform destroy' or 'terraform apply' would delete the service, the command will fail if this field is not set to false in Terraform state.
+When the field is set to true or unset in Terraform state, a 'terraform apply' or 'terraform destroy' that would delete the instance will fail. When the field is set to false, deleting the instance is allowed.`,
+				Default: false,
+			},
 			"project": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -543,12 +546,6 @@ func resourceDataprocMetastoreServiceCreate(d *schema.ResourceData, meta interfa
 		return err
 	} else if v, ok := d.GetOkExists("scheduled_backup"); !tpgresource.IsEmptyValue(reflect.ValueOf(scheduledBackupProp)) && (ok || !reflect.DeepEqual(v, scheduledBackupProp)) {
 		obj["scheduledBackup"] = scheduledBackupProp
-	}
-	deletionProtectionProp, err := expandDataprocMetastoreServiceDeletionProtection(d.Get("deletion_protection"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("deletion_protection"); !tpgresource.IsEmptyValue(reflect.ValueOf(deletionProtectionProp)) && (ok || !reflect.DeepEqual(v, deletionProtectionProp)) {
-		obj["deletionProtection"] = deletionProtectionProp
 	}
 	maintenanceWindowProp, err := expandDataprocMetastoreServiceMaintenanceWindow(d.Get("maintenance_window"), d, config)
 	if err != nil {
@@ -699,6 +696,12 @@ func resourceDataprocMetastoreServiceRead(d *schema.ResourceData, meta interface
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("DataprocMetastoreService %q", d.Id()))
 	}
 
+	// Explicitly set virtual fields to default values if unset
+	if _, ok := d.GetOkExists("deletion_protection"); !ok {
+		if err := d.Set("deletion_protection", false); err != nil {
+			return fmt.Errorf("Error setting deletion_protection: %s", err)
+		}
+	}
 	if err := d.Set("project", project); err != nil {
 		return fmt.Errorf("Error reading Service: %s", err)
 	}
@@ -740,9 +743,6 @@ func resourceDataprocMetastoreServiceRead(d *schema.ResourceData, meta interface
 		return fmt.Errorf("Error reading Service: %s", err)
 	}
 	if err := d.Set("scheduled_backup", flattenDataprocMetastoreServiceScheduledBackup(res["scheduledBackup"], d, config)); err != nil {
-		return fmt.Errorf("Error reading Service: %s", err)
-	}
-	if err := d.Set("deletion_protection", flattenDataprocMetastoreServiceDeletionProtection(res["deletionProtection"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Service: %s", err)
 	}
 	if err := d.Set("maintenance_window", flattenDataprocMetastoreServiceMaintenanceWindow(res["maintenanceWindow"], d, config)); err != nil {
@@ -822,12 +822,6 @@ func resourceDataprocMetastoreServiceUpdate(d *schema.ResourceData, meta interfa
 	} else if v, ok := d.GetOkExists("scheduled_backup"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, scheduledBackupProp)) {
 		obj["scheduledBackup"] = scheduledBackupProp
 	}
-	deletionProtectionProp, err := expandDataprocMetastoreServiceDeletionProtection(d.Get("deletion_protection"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("deletion_protection"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, deletionProtectionProp)) {
-		obj["deletionProtection"] = deletionProtectionProp
-	}
 	maintenanceWindowProp, err := expandDataprocMetastoreServiceMaintenanceWindow(d.Get("maintenance_window"), d, config)
 	if err != nil {
 		return err
@@ -888,10 +882,6 @@ func resourceDataprocMetastoreServiceUpdate(d *schema.ResourceData, meta interfa
 
 	if d.HasChange("scheduled_backup") {
 		updateMask = append(updateMask, "scheduledBackup")
-	}
-
-	if d.HasChange("deletion_protection") {
-		updateMask = append(updateMask, "deletionProtection")
 	}
 
 	if d.HasChange("maintenance_window") {
@@ -988,6 +978,9 @@ func resourceDataprocMetastoreServiceDelete(d *schema.ResourceData, meta interfa
 	}
 
 	headers := make(http.Header)
+	if d.Get("deletion_protection").(bool) {
+		return fmt.Errorf("cannot destroy metastore service without setting deletion_protection=false and running `terraform apply`")
+	}
 
 	log.Printf("[DEBUG] Deleting Service %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
@@ -1032,6 +1025,11 @@ func resourceDataprocMetastoreServiceImport(d *schema.ResourceData, meta interfa
 		return nil, fmt.Errorf("Error constructing id: %s", err)
 	}
 	d.SetId(id)
+
+	// Explicitly set virtual fields to default values on import
+	if err := d.Set("deletion_protection", false); err != nil {
+		return nil, fmt.Errorf("Error setting deletion_protection: %s", err)
+	}
 
 	return []*schema.ResourceData{d}, nil
 }
@@ -1209,10 +1207,6 @@ func flattenDataprocMetastoreServiceScheduledBackupTimeZone(v interface{}, d *sc
 }
 
 func flattenDataprocMetastoreServiceScheduledBackupBackupLocation(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenDataprocMetastoreServiceDeletionProtection(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 
@@ -1667,10 +1661,6 @@ func expandDataprocMetastoreServiceScheduledBackupTimeZone(v interface{}, d tpgr
 }
 
 func expandDataprocMetastoreServiceScheduledBackupBackupLocation(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	return v, nil
-}
-
-func expandDataprocMetastoreServiceDeletionProtection(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 

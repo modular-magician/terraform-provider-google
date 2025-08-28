@@ -169,6 +169,7 @@ type ProviderModel struct {
 	PublicCACustomEndpoint                 types.String `tfsdk:"public_ca_custom_endpoint"`
 	PubsubCustomEndpoint                   types.String `tfsdk:"pubsub_custom_endpoint"`
 	PubsubLiteCustomEndpoint               types.String `tfsdk:"pubsub_lite_custom_endpoint"`
+	RandomCustomEndpoint                   types.String `tfsdk:"random_custom_endpoint"`
 	RedisCustomEndpoint                    types.String `tfsdk:"redis_custom_endpoint"`
 	ResourceManagerCustomEndpoint          types.String `tfsdk:"resource_manager_custom_endpoint"`
 	SecretManagerCustomEndpoint            types.String `tfsdk:"secret_manager_custom_endpoint"`

@@ -375,6 +375,7 @@ type Config struct {
 	PublicCABasePath                 string
 	PubsubBasePath                   string
 	PubsubLiteBasePath               string
+	RandomBasePath                   string
 	RedisBasePath                    string
 	ResourceManagerBasePath          string
 	SecretManagerBasePath            string
@@ -544,6 +545,7 @@ const PrivilegedAccessManagerBasePathKey = "PrivilegedAccessManager"
 const PublicCABasePathKey = "PublicCA"
 const PubsubBasePathKey = "Pubsub"
 const PubsubLiteBasePathKey = "PubsubLite"
+const RandomBasePathKey = "Random"
 const RedisBasePathKey = "Redis"
 const ResourceManagerBasePathKey = "ResourceManager"
 const SecretManagerBasePathKey = "SecretManager"
@@ -702,6 +704,7 @@ var DefaultBasePaths = map[string]string{
 	PublicCABasePathKey:                 "https://publicca.googleapis.com/v1/",
 	PubsubBasePathKey:                   "https://pubsub.googleapis.com/v1/",
 	PubsubLiteBasePathKey:               "https://{{region}}-pubsublite.googleapis.com/v1/admin/",
+	RandomBasePathKey:                   "https://random.googleapis.com/v1/",
 	RedisBasePathKey:                    "https://redis.googleapis.com/v1/",
 	ResourceManagerBasePathKey:          "https://cloudresourcemanager.googleapis.com/v1/",
 	SecretManagerBasePathKey:            "https://secretmanager.googleapis.com/v1/",
@@ -1404,6 +1407,11 @@ func SetEndpointDefaults(d *schema.ResourceData) error {
 		d.Set("pubsub_lite_custom_endpoint", MultiEnvDefault([]string{
 			"GOOGLE_PUBSUB_LITE_CUSTOM_ENDPOINT",
 		}, DefaultBasePaths[PubsubLiteBasePathKey]))
+	}
+	if d.Get("random_custom_endpoint") == "" {
+		d.Set("random_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_RANDOM_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[RandomBasePathKey]))
 	}
 	if d.Get("redis_custom_endpoint") == "" {
 		d.Set("redis_custom_endpoint", MultiEnvDefault([]string{
@@ -2697,6 +2705,7 @@ func ConfigureBasePaths(c *Config) {
 	c.PublicCABasePath = DefaultBasePaths[PublicCABasePathKey]
 	c.PubsubBasePath = DefaultBasePaths[PubsubBasePathKey]
 	c.PubsubLiteBasePath = DefaultBasePaths[PubsubLiteBasePathKey]
+	c.RandomBasePath = DefaultBasePaths[RandomBasePathKey]
 	c.RedisBasePath = DefaultBasePaths[RedisBasePathKey]
 	c.ResourceManagerBasePath = DefaultBasePaths[ResourceManagerBasePathKey]
 	c.SecretManagerBasePath = DefaultBasePaths[SecretManagerBasePathKey]

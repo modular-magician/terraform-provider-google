@@ -134,6 +134,7 @@ import (
 	_ "github.com/hashicorp/terraform-provider-google/google/services/publicca"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/pubsub"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/pubsublite"
+	_ "github.com/hashicorp/terraform-provider-google/google/services/random"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/redis"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/resourcemanager"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/secretmanager"

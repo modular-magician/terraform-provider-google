@@ -512,6 +512,12 @@ To disable automatic snapshot creation you have to remove the whole snapshot_pol
 							Description: `Optional. Time in days to mark the volume's data block as cold and make it eligible for tiering, can be range from 2-183.
 Default is 31.`,
 						},
+						"hot_tier_bypass_mode_enabled": {
+							Type:     schema.TypeBool,
+							Optional: true,
+							Description: `Optional. Flag indicating that the hot tier bypass mode is enabled. Default is false.
+Only applicable to Flex service level.`,
+						},
 						"tier_action": {
 							Type:         schema.TypeString,
 							Optional:     true,
@@ -559,6 +565,11 @@ Default is 31.`,
 				Computed:    true,
 				Description: `Indicates whether the volume is part of a volume replication relationship.`,
 			},
+			"hot_tier_size_used_gib": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: `Total hot tier data rounded down to the nearest GiB used by the volume. This field is only used for flex Service Level`,
+			},
 			"kms_config": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -593,6 +604,11 @@ Format for SMB volumes: '\\\\netbios_prefix-four_random_hex_letters.domain_name\
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: `Human-readable mount instructions.`,
+						},
+						"ip_address": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: `IP Address.`,
 						},
 						"protocol": {
 							Type:        schema.TypeString,
@@ -1014,6 +1030,9 @@ func resourceNetappVolumeRead(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("Error reading Volume: %s", err)
 	}
 	if err := d.Set("throughput_mibps", flattenNetappVolumeThroughputMibps(res["throughputMibps"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Volume: %s", err)
+	}
+	if err := d.Set("hot_tier_size_used_gib", flattenNetappVolumeHotTierSizeUsedGib(res["hotTierSizeUsedGib"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Volume: %s", err)
 	}
 	if err := d.Set("terraform_labels", flattenNetappVolumeTerraformLabels(res["labels"], d, config)); err != nil {
@@ -1565,6 +1584,7 @@ func flattenNetappVolumeMountOptions(v interface{}, d *schema.ResourceData, conf
 			"export_full":  flattenNetappVolumeMountOptionsExportFull(original["exportFull"], d, config),
 			"instructions": flattenNetappVolumeMountOptionsInstructions(original["instructions"], d, config),
 			"protocol":     flattenNetappVolumeMountOptionsProtocol(original["protocol"], d, config),
+			"ip_address":   flattenNetappVolumeMountOptionsIpAddress(original["ipAddress"], d, config),
 		})
 	}
 	return transformed
@@ -1582,6 +1602,10 @@ func flattenNetappVolumeMountOptionsInstructions(v interface{}, d *schema.Resour
 }
 
 func flattenNetappVolumeMountOptionsProtocol(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenNetappVolumeMountOptionsIpAddress(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 
@@ -1937,6 +1961,8 @@ func flattenNetappVolumeTieringPolicy(v interface{}, d *schema.ResourceData, con
 		flattenNetappVolumeTieringPolicyCoolingThresholdDays(original["coolingThresholdDays"], d, config)
 	transformed["tier_action"] =
 		flattenNetappVolumeTieringPolicyTierAction(original["tierAction"], d, config)
+	transformed["hot_tier_bypass_mode_enabled"] =
+		flattenNetappVolumeTieringPolicyHotTierBypassModeEnabled(original["hotTierBypassModeEnabled"], d, config)
 	return []interface{}{transformed}
 }
 func flattenNetappVolumeTieringPolicyCoolingThresholdDays(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -1957,6 +1983,10 @@ func flattenNetappVolumeTieringPolicyCoolingThresholdDays(v interface{}, d *sche
 }
 
 func flattenNetappVolumeTieringPolicyTierAction(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenNetappVolumeTieringPolicyHotTierBypassModeEnabled(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 
@@ -2020,6 +2050,10 @@ func flattenNetappVolumeHybridReplicationParametersLabels(v interface{}, d *sche
 }
 
 func flattenNetappVolumeThroughputMibps(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenNetappVolumeHotTierSizeUsedGib(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 
@@ -2615,6 +2649,13 @@ func expandNetappVolumeTieringPolicy(v interface{}, d tpgresource.TerraformResou
 		transformed["tierAction"] = transformedTierAction
 	}
 
+	transformedHotTierBypassModeEnabled, err := expandNetappVolumeTieringPolicyHotTierBypassModeEnabled(original["hot_tier_bypass_mode_enabled"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedHotTierBypassModeEnabled); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["hotTierBypassModeEnabled"] = transformedHotTierBypassModeEnabled
+	}
+
 	return transformed, nil
 }
 
@@ -2623,6 +2664,10 @@ func expandNetappVolumeTieringPolicyCoolingThresholdDays(v interface{}, d tpgres
 }
 
 func expandNetappVolumeTieringPolicyTierAction(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandNetappVolumeTieringPolicyHotTierBypassModeEnabled(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 

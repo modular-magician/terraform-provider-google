@@ -60,10 +60,10 @@ func ResourceContainerAwsNodePool() *schema.Resource {
 			Version: 1,
 			SchemaFunc: func() map[string]*schema.Schema {
 				return map[string]*schema.Schema{
-					"cluster": {
+					"location": {
 						Type:              schema.TypeString,
 						RequiredForImport: true,
-						Description:       "The awsCluster for the resource",
+						Description:       "The location for the resource",
 					},
 					"name": {
 						Type:              schema.TypeString,
@@ -75,10 +75,10 @@ func ResourceContainerAwsNodePool() *schema.Resource {
 						OptionalForImport: true,
 						Description:       "The project for the resource",
 					},
-					"location": {
+					"cluster": {
 						Type:              schema.TypeString,
 						RequiredForImport: true,
-						Description:       "The location for the resource",
+						Description:       "The awsCluster for the resource",
 					},
 				}
 			},

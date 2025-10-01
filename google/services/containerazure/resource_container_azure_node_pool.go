@@ -65,6 +65,11 @@ func ResourceContainerAzureNodePool() *schema.Resource {
 						RequiredForImport: true,
 						Description:       "The azureCluster for the resource",
 					},
+					"project": {
+						Type:              schema.TypeString,
+						OptionalForImport: true,
+						Description:       "The project for the resource",
+					},
 					"name": {
 						Type:              schema.TypeString,
 						RequiredForImport: true,
@@ -74,11 +79,6 @@ func ResourceContainerAzureNodePool() *schema.Resource {
 						Type:              schema.TypeString,
 						RequiredForImport: true,
 						Description:       "The location for the resource",
-					},
-					"project": {
-						Type:              schema.TypeString,
-						OptionalForImport: true,
-						Description:       "The project for the resource",
 					},
 				}
 			},

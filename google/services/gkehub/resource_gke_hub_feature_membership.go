@@ -51,6 +51,34 @@ func ResourceGkeHubFeatureMembership() *schema.Resource {
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
+		Identity: &schema.ResourceIdentity{
+			Version: 1,
+			SchemaFunc: func() map[string]*schema.Schema {
+				return map[string]*schema.Schema{
+					"membership": {
+						Type:              schema.TypeString,
+						RequiredForImport: true,
+						Description:       "The name of the membership",
+					},
+					"project": {
+						Type:              schema.TypeString,
+						OptionalForImport: true,
+						Description:       "The project of the feature",
+					},
+					"feature": {
+						Type:              schema.TypeString,
+						RequiredForImport: true,
+						Description:       "The name of the feature",
+					},
+					"location": {
+						Type:              schema.TypeString,
+						RequiredForImport: true,
+						Description:       "The location of the feature",
+					},
+				}
+			},
+		},
+
 		Schema: map[string]*schema.Schema{
 			"feature": {
 				Type:             schema.TypeString,

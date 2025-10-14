@@ -51,6 +51,7 @@ import (
 	googleoauth "golang.org/x/oauth2/google"
 	externalaccount "golang.org/x/oauth2/google/externalaccount"
 	appengine "google.golang.org/api/appengine/v1"
+	backupdr "google.golang.org/api/backupdr/v1"
 	"google.golang.org/api/bigquery/v2"
 	"google.golang.org/api/bigtableadmin/v2"
 	"google.golang.org/api/certificatemanager/v1"
@@ -273,6 +274,7 @@ type Config struct {
 	BigqueryAnalyticsHubBasePath     string
 	BigqueryConnectionBasePath       string
 	BigqueryDatapolicyBasePath       string
+	BigqueryDatapolicyv2BasePath     string
 	BigqueryDataTransferBasePath     string
 	BigqueryReservationBasePath      string
 	BigtableBasePath                 string
@@ -376,6 +378,7 @@ type Config struct {
 	PubsubLiteBasePath               string
 	RedisBasePath                    string
 	ResourceManagerBasePath          string
+	ResourceManager3BasePath         string
 	SecretManagerBasePath            string
 	SecretManagerRegionalBasePath    string
 	SecureSourceManagerBasePath      string
@@ -396,7 +399,6 @@ type Config struct {
 	StorageInsightsBasePath          string
 	StorageTransferBasePath          string
 	TagsBasePath                     string
-	TPUBasePath                      string
 	TranscoderBasePath               string
 	VertexAIBasePath                 string
 	VmwareengineBasePath             string
@@ -443,6 +445,7 @@ const BigQueryBasePathKey = "BigQuery"
 const BigqueryAnalyticsHubBasePathKey = "BigqueryAnalyticsHub"
 const BigqueryConnectionBasePathKey = "BigqueryConnection"
 const BigqueryDatapolicyBasePathKey = "BigqueryDatapolicy"
+const BigqueryDatapolicyv2BasePathKey = "BigqueryDatapolicyv2"
 const BigqueryDataTransferBasePathKey = "BigqueryDataTransfer"
 const BigqueryReservationBasePathKey = "BigqueryReservation"
 const BigtableBasePathKey = "Bigtable"
@@ -546,6 +549,7 @@ const PubsubBasePathKey = "Pubsub"
 const PubsubLiteBasePathKey = "PubsubLite"
 const RedisBasePathKey = "Redis"
 const ResourceManagerBasePathKey = "ResourceManager"
+const ResourceManager3BasePathKey = "ResourceManager3"
 const SecretManagerBasePathKey = "SecretManager"
 const SecretManagerRegionalBasePathKey = "SecretManagerRegional"
 const SecureSourceManagerBasePathKey = "SecureSourceManager"
@@ -566,7 +570,6 @@ const StorageControlBasePathKey = "StorageControl"
 const StorageInsightsBasePathKey = "StorageInsights"
 const StorageTransferBasePathKey = "StorageTransfer"
 const TagsBasePathKey = "Tags"
-const TPUBasePathKey = "TPU"
 const TranscoderBasePathKey = "Transcoder"
 const VertexAIBasePathKey = "VertexAI"
 const VmwareengineBasePathKey = "Vmwareengine"
@@ -602,6 +605,7 @@ var DefaultBasePaths = map[string]string{
 	BigqueryAnalyticsHubBasePathKey:     "https://analyticshub.googleapis.com/v1/",
 	BigqueryConnectionBasePathKey:       "https://bigqueryconnection.googleapis.com/v1/",
 	BigqueryDatapolicyBasePathKey:       "https://bigquerydatapolicy.googleapis.com/v1/",
+	BigqueryDatapolicyv2BasePathKey:     "https://bigquerydatapolicy.googleapis.com/v2/",
 	BigqueryDataTransferBasePathKey:     "https://bigquerydatatransfer.googleapis.com/v1/",
 	BigqueryReservationBasePathKey:      "https://bigqueryreservation.googleapis.com/v1/",
 	BigtableBasePathKey:                 "https://bigtableadmin.googleapis.com/v2/",
@@ -705,6 +709,7 @@ var DefaultBasePaths = map[string]string{
 	PubsubLiteBasePathKey:               "https://{{region}}-pubsublite.googleapis.com/v1/admin/",
 	RedisBasePathKey:                    "https://redis.googleapis.com/v1/",
 	ResourceManagerBasePathKey:          "https://cloudresourcemanager.googleapis.com/v1/",
+	ResourceManager3BasePathKey:         "https://cloudresourcemanager.googleapis.com/v3/",
 	SecretManagerBasePathKey:            "https://secretmanager.googleapis.com/v1/",
 	SecretManagerRegionalBasePathKey:    "https://secretmanager.{{location}}.rep.googleapis.com/v1/",
 	SecureSourceManagerBasePathKey:      "https://securesourcemanager.googleapis.com/v1/",
@@ -725,7 +730,6 @@ var DefaultBasePaths = map[string]string{
 	StorageInsightsBasePathKey:          "https://storageinsights.googleapis.com/v1/",
 	StorageTransferBasePathKey:          "https://storagetransfer.googleapis.com/v1/",
 	TagsBasePathKey:                     "https://cloudresourcemanager.googleapis.com/v3/",
-	TPUBasePathKey:                      "https://tpu.googleapis.com/v1/",
 	TranscoderBasePathKey:               "https://transcoder.googleapis.com/v1/",
 	VertexAIBasePathKey:                 "https://{{region}}-aiplatform.googleapis.com/v1/",
 	VmwareengineBasePathKey:             "https://vmwareengine.googleapis.com/v1/",
@@ -901,6 +905,11 @@ func SetEndpointDefaults(d *schema.ResourceData) error {
 		d.Set("bigquery_datapolicy_custom_endpoint", MultiEnvDefault([]string{
 			"GOOGLE_BIGQUERY_DATAPOLICY_CUSTOM_ENDPOINT",
 		}, DefaultBasePaths[BigqueryDatapolicyBasePathKey]))
+	}
+	if d.Get("bigquery_datapolicyv2_custom_endpoint") == "" {
+		d.Set("bigquery_datapolicyv2_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_BIGQUERY_DATAPOLICYV2_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[BigqueryDatapolicyv2BasePathKey]))
 	}
 	if d.Get("bigquery_data_transfer_custom_endpoint") == "" {
 		d.Set("bigquery_data_transfer_custom_endpoint", MultiEnvDefault([]string{
@@ -1417,6 +1426,11 @@ func SetEndpointDefaults(d *schema.ResourceData) error {
 			"GOOGLE_RESOURCE_MANAGER_CUSTOM_ENDPOINT",
 		}, DefaultBasePaths[ResourceManagerBasePathKey]))
 	}
+	if d.Get("resource_manager3_custom_endpoint") == "" {
+		d.Set("resource_manager3_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_RESOURCE_MANAGER3_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[ResourceManager3BasePathKey]))
+	}
 	if d.Get("secret_manager_custom_endpoint") == "" {
 		d.Set("secret_manager_custom_endpoint", MultiEnvDefault([]string{
 			"GOOGLE_SECRET_MANAGER_CUSTOM_ENDPOINT",
@@ -1516,11 +1530,6 @@ func SetEndpointDefaults(d *schema.ResourceData) error {
 		d.Set("tags_custom_endpoint", MultiEnvDefault([]string{
 			"GOOGLE_TAGS_CUSTOM_ENDPOINT",
 		}, DefaultBasePaths[TagsBasePathKey]))
-	}
-	if d.Get("tpu_custom_endpoint") == "" {
-		d.Set("tpu_custom_endpoint", MultiEnvDefault([]string{
-			"GOOGLE_TPU_CUSTOM_ENDPOINT",
-		}, DefaultBasePaths[TPUBasePathKey]))
 	}
 	if d.Get("transcoder_custom_endpoint") == "" {
 		d.Set("transcoder_custom_endpoint", MultiEnvDefault([]string{
@@ -2013,6 +2022,20 @@ func (c *Config) NewSqlAdminClient(userAgent string) *sqladmin.Service {
 	clientSqlAdmin.BasePath = sqlClientBasePath
 
 	return clientSqlAdmin
+}
+
+func (c *Config) NewBackupDRClient(userAgent string) *backupdr.Service {
+	backupdrClientBasePath := RemoveBasePathVersion(RemoveBasePathVersion(c.BackupDRBasePath))
+	log.Printf("[INFO] Instantiating Google SqlAdmin client for path %s", backupdrClientBasePath)
+	clientBackupdrAdmin, err := backupdr.NewService(c.Context, option.WithHTTPClient(c.Client))
+	if err != nil {
+		log.Printf("[WARN] Error creating client storage: %s", err)
+		return nil
+	}
+	clientBackupdrAdmin.UserAgent = userAgent
+	clientBackupdrAdmin.BasePath = backupdrClientBasePath
+
+	return clientBackupdrAdmin
 }
 
 func (c *Config) NewPubsubClient(userAgent string) *pubsub.Service {
@@ -2589,6 +2612,7 @@ func ConfigureBasePaths(c *Config) {
 	c.BigqueryAnalyticsHubBasePath = DefaultBasePaths[BigqueryAnalyticsHubBasePathKey]
 	c.BigqueryConnectionBasePath = DefaultBasePaths[BigqueryConnectionBasePathKey]
 	c.BigqueryDatapolicyBasePath = DefaultBasePaths[BigqueryDatapolicyBasePathKey]
+	c.BigqueryDatapolicyv2BasePath = DefaultBasePaths[BigqueryDatapolicyv2BasePathKey]
 	c.BigqueryDataTransferBasePath = DefaultBasePaths[BigqueryDataTransferBasePathKey]
 	c.BigqueryReservationBasePath = DefaultBasePaths[BigqueryReservationBasePathKey]
 	c.BigtableBasePath = DefaultBasePaths[BigtableBasePathKey]
@@ -2692,6 +2716,7 @@ func ConfigureBasePaths(c *Config) {
 	c.PubsubLiteBasePath = DefaultBasePaths[PubsubLiteBasePathKey]
 	c.RedisBasePath = DefaultBasePaths[RedisBasePathKey]
 	c.ResourceManagerBasePath = DefaultBasePaths[ResourceManagerBasePathKey]
+	c.ResourceManager3BasePath = DefaultBasePaths[ResourceManager3BasePathKey]
 	c.SecretManagerBasePath = DefaultBasePaths[SecretManagerBasePathKey]
 	c.SecretManagerRegionalBasePath = DefaultBasePaths[SecretManagerRegionalBasePathKey]
 	c.SecureSourceManagerBasePath = DefaultBasePaths[SecureSourceManagerBasePathKey]
@@ -2712,7 +2737,6 @@ func ConfigureBasePaths(c *Config) {
 	c.StorageInsightsBasePath = DefaultBasePaths[StorageInsightsBasePathKey]
 	c.StorageTransferBasePath = DefaultBasePaths[StorageTransferBasePathKey]
 	c.TagsBasePath = DefaultBasePaths[TagsBasePathKey]
-	c.TPUBasePath = DefaultBasePaths[TPUBasePathKey]
 	c.TranscoderBasePath = DefaultBasePaths[TranscoderBasePathKey]
 	c.VertexAIBasePath = DefaultBasePaths[VertexAIBasePathKey]
 	c.VmwareengineBasePath = DefaultBasePaths[VmwareengineBasePathKey]
@@ -2744,6 +2768,12 @@ func ConfigureBasePaths(c *Config) {
 }
 
 func GetCurrentUserEmail(config *Config, userAgent string) (string, error) {
+	ud := config.UniverseDomain
+	if ud != "" && ud != "googleapis.com" {
+		log.Printf("[INFO] Configured universe domain detected. Skipping user email retrieval.")
+		return "", nil
+	}
+
 	// When environment variables UserProjectOverride and BillingProject are set for the provider,
 	// the header X-Goog-User-Project is set for the API requests.
 	// But it causes an error when calling GetCurrentUserEmail. Set the project to be "NO_BILLING_PROJECT_OVERRIDE".
@@ -2752,9 +2782,10 @@ func GetCurrentUserEmail(config *Config, userAgent string) (string, error) {
 	// See https://github.com/golang/oauth2/issues/306 for a recommendation to do this from a Go maintainer
 	// URL retrieved from https://accounts.google.com/.well-known/openid-configuration
 	res, err := SendRequest(SendRequestOptions{
-		Config:    config,
-		Method:    "GET",
-		Project:   "NO_BILLING_PROJECT_OVERRIDE",
+		Config:  config,
+		Method:  "GET",
+		Project: "NO_BILLING_PROJECT_OVERRIDE",
+		// URL does not need to be universe domain-aware since we return early for non-GDU universes
 		RawURL:    "https://openidconnect.googleapis.com/v1/userinfo",
 		UserAgent: userAgent,
 	})

@@ -63,14 +63,6 @@ func ResourceNetworkSecurityMirroringEndpointGroup() *schema.Resource {
 				ForceNew:    true,
 				Description: `The cloud location of the endpoint group, currently restricted to 'global'.`,
 			},
-			"mirroring_deployment_group": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-				Description: `The deployment group that this DIRECT endpoint group is connected to, for example:
-'projects/123456789/locations/global/mirroringDeploymentGroups/my-dg'.
-See https://google.aip.dev/124.`,
-			},
 			"mirroring_endpoint_group_id": {
 				Type:     schema.TypeString,
 				Required: true,
@@ -92,6 +84,15 @@ Used as additional context for the endpoint group.`,
 **Note**: This field is non-authoritative, and will only manage the labels present in your configuration.
 Please refer to the field 'effective_labels' for all of the labels present on the resource.`,
 				Elem: &schema.Schema{Type: schema.TypeString},
+			},
+			"mirroring_deployment_group": {
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+				Description: `The deployment group that this DIRECT endpoint group is connected to, for example:
+'projects/123456789/locations/global/mirroringDeploymentGroups/my-dg'.
+See https://google.aip.dev/124.`,
+				ExactlyOneOf: []string{"mirroring_deployment_group"},
 			},
 			"associations": {
 				Type:        schema.TypeSet,
@@ -269,11 +270,11 @@ func resourceNetworkSecurityMirroringEndpointGroupCreate(d *schema.ResourceData,
 	} else if v, ok := d.GetOkExists("description"); !tpgresource.IsEmptyValue(reflect.ValueOf(descriptionProp)) && (ok || !reflect.DeepEqual(v, descriptionProp)) {
 		obj["description"] = descriptionProp
 	}
-	labelsProp, err := expandNetworkSecurityMirroringEndpointGroupEffectiveLabels(d.Get("effective_labels"), d, config)
+	effectiveLabelsProp, err := expandNetworkSecurityMirroringEndpointGroupEffectiveLabels(d.Get("effective_labels"), d, config)
 	if err != nil {
 		return err
-	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(labelsProp)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
-		obj["labels"] = labelsProp
+	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(effectiveLabelsProp)) && (ok || !reflect.DeepEqual(v, effectiveLabelsProp)) {
+		obj["labels"] = effectiveLabelsProp
 	}
 
 	url, err := tpgresource.ReplaceVars(d, config, "{{NetworkSecurityBasePath}}projects/{{project}}/locations/{{location}}/mirroringEndpointGroups?mirroringEndpointGroupId={{mirroring_endpoint_group_id}}")
@@ -436,11 +437,11 @@ func resourceNetworkSecurityMirroringEndpointGroupUpdate(d *schema.ResourceData,
 	} else if v, ok := d.GetOkExists("description"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, descriptionProp)) {
 		obj["description"] = descriptionProp
 	}
-	labelsProp, err := expandNetworkSecurityMirroringEndpointGroupEffectiveLabels(d.Get("effective_labels"), d, config)
+	effectiveLabelsProp, err := expandNetworkSecurityMirroringEndpointGroupEffectiveLabels(d.Get("effective_labels"), d, config)
 	if err != nil {
 		return err
-	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
-		obj["labels"] = labelsProp
+	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, effectiveLabelsProp)) {
+		obj["labels"] = effectiveLabelsProp
 	}
 
 	url, err := tpgresource.ReplaceVars(d, config, "{{NetworkSecurityBasePath}}projects/{{project}}/locations/{{location}}/mirroringEndpointGroups/{{mirroring_endpoint_group_id}}")

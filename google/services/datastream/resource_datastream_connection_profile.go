@@ -507,11 +507,11 @@ func resourceDatastreamConnectionProfileCreate(d *schema.ResourceData, meta inte
 	} else if v, ok := d.GetOkExists("private_connectivity"); !tpgresource.IsEmptyValue(reflect.ValueOf(privateConnectivityProp)) && (ok || !reflect.DeepEqual(v, privateConnectivityProp)) {
 		obj["privateConnectivity"] = privateConnectivityProp
 	}
-	labelsProp, err := expandDatastreamConnectionProfileEffectiveLabels(d.Get("effective_labels"), d, config)
+	effectiveLabelsProp, err := expandDatastreamConnectionProfileEffectiveLabels(d.Get("effective_labels"), d, config)
 	if err != nil {
 		return err
-	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(labelsProp)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
-		obj["labels"] = labelsProp
+	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(effectiveLabelsProp)) && (ok || !reflect.DeepEqual(v, effectiveLabelsProp)) {
+		obj["labels"] = effectiveLabelsProp
 	}
 
 	url, err := tpgresource.ReplaceVars(d, config, "{{DatastreamBasePath}}projects/{{project}}/locations/{{location}}/connectionProfiles?connectionProfileId={{connection_profile_id}}")
@@ -730,11 +730,11 @@ func resourceDatastreamConnectionProfileUpdate(d *schema.ResourceData, meta inte
 	} else if v, ok := d.GetOkExists("private_connectivity"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, privateConnectivityProp)) {
 		obj["privateConnectivity"] = privateConnectivityProp
 	}
-	labelsProp, err := expandDatastreamConnectionProfileEffectiveLabels(d.Get("effective_labels"), d, config)
+	effectiveLabelsProp, err := expandDatastreamConnectionProfileEffectiveLabels(d.Get("effective_labels"), d, config)
 	if err != nil {
 		return err
-	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
-		obj["labels"] = labelsProp
+	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, effectiveLabelsProp)) {
+		obj["labels"] = effectiveLabelsProp
 	}
 
 	url, err := tpgresource.ReplaceVars(d, config, "{{DatastreamBasePath}}projects/{{project}}/locations/{{location}}/connectionProfiles/{{connection_profile_id}}")
@@ -1343,6 +1343,9 @@ func expandDatastreamConnectionProfileDisplayName(v interface{}, d tpgresource.T
 }
 
 func expandDatastreamConnectionProfileOracleProfile(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
@@ -1439,6 +1442,9 @@ func expandDatastreamConnectionProfileOracleProfileConnectionAttributes(v interf
 }
 
 func expandDatastreamConnectionProfileGcsProfile(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
@@ -1473,6 +1479,9 @@ func expandDatastreamConnectionProfileGcsProfileRootPath(v interface{}, d tpgres
 }
 
 func expandDatastreamConnectionProfileMysqlProfile(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
@@ -1547,6 +1556,9 @@ func expandDatastreamConnectionProfileMysqlProfileSecretManagerStoredPassword(v 
 }
 
 func expandDatastreamConnectionProfileMysqlProfileSslConfig(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
@@ -1625,6 +1637,9 @@ func expandDatastreamConnectionProfileMysqlProfileSslConfigCaCertificateSet(v in
 }
 
 func expandDatastreamConnectionProfileBigqueryProfile(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 {
 		return nil, nil
@@ -1640,6 +1655,9 @@ func expandDatastreamConnectionProfileBigqueryProfile(v interface{}, d tpgresour
 }
 
 func expandDatastreamConnectionProfilePostgresqlProfile(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
@@ -1718,6 +1736,9 @@ func expandDatastreamConnectionProfilePostgresqlProfileDatabase(v interface{}, d
 }
 
 func expandDatastreamConnectionProfileSqlServerProfile(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
@@ -1796,6 +1817,9 @@ func expandDatastreamConnectionProfileSqlServerProfileDatabase(v interface{}, d 
 }
 
 func expandDatastreamConnectionProfileForwardSshConnectivity(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
@@ -1863,6 +1887,9 @@ func expandDatastreamConnectionProfileForwardSshConnectivityPrivateKey(v interfa
 }
 
 func expandDatastreamConnectionProfilePrivateConnectivity(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil

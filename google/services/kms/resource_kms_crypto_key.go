@@ -248,11 +248,11 @@ func resourceKMSCryptoKeyCreate(d *schema.ResourceData, meta interface{}) error 
 	} else if v, ok := d.GetOkExists("crypto_key_backend"); !tpgresource.IsEmptyValue(reflect.ValueOf(cryptoKeyBackendProp)) && (ok || !reflect.DeepEqual(v, cryptoKeyBackendProp)) {
 		obj["cryptoKeyBackend"] = cryptoKeyBackendProp
 	}
-	labelsProp, err := expandKMSCryptoKeyEffectiveLabels(d.Get("effective_labels"), d, config)
+	effectiveLabelsProp, err := expandKMSCryptoKeyEffectiveLabels(d.Get("effective_labels"), d, config)
 	if err != nil {
 		return err
-	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(labelsProp)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
-		obj["labels"] = labelsProp
+	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(effectiveLabelsProp)) && (ok || !reflect.DeepEqual(v, effectiveLabelsProp)) {
+		obj["labels"] = effectiveLabelsProp
 	}
 
 	obj, err = resourceKMSCryptoKeyEncoder(d, meta, obj)
@@ -408,11 +408,11 @@ func resourceKMSCryptoKeyUpdate(d *schema.ResourceData, meta interface{}) error 
 	} else if v, ok := d.GetOkExists("version_template"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, versionTemplateProp)) {
 		obj["versionTemplate"] = versionTemplateProp
 	}
-	labelsProp, err := expandKMSCryptoKeyEffectiveLabels(d.Get("effective_labels"), d, config)
+	effectiveLabelsProp, err := expandKMSCryptoKeyEffectiveLabels(d.Get("effective_labels"), d, config)
 	if err != nil {
 		return err
-	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
-		obj["labels"] = labelsProp
+	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, effectiveLabelsProp)) {
+		obj["labels"] = effectiveLabelsProp
 	}
 
 	obj, err = resourceKMSCryptoKeyUpdateEncoder(d, meta, obj)
@@ -648,6 +648,9 @@ func expandKMSCryptoKeyRotationPeriod(v interface{}, d tpgresource.TerraformReso
 }
 
 func expandKMSCryptoKeyVersionTemplate(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
@@ -748,7 +751,10 @@ func resourceKMSCryptoKeyDecoder(d *schema.ResourceData, meta interface{}, res m
 	// We can't just ignore_read on `name` as the linter will
 	// complain that the returned `res` is never used afterwards.
 	// Some field needs to be actually set, and we chose `name`.
-	res["name"] = d.Get("name").(string)
+	v := d.Get("name")
+	if v != nil {
+		res["name"] = v.(string)
+	}
 	return res, nil
 }
 

@@ -1534,6 +1534,28 @@ func ResourceContainerCluster() *schema.Resource {
 							Required:    true,
 							Description: `Enable the Secret manager csi component.`,
 						},
+						"rotation_config": {
+							Type:        schema.TypeList,
+							Optional:    true,
+							Computed:    true,
+							MaxItems:    1,
+							Description: `Configuration for Secret Manager auto rotation.`,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"enabled": {
+										Type:        schema.TypeBool,
+										Required:    true,
+										Description: `Enable the Secret manager auto rotation.`,
+									},
+									"rotation_interval": {
+										Type:        schema.TypeString,
+										Optional:    true,
+										Computed:    true,
+										Description: `The interval between two consecutive rotations. Default rotation interval is 2 minutes`,
+									},
+								},
+							},
+						},
 					},
 				},
 			},
@@ -1686,6 +1708,22 @@ func ResourceContainerCluster() *schema.Resource {
 										Optional:    true,
 										Description: `List of secondary ranges names within this subnetwork that can be used for pod IPs.`,
 										Elem:        &schema.Schema{Type: schema.TypeString},
+									},
+								},
+							},
+						},
+						"auto_ipam_config": {
+							Type:        schema.TypeList,
+							MaxItems:    1,
+							Optional:    true,
+							Computed:    true,
+							Description: `AutoIpamConfig contains all information related to Auto IPAM.`,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"enabled": {
+										Type:        schema.TypeBool,
+										Required:    true,
+										Description: `The flag that enables Auto IPAM on this cluster.`,
 									},
 								},
 							},
@@ -2315,12 +2353,14 @@ func ResourceContainerCluster() *schema.Resource {
 				MaxItems:    1,
 				Computed:    true,
 				Description: `Defines the config needed to enable/disable GKE Enterprise`,
+				Deprecated:  `GKE Enterprise features are now available without an Enterprise tier. This field is deprecated and will be removed in a future major release`,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"cluster_tier": {
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: `Indicates the effective cluster tier. Available options include STANDARD and ENTERPRISE.`,
+							Deprecated:  `GKE Enterprise features are now available without an Enterprise tier. This field is deprecated and will be removed in a future major release`,
 						},
 						"desired_tier": {
 							Type:             schema.TypeString,
@@ -2328,6 +2368,7 @@ func ResourceContainerCluster() *schema.Resource {
 							Computed:         true,
 							ValidateFunc:     validation.StringInSlice([]string{"STANDARD", "ENTERPRISE"}, false),
 							Description:      `Indicates the desired cluster tier. Available options include STANDARD and ENTERPRISE.`,
+							Deprecated:       `GKE Enterprise features are now available without an Enterprise tier. This field is deprecated and will be removed in a future major release`,
 							DiffSuppressFunc: tpgresource.EmptyOrDefaultStringSuppress("CLUSTER_TIER_UNSPECIFIED"),
 						},
 					},
@@ -2634,7 +2675,7 @@ func resourceContainerClusterCreate(d *schema.ResourceData, meta interface{}) er
 	} else {
 		// Node Configs have default values that are set in the expand function,
 		// but can only be set if node pools are unspecified.
-		cluster.NodeConfig = expandNodeConfig([]interface{}{})
+		cluster.NodeConfig = expandNodeConfig(d, "", []interface{}{})
 	}
 
 	if v, ok := d.GetOk("node_pool_defaults"); ok {
@@ -2642,7 +2683,7 @@ func resourceContainerClusterCreate(d *schema.ResourceData, meta interface{}) er
 	}
 
 	if v, ok := d.GetOk("node_config"); ok {
-		cluster.NodeConfig = expandNodeConfig(v)
+		cluster.NodeConfig = expandNodeConfig(d, "", v)
 	}
 
 	if v, ok := d.GetOk("authenticator_groups_config"); ok {
@@ -4060,6 +4101,21 @@ func resourceContainerClusterUpdate(d *schema.ResourceData, meta interface{}) er
 		log.Printf("[INFO] GKE cluster %s's AdditionalIpRangesConfig has been updated", d.Id())
 	}
 
+	if d.HasChange("ip_allocation_policy.0.auto_ipam_config") {
+		req := &container.UpdateClusterRequest{
+			Update: &container.ClusterUpdate{
+				DesiredAutoIpamConfig: &container.AutoIpamConfig{Enabled: d.Get("ip_allocation_policy.0.auto_ipam_config.0.enabled").(bool)},
+			},
+		}
+
+		updateF := updateFunc(req, "updating AutoIpamConfig")
+		if err := transport_tpg.LockedCall(lockKey, updateF); err != nil {
+			return err
+		}
+
+		log.Printf("[INFO] GKE cluster %s's AutoIpamConfig has been updated", d.Id())
+	}
+
 	if n, ok := d.GetOk("node_pool.#"); ok {
 		for i := 0; i < n.(int); i++ {
 			nodePoolInfo, err := extractNodePoolInformationFromCluster(d, config, clusterName)
@@ -5196,7 +5252,19 @@ func expandIPAllocationPolicy(configured interface{}, d *schema.ResourceData, ne
 		UseRoutes:                  networkingMode == "ROUTES",
 		StackType:                  stackType,
 		PodCidrOverprovisionConfig: expandPodCidrOverprovisionConfig(config["pod_cidr_overprovision_config"]),
+		AutoIpamConfig:             expandAutoIpamConfig(config["auto_ipam_config"]),
 	}, additionalIpRangesConfigs, nil
+}
+
+func expandAutoIpamConfig(configured interface{}) *container.AutoIpamConfig {
+	l, ok := configured.([]interface{})
+	if !ok || len(l) == 0 || l[0] == nil {
+		return nil
+	}
+
+	return &container.AutoIpamConfig{
+		Enabled: l[0].(map[string]interface{})["enabled"].(bool),
+	}
 }
 
 func expandMaintenancePolicy(d *schema.ResourceData, meta interface{}) *container.MaintenancePolicy {
@@ -5960,6 +6028,23 @@ func expandSecretManagerConfig(configured interface{}) *container.SecretManagerC
 		Enabled:         config["enabled"].(bool),
 		ForceSendFields: []string{"Enabled"},
 	}
+	if autoRotation, ok := config["rotation_config"]; ok {
+		if autoRotationList, ok := autoRotation.([]interface{}); ok {
+			if len(autoRotationList) > 0 {
+				autoRotationConfig := autoRotationList[0].(map[string]interface{})
+				if rotationInterval, ok := autoRotationConfig["rotation_interval"].(string); ok && rotationInterval != "" {
+					sc.RotationConfig = &container.RotationConfig{
+						Enabled:          autoRotationConfig["enabled"].(bool),
+						RotationInterval: rotationInterval,
+					}
+				} else {
+					sc.RotationConfig = &container.RotationConfig{
+						Enabled: autoRotationConfig["enabled"].(bool),
+					}
+				}
+			}
+		}
+	}
 	return sc
 }
 
@@ -6084,11 +6169,17 @@ func expandUserManagedKeysConfig(configured interface{}) *container.UserManagedK
 	}
 	if v, ok := config["service_account_signing_keys"]; ok {
 		sk := v.(*schema.Set)
-		umkc.ServiceAccountSigningKeys = tpgresource.ConvertStringSet(sk)
+		skss := tpgresource.ConvertStringSet(sk)
+		if len(skss) > 0 {
+			umkc.ServiceAccountSigningKeys = skss
+		}
 	}
 	if v, ok := config["service_account_verification_keys"]; ok {
 		vk := v.(*schema.Set)
-		umkc.ServiceAccountVerificationKeys = tpgresource.ConvertStringSet(vk)
+		vkss := tpgresource.ConvertStringSet(vk)
+		if len(vkss) > 0 {
+			umkc.ServiceAccountVerificationKeys = vkss
+		}
 	}
 	return umkc
 }
@@ -6695,8 +6786,21 @@ func flattenIPAllocationPolicy(c *container.Cluster, d *schema.ResourceData, con
 			"pod_cidr_overprovision_config": flattenPodCidrOverprovisionConfig(p.PodCidrOverprovisionConfig),
 			"additional_pod_ranges_config":  flattenAdditionalPodRangesConfig(c.IpAllocationPolicy),
 			"additional_ip_ranges_config":   flattenAdditionalIpRangesConfigs(p.AdditionalIpRangesConfigs),
+			"auto_ipam_config":              flattenAutoIpamConfig(p.AutoIpamConfig),
 		},
 	}, nil
+}
+
+func flattenAutoIpamConfig(aic *container.AutoIpamConfig) []map[string]interface{} {
+	if aic == nil {
+		return nil
+	}
+
+	return []map[string]interface{}{
+		{
+			"enabled": aic.Enabled,
+		},
+	}
 }
 
 func flattenMaintenancePolicy(mp *container.MaintenancePolicy) []map[string]interface{} {
@@ -6938,6 +7042,18 @@ func flattenSecretManagerConfig(c *container.SecretManagerConfig) []map[string]i
 	result := make(map[string]interface{})
 
 	result["enabled"] = c.Enabled
+
+	rotationList := []map[string]interface{}{}
+	if c.RotationConfig != nil {
+		rotationConfigMap := map[string]interface{}{
+			"enabled": c.RotationConfig.Enabled,
+		}
+		if c.RotationConfig.RotationInterval != "" {
+			rotationConfigMap["rotation_interval"] = c.RotationConfig.RotationInterval
+		}
+		rotationList = append(rotationList, rotationConfigMap)
+	}
+	result["rotation_config"] = rotationList
 	return []map[string]interface{}{result}
 }
 

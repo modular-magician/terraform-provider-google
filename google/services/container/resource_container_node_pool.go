@@ -638,6 +638,7 @@ func resourceContainerNodePoolCreate(d *schema.ResourceData, meta interface{}) e
 		return nil
 	})
 	if err != nil {
+		d.SetId("")
 		return fmt.Errorf("error creating NodePool: %s", err)
 	}
 	timeout -= time.Since(startTime)
@@ -883,7 +884,6 @@ func resourceContainerNodePoolExists(d *schema.ResourceData, meta interface{}) (
 		clusterNodePoolsGetCall.Header().Add("X-Goog-User-Project", nodePoolInfo.project)
 	}
 	_, err = clusterNodePoolsGetCall.Do()
-
 	if err != nil {
 		if err = transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("Container NodePool %s", name)); err == nil {
 			return false, nil
@@ -968,7 +968,7 @@ func expandNodePool(d *schema.ResourceData, prefix string) (*container.NodePool,
 	np := &container.NodePool{
 		Name:             name,
 		InitialNodeCount: int64(nodeCount),
-		Config:           expandNodeConfig(d.Get(prefix + "node_config")),
+		Config:           expandNodeConfig(d, prefix, d.Get(prefix+"node_config")),
 		Locations:        locations,
 		Version:          d.Get(prefix + "version").(string),
 		NetworkConfig:    expandNodeNetworkConfig(d.Get(prefix + "network_config")),

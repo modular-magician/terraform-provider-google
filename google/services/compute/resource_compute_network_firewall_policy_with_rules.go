@@ -726,11 +726,11 @@ func resourceComputeNetworkFirewallPolicyWithRulesCreate(d *schema.ResourceData,
 	} else if v, ok := d.GetOkExists("description"); !tpgresource.IsEmptyValue(reflect.ValueOf(descriptionProp)) && (ok || !reflect.DeepEqual(v, descriptionProp)) {
 		obj["description"] = descriptionProp
 	}
-	rulesProp, err := expandComputeNetworkFirewallPolicyWithRulesRule(d.Get("rule"), d, config)
+	ruleProp, err := expandComputeNetworkFirewallPolicyWithRulesRule(d.Get("rule"), d, config)
 	if err != nil {
 		return err
-	} else if v, ok := d.GetOkExists("rule"); !tpgresource.IsEmptyValue(reflect.ValueOf(rulesProp)) && (ok || !reflect.DeepEqual(v, rulesProp)) {
-		obj["rules"] = rulesProp
+	} else if v, ok := d.GetOkExists("rule"); !tpgresource.IsEmptyValue(reflect.ValueOf(ruleProp)) && (ok || !reflect.DeepEqual(v, ruleProp)) {
+		obj["rules"] = ruleProp
 	}
 	fingerprintProp, err := expandComputeNetworkFirewallPolicyWithRulesFingerprint(d.Get("fingerprint"), d, config)
 	if err != nil {
@@ -942,11 +942,11 @@ func resourceComputeNetworkFirewallPolicyWithRulesUpdate(d *schema.ResourceData,
 	} else if v, ok := d.GetOkExists("description"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, descriptionProp)) {
 		obj["description"] = descriptionProp
 	}
-	rulesProp, err := expandComputeNetworkFirewallPolicyWithRulesRule(d.Get("rule"), d, config)
+	ruleProp, err := expandComputeNetworkFirewallPolicyWithRulesRule(d.Get("rule"), d, config)
 	if err != nil {
 		return err
-	} else if v, ok := d.GetOkExists("rule"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, rulesProp)) {
-		obj["rules"] = rulesProp
+	} else if v, ok := d.GetOkExists("rule"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, ruleProp)) {
+		obj["rules"] = ruleProp
 	}
 	fingerprintProp, err := expandComputeNetworkFirewallPolicyWithRulesFingerprint(d.Get("fingerprint"), d, config)
 	if err != nil {
@@ -1607,6 +1607,9 @@ func expandComputeNetworkFirewallPolicyWithRulesDescription(v interface{}, d tpg
 }
 
 func expandComputeNetworkFirewallPolicyWithRulesRule(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	req := make([]interface{}, 0, len(l))
 	for _, raw := range l {
@@ -1718,6 +1721,9 @@ func expandComputeNetworkFirewallPolicyWithRulesRulePriority(v interface{}, d tp
 }
 
 func expandComputeNetworkFirewallPolicyWithRulesRuleMatch(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
@@ -1854,6 +1860,9 @@ func expandComputeNetworkFirewallPolicyWithRulesRuleMatchDestThreatIntelligences
 }
 
 func expandComputeNetworkFirewallPolicyWithRulesRuleMatchLayer4Config(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	req := make([]interface{}, 0, len(l))
 	for _, raw := range l {
@@ -1891,6 +1900,9 @@ func expandComputeNetworkFirewallPolicyWithRulesRuleMatchLayer4ConfigPorts(v int
 }
 
 func expandComputeNetworkFirewallPolicyWithRulesRuleMatchSrcSecureTag(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	req := make([]interface{}, 0, len(l))
 	for _, raw := range l {
@@ -1928,6 +1940,9 @@ func expandComputeNetworkFirewallPolicyWithRulesRuleMatchSrcSecureTagState(v int
 }
 
 func expandComputeNetworkFirewallPolicyWithRulesRuleTargetSecureTag(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	req := make([]interface{}, 0, len(l))
 	for _, raw := range l {

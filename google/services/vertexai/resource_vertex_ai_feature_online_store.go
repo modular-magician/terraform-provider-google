@@ -247,11 +247,11 @@ func resourceVertexAIFeatureOnlineStoreCreate(d *schema.ResourceData, meta inter
 	} else if v, ok := d.GetOkExists("dedicated_serving_endpoint"); !tpgresource.IsEmptyValue(reflect.ValueOf(dedicatedServingEndpointProp)) && (ok || !reflect.DeepEqual(v, dedicatedServingEndpointProp)) {
 		obj["dedicatedServingEndpoint"] = dedicatedServingEndpointProp
 	}
-	labelsProp, err := expandVertexAIFeatureOnlineStoreEffectiveLabels(d.Get("effective_labels"), d, config)
+	effectiveLabelsProp, err := expandVertexAIFeatureOnlineStoreEffectiveLabels(d.Get("effective_labels"), d, config)
 	if err != nil {
 		return err
-	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(labelsProp)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
-		obj["labels"] = labelsProp
+	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(effectiveLabelsProp)) && (ok || !reflect.DeepEqual(v, effectiveLabelsProp)) {
+		obj["labels"] = effectiveLabelsProp
 	}
 
 	url, err := tpgresource.ReplaceVars(d, config, "{{VertexAIBasePath}}projects/{{project}}/locations/{{region}}/featureOnlineStores?featureOnlineStoreId={{name}}")
@@ -423,11 +423,11 @@ func resourceVertexAIFeatureOnlineStoreUpdate(d *schema.ResourceData, meta inter
 	} else if v, ok := d.GetOkExists("dedicated_serving_endpoint"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, dedicatedServingEndpointProp)) {
 		obj["dedicatedServingEndpoint"] = dedicatedServingEndpointProp
 	}
-	labelsProp, err := expandVertexAIFeatureOnlineStoreEffectiveLabels(d.Get("effective_labels"), d, config)
+	effectiveLabelsProp, err := expandVertexAIFeatureOnlineStoreEffectiveLabels(d.Get("effective_labels"), d, config)
 	if err != nil {
 		return err
-	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
-		obj["labels"] = labelsProp
+	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, effectiveLabelsProp)) {
+		obj["labels"] = effectiveLabelsProp
 	}
 
 	url, err := tpgresource.ReplaceVars(d, config, "{{VertexAIBasePath}}projects/{{project}}/locations/{{region}}/featureOnlineStores/{{name}}")
@@ -770,6 +770,9 @@ func flattenVertexAIFeatureOnlineStoreEffectiveLabels(v interface{}, d *schema.R
 }
 
 func expandVertexAIFeatureOnlineStoreBigtable(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
@@ -789,6 +792,9 @@ func expandVertexAIFeatureOnlineStoreBigtable(v interface{}, d tpgresource.Terra
 }
 
 func expandVertexAIFeatureOnlineStoreBigtableAutoScaling(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
@@ -834,6 +840,9 @@ func expandVertexAIFeatureOnlineStoreBigtableAutoScalingCpuUtilizationTarget(v i
 }
 
 func expandVertexAIFeatureOnlineStoreOptimized(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 {
 		return nil, nil
@@ -849,6 +858,9 @@ func expandVertexAIFeatureOnlineStoreOptimized(v interface{}, d tpgresource.Terr
 }
 
 func expandVertexAIFeatureOnlineStoreDedicatedServingEndpoint(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
@@ -890,6 +902,9 @@ func expandVertexAIFeatureOnlineStoreDedicatedServingEndpointServiceAttachment(v
 }
 
 func expandVertexAIFeatureOnlineStoreDedicatedServingEndpointPrivateServiceConnectConfig(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil

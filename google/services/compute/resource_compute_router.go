@@ -41,7 +41,7 @@ func resourceComputeRouterCustomDiff(_ context.Context, diff *schema.ResourceDif
 	block := diff.Get("bgp.0").(map[string]interface{})
 	advertiseMode := block["advertise_mode"]
 	advertisedGroups := block["advertised_groups"].([]interface{})
-	advertisedIPRanges := block["advertised_ip_ranges"].([]interface{})
+	advertisedIPRanges := block["advertised_ip_ranges"].(*schema.Set).List()
 
 	if advertiseMode == "DEFAULT" && len(advertisedGroups) != 0 {
 		return fmt.Errorf("Error in bgp: advertised_groups cannot be specified when using advertise_mode DEFAULT")
@@ -133,28 +133,15 @@ This enum field has the one valid value: ALL_SUBNETS`,
 							},
 						},
 						"advertised_ip_ranges": {
-							Type:     schema.TypeList,
+							Type:     schema.TypeSet,
 							Optional: true,
 							Description: `User-specified list of individual IP ranges to advertise in
 custom mode. This field can only be populated if advertiseMode
 is CUSTOM and is advertised to all peers of the router. These IP
 ranges will be advertised in addition to any specified groups.
 Leave this field blank to advertise no custom IP ranges.`,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"range": {
-										Type:     schema.TypeString,
-										Required: true,
-										Description: `The IP range to advertise. The value must be a
-CIDR-formatted string.`,
-									},
-									"description": {
-										Type:        schema.TypeString,
-										Optional:    true,
-										Description: `User-specified description for the IP range.`,
-									},
-								},
-							},
+							Elem: computeRouterBgpAdvertisedIpRangesSchema(),
+							// Default schema.HashSchema is used.
 						},
 						"identifier_range": {
 							Type:     schema.TypeString,
@@ -217,6 +204,25 @@ Must be referenced by exactly one bgpPeer. Must comply with RFC1035.`,
 					},
 				},
 			},
+			"params": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				ForceNew:    true,
+				Description: `Additional params passed with the request, but not persisted as part of resource payload`,
+				MaxItems:    1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"resource_manager_tags": {
+							Type:     schema.TypeMap,
+							Optional: true,
+							Description: `Resource manager tags to be bound to the router. Tag keys and values have the
+same definition as resource manager tags. Keys must be in the format tagKeys/{tag_key_id},
+and values are in the format tagValues/456.`,
+							Elem: &schema.Schema{Type: schema.TypeString},
+						},
+					},
+				},
+			},
 			"region": {
 				Type:             schema.TypeString,
 				Computed:         true,
@@ -242,6 +248,24 @@ Must be referenced by exactly one bgpPeer. Must comply with RFC1035.`,
 			},
 		},
 		UseJSONNumber: true,
+	}
+}
+
+func computeRouterBgpAdvertisedIpRangesSchema() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"range": {
+				Type:     schema.TypeString,
+				Required: true,
+				Description: `The IP range to advertise. The value must be a
+CIDR-formatted string.`,
+			},
+			"description": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: `User-specified description for the IP range.`,
+			},
+		},
 	}
 }
 
@@ -288,6 +312,12 @@ func resourceComputeRouterCreate(d *schema.ResourceData, meta interface{}) error
 		return err
 	} else if v, ok := d.GetOkExists("md5_authentication_keys"); !tpgresource.IsEmptyValue(reflect.ValueOf(md5AuthenticationKeysProp)) && (ok || !reflect.DeepEqual(v, md5AuthenticationKeysProp)) {
 		obj["md5AuthenticationKeys"] = md5AuthenticationKeysProp
+	}
+	paramsProp, err := expandComputeRouterParams(d.Get("params"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("params"); !tpgresource.IsEmptyValue(reflect.ValueOf(paramsProp)) && (ok || !reflect.DeepEqual(v, paramsProp)) {
+		obj["params"] = paramsProp
 	}
 	regionProp, err := expandComputeRouterRegion(d.Get("region"), d, config)
 	if err != nil {
@@ -668,30 +698,26 @@ func flattenComputeRouterBgpAdvertisedIpRanges(v interface{}, d *schema.Resource
 		return v
 	}
 	l := v.([]interface{})
-	apiData := make([]map[string]interface{}, 0, len(l))
+	transformed := schema.NewSet(schema.HashResource(computeRouterBgpAdvertisedIpRangesSchema()), []interface{}{})
 	for _, raw := range l {
 		original := raw.(map[string]interface{})
 		if len(original) < 1 {
 			// Do not include empty json objects coming back from the api
 			continue
 		}
-		apiData = append(apiData, map[string]interface{}{
-			"description": original["description"],
-			"range":       original["range"],
+		transformed.Add(map[string]interface{}{
+			"range":       flattenComputeRouterBgpAdvertisedIpRangesRange(original["range"], d, config),
+			"description": flattenComputeRouterBgpAdvertisedIpRangesDescription(original["description"], d, config),
 		})
 	}
-	configData := []map[string]interface{}{}
-	if v, ok := d.GetOk("bgp.0.advertised_ip_ranges"); ok {
-		for _, item := range v.([]interface{}) {
-			configData = append(configData, item.(map[string]interface{}))
-		}
-	}
-	sorted, err := tpgresource.SortMapsByConfigOrder(configData, apiData, "range")
-	if err != nil {
-		log.Printf("[ERROR] Could not support API response for advertisedIpRanges.0.range: %s", err)
-		return apiData
-	}
-	return sorted
+	return transformed
+}
+func flattenComputeRouterBgpAdvertisedIpRangesRange(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenComputeRouterBgpAdvertisedIpRangesDescription(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
 }
 
 func flattenComputeRouterBgpKeepaliveInterval(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -743,6 +769,9 @@ func expandComputeRouterNetwork(v interface{}, d tpgresource.TerraformResourceDa
 }
 
 func expandComputeRouterBgp(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
@@ -809,6 +838,10 @@ func expandComputeRouterBgpAdvertisedGroups(v interface{}, d tpgresource.Terrafo
 }
 
 func expandComputeRouterBgpAdvertisedIpRanges(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	v = v.(*schema.Set).List()
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	req := make([]interface{}, 0, len(l))
 	for _, raw := range l {
@@ -858,6 +891,9 @@ func expandComputeRouterEncryptedInterconnectRouter(v interface{}, d tpgresource
 }
 
 func expandComputeRouterMd5AuthenticationKeys(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
@@ -889,6 +925,39 @@ func expandComputeRouterMd5AuthenticationKeysName(v interface{}, d tpgresource.T
 
 func expandComputeRouterMd5AuthenticationKeysKey(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
+}
+
+func expandComputeRouterParams(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedResourceManagerTags, err := expandComputeRouterParamsResourceManagerTags(original["resource_manager_tags"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedResourceManagerTags); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["resourceManagerTags"] = transformedResourceManagerTags
+	}
+
+	return transformed, nil
+}
+
+func expandComputeRouterParamsResourceManagerTags(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
+	if v == nil {
+		return map[string]string{}, nil
+	}
+	m := make(map[string]string)
+	for k, val := range v.(map[string]interface{}) {
+		m[k] = val.(string)
+	}
+	return m, nil
 }
 
 func expandComputeRouterRegion(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {

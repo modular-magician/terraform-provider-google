@@ -301,7 +301,7 @@ If omitted, a port number will be chosen and passed to the container through the
 													Type:        schema.TypeMap,
 													Computed:    true,
 													Optional:    true,
-													Description: `Only memory, CPU, and nvidia.com/gpu are supported. Use key 'cpu' for CPU limit, 'memory' for memory limit, 'nvidia.com/gpu' for gpu limit. Note: The only supported values for CPU are '1', '2', '4', and '8'. Setting 4 CPU requires at least 2Gi of memory. The values of the map is string form of the 'quantity' k8s type: https://github.com/kubernetes/kubernetes/blob/master/staging/src/k8s.io/apimachinery/pkg/api/resource/quantity.go`,
+													Description: `Only memory, CPU, and nvidia.com/gpu are supported. Use key 'cpu' for CPU limit, 'memory' for memory limit, 'nvidia.com/gpu' for gpu limit. Note: The only supported values for CPU are '1', '2', '4', '6' and '8'. Setting 4 CPU requires at least 2Gi of memory. The values of the map is string form of the 'quantity' k8s type: https://github.com/kubernetes/kubernetes/blob/master/staging/src/k8s.io/apimachinery/pkg/api/resource/quantity.go`,
 													Elem:        &schema.Schema{Type: schema.TypeString},
 												},
 												"startup_cpu_boost": {
@@ -447,6 +447,11 @@ If not specified, defaults to the same value as container.ports[0].containerPort
 													Required:    true,
 													Description: `This must match the Name of a Volume.`,
 												},
+												"sub_path": {
+													Type:        schema.TypeString,
+													Optional:    true,
+													Description: `Path within the volume from which the container's volume should be mounted.`,
+												},
 											},
 										},
 									},
@@ -492,6 +497,11 @@ If not specified, defaults to the same value as container.ports[0].containerPort
 							Type:        schema.TypeBool,
 							Optional:    true,
 							Description: `True if GPU zonal redundancy is disabled on this revision.`,
+						},
+						"health_check_disabled": {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Description: `Disables health checking containers during deployment.`,
 						},
 						"labels": {
 							Type:     schema.TypeMap,
@@ -635,6 +645,15 @@ A duration in seconds with up to nine fractional digits, ending with 's'. Exampl
 													Type:        schema.TypeString,
 													Required:    true,
 													Description: `GCS Bucket name`,
+												},
+												"mount_options": {
+													Type:     schema.TypeList,
+													Optional: true,
+													Description: `A list of flags to pass to the gcsfuse command for configuring this volume.
+Flags should be passed without leading dashes.`,
+													Elem: &schema.Schema{
+														Type: schema.TypeString,
+													},
 												},
 												"read_only": {
 													Type:        schema.TypeBool,
@@ -890,6 +909,11 @@ For more information, see https://cloud.google.com/run/docs/configuring/custom-a
 					Type: schema.TypeString,
 				},
 			},
+			"default_uri_disabled": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: `Disables public resolution of the default URI of this service.`,
+			},
 			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
@@ -929,6 +953,29 @@ Please refer to the field 'effective_labels' for all of the labels present on th
 If no value is specified, GA is assumed. Set the launch stage to a preview stage on input to allow use of preview features in that stage. On read (or output), describes whether the resource uses preview features.
 
 For example, if ALPHA is provided as input, but only BETA and GA-level features are used, this field will be BETA on output. Possible values: ["UNIMPLEMENTED", "PRELAUNCH", "EARLY_ACCESS", "ALPHA", "BETA", "GA", "DEPRECATED"]`,
+			},
+			"multi_region_settings": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: `Settings for creating a Multi-Region Service. Make sure to use region = 'global' when using them. For more information, visit https://cloud.google.com/run/docs/multiple-regions#deploy`,
+				MaxItems:    1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"regions": {
+							Type:        schema.TypeList,
+							Optional:    true,
+							Description: `The list of regions to deploy the multi-region Service.`,
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+						"multi_region_id": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: `System-generated unique id for the multi-region Service.`,
+						},
+					},
+				},
 			},
 			"scaling": {
 				Type:        schema.TypeList,
@@ -1356,6 +1403,12 @@ func resourceCloudRunV2ServiceCreate(d *schema.ResourceData, meta interface{}) e
 	} else if v, ok := d.GetOkExists("scaling"); !tpgresource.IsEmptyValue(reflect.ValueOf(scalingProp)) && (ok || !reflect.DeepEqual(v, scalingProp)) {
 		obj["scaling"] = scalingProp
 	}
+	defaultUriDisabledProp, err := expandCloudRunV2ServiceDefaultUriDisabled(d.Get("default_uri_disabled"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("default_uri_disabled"); !tpgresource.IsEmptyValue(reflect.ValueOf(defaultUriDisabledProp)) && (ok || !reflect.DeepEqual(v, defaultUriDisabledProp)) {
+		obj["defaultUriDisabled"] = defaultUriDisabledProp
+	}
 	templateProp, err := expandCloudRunV2ServiceTemplate(d.Get("template"), d, config)
 	if err != nil {
 		return err
@@ -1380,17 +1433,23 @@ func resourceCloudRunV2ServiceCreate(d *schema.ResourceData, meta interface{}) e
 	} else if v, ok := d.GetOkExists("build_config"); !tpgresource.IsEmptyValue(reflect.ValueOf(buildConfigProp)) && (ok || !reflect.DeepEqual(v, buildConfigProp)) {
 		obj["buildConfig"] = buildConfigProp
 	}
-	labelsProp, err := expandCloudRunV2ServiceEffectiveLabels(d.Get("effective_labels"), d, config)
+	multiRegionSettingsProp, err := expandCloudRunV2ServiceMultiRegionSettings(d.Get("multi_region_settings"), d, config)
 	if err != nil {
 		return err
-	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(labelsProp)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
-		obj["labels"] = labelsProp
+	} else if v, ok := d.GetOkExists("multi_region_settings"); !tpgresource.IsEmptyValue(reflect.ValueOf(multiRegionSettingsProp)) && (ok || !reflect.DeepEqual(v, multiRegionSettingsProp)) {
+		obj["multiRegionSettings"] = multiRegionSettingsProp
 	}
-	annotationsProp, err := expandCloudRunV2ServiceEffectiveAnnotations(d.Get("effective_annotations"), d, config)
+	effectiveLabelsProp, err := expandCloudRunV2ServiceEffectiveLabels(d.Get("effective_labels"), d, config)
 	if err != nil {
 		return err
-	} else if v, ok := d.GetOkExists("effective_annotations"); !tpgresource.IsEmptyValue(reflect.ValueOf(annotationsProp)) && (ok || !reflect.DeepEqual(v, annotationsProp)) {
-		obj["annotations"] = annotationsProp
+	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(effectiveLabelsProp)) && (ok || !reflect.DeepEqual(v, effectiveLabelsProp)) {
+		obj["labels"] = effectiveLabelsProp
+	}
+	effectiveAnnotationsProp, err := expandCloudRunV2ServiceEffectiveAnnotations(d.Get("effective_annotations"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("effective_annotations"); !tpgresource.IsEmptyValue(reflect.ValueOf(effectiveAnnotationsProp)) && (ok || !reflect.DeepEqual(v, effectiveAnnotationsProp)) {
+		obj["annotations"] = effectiveAnnotationsProp
 	}
 
 	url, err := tpgresource.ReplaceVars(d, config, "{{CloudRunV2BasePath}}projects/{{project}}/locations/{{location}}/services?serviceId={{name}}")
@@ -1550,6 +1609,9 @@ func resourceCloudRunV2ServiceRead(d *schema.ResourceData, meta interface{}) err
 	if err := d.Set("scaling", flattenCloudRunV2ServiceScaling(res["scaling"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Service: %s", err)
 	}
+	if err := d.Set("default_uri_disabled", flattenCloudRunV2ServiceDefaultUriDisabled(res["defaultUriDisabled"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Service: %s", err)
+	}
 	if err := d.Set("template", flattenCloudRunV2ServiceTemplate(res["template"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Service: %s", err)
 	}
@@ -1584,6 +1646,9 @@ func resourceCloudRunV2ServiceRead(d *schema.ResourceData, meta interface{}) err
 		return fmt.Errorf("Error reading Service: %s", err)
 	}
 	if err := d.Set("build_config", flattenCloudRunV2ServiceBuildConfig(res["buildConfig"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Service: %s", err)
+	}
+	if err := d.Set("multi_region_settings", flattenCloudRunV2ServiceMultiRegionSettings(res["multiRegionSettings"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Service: %s", err)
 	}
 	if err := d.Set("reconciling", flattenCloudRunV2ServiceReconciling(res["reconciling"], d, config)); err != nil {
@@ -1669,6 +1734,12 @@ func resourceCloudRunV2ServiceUpdate(d *schema.ResourceData, meta interface{}) e
 	} else if v, ok := d.GetOkExists("scaling"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, scalingProp)) {
 		obj["scaling"] = scalingProp
 	}
+	defaultUriDisabledProp, err := expandCloudRunV2ServiceDefaultUriDisabled(d.Get("default_uri_disabled"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("default_uri_disabled"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, defaultUriDisabledProp)) {
+		obj["defaultUriDisabled"] = defaultUriDisabledProp
+	}
 	templateProp, err := expandCloudRunV2ServiceTemplate(d.Get("template"), d, config)
 	if err != nil {
 		return err
@@ -1693,17 +1764,23 @@ func resourceCloudRunV2ServiceUpdate(d *schema.ResourceData, meta interface{}) e
 	} else if v, ok := d.GetOkExists("build_config"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, buildConfigProp)) {
 		obj["buildConfig"] = buildConfigProp
 	}
-	labelsProp, err := expandCloudRunV2ServiceEffectiveLabels(d.Get("effective_labels"), d, config)
+	multiRegionSettingsProp, err := expandCloudRunV2ServiceMultiRegionSettings(d.Get("multi_region_settings"), d, config)
 	if err != nil {
 		return err
-	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
-		obj["labels"] = labelsProp
+	} else if v, ok := d.GetOkExists("multi_region_settings"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, multiRegionSettingsProp)) {
+		obj["multiRegionSettings"] = multiRegionSettingsProp
 	}
-	annotationsProp, err := expandCloudRunV2ServiceEffectiveAnnotations(d.Get("effective_annotations"), d, config)
+	effectiveLabelsProp, err := expandCloudRunV2ServiceEffectiveLabels(d.Get("effective_labels"), d, config)
 	if err != nil {
 		return err
-	} else if v, ok := d.GetOkExists("effective_annotations"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, annotationsProp)) {
-		obj["annotations"] = annotationsProp
+	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, effectiveLabelsProp)) {
+		obj["labels"] = effectiveLabelsProp
+	}
+	effectiveAnnotationsProp, err := expandCloudRunV2ServiceEffectiveAnnotations(d.Get("effective_annotations"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("effective_annotations"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, effectiveAnnotationsProp)) {
+		obj["annotations"] = effectiveAnnotationsProp
 	}
 
 	url, err := tpgresource.ReplaceVars(d, config, "{{CloudRunV2BasePath}}projects/{{project}}/locations/{{location}}/services/{{name}}")
@@ -2020,6 +2097,10 @@ func flattenCloudRunV2ServiceScalingManualInstanceCount(v interface{}, d *schema
 	return v // let terraform core handle it otherwise
 }
 
+func flattenCloudRunV2ServiceDefaultUriDisabled(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
 func flattenCloudRunV2ServiceTemplate(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	if v == nil {
 		return nil
@@ -2059,6 +2140,8 @@ func flattenCloudRunV2ServiceTemplate(v interface{}, d *schema.ResourceData, con
 		flattenCloudRunV2ServiceTemplateNodeSelector(original["nodeSelector"], d, config)
 	transformed["gpu_zonal_redundancy_disabled"] =
 		flattenCloudRunV2ServiceTemplateGpuZonalRedundancyDisabled(original["gpuZonalRedundancyDisabled"], d, config)
+	transformed["health_check_disabled"] =
+		flattenCloudRunV2ServiceTemplateHealthCheckDisabled(original["healthCheckDisabled"], d, config)
 	return []interface{}{transformed}
 }
 func flattenCloudRunV2ServiceTemplateRevision(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -2382,6 +2465,7 @@ func flattenCloudRunV2ServiceTemplateContainersVolumeMounts(v interface{}, d *sc
 		transformed = append(transformed, map[string]interface{}{
 			"name":       flattenCloudRunV2ServiceTemplateContainersVolumeMountsName(original["name"], d, config),
 			"mount_path": flattenCloudRunV2ServiceTemplateContainersVolumeMountsMountPath(original["mountPath"], d, config),
+			"sub_path":   flattenCloudRunV2ServiceTemplateContainersVolumeMountsSubPath(original["subPath"], d, config),
 		})
 	}
 	return transformed
@@ -2391,6 +2475,10 @@ func flattenCloudRunV2ServiceTemplateContainersVolumeMountsName(v interface{}, d
 }
 
 func flattenCloudRunV2ServiceTemplateContainersVolumeMountsMountPath(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenCloudRunV2ServiceTemplateContainersVolumeMountsSubPath(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 
@@ -3028,6 +3116,8 @@ func flattenCloudRunV2ServiceTemplateVolumesGcs(v interface{}, d *schema.Resourc
 		flattenCloudRunV2ServiceTemplateVolumesGcsBucket(original["bucket"], d, config)
 	transformed["read_only"] =
 		flattenCloudRunV2ServiceTemplateVolumesGcsReadOnly(original["readOnly"], d, config)
+	transformed["mount_options"] =
+		flattenCloudRunV2ServiceTemplateVolumesGcsMountOptions(original["mountOptions"], d, config)
 	return []interface{}{transformed}
 }
 func flattenCloudRunV2ServiceTemplateVolumesGcsBucket(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -3035,6 +3125,10 @@ func flattenCloudRunV2ServiceTemplateVolumesGcsBucket(v interface{}, d *schema.R
 }
 
 func flattenCloudRunV2ServiceTemplateVolumesGcsReadOnly(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenCloudRunV2ServiceTemplateVolumesGcsMountOptions(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 
@@ -3114,6 +3208,10 @@ func flattenCloudRunV2ServiceTemplateNodeSelectorAccelerator(v interface{}, d *s
 }
 
 func flattenCloudRunV2ServiceTemplateGpuZonalRedundancyDisabled(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenCloudRunV2ServiceTemplateHealthCheckDisabled(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 
@@ -3427,6 +3525,29 @@ func flattenCloudRunV2ServiceBuildConfigServiceAccount(v interface{}, d *schema.
 	return v
 }
 
+func flattenCloudRunV2ServiceMultiRegionSettings(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["regions"] =
+		flattenCloudRunV2ServiceMultiRegionSettingsRegions(original["regions"], d, config)
+	transformed["multi_region_id"] =
+		flattenCloudRunV2ServiceMultiRegionSettingsMultiRegionId(original["multiRegionId"], d, config)
+	return []interface{}{transformed}
+}
+func flattenCloudRunV2ServiceMultiRegionSettingsRegions(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenCloudRunV2ServiceMultiRegionSettingsMultiRegionId(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
 func flattenCloudRunV2ServiceReconciling(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
@@ -3479,6 +3600,9 @@ func expandCloudRunV2ServiceLaunchStage(v interface{}, d tpgresource.TerraformRe
 }
 
 func expandCloudRunV2ServiceBinaryAuthorization(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
@@ -3528,6 +3652,9 @@ func expandCloudRunV2ServiceCustomAudiences(v interface{}, d tpgresource.Terrafo
 }
 
 func expandCloudRunV2ServiceScaling(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
@@ -3583,7 +3710,14 @@ func expandCloudRunV2ServiceScalingManualInstanceCount(v interface{}, d tpgresou
 	return v, nil
 }
 
+func expandCloudRunV2ServiceDefaultUriDisabled(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
 func expandCloudRunV2ServiceTemplate(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
@@ -3697,6 +3831,13 @@ func expandCloudRunV2ServiceTemplate(v interface{}, d tpgresource.TerraformResou
 		transformed["gpuZonalRedundancyDisabled"] = transformedGpuZonalRedundancyDisabled
 	}
 
+	transformedHealthCheckDisabled, err := expandCloudRunV2ServiceTemplateHealthCheckDisabled(original["health_check_disabled"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedHealthCheckDisabled); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["healthCheckDisabled"] = transformedHealthCheckDisabled
+	}
+
 	return transformed, nil
 }
 
@@ -3727,6 +3868,9 @@ func expandCloudRunV2ServiceTemplateAnnotations(v interface{}, d tpgresource.Ter
 }
 
 func expandCloudRunV2ServiceTemplateScaling(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
@@ -3761,6 +3905,9 @@ func expandCloudRunV2ServiceTemplateScalingMaxInstanceCount(v interface{}, d tpg
 }
 
 func expandCloudRunV2ServiceTemplateVpcAccess(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
@@ -3802,6 +3949,9 @@ func expandCloudRunV2ServiceTemplateVpcAccessEgress(v interface{}, d tpgresource
 }
 
 func expandCloudRunV2ServiceTemplateVpcAccessNetworkInterfaces(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	req := make([]interface{}, 0, len(l))
 	for _, raw := range l {
@@ -3858,6 +4008,9 @@ func expandCloudRunV2ServiceTemplateServiceAccount(v interface{}, d tpgresource.
 }
 
 func expandCloudRunV2ServiceTemplateContainers(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	req := make([]interface{}, 0, len(l))
 	for _, raw := range l {
@@ -3988,6 +4141,9 @@ func expandCloudRunV2ServiceTemplateContainersArgs(v interface{}, d tpgresource.
 
 func expandCloudRunV2ServiceTemplateContainersEnv(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	v = v.(*schema.Set).List()
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	req := make([]interface{}, 0, len(l))
 	for _, raw := range l {
@@ -4032,6 +4188,9 @@ func expandCloudRunV2ServiceTemplateContainersEnvValue(v interface{}, d tpgresou
 }
 
 func expandCloudRunV2ServiceTemplateContainersEnvValueSource(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
@@ -4051,6 +4210,9 @@ func expandCloudRunV2ServiceTemplateContainersEnvValueSource(v interface{}, d tp
 }
 
 func expandCloudRunV2ServiceTemplateContainersEnvValueSourceSecretKeyRef(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
@@ -4085,6 +4247,9 @@ func expandCloudRunV2ServiceTemplateContainersEnvValueSourceSecretKeyRefVersion(
 }
 
 func expandCloudRunV2ServiceTemplateContainersResources(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
@@ -4137,6 +4302,9 @@ func expandCloudRunV2ServiceTemplateContainersResourcesStartupCpuBoost(v interfa
 }
 
 func expandCloudRunV2ServiceTemplateContainersPorts(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	req := make([]interface{}, 0, len(l))
 	for _, raw := range l {
@@ -4174,6 +4342,9 @@ func expandCloudRunV2ServiceTemplateContainersPortsContainerPort(v interface{}, 
 }
 
 func expandCloudRunV2ServiceTemplateContainersVolumeMounts(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	req := make([]interface{}, 0, len(l))
 	for _, raw := range l {
@@ -4197,6 +4368,13 @@ func expandCloudRunV2ServiceTemplateContainersVolumeMounts(v interface{}, d tpgr
 			transformed["mountPath"] = transformedMountPath
 		}
 
+		transformedSubPath, err := expandCloudRunV2ServiceTemplateContainersVolumeMountsSubPath(original["sub_path"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedSubPath); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["subPath"] = transformedSubPath
+		}
+
 		req = append(req, transformed)
 	}
 	return req, nil
@@ -4210,11 +4388,18 @@ func expandCloudRunV2ServiceTemplateContainersVolumeMountsMountPath(v interface{
 	return v, nil
 }
 
+func expandCloudRunV2ServiceTemplateContainersVolumeMountsSubPath(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
 func expandCloudRunV2ServiceTemplateContainersWorkingDir(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 
 func expandCloudRunV2ServiceTemplateContainersLivenessProbe(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
@@ -4292,6 +4477,9 @@ func expandCloudRunV2ServiceTemplateContainersLivenessProbeFailureThreshold(v in
 }
 
 func expandCloudRunV2ServiceTemplateContainersLivenessProbeHttpGet(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 {
 		return nil, nil
@@ -4338,6 +4526,9 @@ func expandCloudRunV2ServiceTemplateContainersLivenessProbeHttpGetPort(v interfa
 }
 
 func expandCloudRunV2ServiceTemplateContainersLivenessProbeHttpGetHttpHeaders(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	req := make([]interface{}, 0, len(l))
 	for _, raw := range l {
@@ -4375,6 +4566,9 @@ func expandCloudRunV2ServiceTemplateContainersLivenessProbeHttpGetHttpHeadersVal
 }
 
 func expandCloudRunV2ServiceTemplateContainersLivenessProbeGrpc(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 {
 		return nil, nil
@@ -4414,6 +4608,9 @@ func expandCloudRunV2ServiceTemplateContainersLivenessProbeGrpcService(v interfa
 }
 
 func expandCloudRunV2ServiceTemplateContainersLivenessProbeTcpSocket(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
@@ -4437,6 +4634,9 @@ func expandCloudRunV2ServiceTemplateContainersLivenessProbeTcpSocketPort(v inter
 }
 
 func expandCloudRunV2ServiceTemplateContainersStartupProbe(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
@@ -4514,6 +4714,9 @@ func expandCloudRunV2ServiceTemplateContainersStartupProbeFailureThreshold(v int
 }
 
 func expandCloudRunV2ServiceTemplateContainersStartupProbeHttpGet(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 {
 		return nil, nil
@@ -4560,6 +4763,9 @@ func expandCloudRunV2ServiceTemplateContainersStartupProbeHttpGetPort(v interfac
 }
 
 func expandCloudRunV2ServiceTemplateContainersStartupProbeHttpGetHttpHeaders(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	req := make([]interface{}, 0, len(l))
 	for _, raw := range l {
@@ -4597,6 +4803,9 @@ func expandCloudRunV2ServiceTemplateContainersStartupProbeHttpGetHttpHeadersValu
 }
 
 func expandCloudRunV2ServiceTemplateContainersStartupProbeTcpSocket(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 {
 		return nil, nil
@@ -4625,6 +4834,9 @@ func expandCloudRunV2ServiceTemplateContainersStartupProbeTcpSocketPort(v interf
 }
 
 func expandCloudRunV2ServiceTemplateContainersStartupProbeGrpc(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 {
 		return nil, nil
@@ -4672,6 +4884,9 @@ func expandCloudRunV2ServiceTemplateContainersBaseImageUri(v interface{}, d tpgr
 }
 
 func expandCloudRunV2ServiceTemplateContainersBuildInfo(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
@@ -4706,6 +4921,9 @@ func expandCloudRunV2ServiceTemplateContainersBuildInfoSourceLocation(v interfac
 }
 
 func expandCloudRunV2ServiceTemplateVolumes(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	req := make([]interface{}, 0, len(l))
 	for _, raw := range l {
@@ -4767,6 +4985,9 @@ func expandCloudRunV2ServiceTemplateVolumesName(v interface{}, d tpgresource.Ter
 }
 
 func expandCloudRunV2ServiceTemplateVolumesSecret(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
@@ -4808,6 +5029,9 @@ func expandCloudRunV2ServiceTemplateVolumesSecretDefaultMode(v interface{}, d tp
 }
 
 func expandCloudRunV2ServiceTemplateVolumesSecretItems(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	req := make([]interface{}, 0, len(l))
 	for _, raw := range l {
@@ -4856,6 +5080,9 @@ func expandCloudRunV2ServiceTemplateVolumesSecretItemsMode(v interface{}, d tpgr
 }
 
 func expandCloudRunV2ServiceTemplateVolumesCloudSqlInstance(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
@@ -4880,6 +5107,9 @@ func expandCloudRunV2ServiceTemplateVolumesCloudSqlInstanceInstances(v interface
 }
 
 func expandCloudRunV2ServiceTemplateVolumesEmptyDir(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
@@ -4914,6 +5144,9 @@ func expandCloudRunV2ServiceTemplateVolumesEmptyDirSizeLimit(v interface{}, d tp
 }
 
 func expandCloudRunV2ServiceTemplateVolumesGcs(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
@@ -4936,6 +5169,13 @@ func expandCloudRunV2ServiceTemplateVolumesGcs(v interface{}, d tpgresource.Terr
 		transformed["readOnly"] = transformedReadOnly
 	}
 
+	transformedMountOptions, err := expandCloudRunV2ServiceTemplateVolumesGcsMountOptions(original["mount_options"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedMountOptions); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["mountOptions"] = transformedMountOptions
+	}
+
 	return transformed, nil
 }
 
@@ -4947,7 +5187,14 @@ func expandCloudRunV2ServiceTemplateVolumesGcsReadOnly(v interface{}, d tpgresou
 	return v, nil
 }
 
+func expandCloudRunV2ServiceTemplateVolumesGcsMountOptions(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
 func expandCloudRunV2ServiceTemplateVolumesNfs(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
@@ -5009,6 +5256,9 @@ func expandCloudRunV2ServiceTemplateSessionAffinity(v interface{}, d tpgresource
 }
 
 func expandCloudRunV2ServiceTemplateNodeSelector(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
@@ -5035,7 +5285,14 @@ func expandCloudRunV2ServiceTemplateGpuZonalRedundancyDisabled(v interface{}, d 
 	return v, nil
 }
 
+func expandCloudRunV2ServiceTemplateHealthCheckDisabled(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
 func expandCloudRunV2ServiceTraffic(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	req := make([]interface{}, 0, len(l))
 	for _, raw := range l {
@@ -5099,6 +5356,9 @@ func expandCloudRunV2ServiceInvokerIamDisabled(v interface{}, d tpgresource.Terr
 }
 
 func expandCloudRunV2ServiceBuildConfig(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
@@ -5213,6 +5473,43 @@ func expandCloudRunV2ServiceBuildConfigEnvironmentVariables(v interface{}, d tpg
 }
 
 func expandCloudRunV2ServiceBuildConfigServiceAccount(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandCloudRunV2ServiceMultiRegionSettings(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedRegions, err := expandCloudRunV2ServiceMultiRegionSettingsRegions(original["regions"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedRegions); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["regions"] = transformedRegions
+	}
+
+	transformedMultiRegionId, err := expandCloudRunV2ServiceMultiRegionSettingsMultiRegionId(original["multi_region_id"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedMultiRegionId); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["multiRegionId"] = transformedMultiRegionId
+	}
+
+	return transformed, nil
+}
+
+func expandCloudRunV2ServiceMultiRegionSettingsRegions(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandCloudRunV2ServiceMultiRegionSettingsMultiRegionId(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 

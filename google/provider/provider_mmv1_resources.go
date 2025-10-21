@@ -138,6 +138,7 @@ import (
 	"github.com/hashicorp/terraform-provider-google/google/services/pubsublite"
 	"github.com/hashicorp/terraform-provider-google/google/services/redis"
 	"github.com/hashicorp/terraform-provider-google/google/services/resourcemanager"
+	"github.com/hashicorp/terraform-provider-google/google/services/resourcemanager3"
 	"github.com/hashicorp/terraform-provider-google/google/services/secretmanager"
 	"github.com/hashicorp/terraform-provider-google/google/services/secretmanagerregional"
 	"github.com/hashicorp/terraform-provider-google/google/services/securesourcemanager"
@@ -187,7 +188,9 @@ var handwrittenDatasources = map[string]*schema.Resource{
 	"google_artifact_registry_docker_images":                     artifactregistry.DataSourceArtifactRegistryDockerImages(),
 	"google_artifact_registry_locations":                         artifactregistry.DataSourceGoogleArtifactRegistryLocations(),
 	"google_artifact_registry_maven_artifact":                    artifactregistry.DataSourceArtifactRegistryMavenArtifact(),
+	"google_artifact_registry_maven_artifacts":                   artifactregistry.DataSourceArtifactRegistryMavenArtifacts(),
 	"google_artifact_registry_npm_package":                       artifactregistry.DataSourceArtifactRegistryNpmPackage(),
+	"google_artifact_registry_npm_packages":                      artifactregistry.DataSourceArtifactRegistryNpmPackages(),
 	"google_artifact_registry_package":                           artifactregistry.DataSourceArtifactRegistryPackage(),
 	"google_artifact_registry_python_package":                    artifactregistry.DataSourceArtifactRegistryPythonPackage(),
 	"google_artifact_registry_repositories":                      artifactregistry.DataSourceArtifactRegistryRepositories(),
@@ -569,9 +572,9 @@ var handwrittenIAMDatasources = map[string]*schema.Resource{
 }
 
 // Resources
-// Generated resources: 646
+// Generated resources: 654
 // Generated IAM resources: 318
-// Total generated resources: 964
+// Total generated resources: 972
 var generatedResources = map[string]*schema.Resource{
 	"google_folder_access_approval_settings":                                     accessapproval.ResourceAccessApprovalFolderSettings(),
 	"google_organization_access_approval_settings":                               accessapproval.ResourceAccessApprovalOrganizationSettings(),
@@ -602,6 +605,7 @@ var generatedResources = map[string]*schema.Resource{
 	"google_alloydb_instance":                                                    alloydb.ResourceAlloydbInstance(),
 	"google_alloydb_user":                                                        alloydb.ResourceAlloydbUser(),
 	"google_apigee_addons_config":                                                apigee.ResourceApigeeAddonsConfig(),
+	"google_apigee_api_deployment":                                               apigee.ResourceApigeeApiDeployment(),
 	"google_apigee_api_product":                                                  apigee.ResourceApigeeApiProduct(),
 	"google_apigee_app_group":                                                    apigee.ResourceApigeeAppGroup(),
 	"google_apigee_control_plane_access":                                         apigee.ResourceApigeeControlPlaneAccess(),
@@ -1044,6 +1048,7 @@ var generatedResources = map[string]*schema.Resource{
 	"google_discovery_engine_acl_config":                                         discoveryengine.ResourceDiscoveryEngineAclConfig(),
 	"google_discovery_engine_chat_engine":                                        discoveryengine.ResourceDiscoveryEngineChatEngine(),
 	"google_discovery_engine_cmek_config":                                        discoveryengine.ResourceDiscoveryEngineCmekConfig(),
+	"google_discovery_engine_data_connector":                                     discoveryengine.ResourceDiscoveryEngineDataConnector(),
 	"google_discovery_engine_data_store":                                         discoveryengine.ResourceDiscoveryEngineDataStore(),
 	"google_discovery_engine_recommendation_engine":                              discoveryengine.ResourceDiscoveryEngineRecommendationEngine(),
 	"google_discovery_engine_schema":                                             discoveryengine.ResourceDiscoveryEngineSchema(),
@@ -1249,6 +1254,8 @@ var generatedResources = map[string]*schema.Resource{
 	"google_lustre_instance":                                                     lustre.ResourceLustreInstance(),
 	"google_managed_kafka_acl":                                                   managedkafka.ResourceManagedKafkaAcl(),
 	"google_managed_kafka_cluster":                                               managedkafka.ResourceManagedKafkaCluster(),
+	"google_managed_kafka_connect_cluster":                                       managedkafka.ResourceManagedKafkaConnectCluster(),
+	"google_managed_kafka_connector":                                             managedkafka.ResourceManagedKafkaConnector(),
 	"google_managed_kafka_topic":                                                 managedkafka.ResourceManagedKafkaTopic(),
 	"google_memcache_instance":                                                   memcache.ResourceMemcacheInstance(),
 	"google_memorystore_instance":                                                memorystore.ResourceMemorystoreInstance(),
@@ -1324,6 +1331,7 @@ var generatedResources = map[string]*schema.Resource{
 	"google_network_services_service_binding":                                    networkservices.ResourceNetworkServicesServiceBinding(),
 	"google_network_services_tcp_route":                                          networkservices.ResourceNetworkServicesTcpRoute(),
 	"google_network_services_tls_route":                                          networkservices.ResourceNetworkServicesTlsRoute(),
+	"google_network_services_wasm_plugin":                                        networkservices.ResourceNetworkServicesWasmPlugin(),
 	"google_notebooks_environment":                                               notebooks.ResourceNotebooksEnvironment(),
 	"google_notebooks_instance":                                                  notebooks.ResourceNotebooksInstance(),
 	"google_notebooks_instance_iam_binding":                                      tpgiamresource.ResourceIamBinding(notebooks.NotebooksInstanceIamSchema, notebooks.NotebooksInstanceIamUpdaterProducer, notebooks.NotebooksInstanceIdParseFunc),
@@ -1378,6 +1386,7 @@ var generatedResources = map[string]*schema.Resource{
 	"google_redis_cluster_user_created_connections":                              redis.ResourceRedisClusterUserCreatedConnections(),
 	"google_redis_instance":                                                      redis.ResourceRedisInstance(),
 	"google_resource_manager_lien":                                               resourcemanager.ResourceResourceManagerLien(),
+	"google_resource_manager_capability":                                         resourcemanager3.ResourceResourceManager3Capability(),
 	"google_secret_manager_secret":                                               secretmanager.ResourceSecretManagerSecret(),
 	"google_secret_manager_secret_iam_binding":                                   tpgiamresource.ResourceIamBinding(secretmanager.SecretManagerSecretIamSchema, secretmanager.SecretManagerSecretIamUpdaterProducer, secretmanager.SecretManagerSecretIdParseFunc),
 	"google_secret_manager_secret_iam_member":                                    tpgiamresource.ResourceIamMember(secretmanager.SecretManagerSecretIamSchema, secretmanager.SecretManagerSecretIamUpdaterProducer, secretmanager.SecretManagerSecretIdParseFunc),
@@ -1477,6 +1486,7 @@ var generatedResources = map[string]*schema.Resource{
 	"google_tags_tag_value_iam_policy":                                           tpgiamresource.ResourceIamPolicy(tags.TagsTagValueIamSchema, tags.TagsTagValueIamUpdaterProducer, tags.TagsTagValueIdParseFunc),
 	"google_transcoder_job":                                                      transcoder.ResourceTranscoderJob(),
 	"google_transcoder_job_template":                                             transcoder.ResourceTranscoderJobTemplate(),
+	"google_vertex_ai_cache_config":                                              vertexai.ResourceVertexAICacheConfig(),
 	"google_vertex_ai_dataset":                                                   vertexai.ResourceVertexAIDataset(),
 	"google_vertex_ai_deployment_resource_pool":                                  vertexai.ResourceVertexAIDeploymentResourcePool(),
 	"google_vertex_ai_endpoint":                                                  vertexai.ResourceVertexAIEndpoint(),
@@ -1492,6 +1502,7 @@ var generatedResources = map[string]*schema.Resource{
 	"google_vertex_ai_index_endpoint":                                            vertexai.ResourceVertexAIIndexEndpoint(),
 	"google_vertex_ai_index_endpoint_deployed_index":                             vertexai.ResourceVertexAIIndexEndpointDeployedIndex(),
 	"google_vertex_ai_rag_engine_config":                                         vertexai.ResourceVertexAIRagEngineConfig(),
+	"google_vertex_ai_reasoning_engine":                                          vertexai.ResourceVertexAIReasoningEngine(),
 	"google_vertex_ai_tensorboard":                                               vertexai.ResourceVertexAITensorboard(),
 	"google_vmwareengine_cluster":                                                vmwareengine.ResourceVmwareengineCluster(),
 	"google_vmwareengine_external_access_rule":                                   vmwareengine.ResourceVmwareengineExternalAccessRule(),
@@ -1793,6 +1804,7 @@ func UseGeneratedProducts() {
 	var _ = pubsublite.ProductName
 	var _ = redis.ProductName
 	var _ = resourcemanager.ProductName
+	var _ = resourcemanager3.ProductName
 	var _ = secretmanager.ProductName
 	var _ = secretmanagerregional.ProductName
 	var _ = securesourcemanager.ProductName

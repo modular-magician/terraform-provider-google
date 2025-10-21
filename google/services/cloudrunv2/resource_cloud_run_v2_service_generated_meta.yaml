@@ -31,6 +31,7 @@ fields:
   - field: 'create_time'
   - field: 'creator'
   - field: 'custom_audiences'
+  - field: 'default_uri_disabled'
   - field: 'delete_time'
   - field: 'deletion_protection'
     provider_only: true
@@ -121,6 +122,7 @@ fields:
   - field: 'template.volumes.empty_dir.medium'
   - field: 'template.volumes.empty_dir.size_limit'
   - field: 'template.volumes.gcs.bucket'
+  - field: 'template.volumes.gcs.mount_options'
   - field: 'template.volumes.gcs.read_only'
   - field: 'template.volumes.name'
   - field: 'template.volumes.nfs.path'

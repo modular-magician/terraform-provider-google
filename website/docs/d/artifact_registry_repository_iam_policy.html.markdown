@@ -30,9 +30,6 @@ Retrieves the current IAM policy data for repository
 
 ```hcl
 data "google_artifact_registry_repository_iam_policy" "policy" {
-  project = google_artifact_registry_repository.my-repo.project
-  location = google_artifact_registry_repository.my-repo.location
-  repository = google_artifact_registry_repository.my-repo.name
 }
 ```
 

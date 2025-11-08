@@ -30,9 +30,6 @@ Retrieves the current IAM policy data for membership
 
 ```hcl
 data "google_gke_hub_membership_iam_policy" "policy" {
-  project = google_gke_hub_membership.membership.project
-  location = google_gke_hub_membership.membership.location
-  membership_id = google_gke_hub_membership.membership.membership_id
 }
 ```
 

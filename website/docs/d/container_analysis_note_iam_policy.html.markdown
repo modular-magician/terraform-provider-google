@@ -30,8 +30,6 @@ Retrieves the current IAM policy data for note
 
 ```hcl
 data "google_container_analysis_note_iam_policy" "policy" {
-  project = google_container_analysis_note.note.project
-  note = google_container_analysis_note.note.name
 }
 ```
 

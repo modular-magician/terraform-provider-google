@@ -30,9 +30,6 @@ Retrieves the current IAM policy data for backupplan
 
 ```hcl
 data "google_gke_backup_backup_plan_iam_policy" "policy" {
-  project = google_gke_backup_backup_plan.basic.project
-  location = google_gke_backup_backup_plan.basic.location
-  name = google_gke_backup_backup_plan.basic.name
 }
 ```
 

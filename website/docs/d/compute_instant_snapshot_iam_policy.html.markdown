@@ -30,9 +30,6 @@ Retrieves the current IAM policy data for instantsnapshot
 
 ```hcl
 data "google_compute_instant_snapshot_iam_policy" "policy" {
-  project = google_compute_instant_snapshot.default.project
-  zone = google_compute_instant_snapshot.default.zone
-  name = google_compute_instant_snapshot.default.name
 }
 ```
 

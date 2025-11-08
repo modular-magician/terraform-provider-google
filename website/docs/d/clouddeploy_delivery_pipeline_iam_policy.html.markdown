@@ -30,9 +30,6 @@ Retrieves the current IAM policy data for deliverypipeline
 
 ```hcl
 data "google_clouddeploy_delivery_pipeline_iam_policy" "policy" {
-  project = google_clouddeploy_delivery_pipeline.default.project
-  location = google_clouddeploy_delivery_pipeline.default.location
-  name = google_clouddeploy_delivery_pipeline.default.name
 }
 ```
 

@@ -30,9 +30,6 @@ Retrieves the current IAM policy data for aspecttype
 
 ```hcl
 data "google_dataplex_aspect_type_iam_policy" "policy" {
-  project = google_dataplex_aspect_type.test_aspect_type_basic.project
-  location = google_dataplex_aspect_type.test_aspect_type_basic.location
-  aspect_type_id = google_dataplex_aspect_type.test_aspect_type_basic.aspect_type_id
 }
 ```
 

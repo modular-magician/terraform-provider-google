@@ -30,9 +30,6 @@ Retrieves the current IAM policy data for disk
 
 ```hcl
 data "google_compute_disk_iam_policy" "policy" {
-  project = google_compute_disk.default.project
-  zone = google_compute_disk.default.zone
-  name = google_compute_disk.default.name
 }
 ```
 

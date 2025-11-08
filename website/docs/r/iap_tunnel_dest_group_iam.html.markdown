@@ -51,9 +51,6 @@ data "google_iam_policy" "admin" {
 }
 
 resource "google_iap_tunnel_dest_group_iam_policy" "policy" {
-  project = google_iap_tunnel_dest_group.dest_group.project
-  region = google_iap_tunnel_dest_group.dest_group.region
-  dest_group = google_iap_tunnel_dest_group.dest_group.group_name
   policy_data = data.google_iam_policy.admin.policy_data
 }
 ```
@@ -77,9 +74,6 @@ data "google_iam_policy" "admin" {
 }
 
 resource "google_iap_tunnel_dest_group_iam_policy" "policy" {
-  project = google_iap_tunnel_dest_group.dest_group.project
-  region = google_iap_tunnel_dest_group.dest_group.region
-  dest_group = google_iap_tunnel_dest_group.dest_group.group_name
   policy_data = data.google_iam_policy.admin.policy_data
 }
 ```
@@ -87,9 +81,6 @@ resource "google_iap_tunnel_dest_group_iam_policy" "policy" {
 
 ```hcl
 resource "google_iap_tunnel_dest_group_iam_binding" "binding" {
-  project = google_iap_tunnel_dest_group.dest_group.project
-  region = google_iap_tunnel_dest_group.dest_group.region
-  dest_group = google_iap_tunnel_dest_group.dest_group.group_name
   role = "roles/iap.tunnelResourceAccessor"
   members = [
     "user:jane@example.com",
@@ -101,9 +92,6 @@ With IAM Conditions:
 
 ```hcl
 resource "google_iap_tunnel_dest_group_iam_binding" "binding" {
-  project = google_iap_tunnel_dest_group.dest_group.project
-  region = google_iap_tunnel_dest_group.dest_group.region
-  dest_group = google_iap_tunnel_dest_group.dest_group.group_name
   role = "roles/iap.tunnelResourceAccessor"
   members = [
     "user:jane@example.com",
@@ -120,9 +108,6 @@ resource "google_iap_tunnel_dest_group_iam_binding" "binding" {
 
 ```hcl
 resource "google_iap_tunnel_dest_group_iam_member" "member" {
-  project = google_iap_tunnel_dest_group.dest_group.project
-  region = google_iap_tunnel_dest_group.dest_group.region
-  dest_group = google_iap_tunnel_dest_group.dest_group.group_name
   role = "roles/iap.tunnelResourceAccessor"
   member = "user:jane@example.com"
 }
@@ -132,9 +117,6 @@ With IAM Conditions:
 
 ```hcl
 resource "google_iap_tunnel_dest_group_iam_member" "member" {
-  project = google_iap_tunnel_dest_group.dest_group.project
-  region = google_iap_tunnel_dest_group.dest_group.region
-  dest_group = google_iap_tunnel_dest_group.dest_group.group_name
   role = "roles/iap.tunnelResourceAccessor"
   member = "user:jane@example.com"
 

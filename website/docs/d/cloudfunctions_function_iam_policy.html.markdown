@@ -30,9 +30,6 @@ Retrieves the current IAM policy data for cloudfunction
 
 ```hcl
 data "google_cloudfunctions_function_iam_policy" "policy" {
-  project = google_cloudfunctions_function.function.project
-  region = google_cloudfunctions_function.function.region
-  cloud_function = google_cloudfunctions_function.function.name
 }
 ```
 

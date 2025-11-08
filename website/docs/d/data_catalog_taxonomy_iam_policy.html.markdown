@@ -30,7 +30,6 @@ Retrieves the current IAM policy data for taxonomy
 
 ```hcl
 data "google_data_catalog_taxonomy_iam_policy" "policy" {
-  taxonomy = google_data_catalog_taxonomy.basic_taxonomy.name
 }
 ```
 

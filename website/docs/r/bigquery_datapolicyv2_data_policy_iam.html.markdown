@@ -50,9 +50,6 @@ data "google_iam_policy" "admin" {
 }
 
 resource "google_bigquery_datapolicyv2_data_policy_iam_policy" "policy" {
-  project = google_bigquery_datapolicyv2_data_policy.basic_data_policy.project
-  location = google_bigquery_datapolicyv2_data_policy.basic_data_policy.location
-  data_policy_id = google_bigquery_datapolicyv2_data_policy.basic_data_policy.data_policy_id
   policy_data = data.google_iam_policy.admin.policy_data
 }
 ```
@@ -61,9 +58,6 @@ resource "google_bigquery_datapolicyv2_data_policy_iam_policy" "policy" {
 
 ```hcl
 resource "google_bigquery_datapolicyv2_data_policy_iam_binding" "binding" {
-  project = google_bigquery_datapolicyv2_data_policy.basic_data_policy.project
-  location = google_bigquery_datapolicyv2_data_policy.basic_data_policy.location
-  data_policy_id = google_bigquery_datapolicyv2_data_policy.basic_data_policy.data_policy_id
   role = "roles/viewer"
   members = [
     "user:jane@example.com",
@@ -75,9 +69,6 @@ resource "google_bigquery_datapolicyv2_data_policy_iam_binding" "binding" {
 
 ```hcl
 resource "google_bigquery_datapolicyv2_data_policy_iam_member" "member" {
-  project = google_bigquery_datapolicyv2_data_policy.basic_data_policy.project
-  location = google_bigquery_datapolicyv2_data_policy.basic_data_policy.location
-  data_policy_id = google_bigquery_datapolicyv2_data_policy.basic_data_policy.data_policy_id
   role = "roles/viewer"
   member = "user:jane@example.com"
 }

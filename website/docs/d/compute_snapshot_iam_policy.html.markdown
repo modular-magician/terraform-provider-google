@@ -30,8 +30,6 @@ Retrieves the current IAM policy data for snapshot
 
 ```hcl
 data "google_compute_snapshot_iam_policy" "policy" {
-  project = google_compute_snapshot.snapshot.project
-  name = google_compute_snapshot.snapshot.name
 }
 ```
 

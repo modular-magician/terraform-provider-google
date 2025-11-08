@@ -30,9 +30,6 @@ Retrieves the current IAM policy data for job
 
 ```hcl
 data "google_cloud_run_v2_job_iam_policy" "policy" {
-  project = google_cloud_run_v2_job.default.project
-  location = google_cloud_run_v2_job.default.location
-  name = google_cloud_run_v2_job.default.name
 }
 ```
 

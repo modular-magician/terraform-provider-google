@@ -30,8 +30,6 @@ Retrieves the current IAM policy data for repository
 
 ```hcl
 data "google_sourcerepo_repository_iam_policy" "policy" {
-  project = google_sourcerepo_repository.my-repo.project
-  repository = google_sourcerepo_repository.my-repo.name
 }
 ```
 

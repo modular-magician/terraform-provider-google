@@ -30,9 +30,6 @@ Retrieves the current IAM policy data for instance
 
 ```hcl
 data "google_workbench_instance_iam_policy" "policy" {
-  project = google_workbench_instance.instance.project
-  location = google_workbench_instance.instance.location
-  name = google_workbench_instance.instance.name
 }
 ```
 

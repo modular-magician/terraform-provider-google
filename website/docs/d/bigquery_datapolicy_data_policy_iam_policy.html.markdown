@@ -30,9 +30,6 @@ Retrieves the current IAM policy data for datapolicy
 
 ```hcl
 data "google_bigquery_datapolicy_data_policy_iam_policy" "policy" {
-  project = google_bigquery_datapolicy_data_policy.data_policy.project
-  location = google_bigquery_datapolicy_data_policy.data_policy.location
-  data_policy_id = google_bigquery_datapolicy_data_policy.data_policy.data_policy_id
 }
 ```
 

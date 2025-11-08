@@ -50,11 +50,6 @@ data "google_iam_policy" "admin" {
 }
 
 resource "google_dataplex_asset_iam_policy" "policy" {
-  project = google_dataplex_asset.example.project
-  location = google_dataplex_asset.example.location
-  lake = google_dataplex_asset.example.lake
-  dataplex_zone = google_dataplex_asset.example.dataplex_zone
-  asset = google_dataplex_asset.example.name
   policy_data = data.google_iam_policy.admin.policy_data
 }
 ```
@@ -63,11 +58,6 @@ resource "google_dataplex_asset_iam_policy" "policy" {
 
 ```hcl
 resource "google_dataplex_asset_iam_binding" "binding" {
-  project = google_dataplex_asset.example.project
-  location = google_dataplex_asset.example.location
-  lake = google_dataplex_asset.example.lake
-  dataplex_zone = google_dataplex_asset.example.dataplex_zone
-  asset = google_dataplex_asset.example.name
   role = "roles/viewer"
   members = [
     "user:jane@example.com",
@@ -79,11 +69,6 @@ resource "google_dataplex_asset_iam_binding" "binding" {
 
 ```hcl
 resource "google_dataplex_asset_iam_member" "member" {
-  project = google_dataplex_asset.example.project
-  location = google_dataplex_asset.example.location
-  lake = google_dataplex_asset.example.lake
-  dataplex_zone = google_dataplex_asset.example.dataplex_zone
-  asset = google_dataplex_asset.example.name
   role = "roles/viewer"
   member = "user:jane@example.com"
 }

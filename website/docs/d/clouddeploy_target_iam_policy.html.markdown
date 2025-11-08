@@ -30,9 +30,6 @@ Retrieves the current IAM policy data for target
 
 ```hcl
 data "google_clouddeploy_target_iam_policy" "policy" {
-  project = google_clouddeploy_target.default.project
-  location = google_clouddeploy_target.default.location
-  name = google_clouddeploy_target.default.name
 }
 ```
 

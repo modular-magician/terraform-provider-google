@@ -50,8 +50,6 @@ data "google_iam_policy" "admin" {
 }
 
 resource "google_iam_workforce_pool_iam_policy" "policy" {
-  location = google_iam_workforce_pool.example.location
-  workforce_pool_id = google_iam_workforce_pool.example.workforce_pool_id
   policy_data = data.google_iam_policy.admin.policy_data
 }
 ```
@@ -60,8 +58,6 @@ resource "google_iam_workforce_pool_iam_policy" "policy" {
 
 ```hcl
 resource "google_iam_workforce_pool_iam_binding" "binding" {
-  location = google_iam_workforce_pool.example.location
-  workforce_pool_id = google_iam_workforce_pool.example.workforce_pool_id
   role = "roles/iam.workforcePoolAdmin"
   members = [
     "user:jane@example.com",
@@ -73,8 +69,6 @@ resource "google_iam_workforce_pool_iam_binding" "binding" {
 
 ```hcl
 resource "google_iam_workforce_pool_iam_member" "member" {
-  location = google_iam_workforce_pool.example.location
-  workforce_pool_id = google_iam_workforce_pool.example.workforce_pool_id
   role = "roles/iam.workforcePoolAdmin"
   member = "user:jane@example.com"
 }

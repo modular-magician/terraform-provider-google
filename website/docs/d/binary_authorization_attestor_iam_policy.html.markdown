@@ -30,8 +30,6 @@ Retrieves the current IAM policy data for attestor
 
 ```hcl
 data "google_binary_authorization_attestor_iam_policy" "policy" {
-  project = google_binary_authorization_attestor.attestor.project
-  attestor = google_binary_authorization_attestor.attestor.name
 }
 ```
 

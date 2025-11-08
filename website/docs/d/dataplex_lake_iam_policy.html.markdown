@@ -30,9 +30,6 @@ Retrieves the current IAM policy data for lake
 
 ```hcl
 data "google_dataplex_lake_iam_policy" "policy" {
-  project = google_dataplex_lake.example.project
-  location = google_dataplex_lake.example.location
-  lake = google_dataplex_lake.example.name
 }
 ```
 

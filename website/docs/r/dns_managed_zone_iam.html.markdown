@@ -50,8 +50,6 @@ data "google_iam_policy" "admin" {
 }
 
 resource "google_dns_managed_zone_iam_policy" "policy" {
-  project = google_dns_managed_zone.default.project
-  managed_zone = google_dns_managed_zone.default.name
   policy_data = data.google_iam_policy.admin.policy_data
 }
 ```
@@ -60,8 +58,6 @@ resource "google_dns_managed_zone_iam_policy" "policy" {
 
 ```hcl
 resource "google_dns_managed_zone_iam_binding" "binding" {
-  project = google_dns_managed_zone.default.project
-  managed_zone = google_dns_managed_zone.default.name
   role = "roles/viewer"
   members = [
     "user:jane@example.com",
@@ -73,8 +69,6 @@ resource "google_dns_managed_zone_iam_binding" "binding" {
 
 ```hcl
 resource "google_dns_managed_zone_iam_member" "member" {
-  project = google_dns_managed_zone.default.project
-  managed_zone = google_dns_managed_zone.default.name
   role = "roles/viewer"
   member = "user:jane@example.com"
 }

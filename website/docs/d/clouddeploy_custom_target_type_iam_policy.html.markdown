@@ -30,9 +30,6 @@ Retrieves the current IAM policy data for customtargettype
 
 ```hcl
 data "google_clouddeploy_custom_target_type_iam_policy" "policy" {
-  project = google_clouddeploy_custom_target_type.custom-target-type.project
-  location = google_clouddeploy_custom_target_type.custom-target-type.location
-  name = google_clouddeploy_custom_target_type.custom-target-type.name
 }
 ```
 

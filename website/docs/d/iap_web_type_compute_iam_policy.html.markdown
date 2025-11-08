@@ -30,7 +30,6 @@ Retrieves the current IAM policy data for webtypecompute
 
 ```hcl
 data "google_iap_web_type_compute_iam_policy" "policy" {
-  project = google_project_service.project_service.project
 }
 ```
 

@@ -30,9 +30,6 @@ Retrieves the current IAM policy data for restoreplan
 
 ```hcl
 data "google_gke_backup_restore_plan_iam_policy" "policy" {
-  project = google_gke_backup_restore_plan.all_ns.project
-  location = google_gke_backup_restore_plan.all_ns.location
-  name = google_gke_backup_restore_plan.all_ns.name
 }
 ```
 

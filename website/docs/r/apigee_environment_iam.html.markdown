@@ -50,8 +50,6 @@ data "google_iam_policy" "admin" {
 }
 
 resource "google_apigee_environment_iam_policy" "policy" {
-  org_id = google_apigee_environment.apigee_environment.org_id
-  env_id = google_apigee_environment.apigee_environment.name
   policy_data = data.google_iam_policy.admin.policy_data
 }
 ```
@@ -60,8 +58,6 @@ resource "google_apigee_environment_iam_policy" "policy" {
 
 ```hcl
 resource "google_apigee_environment_iam_binding" "binding" {
-  org_id = google_apigee_environment.apigee_environment.org_id
-  env_id = google_apigee_environment.apigee_environment.name
   role = "roles/viewer"
   members = [
     "user:jane@example.com",
@@ -73,8 +69,6 @@ resource "google_apigee_environment_iam_binding" "binding" {
 
 ```hcl
 resource "google_apigee_environment_iam_member" "member" {
-  org_id = google_apigee_environment.apigee_environment.org_id
-  env_id = google_apigee_environment.apigee_environment.name
   role = "roles/viewer"
   member = "user:jane@example.com"
 }

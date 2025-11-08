@@ -30,10 +30,6 @@ Retrieves the current IAM policy data for logview
 
 ```hcl
 data "google_logging_log_view_iam_policy" "policy" {
-  parent = google_logging_log_view.logging_log_view.parent
-  location = google_logging_log_view.logging_log_view.location
-  bucket = google_logging_log_view.logging_log_view.bucket
-  name = google_logging_log_view.logging_log_view.name
 }
 ```
 

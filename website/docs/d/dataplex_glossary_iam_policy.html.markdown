@@ -30,9 +30,6 @@ Retrieves the current IAM policy data for glossary
 
 ```hcl
 data "google_dataplex_glossary_iam_policy" "policy" {
-  project = google_dataplex_glossary.glossary_test_id.project
-  location = google_dataplex_glossary.glossary_test_id.location
-  glossary_id = google_dataplex_glossary.glossary_test_id.glossary_id
 }
 ```
 

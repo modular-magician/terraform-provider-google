@@ -30,9 +30,6 @@ Retrieves the current IAM policy data for instance
 
 ```hcl
 data "google_secure_source_manager_instance_iam_policy" "policy" {
-  project = google_secure_source_manager_instance.default.project
-  location = google_secure_source_manager_instance.default.location
-  instance_id = google_secure_source_manager_instance.default.instance_id
 }
 ```
 

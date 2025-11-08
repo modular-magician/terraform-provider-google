@@ -51,10 +51,6 @@ data "google_iam_policy" "admin" {
 }
 
 resource "google_logging_log_view_iam_policy" "policy" {
-  parent = google_logging_log_view.logging_log_view.parent
-  location = google_logging_log_view.logging_log_view.location
-  bucket = google_logging_log_view.logging_log_view.bucket
-  name = google_logging_log_view.logging_log_view.name
   policy_data = data.google_iam_policy.admin.policy_data
 }
 ```
@@ -78,10 +74,6 @@ data "google_iam_policy" "admin" {
 }
 
 resource "google_logging_log_view_iam_policy" "policy" {
-  parent = google_logging_log_view.logging_log_view.parent
-  location = google_logging_log_view.logging_log_view.location
-  bucket = google_logging_log_view.logging_log_view.bucket
-  name = google_logging_log_view.logging_log_view.name
   policy_data = data.google_iam_policy.admin.policy_data
 }
 ```
@@ -89,10 +81,6 @@ resource "google_logging_log_view_iam_policy" "policy" {
 
 ```hcl
 resource "google_logging_log_view_iam_binding" "binding" {
-  parent = google_logging_log_view.logging_log_view.parent
-  location = google_logging_log_view.logging_log_view.location
-  bucket = google_logging_log_view.logging_log_view.bucket
-  name = google_logging_log_view.logging_log_view.name
   role = "roles/logging.admin"
   members = [
     "user:jane@example.com",
@@ -104,10 +92,6 @@ With IAM Conditions:
 
 ```hcl
 resource "google_logging_log_view_iam_binding" "binding" {
-  parent = google_logging_log_view.logging_log_view.parent
-  location = google_logging_log_view.logging_log_view.location
-  bucket = google_logging_log_view.logging_log_view.bucket
-  name = google_logging_log_view.logging_log_view.name
   role = "roles/logging.admin"
   members = [
     "user:jane@example.com",
@@ -124,10 +108,6 @@ resource "google_logging_log_view_iam_binding" "binding" {
 
 ```hcl
 resource "google_logging_log_view_iam_member" "member" {
-  parent = google_logging_log_view.logging_log_view.parent
-  location = google_logging_log_view.logging_log_view.location
-  bucket = google_logging_log_view.logging_log_view.bucket
-  name = google_logging_log_view.logging_log_view.name
   role = "roles/logging.admin"
   member = "user:jane@example.com"
 }
@@ -137,10 +117,6 @@ With IAM Conditions:
 
 ```hcl
 resource "google_logging_log_view_iam_member" "member" {
-  parent = google_logging_log_view.logging_log_view.parent
-  location = google_logging_log_view.logging_log_view.location
-  bucket = google_logging_log_view.logging_log_view.bucket
-  name = google_logging_log_view.logging_log_view.name
   role = "roles/logging.admin"
   member = "user:jane@example.com"
 

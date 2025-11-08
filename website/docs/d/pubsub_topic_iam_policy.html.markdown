@@ -30,8 +30,6 @@ Retrieves the current IAM policy data for topic
 
 ```hcl
 data "google_pubsub_topic_iam_policy" "policy" {
-  project = google_pubsub_topic.example.project
-  topic = google_pubsub_topic.example.name
 }
 ```
 

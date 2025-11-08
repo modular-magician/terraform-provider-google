@@ -30,8 +30,6 @@ Retrieves the current IAM policy data for webtypeappengine
 
 ```hcl
 data "google_iap_web_type_app_engine_iam_policy" "policy" {
-  project = google_app_engine_application.app.project
-  app_id = google_app_engine_application.app.app_id
 }
 ```
 

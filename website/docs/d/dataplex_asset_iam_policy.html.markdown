@@ -30,11 +30,6 @@ Retrieves the current IAM policy data for asset
 
 ```hcl
 data "google_dataplex_asset_iam_policy" "policy" {
-  project = google_dataplex_asset.example.project
-  location = google_dataplex_asset.example.location
-  lake = google_dataplex_asset.example.lake
-  dataplex_zone = google_dataplex_asset.example.dataplex_zone
-  asset = google_dataplex_asset.example.name
 }
 ```
 

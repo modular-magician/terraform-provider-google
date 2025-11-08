@@ -30,8 +30,6 @@ Retrieves the current IAM policy data for managedzone
 
 ```hcl
 data "google_dns_managed_zone_iam_policy" "policy" {
-  project = google_dns_managed_zone.default.project
-  managed_zone = google_dns_managed_zone.default.name
 }
 ```
 

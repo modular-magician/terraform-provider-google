@@ -30,9 +30,6 @@ Retrieves the current IAM policy data for dataexchange
 
 ```hcl
 data "google_bigquery_analytics_hub_data_exchange_iam_policy" "policy" {
-  project = google_bigquery_analytics_hub_data_exchange.data_exchange.project
-  location = google_bigquery_analytics_hub_data_exchange.data_exchange.location
-  data_exchange_id = google_bigquery_analytics_hub_data_exchange.data_exchange.data_exchange_id
 }
 ```
 

@@ -30,9 +30,6 @@ Retrieves the current IAM policy data for securitygateway
 
 ```hcl
 data "google_beyondcorp_security_gateway_iam_policy" "policy" {
-  project = google_beyondcorp_security_gateway.example.project
-  location = google_beyondcorp_security_gateway.example.location
-  security_gateway_id = google_beyondcorp_security_gateway.example.security_gateway_id
 }
 ```
 

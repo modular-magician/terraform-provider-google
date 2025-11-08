@@ -30,9 +30,6 @@ Retrieves the current IAM policy data for autoscalingpolicy
 
 ```hcl
 data "google_dataproc_autoscaling_policy_iam_policy" "policy" {
-  project = google_dataproc_autoscaling_policy.basic.project
-  location = google_dataproc_autoscaling_policy.basic.location
-  policy_id = google_dataproc_autoscaling_policy.basic.policy_id
 }
 ```
 

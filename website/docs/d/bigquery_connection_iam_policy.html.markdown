@@ -30,9 +30,6 @@ Retrieves the current IAM policy data for connection
 
 ```hcl
 data "google_bigquery_connection_iam_policy" "policy" {
-  project = google_bigquery_connection.connection.project
-  location = google_bigquery_connection.connection.location
-  connection_id = google_bigquery_connection.connection.connection_id
 }
 ```
 

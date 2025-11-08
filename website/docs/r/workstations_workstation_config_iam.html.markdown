@@ -54,10 +54,6 @@ data "google_iam_policy" "admin" {
 
 resource "google_workstations_workstation_config_iam_policy" "policy" {
   provider = google-beta
-  project = google_workstations_workstation_config.default.project
-  location = google_workstations_workstation_config.default.location
-  workstation_cluster_id = google_workstations_workstation_config.default.workstation_cluster_id
-  workstation_config_id = google_workstations_workstation_config.default.workstation_config_id
   policy_data = data.google_iam_policy.admin.policy_data
 }
 ```
@@ -67,10 +63,6 @@ resource "google_workstations_workstation_config_iam_policy" "policy" {
 ```hcl
 resource "google_workstations_workstation_config_iam_binding" "binding" {
   provider = google-beta
-  project = google_workstations_workstation_config.default.project
-  location = google_workstations_workstation_config.default.location
-  workstation_cluster_id = google_workstations_workstation_config.default.workstation_cluster_id
-  workstation_config_id = google_workstations_workstation_config.default.workstation_config_id
   role = "roles/viewer"
   members = [
     "user:jane@example.com",
@@ -83,10 +75,6 @@ resource "google_workstations_workstation_config_iam_binding" "binding" {
 ```hcl
 resource "google_workstations_workstation_config_iam_member" "member" {
   provider = google-beta
-  project = google_workstations_workstation_config.default.project
-  location = google_workstations_workstation_config.default.location
-  workstation_cluster_id = google_workstations_workstation_config.default.workstation_cluster_id
-  workstation_config_id = google_workstations_workstation_config.default.workstation_config_id
   role = "roles/viewer"
   member = "user:jane@example.com"
 }

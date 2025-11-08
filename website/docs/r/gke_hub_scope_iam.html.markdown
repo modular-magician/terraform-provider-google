@@ -50,8 +50,6 @@ data "google_iam_policy" "admin" {
 }
 
 resource "google_gke_hub_scope_iam_policy" "policy" {
-  project = google_gke_hub_scope.scope.project
-  scope_id = google_gke_hub_scope.scope.scope_id
   policy_data = data.google_iam_policy.admin.policy_data
 }
 ```
@@ -60,8 +58,6 @@ resource "google_gke_hub_scope_iam_policy" "policy" {
 
 ```hcl
 resource "google_gke_hub_scope_iam_binding" "binding" {
-  project = google_gke_hub_scope.scope.project
-  scope_id = google_gke_hub_scope.scope.scope_id
   role = "roles/viewer"
   members = [
     "user:jane@example.com",
@@ -73,8 +69,6 @@ resource "google_gke_hub_scope_iam_binding" "binding" {
 
 ```hcl
 resource "google_gke_hub_scope_iam_member" "member" {
-  project = google_gke_hub_scope.scope.project
-  scope_id = google_gke_hub_scope.scope.scope_id
   role = "roles/viewer"
   member = "user:jane@example.com"
 }

@@ -50,9 +50,6 @@ data "google_iam_policy" "admin" {
 }
 
 resource "google_dataplex_glossary_iam_policy" "policy" {
-  project = google_dataplex_glossary.glossary_test_id.project
-  location = google_dataplex_glossary.glossary_test_id.location
-  glossary_id = google_dataplex_glossary.glossary_test_id.glossary_id
   policy_data = data.google_iam_policy.admin.policy_data
 }
 ```
@@ -61,9 +58,6 @@ resource "google_dataplex_glossary_iam_policy" "policy" {
 
 ```hcl
 resource "google_dataplex_glossary_iam_binding" "binding" {
-  project = google_dataplex_glossary.glossary_test_id.project
-  location = google_dataplex_glossary.glossary_test_id.location
-  glossary_id = google_dataplex_glossary.glossary_test_id.glossary_id
   role = "roles/viewer"
   members = [
     "user:jane@example.com",
@@ -75,9 +69,6 @@ resource "google_dataplex_glossary_iam_binding" "binding" {
 
 ```hcl
 resource "google_dataplex_glossary_iam_member" "member" {
-  project = google_dataplex_glossary.glossary_test_id.project
-  location = google_dataplex_glossary.glossary_test_id.location
-  glossary_id = google_dataplex_glossary.glossary_test_id.glossary_id
   role = "roles/viewer"
   member = "user:jane@example.com"
 }

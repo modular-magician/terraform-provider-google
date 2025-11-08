@@ -30,9 +30,6 @@ Retrieves the current IAM policy data for subnetwork
 
 ```hcl
 data "google_compute_subnetwork_iam_policy" "policy" {
-  project = google_compute_subnetwork.network-with-private-secondary-ip-ranges.project
-  region = google_compute_subnetwork.network-with-private-secondary-ip-ranges.region
-  subnetwork = google_compute_subnetwork.network-with-private-secondary-ip-ranges.name
 }
 ```
 

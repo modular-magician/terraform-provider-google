@@ -30,9 +30,6 @@ Retrieves the current IAM policy data for federation
 
 ```hcl
 data "google_dataproc_metastore_federation_iam_policy" "policy" {
-  project = google_dataproc_metastore_federation.default.project
-  location = google_dataproc_metastore_federation.default.location
-  federation_id = google_dataproc_metastore_federation.default.federation_id
 }
 ```
 

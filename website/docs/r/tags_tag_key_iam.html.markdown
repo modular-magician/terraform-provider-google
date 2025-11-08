@@ -50,7 +50,6 @@ data "google_iam_policy" "admin" {
 }
 
 resource "google_tags_tag_key_iam_policy" "policy" {
-  tag_key = google_tags_tag_key.key.name
   policy_data = data.google_iam_policy.admin.policy_data
 }
 ```
@@ -59,7 +58,6 @@ resource "google_tags_tag_key_iam_policy" "policy" {
 
 ```hcl
 resource "google_tags_tag_key_iam_binding" "binding" {
-  tag_key = google_tags_tag_key.key.name
   role = "roles/viewer"
   members = [
     "user:jane@example.com",
@@ -71,7 +69,6 @@ resource "google_tags_tag_key_iam_binding" "binding" {
 
 ```hcl
 resource "google_tags_tag_key_iam_member" "member" {
-  tag_key = google_tags_tag_key.key.name
   role = "roles/viewer"
   member = "user:jane@example.com"
 }

@@ -30,9 +30,6 @@ Retrieves the current IAM policy data for webcloudrunservice
 
 ```hcl
 data "google_iap_web_cloud_run_service_iam_policy" "policy" {
-  project = google_cloud_run_v2_service.default.project
-  location = google_cloud_run_v2_service.default.location
-  cloud_run_service_name = google_cloud_run_v2_service.default.name
 }
 ```
 

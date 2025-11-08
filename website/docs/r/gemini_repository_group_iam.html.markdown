@@ -50,10 +50,6 @@ data "google_iam_policy" "admin" {
 }
 
 resource "google_gemini_repository_group_iam_policy" "policy" {
-  project = google_gemini_repository_group.example.project
-  location = google_gemini_repository_group.example.location
-  code_repository_index = google_gemini_repository_group.example.code_repository_index
-  repository_group_id = google_gemini_repository_group.example.repository_group_id
   policy_data = data.google_iam_policy.admin.policy_data
 }
 ```
@@ -62,10 +58,6 @@ resource "google_gemini_repository_group_iam_policy" "policy" {
 
 ```hcl
 resource "google_gemini_repository_group_iam_binding" "binding" {
-  project = google_gemini_repository_group.example.project
-  location = google_gemini_repository_group.example.location
-  code_repository_index = google_gemini_repository_group.example.code_repository_index
-  repository_group_id = google_gemini_repository_group.example.repository_group_id
   role = "roles/cloudaicompanion.repositoryGroupsUser"
   members = [
     "user:jane@example.com",
@@ -77,10 +69,6 @@ resource "google_gemini_repository_group_iam_binding" "binding" {
 
 ```hcl
 resource "google_gemini_repository_group_iam_member" "member" {
-  project = google_gemini_repository_group.example.project
-  location = google_gemini_repository_group.example.location
-  code_repository_index = google_gemini_repository_group.example.code_repository_index
-  repository_group_id = google_gemini_repository_group.example.repository_group_id
   role = "roles/cloudaicompanion.repositoryGroupsUser"
   member = "user:jane@example.com"
 }

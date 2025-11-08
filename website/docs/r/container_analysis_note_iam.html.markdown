@@ -50,8 +50,6 @@ data "google_iam_policy" "admin" {
 }
 
 resource "google_container_analysis_note_iam_policy" "policy" {
-  project = google_container_analysis_note.note.project
-  note = google_container_analysis_note.note.name
   policy_data = data.google_iam_policy.admin.policy_data
 }
 ```
@@ -60,8 +58,6 @@ resource "google_container_analysis_note_iam_policy" "policy" {
 
 ```hcl
 resource "google_container_analysis_note_iam_binding" "binding" {
-  project = google_container_analysis_note.note.project
-  note = google_container_analysis_note.note.name
   role = "roles/containeranalysis.notes.occurrences.viewer"
   members = [
     "user:jane@example.com",
@@ -73,8 +69,6 @@ resource "google_container_analysis_note_iam_binding" "binding" {
 
 ```hcl
 resource "google_container_analysis_note_iam_member" "member" {
-  project = google_container_analysis_note.note.project
-  note = google_container_analysis_note.note.name
   role = "roles/containeranalysis.notes.occurrences.viewer"
   member = "user:jane@example.com"
 }

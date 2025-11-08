@@ -30,10 +30,6 @@ Retrieves the current IAM policy data for listing
 
 ```hcl
 data "google_bigquery_analytics_hub_listing_iam_policy" "policy" {
-  project = google_bigquery_analytics_hub_listing.listing.project
-  location = google_bigquery_analytics_hub_listing.listing.location
-  data_exchange_id = google_bigquery_analytics_hub_listing.listing.data_exchange_id
-  listing_id = google_bigquery_analytics_hub_listing.listing.listing_id
 }
 ```
 

@@ -53,9 +53,6 @@ data "google_iam_policy" "admin" {
 }
 
 resource "google_compute_region_backend_service_iam_policy" "policy" {
-  project = google_compute_region_backend_service.default.project
-  region = google_compute_region_backend_service.default.region
-  name = google_compute_region_backend_service.default.name
   policy_data = data.google_iam_policy.admin.policy_data
 }
 ```
@@ -79,9 +76,6 @@ data "google_iam_policy" "admin" {
 }
 
 resource "google_compute_region_backend_service_iam_policy" "policy" {
-  project = google_compute_region_backend_service.default.project
-  region = google_compute_region_backend_service.default.region
-  name = google_compute_region_backend_service.default.name
   policy_data = data.google_iam_policy.admin.policy_data
 }
 ```
@@ -89,9 +83,6 @@ resource "google_compute_region_backend_service_iam_policy" "policy" {
 
 ```hcl
 resource "google_compute_region_backend_service_iam_binding" "binding" {
-  project = google_compute_region_backend_service.default.project
-  region = google_compute_region_backend_service.default.region
-  name = google_compute_region_backend_service.default.name
   role = "roles/compute.admin"
   members = [
     "user:jane@example.com",
@@ -103,9 +94,6 @@ With IAM Conditions:
 
 ```hcl
 resource "google_compute_region_backend_service_iam_binding" "binding" {
-  project = google_compute_region_backend_service.default.project
-  region = google_compute_region_backend_service.default.region
-  name = google_compute_region_backend_service.default.name
   role = "roles/compute.admin"
   members = [
     "user:jane@example.com",
@@ -122,9 +110,6 @@ resource "google_compute_region_backend_service_iam_binding" "binding" {
 
 ```hcl
 resource "google_compute_region_backend_service_iam_member" "member" {
-  project = google_compute_region_backend_service.default.project
-  region = google_compute_region_backend_service.default.region
-  name = google_compute_region_backend_service.default.name
   role = "roles/compute.admin"
   member = "user:jane@example.com"
 }
@@ -134,9 +119,6 @@ With IAM Conditions:
 
 ```hcl
 resource "google_compute_region_backend_service_iam_member" "member" {
-  project = google_compute_region_backend_service.default.project
-  region = google_compute_region_backend_service.default.region
-  name = google_compute_region_backend_service.default.name
   role = "roles/compute.admin"
   member = "user:jane@example.com"
 

@@ -30,7 +30,6 @@ Retrieves the current IAM policy data for entrygroup
 
 ```hcl
 data "google_data_catalog_entry_group_iam_policy" "policy" {
-  entry_group = google_data_catalog_entry_group.basic_entry_group.name
 }
 ```
 

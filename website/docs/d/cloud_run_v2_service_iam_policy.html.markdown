@@ -30,9 +30,6 @@ Retrieves the current IAM policy data for service
 
 ```hcl
 data "google_cloud_run_v2_service_iam_policy" "policy" {
-  project = google_cloud_run_v2_service.default.project
-  location = google_cloud_run_v2_service.default.location
-  name = google_cloud_run_v2_service.default.name
 }
 ```
 

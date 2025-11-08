@@ -50,9 +50,6 @@ data "google_iam_policy" "admin" {
 }
 
 resource "google_dataplex_entry_type_iam_policy" "policy" {
-  project = google_dataplex_entry_type.test_entry_type_basic.project
-  location = google_dataplex_entry_type.test_entry_type_basic.location
-  entry_type_id = google_dataplex_entry_type.test_entry_type_basic.entry_type_id
   policy_data = data.google_iam_policy.admin.policy_data
 }
 ```
@@ -61,9 +58,6 @@ resource "google_dataplex_entry_type_iam_policy" "policy" {
 
 ```hcl
 resource "google_dataplex_entry_type_iam_binding" "binding" {
-  project = google_dataplex_entry_type.test_entry_type_basic.project
-  location = google_dataplex_entry_type.test_entry_type_basic.location
-  entry_type_id = google_dataplex_entry_type.test_entry_type_basic.entry_type_id
   role = "roles/viewer"
   members = [
     "user:jane@example.com",
@@ -75,9 +69,6 @@ resource "google_dataplex_entry_type_iam_binding" "binding" {
 
 ```hcl
 resource "google_dataplex_entry_type_iam_member" "member" {
-  project = google_dataplex_entry_type.test_entry_type_basic.project
-  location = google_dataplex_entry_type.test_entry_type_basic.location
-  entry_type_id = google_dataplex_entry_type.test_entry_type_basic.entry_type_id
   role = "roles/viewer"
   member = "user:jane@example.com"
 }

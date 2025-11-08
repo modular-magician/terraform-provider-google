@@ -30,8 +30,6 @@ Retrieves the current IAM policy data for consentstore
 
 ```hcl
 data "google_healthcare_consent_store_iam_policy" "policy" {
-  dataset = google_healthcare_consent_store.my-consent.dataset
-  consent_store_id = google_healthcare_consent_store.my-consent.name
 }
 ```
 

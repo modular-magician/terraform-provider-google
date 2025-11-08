@@ -30,9 +30,6 @@ Retrieves the current IAM policy data for entrygroup
 
 ```hcl
 data "google_dataplex_entry_group_iam_policy" "policy" {
-  project = google_dataplex_entry_group.test_entry_group_basic.project
-  location = google_dataplex_entry_group.test_entry_group_basic.location
-  entry_group_id = google_dataplex_entry_group.test_entry_group_basic.entry_group_id
 }
 ```
 

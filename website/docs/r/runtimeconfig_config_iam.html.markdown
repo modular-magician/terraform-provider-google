@@ -54,8 +54,6 @@ data "google_iam_policy" "admin" {
 
 resource "google_runtimeconfig_config_iam_policy" "policy" {
   provider = google-beta
-  project = google_runtimeconfig_config.config.project
-  config = google_runtimeconfig_config.config.name
   policy_data = data.google_iam_policy.admin.policy_data
 }
 ```
@@ -65,8 +63,6 @@ resource "google_runtimeconfig_config_iam_policy" "policy" {
 ```hcl
 resource "google_runtimeconfig_config_iam_binding" "binding" {
   provider = google-beta
-  project = google_runtimeconfig_config.config.project
-  config = google_runtimeconfig_config.config.name
   role = "roles/viewer"
   members = [
     "user:jane@example.com",
@@ -79,8 +75,6 @@ resource "google_runtimeconfig_config_iam_binding" "binding" {
 ```hcl
 resource "google_runtimeconfig_config_iam_member" "member" {
   provider = google-beta
-  project = google_runtimeconfig_config.config.project
-  config = google_runtimeconfig_config.config.name
   role = "roles/viewer"
   member = "user:jane@example.com"
 }

@@ -50,9 +50,6 @@ data "google_iam_policy" "admin" {
 }
 
 resource "google_clouddeploy_target_iam_policy" "policy" {
-  project = google_clouddeploy_target.default.project
-  location = google_clouddeploy_target.default.location
-  name = google_clouddeploy_target.default.name
   policy_data = data.google_iam_policy.admin.policy_data
 }
 ```
@@ -61,9 +58,6 @@ resource "google_clouddeploy_target_iam_policy" "policy" {
 
 ```hcl
 resource "google_clouddeploy_target_iam_binding" "binding" {
-  project = google_clouddeploy_target.default.project
-  location = google_clouddeploy_target.default.location
-  name = google_clouddeploy_target.default.name
   role = "roles/viewer"
   members = [
     "user:jane@example.com",
@@ -75,9 +69,6 @@ resource "google_clouddeploy_target_iam_binding" "binding" {
 
 ```hcl
 resource "google_clouddeploy_target_iam_member" "member" {
-  project = google_clouddeploy_target.default.project
-  location = google_clouddeploy_target.default.location
-  name = google_clouddeploy_target.default.name
   role = "roles/viewer"
   member = "user:jane@example.com"
 }

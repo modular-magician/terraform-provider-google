@@ -30,8 +30,6 @@ Retrieves the current IAM policy data for workforcepool
 
 ```hcl
 data "google_iam_workforce_pool_iam_policy" "policy" {
-  location = google_iam_workforce_pool.example.location
-  workforce_pool_id = google_iam_workforce_pool.example.workforce_pool_id
 }
 ```
 

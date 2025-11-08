@@ -30,9 +30,6 @@ Retrieves the current IAM policy data for table
 
 ```hcl
 data "google_bigquery_table_iam_policy" "policy" {
-  project = google_bigquery_table.test.project
-  dataset_id = google_bigquery_table.test.dataset_id
-  table_id = google_bigquery_table.test.table_id
 }
 ```
 

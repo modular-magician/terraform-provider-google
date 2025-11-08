@@ -30,9 +30,6 @@ Retrieves the current IAM policy data for runtime
 
 ```hcl
 data "google_notebooks_runtime_iam_policy" "policy" {
-  project = google_notebooks_runtime.runtime.project
-  location = google_notebooks_runtime.runtime.location
-  runtime_name = google_notebooks_runtime.runtime.name
 }
 ```
 

@@ -50,9 +50,6 @@ data "google_iam_policy" "admin" {
 }
 
 resource "google_dataplex_lake_iam_policy" "policy" {
-  project = google_dataplex_lake.example.project
-  location = google_dataplex_lake.example.location
-  lake = google_dataplex_lake.example.name
   policy_data = data.google_iam_policy.admin.policy_data
 }
 ```
@@ -61,9 +58,6 @@ resource "google_dataplex_lake_iam_policy" "policy" {
 
 ```hcl
 resource "google_dataplex_lake_iam_binding" "binding" {
-  project = google_dataplex_lake.example.project
-  location = google_dataplex_lake.example.location
-  lake = google_dataplex_lake.example.name
   role = "roles/viewer"
   members = [
     "user:jane@example.com",
@@ -75,9 +69,6 @@ resource "google_dataplex_lake_iam_binding" "binding" {
 
 ```hcl
 resource "google_dataplex_lake_iam_member" "member" {
-  project = google_dataplex_lake.example.project
-  location = google_dataplex_lake.example.location
-  lake = google_dataplex_lake.example.name
   role = "roles/viewer"
   member = "user:jane@example.com"
 }

@@ -30,7 +30,6 @@ Retrieves the current IAM policy data for policytag
 
 ```hcl
 data "google_data_catalog_policy_tag_iam_policy" "policy" {
-  policy_tag = google_data_catalog_policy_tag.basic_policy_tag.name
 }
 ```
 

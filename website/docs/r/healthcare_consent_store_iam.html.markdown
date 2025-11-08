@@ -50,8 +50,6 @@ data "google_iam_policy" "admin" {
 }
 
 resource "google_healthcare_consent_store_iam_policy" "policy" {
-  dataset = google_healthcare_consent_store.my-consent.dataset
-  consent_store_id = google_healthcare_consent_store.my-consent.name
   policy_data = data.google_iam_policy.admin.policy_data
 }
 ```
@@ -60,8 +58,6 @@ resource "google_healthcare_consent_store_iam_policy" "policy" {
 
 ```hcl
 resource "google_healthcare_consent_store_iam_binding" "binding" {
-  dataset = google_healthcare_consent_store.my-consent.dataset
-  consent_store_id = google_healthcare_consent_store.my-consent.name
   role = "roles/viewer"
   members = [
     "user:jane@example.com",
@@ -73,8 +69,6 @@ resource "google_healthcare_consent_store_iam_binding" "binding" {
 
 ```hcl
 resource "google_healthcare_consent_store_iam_member" "member" {
-  dataset = google_healthcare_consent_store.my-consent.dataset
-  consent_store_id = google_healthcare_consent_store.my-consent.name
   role = "roles/viewer"
   member = "user:jane@example.com"
 }

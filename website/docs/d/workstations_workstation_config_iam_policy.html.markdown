@@ -33,10 +33,6 @@ See [Provider Versions](https://terraform.io/docs/providers/google/guides/provid
 ```hcl
 data "google_workstations_workstation_config_iam_policy" "policy" {
   provider = google-beta
-  project = google_workstations_workstation_config.default.project
-  location = google_workstations_workstation_config.default.location
-  workstation_cluster_id = google_workstations_workstation_config.default.workstation_cluster_id
-  workstation_config_id = google_workstations_workstation_config.default.workstation_config_id
 }
 ```
 

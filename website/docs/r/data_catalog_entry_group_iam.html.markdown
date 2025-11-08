@@ -50,7 +50,6 @@ data "google_iam_policy" "admin" {
 }
 
 resource "google_data_catalog_entry_group_iam_policy" "policy" {
-  entry_group = google_data_catalog_entry_group.basic_entry_group.name
   policy_data = data.google_iam_policy.admin.policy_data
 }
 ```
@@ -59,7 +58,6 @@ resource "google_data_catalog_entry_group_iam_policy" "policy" {
 
 ```hcl
 resource "google_data_catalog_entry_group_iam_binding" "binding" {
-  entry_group = google_data_catalog_entry_group.basic_entry_group.name
   role = "roles/viewer"
   members = [
     "user:jane@example.com",
@@ -71,7 +69,6 @@ resource "google_data_catalog_entry_group_iam_binding" "binding" {
 
 ```hcl
 resource "google_data_catalog_entry_group_iam_member" "member" {
-  entry_group = google_data_catalog_entry_group.basic_entry_group.name
   role = "roles/viewer"
   member = "user:jane@example.com"
 }

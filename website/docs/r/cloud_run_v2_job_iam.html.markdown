@@ -50,9 +50,6 @@ data "google_iam_policy" "admin" {
 }
 
 resource "google_cloud_run_v2_job_iam_policy" "policy" {
-  project = google_cloud_run_v2_job.default.project
-  location = google_cloud_run_v2_job.default.location
-  name = google_cloud_run_v2_job.default.name
   policy_data = data.google_iam_policy.admin.policy_data
 }
 ```
@@ -61,9 +58,6 @@ resource "google_cloud_run_v2_job_iam_policy" "policy" {
 
 ```hcl
 resource "google_cloud_run_v2_job_iam_binding" "binding" {
-  project = google_cloud_run_v2_job.default.project
-  location = google_cloud_run_v2_job.default.location
-  name = google_cloud_run_v2_job.default.name
   role = "roles/viewer"
   members = [
     "user:jane@example.com",
@@ -75,9 +69,6 @@ resource "google_cloud_run_v2_job_iam_binding" "binding" {
 
 ```hcl
 resource "google_cloud_run_v2_job_iam_member" "member" {
-  project = google_cloud_run_v2_job.default.project
-  location = google_cloud_run_v2_job.default.location
-  name = google_cloud_run_v2_job.default.name
   role = "roles/viewer"
   member = "user:jane@example.com"
 }

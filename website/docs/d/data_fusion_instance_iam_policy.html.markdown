@@ -30,9 +30,6 @@ Retrieves the current IAM policy data for instance
 
 ```hcl
 data "google_data_fusion_instance_iam_policy" "policy" {
-  project = google_data_fusion_instance.basic_instance.project
-  region = google_data_fusion_instance.basic_instance.region
-  name = google_data_fusion_instance.basic_instance.name
 }
 ```
 

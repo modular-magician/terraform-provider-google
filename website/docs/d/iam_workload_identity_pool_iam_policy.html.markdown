@@ -32,8 +32,6 @@ See [Provider Versions](https://terraform.io/docs/providers/google/guides/provid
 
 ```hcl
 data "google_iam_workload_identity_pool_iam_policy" "policy" {
-  project = google_iam_workload_identity_pool.example.project
-  workload_identity_pool_id = google_iam_workload_identity_pool.example.workload_identity_pool_id
 }
 ```
 

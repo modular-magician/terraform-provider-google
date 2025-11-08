@@ -30,8 +30,6 @@ Retrieves the current IAM policy data for secret
 
 ```hcl
 data "google_secret_manager_secret_iam_policy" "policy" {
-  project = google_secret_manager_secret.secret-basic.project
-  secret_id = google_secret_manager_secret.secret-basic.secret_id
 }
 ```
 

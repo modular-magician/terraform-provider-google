@@ -30,9 +30,6 @@ Retrieves the current IAM policy data for webregionforwardingruleservice
 
 ```hcl
 data "google_iap_web_region_forwarding_rule_service_iam_policy" "policy" {
-  project = google_compute_forwarding_rule.default.project
-  region = google_compute_forwarding_rule.default.region
-  forwarding_rule_region_service_name = google_compute_forwarding_rule.default.name
 }
 ```
 

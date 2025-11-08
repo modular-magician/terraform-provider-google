@@ -30,9 +30,6 @@ Retrieves the current IAM policy data for feature
 
 ```hcl
 data "google_gke_hub_feature_iam_policy" "policy" {
-  project = google_gke_hub_feature.feature.project
-  location = google_gke_hub_feature.feature.location
-  name = google_gke_hub_feature.feature.name
 }
 ```
 

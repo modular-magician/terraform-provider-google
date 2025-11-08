@@ -30,7 +30,6 @@ Retrieves the current IAM policy data for organizationsource
 
 ```hcl
 data "google_scc_v2_organization_source_iam_policy" "policy" {
-  source = google_scc_v2_organization_source.custom_source.name
 }
 ```
 

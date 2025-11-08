@@ -30,10 +30,6 @@ Retrieves the current IAM policy data for zone
 
 ```hcl
 data "google_dataplex_zone_iam_policy" "policy" {
-  project = google_dataplex_zone.example.project
-  location = google_dataplex_zone.example.location
-  lake = google_dataplex_zone.example.lake
-  dataplex_zone = google_dataplex_zone.example.name
 }
 ```
 

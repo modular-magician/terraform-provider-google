@@ -30,8 +30,6 @@ Retrieves the current IAM policy data for webforwardingruleservice
 
 ```hcl
 data "google_iap_web_forwarding_rule_service_iam_policy" "policy" {
-  project = google_compute_global_forwarding_rule.default.project
-  forwarding_rule_service_name = google_compute_global_forwarding_rule.default.name
 }
 ```
 

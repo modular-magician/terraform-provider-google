@@ -33,8 +33,6 @@ See [Provider Versions](https://terraform.io/docs/providers/google/guides/provid
 ```hcl
 data "google_compute_machine_image_iam_policy" "policy" {
   provider = google-beta
-  project = google_compute_machine_image.image.project
-  machine_image = google_compute_machine_image.image.name
 }
 ```
 

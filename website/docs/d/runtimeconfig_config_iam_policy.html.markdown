@@ -33,8 +33,6 @@ See [Provider Versions](https://terraform.io/docs/providers/google/guides/provid
 ```hcl
 data "google_runtimeconfig_config_iam_policy" "policy" {
   provider = google-beta
-  project = google_runtimeconfig_config.config.project
-  config = google_runtimeconfig_config.config.name
 }
 ```
 

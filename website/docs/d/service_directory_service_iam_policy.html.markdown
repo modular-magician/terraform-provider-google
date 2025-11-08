@@ -33,7 +33,6 @@ See [Provider Versions](https://terraform.io/docs/providers/google/guides/provid
 ```hcl
 data "google_service_directory_service_iam_policy" "policy" {
   provider = google-beta
-  name = google_service_directory_service.example.name
 }
 ```
 

@@ -30,8 +30,6 @@ Retrieves the current IAM policy data for webbackendservice
 
 ```hcl
 data "google_iap_web_backend_service_iam_policy" "policy" {
-  project = google_compute_backend_service.default.project
-  web_backend_service = google_compute_backend_service.default.name
 }
 ```
 

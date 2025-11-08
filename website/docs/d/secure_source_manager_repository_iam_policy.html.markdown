@@ -30,9 +30,6 @@ Retrieves the current IAM policy data for repository
 
 ```hcl
 data "google_secure_source_manager_repository_iam_policy" "policy" {
-  project = google_secure_source_manager_repository.default.project
-  location = google_secure_source_manager_repository.default.location
-  repository_id = google_secure_source_manager_repository.default.repository_id
 }
 ```
 

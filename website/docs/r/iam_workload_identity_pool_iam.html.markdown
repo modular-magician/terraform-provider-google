@@ -53,8 +53,6 @@ data "google_iam_policy" "admin" {
 }
 
 resource "google_iam_workload_identity_pool_iam_policy" "policy" {
-  project = google_iam_workload_identity_pool.example.project
-  workload_identity_pool_id = google_iam_workload_identity_pool.example.workload_identity_pool_id
   policy_data = data.google_iam_policy.admin.policy_data
 }
 ```
@@ -78,8 +76,6 @@ data "google_iam_policy" "admin" {
 }
 
 resource "google_iam_workload_identity_pool_iam_policy" "policy" {
-  project = google_iam_workload_identity_pool.example.project
-  workload_identity_pool_id = google_iam_workload_identity_pool.example.workload_identity_pool_id
   policy_data = data.google_iam_policy.admin.policy_data
 }
 ```
@@ -87,8 +83,6 @@ resource "google_iam_workload_identity_pool_iam_policy" "policy" {
 
 ```hcl
 resource "google_iam_workload_identity_pool_iam_binding" "binding" {
-  project = google_iam_workload_identity_pool.example.project
-  workload_identity_pool_id = google_iam_workload_identity_pool.example.workload_identity_pool_id
   role = "roles/iam.workloadIdentityPoolViewer"
   members = [
     "user:jane@example.com",
@@ -100,8 +94,6 @@ With IAM Conditions:
 
 ```hcl
 resource "google_iam_workload_identity_pool_iam_binding" "binding" {
-  project = google_iam_workload_identity_pool.example.project
-  workload_identity_pool_id = google_iam_workload_identity_pool.example.workload_identity_pool_id
   role = "roles/iam.workloadIdentityPoolViewer"
   members = [
     "user:jane@example.com",
@@ -118,8 +110,6 @@ resource "google_iam_workload_identity_pool_iam_binding" "binding" {
 
 ```hcl
 resource "google_iam_workload_identity_pool_iam_member" "member" {
-  project = google_iam_workload_identity_pool.example.project
-  workload_identity_pool_id = google_iam_workload_identity_pool.example.workload_identity_pool_id
   role = "roles/iam.workloadIdentityPoolViewer"
   member = "user:jane@example.com"
 }
@@ -129,8 +119,6 @@ With IAM Conditions:
 
 ```hcl
 resource "google_iam_workload_identity_pool_iam_member" "member" {
-  project = google_iam_workload_identity_pool.example.project
-  workload_identity_pool_id = google_iam_workload_identity_pool.example.workload_identity_pool_id
   role = "roles/iam.workloadIdentityPoolViewer"
   member = "user:jane@example.com"
 

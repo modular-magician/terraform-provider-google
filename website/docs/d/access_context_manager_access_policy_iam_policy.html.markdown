@@ -30,7 +30,6 @@ Retrieves the current IAM policy data for accesspolicy
 
 ```hcl
 data "google_access_context_manager_access_policy_iam_policy" "policy" {
-  name = google_access_context_manager_access_policy.access-policy.name
 }
 ```
 

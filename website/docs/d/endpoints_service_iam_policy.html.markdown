@@ -30,7 +30,6 @@ Retrieves the current IAM policy data for service
 
 ```hcl
 data "google_endpoints_service_iam_policy" "policy" {
-  service_name = google_endpoints_service.endpoints_service.service_name
 }
 ```
 

@@ -51,8 +51,6 @@ data "google_iam_policy" "admin" {
 }
 
 resource "google_iap_web_forwarding_rule_service_iam_policy" "policy" {
-  project = google_compute_global_forwarding_rule.default.project
-  forwarding_rule_service_name = google_compute_global_forwarding_rule.default.name
   policy_data = data.google_iam_policy.admin.policy_data
 }
 ```
@@ -76,8 +74,6 @@ data "google_iam_policy" "admin" {
 }
 
 resource "google_iap_web_forwarding_rule_service_iam_policy" "policy" {
-  project = google_compute_global_forwarding_rule.default.project
-  forwarding_rule_service_name = google_compute_global_forwarding_rule.default.name
   policy_data = data.google_iam_policy.admin.policy_data
 }
 ```
@@ -85,8 +81,6 @@ resource "google_iap_web_forwarding_rule_service_iam_policy" "policy" {
 
 ```hcl
 resource "google_iap_web_forwarding_rule_service_iam_binding" "binding" {
-  project = google_compute_global_forwarding_rule.default.project
-  forwarding_rule_service_name = google_compute_global_forwarding_rule.default.name
   role = "roles/iap.httpsResourceAccessor"
   members = [
     "user:jane@example.com",
@@ -98,8 +92,6 @@ With IAM Conditions:
 
 ```hcl
 resource "google_iap_web_forwarding_rule_service_iam_binding" "binding" {
-  project = google_compute_global_forwarding_rule.default.project
-  forwarding_rule_service_name = google_compute_global_forwarding_rule.default.name
   role = "roles/iap.httpsResourceAccessor"
   members = [
     "user:jane@example.com",
@@ -116,8 +108,6 @@ resource "google_iap_web_forwarding_rule_service_iam_binding" "binding" {
 
 ```hcl
 resource "google_iap_web_forwarding_rule_service_iam_member" "member" {
-  project = google_compute_global_forwarding_rule.default.project
-  forwarding_rule_service_name = google_compute_global_forwarding_rule.default.name
   role = "roles/iap.httpsResourceAccessor"
   member = "user:jane@example.com"
 }
@@ -127,8 +117,6 @@ With IAM Conditions:
 
 ```hcl
 resource "google_iap_web_forwarding_rule_service_iam_member" "member" {
-  project = google_compute_global_forwarding_rule.default.project
-  forwarding_rule_service_name = google_compute_global_forwarding_rule.default.name
   role = "roles/iap.httpsResourceAccessor"
   member = "user:jane@example.com"
 

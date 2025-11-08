@@ -50,9 +50,6 @@ data "google_iam_policy" "admin" {
 }
 
 resource "google_dataproc_metastore_federation_iam_policy" "policy" {
-  project = google_dataproc_metastore_federation.default.project
-  location = google_dataproc_metastore_federation.default.location
-  federation_id = google_dataproc_metastore_federation.default.federation_id
   policy_data = data.google_iam_policy.admin.policy_data
 }
 ```
@@ -61,9 +58,6 @@ resource "google_dataproc_metastore_federation_iam_policy" "policy" {
 
 ```hcl
 resource "google_dataproc_metastore_federation_iam_binding" "binding" {
-  project = google_dataproc_metastore_federation.default.project
-  location = google_dataproc_metastore_federation.default.location
-  federation_id = google_dataproc_metastore_federation.default.federation_id
   role = "roles/viewer"
   members = [
     "user:jane@example.com",
@@ -75,9 +69,6 @@ resource "google_dataproc_metastore_federation_iam_binding" "binding" {
 
 ```hcl
 resource "google_dataproc_metastore_federation_iam_member" "member" {
-  project = google_dataproc_metastore_federation.default.project
-  location = google_dataproc_metastore_federation.default.location
-  federation_id = google_dataproc_metastore_federation.default.federation_id
   role = "roles/viewer"
   member = "user:jane@example.com"
 }

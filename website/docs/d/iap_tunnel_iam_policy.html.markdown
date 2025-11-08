@@ -30,7 +30,6 @@ Retrieves the current IAM policy data for tunnel
 
 ```hcl
 data "google_iap_tunnel_iam_policy" "policy" {
-  project = google_project_service.project_service.project
 }
 ```
 

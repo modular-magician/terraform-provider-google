@@ -32,8 +32,6 @@ See [Provider Versions](https://terraform.io/docs/providers/google/guides/provid
 
 ```hcl
 data "google_compute_backend_bucket_iam_policy" "policy" {
-  project = google_compute_backend_bucket.image_backend.project
-  name = google_compute_backend_bucket.image_backend.name
 }
 ```
 

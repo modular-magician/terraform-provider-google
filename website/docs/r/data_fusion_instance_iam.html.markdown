@@ -50,9 +50,6 @@ data "google_iam_policy" "admin" {
 }
 
 resource "google_data_fusion_instance_iam_policy" "policy" {
-  project = google_data_fusion_instance.basic_instance.project
-  region = google_data_fusion_instance.basic_instance.region
-  name = google_data_fusion_instance.basic_instance.name
   policy_data = data.google_iam_policy.admin.policy_data
 }
 ```
@@ -61,9 +58,6 @@ resource "google_data_fusion_instance_iam_policy" "policy" {
 
 ```hcl
 resource "google_data_fusion_instance_iam_binding" "binding" {
-  project = google_data_fusion_instance.basic_instance.project
-  region = google_data_fusion_instance.basic_instance.region
-  name = google_data_fusion_instance.basic_instance.name
   role = "roles/viewer"
   members = [
     "user:jane@example.com",
@@ -75,9 +69,6 @@ resource "google_data_fusion_instance_iam_binding" "binding" {
 
 ```hcl
 resource "google_data_fusion_instance_iam_member" "member" {
-  project = google_data_fusion_instance.basic_instance.project
-  region = google_data_fusion_instance.basic_instance.region
-  name = google_data_fusion_instance.basic_instance.name
   role = "roles/viewer"
   member = "user:jane@example.com"
 }

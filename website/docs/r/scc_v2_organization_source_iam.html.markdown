@@ -50,7 +50,6 @@ data "google_iam_policy" "admin" {
 }
 
 resource "google_scc_v2_organization_source_iam_policy" "policy" {
-  source = google_scc_v2_organization_source.custom_source.name
   policy_data = data.google_iam_policy.admin.policy_data
 }
 ```
@@ -59,7 +58,6 @@ resource "google_scc_v2_organization_source_iam_policy" "policy" {
 
 ```hcl
 resource "google_scc_v2_organization_source_iam_binding" "binding" {
-  source = google_scc_v2_organization_source.custom_source.name
   role = "roles/viewer"
   members = [
     "user:jane@example.com",
@@ -71,7 +69,6 @@ resource "google_scc_v2_organization_source_iam_binding" "binding" {
 
 ```hcl
 resource "google_scc_v2_organization_source_iam_member" "member" {
-  source = google_scc_v2_organization_source.custom_source.name
   role = "roles/viewer"
   member = "user:jane@example.com"
 }

@@ -30,9 +30,6 @@ Retrieves the current IAM policy data for tunnelinstance
 
 ```hcl
 data "google_iap_tunnel_instance_iam_policy" "policy" {
-  project = google_compute_instance.tunnelvm.project
-  zone = google_compute_instance.tunnelvm.zone
-  instance = google_compute_instance.tunnelvm.name
 }
 ```
 

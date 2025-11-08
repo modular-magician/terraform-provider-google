@@ -33,9 +33,6 @@ See [Provider Versions](https://terraform.io/docs/providers/google/guides/provid
 ```hcl
 data "google_dataform_repository_iam_policy" "policy" {
   provider = google-beta
-  project = google_dataform_repository.dataform_repository.project
-  region = google_dataform_repository.dataform_repository.region
-  repository = google_dataform_repository.dataform_repository.name
 }
 ```
 

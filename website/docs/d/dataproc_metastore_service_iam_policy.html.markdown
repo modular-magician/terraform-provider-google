@@ -30,9 +30,6 @@ Retrieves the current IAM policy data for service
 
 ```hcl
 data "google_dataproc_metastore_service_iam_policy" "policy" {
-  project = google_dataproc_metastore_service.default.project
-  location = google_dataproc_metastore_service.default.location
-  service_id = google_dataproc_metastore_service.default.service_id
 }
 ```
 

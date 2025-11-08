@@ -30,9 +30,6 @@ Retrieves the current IAM policy data for connection
 
 ```hcl
 data "google_cloudbuildv2_connection_iam_policy" "policy" {
-  project = google_cloudbuildv2_connection.my-connection.project
-  location = google_cloudbuildv2_connection.my-connection.location
-  name = google_cloudbuildv2_connection.my-connection.name
 }
 ```
 

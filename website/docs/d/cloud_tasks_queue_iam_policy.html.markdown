@@ -30,9 +30,6 @@ Retrieves the current IAM policy data for queue
 
 ```hcl
 data "google_cloud_tasks_queue_iam_policy" "policy" {
-  project = google_cloud_tasks_queue.default.project
-  location = google_cloud_tasks_queue.default.location
-  name = google_cloud_tasks_queue.default.name
 }
 ```
 

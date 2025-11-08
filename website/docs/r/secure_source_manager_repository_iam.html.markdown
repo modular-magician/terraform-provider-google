@@ -50,9 +50,6 @@ data "google_iam_policy" "admin" {
 }
 
 resource "google_secure_source_manager_repository_iam_policy" "policy" {
-  project = google_secure_source_manager_repository.default.project
-  location = google_secure_source_manager_repository.default.location
-  repository_id = google_secure_source_manager_repository.default.repository_id
   policy_data = data.google_iam_policy.admin.policy_data
 }
 ```
@@ -61,9 +58,6 @@ resource "google_secure_source_manager_repository_iam_policy" "policy" {
 
 ```hcl
 resource "google_secure_source_manager_repository_iam_binding" "binding" {
-  project = google_secure_source_manager_repository.default.project
-  location = google_secure_source_manager_repository.default.location
-  repository_id = google_secure_source_manager_repository.default.repository_id
   role = "roles/securesourcemanager.repoAdmin"
   members = [
     "user:jane@example.com",
@@ -75,9 +69,6 @@ resource "google_secure_source_manager_repository_iam_binding" "binding" {
 
 ```hcl
 resource "google_secure_source_manager_repository_iam_member" "member" {
-  project = google_secure_source_manager_repository.default.project
-  location = google_secure_source_manager_repository.default.location
-  repository_id = google_secure_source_manager_repository.default.repository_id
   role = "roles/securesourcemanager.repoAdmin"
   member = "user:jane@example.com"
 }

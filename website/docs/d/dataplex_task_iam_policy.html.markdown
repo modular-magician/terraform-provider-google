@@ -30,10 +30,6 @@ Retrieves the current IAM policy data for task
 
 ```hcl
 data "google_dataplex_task_iam_policy" "policy" {
-  project = google_dataplex_task.example.project
-  location = google_dataplex_task.example.location
-  lake = google_dataplex_task.example.lake
-  task_id = google_dataplex_task.example.task_id
 }
 ```
 

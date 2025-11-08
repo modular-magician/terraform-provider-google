@@ -30,9 +30,6 @@ Retrieves the current IAM policy data for instance
 
 ```hcl
 data "google_compute_instance_iam_policy" "policy" {
-  project = google_compute_instance.default.project
-  zone = google_compute_instance.default.zone
-  instance_name = google_compute_instance.default.name
 }
 ```
 

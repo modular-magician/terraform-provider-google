@@ -30,9 +30,6 @@ Retrieves the current IAM policy data for workerpool
 
 ```hcl
 data "google_cloud_run_v2_worker_pool_iam_policy" "policy" {
-  project = google_cloud_run_v2_worker_pool.default.project
-  location = google_cloud_run_v2_worker_pool.default.location
-  name = google_cloud_run_v2_worker_pool.default.name
 }
 ```
 

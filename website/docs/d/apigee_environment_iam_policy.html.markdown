@@ -30,8 +30,6 @@ Retrieves the current IAM policy data for environment
 
 ```hcl
 data "google_apigee_environment_iam_policy" "policy" {
-  org_id = google_apigee_environment.apigee_environment.org_id
-  env_id = google_apigee_environment.apigee_environment.name
 }
 ```
 

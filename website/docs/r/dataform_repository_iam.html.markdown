@@ -54,9 +54,6 @@ data "google_iam_policy" "admin" {
 
 resource "google_dataform_repository_iam_policy" "policy" {
   provider = google-beta
-  project = google_dataform_repository.dataform_repository.project
-  region = google_dataform_repository.dataform_repository.region
-  repository = google_dataform_repository.dataform_repository.name
   policy_data = data.google_iam_policy.admin.policy_data
 }
 ```
@@ -66,9 +63,6 @@ resource "google_dataform_repository_iam_policy" "policy" {
 ```hcl
 resource "google_dataform_repository_iam_binding" "binding" {
   provider = google-beta
-  project = google_dataform_repository.dataform_repository.project
-  region = google_dataform_repository.dataform_repository.region
-  repository = google_dataform_repository.dataform_repository.name
   role = "roles/viewer"
   members = [
     "user:jane@example.com",
@@ -81,9 +75,6 @@ resource "google_dataform_repository_iam_binding" "binding" {
 ```hcl
 resource "google_dataform_repository_iam_member" "member" {
   provider = google-beta
-  project = google_dataform_repository.dataform_repository.project
-  region = google_dataform_repository.dataform_repository.region
-  repository = google_dataform_repository.dataform_repository.name
   role = "roles/viewer"
   member = "user:jane@example.com"
 }

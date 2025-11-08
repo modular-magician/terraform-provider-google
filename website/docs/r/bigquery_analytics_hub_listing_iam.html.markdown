@@ -50,10 +50,6 @@ data "google_iam_policy" "admin" {
 }
 
 resource "google_bigquery_analytics_hub_listing_iam_policy" "policy" {
-  project = google_bigquery_analytics_hub_listing.listing.project
-  location = google_bigquery_analytics_hub_listing.listing.location
-  data_exchange_id = google_bigquery_analytics_hub_listing.listing.data_exchange_id
-  listing_id = google_bigquery_analytics_hub_listing.listing.listing_id
   policy_data = data.google_iam_policy.admin.policy_data
 }
 ```
@@ -62,10 +58,6 @@ resource "google_bigquery_analytics_hub_listing_iam_policy" "policy" {
 
 ```hcl
 resource "google_bigquery_analytics_hub_listing_iam_binding" "binding" {
-  project = google_bigquery_analytics_hub_listing.listing.project
-  location = google_bigquery_analytics_hub_listing.listing.location
-  data_exchange_id = google_bigquery_analytics_hub_listing.listing.data_exchange_id
-  listing_id = google_bigquery_analytics_hub_listing.listing.listing_id
   role = "roles/viewer"
   members = [
     "user:jane@example.com",
@@ -77,10 +69,6 @@ resource "google_bigquery_analytics_hub_listing_iam_binding" "binding" {
 
 ```hcl
 resource "google_bigquery_analytics_hub_listing_iam_member" "member" {
-  project = google_bigquery_analytics_hub_listing.listing.project
-  location = google_bigquery_analytics_hub_listing.listing.location
-  data_exchange_id = google_bigquery_analytics_hub_listing.listing.data_exchange_id
-  listing_id = google_bigquery_analytics_hub_listing.listing.listing_id
   role = "roles/viewer"
   member = "user:jane@example.com"
 }

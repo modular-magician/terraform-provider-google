@@ -30,8 +30,6 @@ Retrieves the current IAM policy data for scope
 
 ```hcl
 data "google_gke_hub_scope_iam_policy" "policy" {
-  project = google_gke_hub_scope.scope.project
-  scope_id = google_gke_hub_scope.scope.scope_id
 }
 ```
 

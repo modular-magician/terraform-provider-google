@@ -33,8 +33,6 @@ See [Provider Versions](https://terraform.io/docs/providers/google/guides/provid
 ```hcl
 data "google_api_gateway_api_iam_policy" "policy" {
   provider = google-beta
-  project = google_api_gateway_api.api.project
-  api = google_api_gateway_api.api.api_id
 }
 ```
 

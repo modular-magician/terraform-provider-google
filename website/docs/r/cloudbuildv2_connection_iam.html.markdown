@@ -50,9 +50,6 @@ data "google_iam_policy" "admin" {
 }
 
 resource "google_cloudbuildv2_connection_iam_policy" "policy" {
-  project = google_cloudbuildv2_connection.my-connection.project
-  location = google_cloudbuildv2_connection.my-connection.location
-  name = google_cloudbuildv2_connection.my-connection.name
   policy_data = data.google_iam_policy.admin.policy_data
 }
 ```
@@ -61,9 +58,6 @@ resource "google_cloudbuildv2_connection_iam_policy" "policy" {
 
 ```hcl
 resource "google_cloudbuildv2_connection_iam_binding" "binding" {
-  project = google_cloudbuildv2_connection.my-connection.project
-  location = google_cloudbuildv2_connection.my-connection.location
-  name = google_cloudbuildv2_connection.my-connection.name
   role = "roles/cloudbuild.connectionViewer"
   members = [
     "user:jane@example.com",
@@ -75,9 +69,6 @@ resource "google_cloudbuildv2_connection_iam_binding" "binding" {
 
 ```hcl
 resource "google_cloudbuildv2_connection_iam_member" "member" {
-  project = google_cloudbuildv2_connection.my-connection.project
-  location = google_cloudbuildv2_connection.my-connection.location
-  name = google_cloudbuildv2_connection.my-connection.name
   role = "roles/cloudbuild.connectionViewer"
   member = "user:jane@example.com"
 }

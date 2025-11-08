@@ -30,8 +30,6 @@ Retrieves the current IAM policy data for instancetemplate
 
 ```hcl
 data "google_compute_instance_template_iam_policy" "policy" {
-  project = google_compute_instance_template.default.project
-  name = google_compute_instance_template.default.name
 }
 ```
 

@@ -30,9 +30,6 @@ Retrieves the current IAM policy data for regiondisk
 
 ```hcl
 data "google_compute_region_disk_iam_policy" "policy" {
-  project = google_compute_region_disk.regiondisk.project
-  region = google_compute_region_disk.regiondisk.region
-  name = google_compute_region_disk.regiondisk.name
 }
 ```
 

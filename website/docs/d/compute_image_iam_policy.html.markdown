@@ -30,8 +30,6 @@ Retrieves the current IAM policy data for image
 
 ```hcl
 data "google_compute_image_iam_policy" "policy" {
-  project = google_compute_image.example.project
-  image = google_compute_image.example.name
 }
 ```
 

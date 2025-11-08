@@ -30,9 +30,6 @@ Retrieves the current IAM policy data for tunneldestgroup
 
 ```hcl
 data "google_iap_tunnel_dest_group_iam_policy" "policy" {
-  project = google_iap_tunnel_dest_group.dest_group.project
-  region = google_iap_tunnel_dest_group.dest_group.region
-  dest_group = google_iap_tunnel_dest_group.dest_group.group_name
 }
 ```
 

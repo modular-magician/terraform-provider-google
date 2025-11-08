@@ -30,9 +30,6 @@ Retrieves the current IAM policy data for entrytype
 
 ```hcl
 data "google_dataplex_entry_type_iam_policy" "policy" {
-  project = google_dataplex_entry_type.test_entry_type_basic.project
-  location = google_dataplex_entry_type.test_entry_type_basic.location
-  entry_type_id = google_dataplex_entry_type.test_entry_type_basic.entry_type_id
 }
 ```
 

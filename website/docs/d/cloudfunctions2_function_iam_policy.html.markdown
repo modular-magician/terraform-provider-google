@@ -30,9 +30,6 @@ Retrieves the current IAM policy data for function
 
 ```hcl
 data "google_cloudfunctions2_function_iam_policy" "policy" {
-  project = google_cloudfunctions2_function.function.project
-  location = google_cloudfunctions2_function.function.location
-  cloud_function = google_cloudfunctions2_function.function.name
 }
 ```
 

@@ -50,9 +50,6 @@ data "google_iam_policy" "admin" {
 }
 
 resource "google_cloudfunctions2_function_iam_policy" "policy" {
-  project = google_cloudfunctions2_function.function.project
-  location = google_cloudfunctions2_function.function.location
-  cloud_function = google_cloudfunctions2_function.function.name
   policy_data = data.google_iam_policy.admin.policy_data
 }
 ```
@@ -61,9 +58,6 @@ resource "google_cloudfunctions2_function_iam_policy" "policy" {
 
 ```hcl
 resource "google_cloudfunctions2_function_iam_binding" "binding" {
-  project = google_cloudfunctions2_function.function.project
-  location = google_cloudfunctions2_function.function.location
-  cloud_function = google_cloudfunctions2_function.function.name
   role = "roles/viewer"
   members = [
     "user:jane@example.com",
@@ -75,9 +69,6 @@ resource "google_cloudfunctions2_function_iam_binding" "binding" {
 
 ```hcl
 resource "google_cloudfunctions2_function_iam_member" "member" {
-  project = google_cloudfunctions2_function.function.project
-  location = google_cloudfunctions2_function.function.location
-  cloud_function = google_cloudfunctions2_function.function.name
   role = "roles/viewer"
   member = "user:jane@example.com"
 }

@@ -30,9 +30,6 @@ Retrieves the current IAM policy data for datascan
 
 ```hcl
 data "google_dataplex_datascan_iam_policy" "policy" {
-  project = google_dataplex_datascan.basic_profile.project
-  location = google_dataplex_datascan.basic_profile.location
-  data_scan_id = google_dataplex_datascan.basic_profile.data_scan_id
 }
 ```
 

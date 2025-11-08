@@ -30,9 +30,6 @@ Retrieves the current IAM policy data for ekmconnection
 
 ```hcl
 data "google_kms_ekm_connection_iam_policy" "policy" {
-  project = google_kms_ekm_connection.example-ekmconnection.project
-  location = google_kms_ekm_connection.example-ekmconnection.location
-  name = google_kms_ekm_connection.example-ekmconnection.name
 }
 ```
 

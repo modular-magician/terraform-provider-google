@@ -50,9 +50,6 @@ data "google_iam_policy" "admin" {
 }
 
 resource "google_secure_source_manager_instance_iam_policy" "policy" {
-  project = google_secure_source_manager_instance.default.project
-  location = google_secure_source_manager_instance.default.location
-  instance_id = google_secure_source_manager_instance.default.instance_id
   policy_data = data.google_iam_policy.admin.policy_data
 }
 ```
@@ -61,9 +58,6 @@ resource "google_secure_source_manager_instance_iam_policy" "policy" {
 
 ```hcl
 resource "google_secure_source_manager_instance_iam_binding" "binding" {
-  project = google_secure_source_manager_instance.default.project
-  location = google_secure_source_manager_instance.default.location
-  instance_id = google_secure_source_manager_instance.default.instance_id
   role = "roles/securesourcemanager.instanceOwner"
   members = [
     "user:jane@example.com",
@@ -75,9 +69,6 @@ resource "google_secure_source_manager_instance_iam_binding" "binding" {
 
 ```hcl
 resource "google_secure_source_manager_instance_iam_member" "member" {
-  project = google_secure_source_manager_instance.default.project
-  location = google_secure_source_manager_instance.default.location
-  instance_id = google_secure_source_manager_instance.default.instance_id
   role = "roles/securesourcemanager.instanceOwner"
   member = "user:jane@example.com"
 }

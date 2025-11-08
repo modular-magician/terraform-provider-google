@@ -30,9 +30,6 @@ Retrieves the current IAM policy data for storagepool
 
 ```hcl
 data "google_compute_storage_pool_iam_policy" "policy" {
-  project = google_compute_storage_pool.test-storage-pool-basic.project
-  zone = google_compute_storage_pool.test-storage-pool-basic.zone
-  name = google_compute_storage_pool.test-storage-pool-basic.name
 }
 ```
 

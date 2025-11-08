@@ -51,8 +51,6 @@ data "google_iam_policy" "admin" {
 }
 
 resource "google_secret_manager_secret_iam_policy" "policy" {
-  project = google_secret_manager_secret.secret-basic.project
-  secret_id = google_secret_manager_secret.secret-basic.secret_id
   policy_data = data.google_iam_policy.admin.policy_data
 }
 ```
@@ -76,8 +74,6 @@ data "google_iam_policy" "admin" {
 }
 
 resource "google_secret_manager_secret_iam_policy" "policy" {
-  project = google_secret_manager_secret.secret-basic.project
-  secret_id = google_secret_manager_secret.secret-basic.secret_id
   policy_data = data.google_iam_policy.admin.policy_data
 }
 ```
@@ -85,8 +81,6 @@ resource "google_secret_manager_secret_iam_policy" "policy" {
 
 ```hcl
 resource "google_secret_manager_secret_iam_binding" "binding" {
-  project = google_secret_manager_secret.secret-basic.project
-  secret_id = google_secret_manager_secret.secret-basic.secret_id
   role = "roles/secretmanager.secretAccessor"
   members = [
     "user:jane@example.com",
@@ -98,8 +92,6 @@ With IAM Conditions:
 
 ```hcl
 resource "google_secret_manager_secret_iam_binding" "binding" {
-  project = google_secret_manager_secret.secret-basic.project
-  secret_id = google_secret_manager_secret.secret-basic.secret_id
   role = "roles/secretmanager.secretAccessor"
   members = [
     "user:jane@example.com",
@@ -116,8 +108,6 @@ resource "google_secret_manager_secret_iam_binding" "binding" {
 
 ```hcl
 resource "google_secret_manager_secret_iam_member" "member" {
-  project = google_secret_manager_secret.secret-basic.project
-  secret_id = google_secret_manager_secret.secret-basic.secret_id
   role = "roles/secretmanager.secretAccessor"
   member = "user:jane@example.com"
 }
@@ -127,8 +117,6 @@ With IAM Conditions:
 
 ```hcl
 resource "google_secret_manager_secret_iam_member" "member" {
-  project = google_secret_manager_secret.secret-basic.project
-  secret_id = google_secret_manager_secret.secret-basic.secret_id
   role = "roles/secretmanager.secretAccessor"
   member = "user:jane@example.com"
 

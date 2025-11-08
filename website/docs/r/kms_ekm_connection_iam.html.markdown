@@ -51,9 +51,6 @@ data "google_iam_policy" "admin" {
 }
 
 resource "google_kms_ekm_connection_iam_policy" "policy" {
-  project = google_kms_ekm_connection.example-ekmconnection.project
-  location = google_kms_ekm_connection.example-ekmconnection.location
-  name = google_kms_ekm_connection.example-ekmconnection.name
   policy_data = data.google_iam_policy.admin.policy_data
 }
 ```
@@ -77,9 +74,6 @@ data "google_iam_policy" "admin" {
 }
 
 resource "google_kms_ekm_connection_iam_policy" "policy" {
-  project = google_kms_ekm_connection.example-ekmconnection.project
-  location = google_kms_ekm_connection.example-ekmconnection.location
-  name = google_kms_ekm_connection.example-ekmconnection.name
   policy_data = data.google_iam_policy.admin.policy_data
 }
 ```
@@ -87,9 +81,6 @@ resource "google_kms_ekm_connection_iam_policy" "policy" {
 
 ```hcl
 resource "google_kms_ekm_connection_iam_binding" "binding" {
-  project = google_kms_ekm_connection.example-ekmconnection.project
-  location = google_kms_ekm_connection.example-ekmconnection.location
-  name = google_kms_ekm_connection.example-ekmconnection.name
   role = "roles/viewer"
   members = [
     "user:jane@example.com",
@@ -101,9 +92,6 @@ With IAM Conditions:
 
 ```hcl
 resource "google_kms_ekm_connection_iam_binding" "binding" {
-  project = google_kms_ekm_connection.example-ekmconnection.project
-  location = google_kms_ekm_connection.example-ekmconnection.location
-  name = google_kms_ekm_connection.example-ekmconnection.name
   role = "roles/viewer"
   members = [
     "user:jane@example.com",
@@ -120,9 +108,6 @@ resource "google_kms_ekm_connection_iam_binding" "binding" {
 
 ```hcl
 resource "google_kms_ekm_connection_iam_member" "member" {
-  project = google_kms_ekm_connection.example-ekmconnection.project
-  location = google_kms_ekm_connection.example-ekmconnection.location
-  name = google_kms_ekm_connection.example-ekmconnection.name
   role = "roles/viewer"
   member = "user:jane@example.com"
 }
@@ -132,9 +117,6 @@ With IAM Conditions:
 
 ```hcl
 resource "google_kms_ekm_connection_iam_member" "member" {
-  project = google_kms_ekm_connection.example-ekmconnection.project
-  location = google_kms_ekm_connection.example-ekmconnection.location
-  name = google_kms_ekm_connection.example-ekmconnection.name
   role = "roles/viewer"
   member = "user:jane@example.com"
 

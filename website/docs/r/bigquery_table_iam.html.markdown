@@ -50,9 +50,6 @@ data "google_iam_policy" "admin" {
 }
 
 resource "google_bigquery_table_iam_policy" "policy" {
-  project = google_bigquery_table.test.project
-  dataset_id = google_bigquery_table.test.dataset_id
-  table_id = google_bigquery_table.test.table_id
   policy_data = data.google_iam_policy.admin.policy_data
 }
 ```
@@ -61,9 +58,6 @@ resource "google_bigquery_table_iam_policy" "policy" {
 
 ```hcl
 resource "google_bigquery_table_iam_binding" "binding" {
-  project = google_bigquery_table.test.project
-  dataset_id = google_bigquery_table.test.dataset_id
-  table_id = google_bigquery_table.test.table_id
   role = "roles/bigquery.dataOwner"
   members = [
     "user:jane@example.com",
@@ -75,9 +69,6 @@ resource "google_bigquery_table_iam_binding" "binding" {
 
 ```hcl
 resource "google_bigquery_table_iam_member" "member" {
-  project = google_bigquery_table.test.project
-  dataset_id = google_bigquery_table.test.dataset_id
-  table_id = google_bigquery_table.test.table_id
   role = "roles/bigquery.dataOwner"
   member = "user:jane@example.com"
 }

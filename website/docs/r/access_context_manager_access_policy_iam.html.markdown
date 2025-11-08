@@ -50,7 +50,6 @@ data "google_iam_policy" "admin" {
 }
 
 resource "google_access_context_manager_access_policy_iam_policy" "policy" {
-  name = google_access_context_manager_access_policy.access-policy.name
   policy_data = data.google_iam_policy.admin.policy_data
 }
 ```
@@ -59,7 +58,6 @@ resource "google_access_context_manager_access_policy_iam_policy" "policy" {
 
 ```hcl
 resource "google_access_context_manager_access_policy_iam_binding" "binding" {
-  name = google_access_context_manager_access_policy.access-policy.name
   role = "roles/accesscontextmanager.policyAdmin"
   members = [
     "user:jane@example.com",
@@ -71,7 +69,6 @@ resource "google_access_context_manager_access_policy_iam_binding" "binding" {
 
 ```hcl
 resource "google_access_context_manager_access_policy_iam_member" "member" {
-  name = google_access_context_manager_access_policy.access-policy.name
   role = "roles/accesscontextmanager.policyAdmin"
   member = "user:jane@example.com"
 }

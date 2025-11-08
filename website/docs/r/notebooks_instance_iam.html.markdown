@@ -50,9 +50,6 @@ data "google_iam_policy" "admin" {
 }
 
 resource "google_notebooks_instance_iam_policy" "policy" {
-  project = google_notebooks_instance.instance.project
-  location = google_notebooks_instance.instance.location
-  instance_name = google_notebooks_instance.instance.name
   policy_data = data.google_iam_policy.admin.policy_data
 }
 ```
@@ -61,9 +58,6 @@ resource "google_notebooks_instance_iam_policy" "policy" {
 
 ```hcl
 resource "google_notebooks_instance_iam_binding" "binding" {
-  project = google_notebooks_instance.instance.project
-  location = google_notebooks_instance.instance.location
-  instance_name = google_notebooks_instance.instance.name
   role = "roles/viewer"
   members = [
     "user:jane@example.com",
@@ -75,9 +69,6 @@ resource "google_notebooks_instance_iam_binding" "binding" {
 
 ```hcl
 resource "google_notebooks_instance_iam_member" "member" {
-  project = google_notebooks_instance.instance.project
-  location = google_notebooks_instance.instance.location
-  instance_name = google_notebooks_instance.instance.name
   role = "roles/viewer"
   member = "user:jane@example.com"
 }

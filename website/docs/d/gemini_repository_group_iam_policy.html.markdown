@@ -30,10 +30,6 @@ Retrieves the current IAM policy data for repositorygroup
 
 ```hcl
 data "google_gemini_repository_group_iam_policy" "policy" {
-  project = google_gemini_repository_group.example.project
-  location = google_gemini_repository_group.example.location
-  code_repository_index = google_gemini_repository_group.example.code_repository_index
-  repository_group_id = google_gemini_repository_group.example.repository_group_id
 }
 ```
 

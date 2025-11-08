@@ -30,8 +30,6 @@ Retrieves the current IAM policy data for schema
 
 ```hcl
 data "google_pubsub_schema_iam_policy" "policy" {
-  project = google_pubsub_schema.example.project
-  schema = google_pubsub_schema.example.name
 }
 ```
 

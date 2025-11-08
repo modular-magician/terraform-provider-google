@@ -50,9 +50,6 @@ data "google_iam_policy" "admin" {
 }
 
 resource "google_compute_region_disk_iam_policy" "policy" {
-  project = google_compute_region_disk.regiondisk.project
-  region = google_compute_region_disk.regiondisk.region
-  name = google_compute_region_disk.regiondisk.name
   policy_data = data.google_iam_policy.admin.policy_data
 }
 ```
@@ -61,9 +58,6 @@ resource "google_compute_region_disk_iam_policy" "policy" {
 
 ```hcl
 resource "google_compute_region_disk_iam_binding" "binding" {
-  project = google_compute_region_disk.regiondisk.project
-  region = google_compute_region_disk.regiondisk.region
-  name = google_compute_region_disk.regiondisk.name
   role = "roles/viewer"
   members = [
     "user:jane@example.com",
@@ -75,9 +69,6 @@ resource "google_compute_region_disk_iam_binding" "binding" {
 
 ```hcl
 resource "google_compute_region_disk_iam_member" "member" {
-  project = google_compute_region_disk.regiondisk.project
-  region = google_compute_region_disk.regiondisk.region
-  name = google_compute_region_disk.regiondisk.name
   role = "roles/viewer"
   member = "user:jane@example.com"
 }

@@ -30,7 +30,6 @@ Retrieves the current IAM policy data for tagkey
 
 ```hcl
 data "google_tags_tag_key_iam_policy" "policy" {
-  tag_key = google_tags_tag_key.key.name
 }
 ```
 

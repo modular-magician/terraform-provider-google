@@ -524,6 +524,12 @@ simultaneous updates from overwriting each other.`,
  and default labels configured on the provider.`,
 				Elem: &schema.Schema{Type: schema.TypeString},
 			},
+			"replica_action": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: verify.ValidateEnum([]string{"PAUSE", "RESUME", ""}),
+				Description:  `Replicate action can perfrom p[ause and resume on replica Possible values: ["PAUSE", "RESUME"]`,
+			},
 			"project": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -729,6 +735,7 @@ func resourceFilestoreInstanceRead(d *schema.ResourceData, meta interface{}) err
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("FilestoreInstance %q", d.Id()))
 	}
 
+	// Explicitly set virtual fields to default values if unset
 	if err := d.Set("project", project); err != nil {
 		return fmt.Errorf("Error reading Instance: %s", err)
 	}
@@ -833,6 +840,11 @@ func resourceFilestoreInstanceUpdate(d *schema.ResourceData, meta interface{}) e
 		return err
 	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, effectiveLabelsProp)) {
 		obj["labels"] = effectiveLabelsProp
+	}
+
+	obj, err = resourceFilestoreInstanceUpdateEncoder(d, meta, obj)
+	if err != nil {
+		return err
 	}
 
 	url, err := tpgresource.ReplaceVars(d, config, "{{FilestoreBasePath}}projects/{{project}}/locations/{{location}}/instances/{{name}}")
@@ -984,6 +996,8 @@ func resourceFilestoreInstanceImport(d *schema.ResourceData, meta interface{}) (
 		return nil, fmt.Errorf("Error constructing id: %s", err)
 	}
 	d.SetId(id)
+
+	// Explicitly set virtual fields to default values on import
 
 	return []*schema.ResourceData{d}, nil
 }
@@ -1807,6 +1821,11 @@ func expandFilestoreInstanceEffectiveLabels(v interface{}, d tpgresource.Terrafo
 		m[k] = val.(string)
 	}
 	return m, nil
+}
+
+func resourceFilestoreInstanceUpdateEncoder(d *schema.ResourceData, meta interface{}, obj map[string]interface{}) (map[string]interface{}, error) {
+
+	return obj, nil
 }
 
 func resourceFilestoreInstanceResourceV0() *schema.Resource {

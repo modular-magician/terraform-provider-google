@@ -5451,7 +5451,6 @@ func expandClusterAutoscaling(configured interface{}, d *schema.ResourceData) *c
 		}
 		return &container.ClusterAutoscaling{
 			EnableNodeAutoprovisioning: false,
-			ForceSendFields:            []string{"EnableNodeAutoprovisioning"},
 		}
 	}
 

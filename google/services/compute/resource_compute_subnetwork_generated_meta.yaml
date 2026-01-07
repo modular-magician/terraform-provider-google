@@ -7,6 +7,7 @@ api_resource_type_kind: Subnetwork
 fields:
     - api_field: creationTimestamp
     - api_field: description
+    - api_field: enableFlowLogs
     - api_field: externalIpv6Prefix
     - api_field: gatewayAddress
     - api_field: internalIpv6Prefix

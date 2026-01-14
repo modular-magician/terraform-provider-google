@@ -73,6 +73,12 @@ func TestAccColabNotebookExecution_colabNotebookExecutionBasicExample(t *testing
 				ImportStateVerify:       true,
 				ImportStateVerifyIgnore: []string{"direct_notebook_source", "direct_notebook_source.0.content", "location", "notebook_execution_job_id"},
 			},
+			{
+				ResourceName:       "google_colab_notebook_execution.notebook-execution",
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+				ImportStateKind:    resource.ImportBlockWithResourceIdentity,
+			},
 		},
 	})
 }
@@ -181,6 +187,12 @@ func TestAccColabNotebookExecution_colabNotebookExecutionCustomEnvExample(t *tes
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateVerifyIgnore: []string{"direct_notebook_source", "direct_notebook_source.0.content", "location", "notebook_execution_job_id"},
+			},
+			{
+				ResourceName:       "google_colab_notebook_execution.notebook-execution",
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+				ImportStateKind:    resource.ImportBlockWithResourceIdentity,
 			},
 		},
 	})

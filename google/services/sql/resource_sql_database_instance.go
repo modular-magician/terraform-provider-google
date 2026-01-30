@@ -77,6 +77,19 @@ var sqlDatabaseFlagSchemaElem *schema.Resource = &schema.Resource{
 	},
 }
 
+var dbAlignedAtomicWritesSchemaElem = &schema.Resource{
+	Schema: map[string]*schema.Schema{
+		"db_aligned_atomic_writes": {
+			Type:         schema.TypeBool,
+			Optional:     true,
+			Default:      false,
+			ExactlyOneOf: dbAlignedAtomicWritesConfigKeys,
+			ForceNew:     true,
+			Description:  `Enable Database Engine Aligned Atomic Writes setting.`,
+		},
+	},
+}
+
 var (
 	backupConfigurationKeys = []string{
 		"settings.0.backup_configuration.0.binary_log_enabled",
@@ -92,6 +105,10 @@ var (
 	connectionPoolConfigKeys = []string{
 		"settings.0.connection_pool_config.0.connection_pooling_enabled",
 		"settings.0.connection_pool_config.0.flags",
+	}
+
+	dbAlignedAtomicWritesConfigKeys = []string{
+		"settings.0.db_aligned_atomic_writes_config.0.db_aligned_atomic_writes",
 	}
 
 	ipConfigurationKeys = []string{
@@ -512,6 +529,15 @@ API (for read pools, effective_availability_type may differ from availability_ty
 							Optional: true,
 							Set:      schema.HashResource(sqlDatabaseFlagSchemaElem),
 							Elem:     sqlDatabaseFlagSchemaElem,
+						},
+						"db_aligned_atomic_writes_config": {
+							Type:        schema.TypeSet,
+							Optional:    true,
+							ForceNew:    true,
+							Set:         schema.HashResource(dbAlignedAtomicWritesSchemaElem),
+							Elem:        dbAlignedAtomicWritesSchemaElem,
+							MaxItems:    1,
+							Description: `Enables DB Engine Aligned Atomic Writes. Can be used with MySQL only.`,
 						},
 						"disk_autoresize": {
 							Type:        schema.TypeBool,
@@ -1728,38 +1754,39 @@ func expandSqlDatabaseInstanceSettings(configured []interface{}, databaseVersion
 	_settings := configured[0].(map[string]interface{})
 	settings := &sqladmin.Settings{
 		// Version is unset in Create but is set during update
-		SettingsVersion:           int64(_settings["version"].(int)),
-		DataCacheConfig:           expandDataCacheConfig(_settings["data_cache_config"].([]interface{})),
-		Tier:                      _settings["tier"].(string),
-		Edition:                   _settings["edition"].(string),
-		AdvancedMachineFeatures:   expandSqlServerAdvancedMachineFeatures(_settings["advanced_machine_features"].([]interface{})),
-		ForceSendFields:           []string{"StorageAutoResize", "EnableGoogleMlIntegration", "EnableDataplexIntegration", "RetainBackupsOnDelete"},
-		ActivationPolicy:          _settings["activation_policy"].(string),
-		ActiveDirectoryConfig:     expandActiveDirectoryConfig(_settings["active_directory_config"].([]interface{})),
-		DenyMaintenancePeriods:    expandDenyMaintenancePeriod(_settings["deny_maintenance_period"].([]interface{})),
-		SqlServerAuditConfig:      expandSqlServerAuditConfig(_settings["sql_server_audit_config"].([]interface{})),
-		TimeZone:                  _settings["time_zone"].(string),
-		AvailabilityType:          _settings["availability_type"].(string),
-		ConnectorEnforcement:      _settings["connector_enforcement"].(string),
-		Collation:                 _settings["collation"].(string),
-		DataDiskSizeGb:            int64(_settings["disk_size"].(int)),
-		DataDiskType:              _settings["disk_type"].(string),
-		PricingPlan:               _settings["pricing_plan"].(string),
-		DeletionProtectionEnabled: _settings["deletion_protection_enabled"].(bool),
-		EnableGoogleMlIntegration: _settings["enable_google_ml_integration"].(bool),
-		EnableDataplexIntegration: _settings["enable_dataplex_integration"].(bool),
-		RetainBackupsOnDelete:     _settings["retain_backups_on_delete"].(bool),
-		FinalBackupConfig:         expandFinalBackupConfig(_settings["final_backup_config"].([]interface{})),
-		UserLabels:                tpgresource.ConvertStringMap(_settings["user_labels"].(map[string]interface{})),
-		BackupConfiguration:       expandBackupConfiguration(_settings["backup_configuration"].([]interface{})),
-		DatabaseFlags:             expandDatabaseFlags(_settings["database_flags"].(*schema.Set).List()),
-		IpConfiguration:           expandIpConfiguration(_settings["ip_configuration"].([]interface{}), databaseVersion),
-		LocationPreference:        expandLocationPreference(_settings["location_preference"].([]interface{})),
-		MaintenanceWindow:         expandMaintenanceWindow(_settings["maintenance_window"].([]interface{})),
-		InsightsConfig:            expandInsightsConfig(_settings["insights_config"].([]interface{})),
-		PasswordValidationPolicy:  expandPasswordValidationPolicy(_settings["password_validation_policy"].([]interface{})),
-		ConnectionPoolConfig:      expandConnectionPoolConfig(_settings["connection_pool_config"].(*schema.Set).List()),
-		ReadPoolAutoScaleConfig:   expandReadPoolAutoScaleConfig(_settings["read_pool_auto_scale_config"].([]interface{})),
+		SettingsVersion:             int64(_settings["version"].(int)),
+		DataCacheConfig:             expandDataCacheConfig(_settings["data_cache_config"].([]interface{})),
+		Tier:                        _settings["tier"].(string),
+		Edition:                     _settings["edition"].(string),
+		AdvancedMachineFeatures:     expandSqlServerAdvancedMachineFeatures(_settings["advanced_machine_features"].([]interface{})),
+		ForceSendFields:             []string{"StorageAutoResize", "EnableGoogleMlIntegration", "EnableDataplexIntegration", "RetainBackupsOnDelete"},
+		ActivationPolicy:            _settings["activation_policy"].(string),
+		ActiveDirectoryConfig:       expandActiveDirectoryConfig(_settings["active_directory_config"].([]interface{})),
+		DenyMaintenancePeriods:      expandDenyMaintenancePeriod(_settings["deny_maintenance_period"].([]interface{})),
+		SqlServerAuditConfig:        expandSqlServerAuditConfig(_settings["sql_server_audit_config"].([]interface{})),
+		TimeZone:                    _settings["time_zone"].(string),
+		AvailabilityType:            _settings["availability_type"].(string),
+		ConnectorEnforcement:        _settings["connector_enforcement"].(string),
+		Collation:                   _settings["collation"].(string),
+		DataDiskSizeGb:              int64(_settings["disk_size"].(int)),
+		DataDiskType:                _settings["disk_type"].(string),
+		PricingPlan:                 _settings["pricing_plan"].(string),
+		DeletionProtectionEnabled:   _settings["deletion_protection_enabled"].(bool),
+		DbAlignedAtomicWritesConfig: expandDbAlignedAtomicWritesConfig(_settings["db_aligned_atomic_writes_config"].(*schema.Set).List()),
+		EnableGoogleMlIntegration:   _settings["enable_google_ml_integration"].(bool),
+		EnableDataplexIntegration:   _settings["enable_dataplex_integration"].(bool),
+		RetainBackupsOnDelete:       _settings["retain_backups_on_delete"].(bool),
+		FinalBackupConfig:           expandFinalBackupConfig(_settings["final_backup_config"].([]interface{})),
+		UserLabels:                  tpgresource.ConvertStringMap(_settings["user_labels"].(map[string]interface{})),
+		BackupConfiguration:         expandBackupConfiguration(_settings["backup_configuration"].([]interface{})),
+		DatabaseFlags:               expandDatabaseFlags(_settings["database_flags"].(*schema.Set).List()),
+		IpConfiguration:             expandIpConfiguration(_settings["ip_configuration"].([]interface{}), databaseVersion),
+		LocationPreference:          expandLocationPreference(_settings["location_preference"].([]interface{})),
+		MaintenanceWindow:           expandMaintenanceWindow(_settings["maintenance_window"].([]interface{})),
+		InsightsConfig:              expandInsightsConfig(_settings["insights_config"].([]interface{})),
+		PasswordValidationPolicy:    expandPasswordValidationPolicy(_settings["password_validation_policy"].([]interface{})),
+		ConnectionPoolConfig:        expandConnectionPoolConfig(_settings["connection_pool_config"].(*schema.Set).List()),
+		ReadPoolAutoScaleConfig:     expandReadPoolAutoScaleConfig(_settings["read_pool_auto_scale_config"].([]interface{})),
 	}
 
 	resize := _settings["disk_autoresize"].(bool)
@@ -1932,6 +1959,18 @@ func expandConnectionPoolConfig(configured []interface{}) *sqladmin.ConnectionPo
 	return &sqladmin.ConnectionPoolConfig{
 		ConnectionPoolingEnabled: _connectionPoolConfig["connection_pooling_enabled"].(bool),
 		Flags:                    expandFlags(_connectionPoolConfig["flags"].(*schema.Set).List()),
+	}
+}
+
+func expandDbAlignedAtomicWritesConfig(configured []interface{}) *sqladmin.DbAlignedAtomicWritesConfig {
+	if len(configured) == 0 || configured[0] == nil {
+		return nil
+	}
+
+	_dbAlignedAtomicWritesConfig := configured[0].(map[string]interface{})
+
+	return &sqladmin.DbAlignedAtomicWritesConfig{
+		DbAlignedAtomicWrites: _dbAlignedAtomicWritesConfig["db_aligned_atomic_writes"].(bool),
 	}
 }
 
@@ -2852,6 +2891,10 @@ func flattenSettings(settings *sqladmin.Settings, iType string, d *schema.Resour
 		data["connection_pool_config"] = flattenConnectionPoolConfig(settings.ConnectionPoolConfig)
 	}
 
+	if settings.DbAlignedAtomicWritesConfig != nil {
+		data["db_aligned_atomic_writes_config"] = flattenDbAlignedAtomicWritesConfig(settings.DbAlignedAtomicWritesConfig)
+	}
+
 	if settings.IpConfiguration != nil {
 		data["ip_configuration"] = flattenIpConfiguration(settings.IpConfiguration, d)
 	}
@@ -3074,6 +3117,21 @@ func flattenConnectionPoolConfig(connectionPoolConfig *sqladmin.ConnectionPoolCo
 	data := map[string]interface{}{
 		"connection_pooling_enabled": connectionPoolConfig.ConnectionPoolingEnabled,          // Corrected key
 		"flags":                      flattenConnectionPoolFlags(connectionPoolConfig.Flags), // Corrected key
+	}
+	return []interface{}{data}
+}
+
+func flattenDbAlignedAtomicWritesConfig(dbAlignedAtomicWritesConfig *sqladmin.DbAlignedAtomicWritesConfig) []interface{} {
+	if dbAlignedAtomicWritesConfig == nil {
+		return []interface{}{
+			map[string]interface{}{
+				"db_aligned_atomic_writes": false,
+			},
+		}
+	}
+
+	data := map[string]interface{}{
+		"db_aligned_atomic_writes": dbAlignedAtomicWritesConfig.DbAlignedAtomicWrites,
 	}
 	return []interface{}{data}
 }

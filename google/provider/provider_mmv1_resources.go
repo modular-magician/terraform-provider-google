@@ -599,9 +599,9 @@ var handwrittenIAMDatasources = map[string]*schema.Resource{
 }
 
 // Resources
-// Generated resources: 714
+// Generated resources: 715
 // Generated IAM resources: 330
-// Total generated resources: 1044
+// Total generated resources: 1045
 var generatedResources = map[string]*schema.Resource{
 	"google_folder_access_approval_settings":                                     registry.Resource("google_folder_access_approval_settings"),
 	"google_organization_access_approval_settings":                               registry.Resource("google_organization_access_approval_settings"),
@@ -1310,6 +1310,7 @@ var generatedResources = map[string]*schema.Resource{
 	"google_kms_key_ring":                                                        registry.Resource("google_kms_key_ring"),
 	"google_kms_key_ring_import_job":                                             registry.Resource("google_kms_key_ring_import_job"),
 	"google_kms_secret_ciphertext":                                               registry.Resource("google_kms_secret_ciphertext"),
+	"google_kms_google_kms_autokey_config":                                       registry.Resource("google_kms_google_kms_autokey_config"),
 	"google_logging_folder_settings":                                             registry.Resource("google_logging_folder_settings"),
 	"google_logging_linked_dataset":                                              registry.Resource("google_logging_linked_dataset"),
 	"google_logging_log_scope":                                                   registry.Resource("google_logging_log_scope"),

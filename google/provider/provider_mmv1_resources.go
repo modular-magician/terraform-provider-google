@@ -599,9 +599,9 @@ var handwrittenIAMDatasources = map[string]*schema.Resource{
 }
 
 // Resources
-// Generated resources: 714
+// Generated resources: 715
 // Generated IAM resources: 330
-// Total generated resources: 1044
+// Total generated resources: 1045
 var generatedResources = map[string]*schema.Resource{
 	"google_folder_access_approval_settings":                                     registry.Resource("google_folder_access_approval_settings"),
 	"google_organization_access_approval_settings":                               registry.Resource("google_organization_access_approval_settings"),
@@ -908,6 +908,7 @@ var generatedResources = map[string]*schema.Resource{
 	"google_compute_node_template":                                               registry.Resource("google_compute_node_template"),
 	"google_compute_organization_security_policy":                                registry.Resource("google_compute_organization_security_policy"),
 	"google_compute_organization_security_policy_association":                    registry.Resource("google_compute_organization_security_policy_association"),
+	"google_compute_organization_security_policy_rule":                           registry.Resource("google_compute_organization_security_policy_rule"),
 	"google_compute_packet_mirroring":                                            registry.Resource("google_compute_packet_mirroring"),
 	"google_compute_per_instance_config":                                         registry.Resource("google_compute_per_instance_config"),
 	"google_compute_preview_feature":                                             registry.Resource("google_compute_preview_feature"),

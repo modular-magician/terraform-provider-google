@@ -127,38 +127,10 @@ func ResourceComputeOrganizationSecurityPolicyRule() *schema.Resource {
 				MaxItems:    1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"config": {
-							Type:        schema.TypeList,
-							Required:    true,
-							Description: `The configuration options for matching the rule.`,
-							MaxItems:    1,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"src_ip_ranges": {
-										Type:     schema.TypeList,
-										Optional: true,
-										Description: `Source IP address range in CIDR format. Required for
-INGRESS rules.`,
-										Elem: &schema.Schema{
-											Type: schema.TypeString,
-										},
-										ExactlyOneOf: []string{"match.0.config.0.src_ip_ranges"},
-									},
-								},
-							},
-						},
 						"description": {
 							Type:        schema.TypeString,
 							Optional:    true,
 							Description: `A description of the rule.`,
-						},
-						"versioned_expr": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Description: `Preconfigured versioned expression. For organization security policy rules,
-the only supported type is "SRC_IPS_V1".
-**NOTE** : 'FIREWALL' type is deprecated. Please use 'google_compute_firewall_policy_rule' resource instead.`,
-							Default: "FIREWALL",
 						},
 					},
 				},
@@ -577,34 +549,9 @@ func flattenComputeOrganizationSecurityPolicyRuleMatch(v interface{}, d *schema.
 	transformed := make(map[string]interface{})
 	transformed["description"] =
 		flattenComputeOrganizationSecurityPolicyRuleMatchDescription(original["description"], d, config)
-	transformed["versioned_expr"] =
-		flattenComputeOrganizationSecurityPolicyRuleMatchVersionedExpr(original["versionedExpr"], d, config)
-	transformed["config"] =
-		flattenComputeOrganizationSecurityPolicyRuleMatchConfig(original["config"], d, config)
 	return []interface{}{transformed}
 }
 func flattenComputeOrganizationSecurityPolicyRuleMatchDescription(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenComputeOrganizationSecurityPolicyRuleMatchVersionedExpr(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenComputeOrganizationSecurityPolicyRuleMatchConfig(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	if v == nil {
-		return nil
-	}
-	original := v.(map[string]interface{})
-	if len(original) == 0 {
-		return nil
-	}
-	transformed := make(map[string]interface{})
-	transformed["src_ip_ranges"] =
-		flattenComputeOrganizationSecurityPolicyRuleMatchConfigSrcIpRanges(original["srcIpRanges"], d, config)
-	return []interface{}{transformed}
-}
-func flattenComputeOrganizationSecurityPolicyRuleMatchConfigSrcIpRanges(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 
@@ -643,54 +590,10 @@ func expandComputeOrganizationSecurityPolicyRuleMatch(v interface{}, d tpgresour
 		transformed["description"] = transformedDescription
 	}
 
-	transformedVersionedExpr, err := expandComputeOrganizationSecurityPolicyRuleMatchVersionedExpr(original["versioned_expr"], d, config)
-	if err != nil {
-		return nil, err
-	} else if val := reflect.ValueOf(transformedVersionedExpr); val.IsValid() && !tpgresource.IsEmptyValue(val) {
-		transformed["versionedExpr"] = transformedVersionedExpr
-	}
-
-	transformedConfig, err := expandComputeOrganizationSecurityPolicyRuleMatchConfig(original["config"], d, config)
-	if err != nil {
-		return nil, err
-	} else if val := reflect.ValueOf(transformedConfig); val.IsValid() && !tpgresource.IsEmptyValue(val) {
-		transformed["config"] = transformedConfig
-	}
-
 	return transformed, nil
 }
 
 func expandComputeOrganizationSecurityPolicyRuleMatchDescription(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	return v, nil
-}
-
-func expandComputeOrganizationSecurityPolicyRuleMatchVersionedExpr(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	return v, nil
-}
-
-func expandComputeOrganizationSecurityPolicyRuleMatchConfig(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	if v == nil {
-		return nil, nil
-	}
-	l := v.([]interface{})
-	if len(l) == 0 || l[0] == nil {
-		return nil, nil
-	}
-	raw := l[0]
-	original := raw.(map[string]interface{})
-	transformed := make(map[string]interface{})
-
-	transformedSrcIpRanges, err := expandComputeOrganizationSecurityPolicyRuleMatchConfigSrcIpRanges(original["src_ip_ranges"], d, config)
-	if err != nil {
-		return nil, err
-	} else if val := reflect.ValueOf(transformedSrcIpRanges); val.IsValid() && !tpgresource.IsEmptyValue(val) {
-		transformed["srcIpRanges"] = transformedSrcIpRanges
-	}
-
-	return transformed, nil
-}
-
-func expandComputeOrganizationSecurityPolicyRuleMatchConfigSrcIpRanges(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 

@@ -1691,6 +1691,16 @@ func TestAccSqlDatabaseInstance_basicClone(t *testing.T) {
 	})
 }
 
+func testAccSqlDatabaseInstanceImportStateIdFunc(resourceName string) resource.ImportStateIdFunc {
+	return func(s *terraform.State) (string, error) {
+		rs, ok := s.RootModule().Resources[resourceName]
+		if !ok {
+			return "", fmt.Errorf("Not found: %s", resourceName)
+		}
+		return fmt.Sprintf("%s/%s", rs.Primary.Attributes["project"], rs.Primary.Attributes["name"]), nil
+	}
+}
+
 func TestAccSqlDatabaseInstance_cloneWithSettings(t *testing.T) {
 	// Sqladmin client
 	acctest.SkipIfVcr(t)
@@ -8180,6 +8190,67 @@ data "google_sql_backup_run" "backup" {
 	most_recent = true
 }
 `, context)
+}
+
+func testAccSqlDatabaseInstance_crossProjectClone(context map[string]interface{}) string {
+	return acctest.Nprintf(`
+			data "google_project" "destination_project" {
+			    provider = google-beta
+				project_id = "%{cloneDestinationProject}"
+			}
+			resource "google_project_service" "servicenetworking" {
+				project = data.google_project.destination_project.project_id
+				service = "servicenetworking.googleapis.com"
+			}
+			resource "google_sql_database_instance" "instance" {
+			    provider = google-beta
+				name             = "tf-test-cpc-%{random_suffix}"
+				database_version = "POSTGRES_11"
+				region           = "us-central1"
+				project          = "${data.google_project.destination_project.project_id}"
+
+				settings {
+					tier = "db-custom-2-3840"
+					edition = "ENTERPRISE"
+					ip_configuration {
+						private_network = "projects/%{cloneDestinationProject}/global/networks/default" //data.google_compute_network.servicenet.self_link
+					}
+					backup_configuration {
+						enabled                        = true
+						point_in_time_recovery_enabled = true
+					}
+				}
+
+				clone {
+					source_project =  "${data.google_project.source_project.project_id}"
+					source_instance_name = data.google_sql_database_instance.source_instance.name
+				}
+
+				deletion_protection = false
+
+				// Ignore changes, since the most recent backup may change during the test
+				lifecycle{
+					ignore_changes = [clone[0].point_in_time]
+				}
+				depends_on = [google_project_service.servicenetworking]
+			}
+
+			data "google_sql_database_instance" "source_instance" {
+			    provider = google-beta
+				name = "%{original_db_name}"
+				project = "${data.google_project.source_project.project_id}"
+			}
+
+			//data "google_compute_network" "servicenet" {
+			//	name = "%{destinationNetwork}"
+			//	project = "${data.google_project.destination_project.project_id}"
+			//}
+
+			data "google_project" "source_project" {
+			    provider = google-beta
+				project_id = "%{cloneSourceProject}"
+			}
+		`, context)
 }
 
 func testAccSqlDatabaseInstance_cloneWithSettings(context map[string]interface{}) string {

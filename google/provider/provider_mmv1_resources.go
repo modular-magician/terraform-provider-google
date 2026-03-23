@@ -543,6 +543,7 @@ var generatedIAMDatasources = map[string]*schema.Resource{
 	"google_gke_hub_feature_iam_policy":                         registry.DataSource("google_gke_hub_feature_iam_policy"),
 	"google_gke_hub_scope_iam_policy":                           registry.DataSource("google_gke_hub_scope_iam_policy"),
 	"google_healthcare_consent_store_iam_policy":                registry.DataSource("google_healthcare_consent_store_iam_policy"),
+	"google_iam_workload_identity_pool_iam_policy":              registry.DataSource("google_iam_workload_identity_pool_iam_policy"),
 	"google_iam_workforce_pool_iam_policy":                      registry.DataSource("google_iam_workforce_pool_iam_policy"),
 	"google_iap_app_engine_service_iam_policy":                  registry.DataSource("google_iap_app_engine_service_iam_policy"),
 	"google_iap_app_engine_version_iam_policy":                  registry.DataSource("google_iap_app_engine_version_iam_policy"),
@@ -612,9 +613,9 @@ var handwrittenIAMDatasources = map[string]*schema.Resource{
 }
 
 // Resources
-// Generated resources: 728
+// Generated resources: 730
 // Generated IAM resources: 342
-// Total generated resources: 1070
+// Total generated resources: 1072
 var generatedResources = map[string]*schema.Resource{
 	"google_folder_access_approval_settings":                                     registry.Resource("google_folder_access_approval_settings"),
 	"google_organization_access_approval_settings":                               registry.Resource("google_organization_access_approval_settings"),
@@ -1256,6 +1257,11 @@ var generatedResources = map[string]*schema.Resource{
 	"google_iam_principal_access_boundary_policy":                                registry.Resource("google_iam_principal_access_boundary_policy"),
 	"google_iam_projects_policy_binding":                                         registry.Resource("google_iam_projects_policy_binding"),
 	"google_iam_workload_identity_pool":                                          registry.Resource("google_iam_workload_identity_pool"),
+	"google_iam_workload_identity_pool_iam_binding":                              registry.Resource("google_iam_workload_identity_pool_iam_binding"),
+	"google_iam_workload_identity_pool_iam_member":                               registry.Resource("google_iam_workload_identity_pool_iam_member"),
+	"google_iam_workload_identity_pool_iam_policy":                               registry.Resource("google_iam_workload_identity_pool_iam_policy"),
+	"google_iam_workload_identity_pool_managed_identity":                         registry.Resource("google_iam_workload_identity_pool_managed_identity"),
+	"google_iam_workload_identity_pool_namespace":                                registry.Resource("google_iam_workload_identity_pool_namespace"),
 	"google_iam_workload_identity_pool_provider":                                 registry.Resource("google_iam_workload_identity_pool_provider"),
 	"google_iam_oauth_client":                                                    registry.Resource("google_iam_oauth_client"),
 	"google_iam_oauth_client_credential":                                         registry.Resource("google_iam_oauth_client_credential"),

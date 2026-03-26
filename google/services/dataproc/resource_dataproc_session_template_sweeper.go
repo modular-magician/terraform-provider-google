@@ -195,7 +195,7 @@ func deleteResourceDataprocSessionTemplate(config *transport_tpg.Config, d *tpgr
 		return nil
 	}
 
-	deleteTemplate := "https://dataproc.googleapis.com/v1/{{name}}"
+	deleteTemplate := "https://dataproc.googleapis.com/v1/projects/{{project}}/locations/{{location}}/sessionTemplates/{{name}}"
 
 	url, err := tpgresource.ReplaceVars(d, config, deleteTemplate)
 	if err != nil {

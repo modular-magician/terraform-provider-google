@@ -15,6 +15,7 @@ fields:
     - api_field: deleteAfterDuration.seconds
     - api_field: deleteAtTime
     - api_field: description
+    - api_field: enableEmergentMaintenance
     - api_field: id
     - api_field: kind
     - api_field: linkedCommitments

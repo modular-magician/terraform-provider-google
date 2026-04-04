@@ -224,6 +224,14 @@ Possible values are: AUTO, MANUAL. Possible values: ["QOS_TYPE_UNSPECIFIED", "AU
 				Description: `Specifies the replica zone for regional Flex pools. 'zone' and 'replica_zone' values can be swapped to initiate a
 [zone switch](https://cloud.google.com/netapp/volumes/docs/configure-and-use/storage-pools/edit-or-delete-storage-pool#switch_active_and_replica_zones).`,
 			},
+			"scale_type": {
+				Type:         schema.TypeString,
+				Computed:     true,
+				Optional:     true,
+				ForceNew:     true,
+				ValidateFunc: verify.ValidateEnum([]string{"SCALE_TYPE_UNSPECIFIED", "SCALE_TYPE_DEFAULT", "SCALE_TYPE_SCALEOUT", ""}),
+				Description:  `The scale type of the storage pool. Defaults to 'SCALE_TYPE_DEFAULT' if not specified. Possible values: ["SCALE_TYPE_UNSPECIFIED", "SCALE_TYPE_DEFAULT", "SCALE_TYPE_SCALEOUT"]`,
+			},
 			"total_iops": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -418,6 +426,12 @@ func resourceNetappStoragePoolCreate(d *schema.ResourceData, meta interface{}) e
 	} else if v, ok := d.GetOkExists("type"); !tpgresource.IsEmptyValue(reflect.ValueOf(typeProp)) && (ok || !reflect.DeepEqual(v, typeProp)) {
 		obj["type"] = typeProp
 	}
+	scaleTypeProp, err := expandNetappStoragePoolScaleType(d.Get("scale_type"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("scale_type"); !tpgresource.IsEmptyValue(reflect.ValueOf(scaleTypeProp)) && (ok || !reflect.DeepEqual(v, scaleTypeProp)) {
+		obj["scaleType"] = scaleTypeProp
+	}
 	effectiveLabelsProp, err := expandNetappStoragePoolEffectiveLabels(d.Get("effective_labels"), d, config)
 	if err != nil {
 		return err
@@ -592,6 +606,9 @@ func resourceNetappStoragePoolRead(d *schema.ResourceData, meta interface{}) err
 		return fmt.Errorf("Error reading StoragePool: %s", err)
 	}
 	if err := d.Set("type", flattenNetappStoragePoolType(res["type"], d, config)); err != nil {
+		return fmt.Errorf("Error reading StoragePool: %s", err)
+	}
+	if err := d.Set("scale_type", flattenNetappStoragePoolScaleType(res["scaleType"], d, config)); err != nil {
 		return fmt.Errorf("Error reading StoragePool: %s", err)
 	}
 	if err := d.Set("terraform_labels", flattenNetappStoragePoolTerraformLabels(res["labels"], d, config)); err != nil {
@@ -1049,6 +1066,10 @@ func flattenNetappStoragePoolType(v interface{}, d *schema.ResourceData, config 
 	return v
 }
 
+func flattenNetappStoragePoolScaleType(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
 func flattenNetappStoragePoolTerraformLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	if v == nil {
 		return v
@@ -1133,6 +1154,10 @@ func expandNetappStoragePoolQosType(v interface{}, d tpgresource.TerraformResour
 }
 
 func expandNetappStoragePoolType(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandNetappStoragePoolScaleType(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 

@@ -519,7 +519,7 @@ func TestAccComputeRegionNetworkEndpointGroup_regionNetworkEndpointGroupInternet
 
 	context := map[string]interface{}{
 		"neg_name":      "tf-test-ip-port-neg" + randomSuffix,
-		"network_name":  "network" + randomSuffix,
+		"network_name":  "tf-test-network" + randomSuffix,
 		"random_suffix": randomSuffix,
 	}
 
@@ -570,7 +570,7 @@ func TestAccComputeRegionNetworkEndpointGroup_regionNetworkEndpointGroupInternet
 
 	context := map[string]interface{}{
 		"neg_name":      "tf-test-ip-port-neg" + randomSuffix,
-		"network_name":  "network" + randomSuffix,
+		"network_name":  "tf-test-network" + randomSuffix,
 		"random_suffix": randomSuffix,
 	}
 

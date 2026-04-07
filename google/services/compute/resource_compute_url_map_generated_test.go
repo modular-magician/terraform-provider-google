@@ -58,9 +58,9 @@ func TestAccComputeUrlMap_urlMapBucketAndServiceExample(t *testing.T) {
 	context := map[string]interface{}{
 		"backend_bucket_name":        "tf-test-static-asset-backend-bucket" + randomSuffix,
 		"http_health_check_name":     "tf-test-health-check" + randomSuffix,
-		"login_backend_service_name": "login" + randomSuffix,
+		"login_backend_service_name": "tf-test-login" + randomSuffix,
 		"storage_bucket_name":        "tf-test-static-asset-bucket" + randomSuffix,
-		"url_map_name":               "urlmap" + randomSuffix,
+		"url_map_name":               "tf-test-urlmap" + randomSuffix,
 		"random_suffix":              randomSuffix,
 	}
 
@@ -174,8 +174,8 @@ func TestAccComputeUrlMap_urlMapTrafficDirectorRouteExample(t *testing.T) {
 
 	context := map[string]interface{}{
 		"health_check_name":         "tf-test-health-check" + randomSuffix,
-		"home_backend_service_name": "home" + randomSuffix,
-		"url_map_name":              "urlmap" + randomSuffix,
+		"home_backend_service_name": "tf-test-home" + randomSuffix,
+		"url_map_name":              "tf-test-urlmap" + randomSuffix,
 		"random_suffix":             randomSuffix,
 	}
 
@@ -298,8 +298,8 @@ func TestAccComputeUrlMap_urlMapTrafficDirectorRoutePartialExample(t *testing.T)
 
 	context := map[string]interface{}{
 		"health_check_name":         "tf-test-health-check" + randomSuffix,
-		"home_backend_service_name": "home" + randomSuffix,
-		"url_map_name":              "urlmap" + randomSuffix,
+		"home_backend_service_name": "tf-test-home" + randomSuffix,
+		"url_map_name":              "tf-test-urlmap" + randomSuffix,
 		"random_suffix":             randomSuffix,
 	}
 
@@ -393,8 +393,8 @@ func TestAccComputeUrlMap_urlMapTrafficDirectorPathExample(t *testing.T) {
 
 	context := map[string]interface{}{
 		"health_check_name":         "tf-test-health-check" + randomSuffix,
-		"home_backend_service_name": "home" + randomSuffix,
-		"url_map_name":              "urlmap" + randomSuffix,
+		"home_backend_service_name": "tf-test-home" + randomSuffix,
+		"url_map_name":              "tf-test-urlmap" + randomSuffix,
 		"random_suffix":             randomSuffix,
 	}
 
@@ -537,8 +537,8 @@ func TestAccComputeUrlMap_urlMapTrafficDirectorPathPartialExample(t *testing.T) 
 
 	context := map[string]interface{}{
 		"health_check_name":         "tf-test-health-check" + randomSuffix,
-		"home_backend_service_name": "home" + randomSuffix,
-		"url_map_name":              "urlmap" + randomSuffix,
+		"home_backend_service_name": "tf-test-home" + randomSuffix,
+		"url_map_name":              "tf-test-urlmap" + randomSuffix,
 		"random_suffix":             randomSuffix,
 	}
 
@@ -653,11 +653,11 @@ func TestAccComputeUrlMap_urlMapHeaderBasedRoutingExample(t *testing.T) {
 	randomSuffix := acctest.RandString(t, 10)
 
 	context := map[string]interface{}{
-		"default_backend_service_name":   "default" + randomSuffix,
+		"default_backend_service_name":   "tf-test-default" + randomSuffix,
 		"health_check_name":              "tf-test-health-check" + randomSuffix,
 		"service_a_backend_service_name": "tf-test-service-a" + randomSuffix,
 		"service_b_backend_service_name": "tf-test-service-b" + randomSuffix,
-		"url_map_name":                   "urlmap" + randomSuffix,
+		"url_map_name":                   "tf-test-urlmap" + randomSuffix,
 		"random_suffix":                  randomSuffix,
 	}
 
@@ -770,11 +770,11 @@ func TestAccComputeUrlMap_urlMapParameterBasedRoutingExample(t *testing.T) {
 	randomSuffix := acctest.RandString(t, 10)
 
 	context := map[string]interface{}{
-		"default_backend_service_name":   "default" + randomSuffix,
+		"default_backend_service_name":   "tf-test-default" + randomSuffix,
 		"health_check_name":              "tf-test-health-check" + randomSuffix,
 		"service_a_backend_service_name": "tf-test-service-a" + randomSuffix,
 		"service_b_backend_service_name": "tf-test-service-b" + randomSuffix,
-		"url_map_name":                   "urlmap" + randomSuffix,
+		"url_map_name":                   "tf-test-urlmap" + randomSuffix,
 		"random_suffix":                  randomSuffix,
 	}
 
@@ -887,9 +887,9 @@ func TestAccComputeUrlMap_urlMapTestHeadersExample(t *testing.T) {
 	randomSuffix := acctest.RandString(t, 10)
 
 	context := map[string]interface{}{
-		"backend_service_name": "backend" + randomSuffix,
+		"backend_service_name": "tf-test-backend" + randomSuffix,
 		"health_check_name":    "tf-test-health-check" + randomSuffix,
-		"url_map_name":         "urlmap" + randomSuffix,
+		"url_map_name":         "tf-test-urlmap" + randomSuffix,
 		"random_suffix":        randomSuffix,
 	}
 
@@ -986,9 +986,9 @@ func TestAccComputeUrlMap_urlMapTestExpectedOutputUrlExample(t *testing.T) {
 	randomSuffix := acctest.RandString(t, 10)
 
 	context := map[string]interface{}{
-		"backend_service_name": "backend" + randomSuffix,
+		"backend_service_name": "tf-test-backend" + randomSuffix,
 		"health_check_name":    "tf-test-health-check" + randomSuffix,
-		"url_map_name":         "urlmap" + randomSuffix,
+		"url_map_name":         "tf-test-urlmap" + randomSuffix,
 		"random_suffix":        randomSuffix,
 	}
 
@@ -1079,9 +1079,9 @@ func TestAccComputeUrlMap_urlMapTestRedirectResponseCodeExample(t *testing.T) {
 	randomSuffix := acctest.RandString(t, 10)
 
 	context := map[string]interface{}{
-		"backend_service_name": "backend" + randomSuffix,
+		"backend_service_name": "tf-test-backend" + randomSuffix,
 		"health_check_name":    "tf-test-health-check" + randomSuffix,
-		"url_map_name":         "urlmap" + randomSuffix,
+		"url_map_name":         "tf-test-urlmap" + randomSuffix,
 		"random_suffix":        randomSuffix,
 	}
 
@@ -1197,7 +1197,7 @@ func TestAccComputeUrlMap_urlMapPathTemplateMatchExample(t *testing.T) {
 		"cart_backend_service_name": "tf-test-cart-service" + randomSuffix,
 		"http_health_check_name":    "tf-test-health-check" + randomSuffix,
 		"storage_bucket_name":       "tf-test-static-asset-bucket" + randomSuffix,
-		"url_map_name":              "urlmap" + randomSuffix,
+		"url_map_name":              "tf-test-urlmap" + randomSuffix,
 		"user_backend_service_name": "tf-test-user-service" + randomSuffix,
 		"random_suffix":             randomSuffix,
 	}
@@ -1312,11 +1312,11 @@ func TestAccComputeUrlMap_urlMapCustomErrorResponsePolicyExample(t *testing.T) {
 	randomSuffix := acctest.RandString(t, 10)
 
 	context := map[string]interface{}{
-		"backend_service_name":      "login" + randomSuffix,
+		"backend_service_name":      "tf-test-login" + randomSuffix,
 		"error_backend_bucket_name": "tf-test-error-backend-bucket" + randomSuffix,
 		"http_health_check_name":    "tf-test-health-check" + randomSuffix,
 		"storage_bucket_name":       "tf-test-static-asset-bucket" + randomSuffix,
-		"url_map_name":              "urlmap" + randomSuffix,
+		"url_map_name":              "tf-test-urlmap" + randomSuffix,
 		"random_suffix":             randomSuffix,
 	}
 

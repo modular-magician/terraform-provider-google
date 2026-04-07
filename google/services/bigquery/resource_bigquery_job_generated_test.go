@@ -56,7 +56,7 @@ func TestAccBigQueryJob_bigqueryJobQueryExample(t *testing.T) {
 	randomSuffix := acctest.RandString(t, 10)
 
 	context := map[string]interface{}{
-		"account_name":  "bqowner" + randomSuffix,
+		"account_name":  "tf-test-bqowner" + randomSuffix,
 		"job_id":        "tf_test_job_query" + randomSuffix,
 		"random_suffix": randomSuffix,
 	}
@@ -126,7 +126,7 @@ func TestAccBigQueryJob_bigqueryJobQueryTableReferenceExample(t *testing.T) {
 	randomSuffix := acctest.RandString(t, 10)
 
 	context := map[string]interface{}{
-		"account_name":  "bqowner" + randomSuffix,
+		"account_name":  "tf-test-bqowner" + randomSuffix,
 		"job_id":        "tf_test_job_query" + randomSuffix,
 		"random_suffix": randomSuffix,
 	}
@@ -539,7 +539,7 @@ func TestAccBigQueryJob_bigqueryJobCopyExample(t *testing.T) {
 
 	context := map[string]interface{}{
 		"project":       envvar.GetTestProjectFromEnv(),
-		"account_name":  "bqowner" + randomSuffix,
+		"account_name":  "tf-test-bqowner" + randomSuffix,
 		"job_id":        "tf_test_job_copy" + randomSuffix,
 		"kms_key_name":  acctest.BootstrapKMSKeyWithPurposeInLocationAndName(t, "ENCRYPT_DECRYPT", "global", "tf-bootstrap-bigquery-job-key1").CryptoKey.Name,
 		"random_suffix": randomSuffix,
@@ -694,7 +694,7 @@ func TestAccBigQueryJob_bigqueryJobCopyTableReferenceExample(t *testing.T) {
 
 	context := map[string]interface{}{
 		"project":       envvar.GetTestProjectFromEnv(),
-		"account_name":  "bqowner" + randomSuffix,
+		"account_name":  "tf-test-bqowner" + randomSuffix,
 		"job_id":        "tf_test_job_copy" + randomSuffix,
 		"kms_key_name":  acctest.BootstrapKMSKeyWithPurposeInLocationAndName(t, "ENCRYPT_DECRYPT", "global", "tf-bootstrap-bigquery-job-key2").CryptoKey.Name,
 		"random_suffix": randomSuffix,
@@ -843,7 +843,7 @@ func TestAccBigQueryJob_bigqueryJobExtractExample(t *testing.T) {
 	randomSuffix := acctest.RandString(t, 10)
 
 	context := map[string]interface{}{
-		"account_name":  "bqowner" + randomSuffix,
+		"account_name":  "tf-test-bqowner" + randomSuffix,
 		"job_id":        "tf_test_job_extract" + randomSuffix,
 		"random_suffix": randomSuffix,
 	}
@@ -931,7 +931,7 @@ func TestAccBigQueryJob_bigqueryJobExtractTableReferenceExample(t *testing.T) {
 	randomSuffix := acctest.RandString(t, 10)
 
 	context := map[string]interface{}{
-		"account_name":  "bqowner" + randomSuffix,
+		"account_name":  "tf-test-bqowner" + randomSuffix,
 		"job_id":        "tf_test_job_extract" + randomSuffix,
 		"random_suffix": randomSuffix,
 	}

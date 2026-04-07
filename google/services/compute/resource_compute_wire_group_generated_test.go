@@ -58,7 +58,7 @@ func TestAccComputeWireGroup_computeWireGroupBasicExample(t *testing.T) {
 	context := map[string]interface{}{
 		"project":            envvar.GetTestProjectFromEnv(),
 		"cross_site_network": "tf-test-test-cross-site-network" + randomSuffix,
-		"description":        "Example Wire Group" + randomSuffix,
+		"description":        "tf-test-Example Wire Group" + randomSuffix,
 		"name":               "tf-test-test-wire-group" + randomSuffix,
 		"random_suffix":      randomSuffix,
 	}

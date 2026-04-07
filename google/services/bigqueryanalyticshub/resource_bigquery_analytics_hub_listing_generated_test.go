@@ -57,7 +57,7 @@ func TestAccBigqueryAnalyticsHubListing_bigqueryAnalyticshubListingBasicExample(
 
 	context := map[string]interface{}{
 		"data_exchange_id": "tf_test_my_data_exchange" + randomSuffix,
-		"desc":             "example data exchange" + randomSuffix,
+		"desc":             "tf-test-example data exchange" + randomSuffix,
 		"listing_id":       "tf_test_my_listing" + randomSuffix,
 		"random_suffix":    randomSuffix,
 	}
@@ -123,7 +123,7 @@ func TestAccBigqueryAnalyticsHubListing_bigqueryAnalyticshubListingRestrictedExa
 
 	context := map[string]interface{}{
 		"data_exchange_id": "tf_test_my_data_exchange" + randomSuffix,
-		"desc":             "example data exchange" + randomSuffix,
+		"desc":             "tf-test-example data exchange" + randomSuffix,
 		"listing_id":       "tf_test_my_listing" + randomSuffix,
 		"random_suffix":    randomSuffix,
 	}
@@ -194,7 +194,7 @@ func TestAccBigqueryAnalyticsHubListing_bigqueryAnalyticshubListingDcrExample(t 
 
 	context := map[string]interface{}{
 		"data_exchange_id": "tf_test_dcr_data_exchange" + randomSuffix,
-		"desc":             "example dcr data exchange" + randomSuffix,
+		"desc":             "tf-test-example dcr data exchange" + randomSuffix,
 		"listing_id":       "tf_test_dcr_listing" + randomSuffix,
 		"random_suffix":    randomSuffix,
 	}
@@ -296,7 +296,7 @@ func TestAccBigqueryAnalyticsHubListing_bigqueryAnalyticshubListingLogLinkedData
 	context := map[string]interface{}{
 		"data_exchange_id": "tf_test_tf_test_log_email_de" + randomSuffix,
 		"dataset_id":       "tf_test_tf_test_log_email_ds" + randomSuffix,
-		"description":      "Example for log email test" + randomSuffix,
+		"description":      "tf-test-Example for log email test" + randomSuffix,
 		"listing_id":       "tf_test_tf_test_log_email_listing" + randomSuffix,
 		"random_suffix":    randomSuffix,
 	}
@@ -363,7 +363,7 @@ func TestAccBigqueryAnalyticsHubListing_bigqueryAnalyticshubListingPubsubExample
 
 	context := map[string]interface{}{
 		"data_exchange_id":  "tf_test_tf_test_pubsub_data_exchange" + randomSuffix,
-		"description":       "Example for pubsub topic source" + randomSuffix,
+		"description":       "tf-test-Example for pubsub topic source" + randomSuffix,
 		"listing_id":        "tf_test_tf_test_pubsub_listing" + randomSuffix,
 		"pubsub_topic_name": "tf_test_test_pubsub" + randomSuffix,
 		"random_suffix":     randomSuffix,
@@ -431,7 +431,7 @@ func TestAccBigqueryAnalyticsHubListing_bigqueryAnalyticshubPublicListingExample
 
 	context := map[string]interface{}{
 		"data_exchange_id": "tf_test_my_data_exchange" + randomSuffix,
-		"desc":             "example public listing" + randomSuffix,
+		"desc":             "tf-test-example public listing" + randomSuffix,
 		"listing_id":       "tf_test_my_listing" + randomSuffix,
 		"random_suffix":    randomSuffix,
 	}
@@ -500,7 +500,7 @@ func TestAccBigqueryAnalyticsHubListing_bigqueryAnalyticshubListingMarketplaceEx
 
 	context := map[string]interface{}{
 		"data_exchange_id": "tf_test_my_data_exchange" + randomSuffix,
-		"desc":             "example data exchange" + randomSuffix,
+		"desc":             "tf-test-example data exchange" + randomSuffix,
 		"listing_id":       "tf_test_my_listing" + randomSuffix,
 		"random_suffix":    randomSuffix,
 	}

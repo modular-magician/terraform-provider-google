@@ -5034,6 +5034,7 @@ func resourceContainerClusterUpdate(d *schema.ResourceData, meta interface{}) er
 		req := &container.UpdateClusterRequest{
 			Update: &container.ClusterUpdate{
 				DesiredNodePoolAutoConfigResourceManagerTags: expandResourceManagerTags(rmtags),
+				MostDisruptiveAllowedAction:                  "RESTART",
 			},
 		}
 

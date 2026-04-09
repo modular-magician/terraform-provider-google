@@ -73,6 +73,7 @@ import (
 	"github.com/hashicorp/terraform-provider-google/google/services/corebilling"
 	"github.com/hashicorp/terraform-provider-google/google/services/databasemigrationservice"
 	"github.com/hashicorp/terraform-provider-google/google/services/datacatalog"
+	"github.com/hashicorp/terraform-provider-google/google/services/dataform"
 	"github.com/hashicorp/terraform-provider-google/google/services/datafusion"
 	"github.com/hashicorp/terraform-provider-google/google/services/datalossprevention"
 	"github.com/hashicorp/terraform-provider-google/google/services/datapipeline"
@@ -620,9 +621,9 @@ var handwrittenIAMDatasources = map[string]*schema.Resource{
 }
 
 // Resources
-// Generated resources: 733
+// Generated resources: 734
 // Generated IAM resources: 342
-// Total generated resources: 1075
+// Total generated resources: 1076
 var generatedResources = map[string]*schema.Resource{
 	"google_folder_access_approval_settings":                                     registry.Resource("google_folder_access_approval_settings"),
 	"google_organization_access_approval_settings":                               registry.Resource("google_organization_access_approval_settings"),
@@ -1036,6 +1037,7 @@ var generatedResources = map[string]*schema.Resource{
 	"google_data_catalog_taxonomy_iam_binding":                                   registry.Resource("google_data_catalog_taxonomy_iam_binding"),
 	"google_data_catalog_taxonomy_iam_member":                                    registry.Resource("google_data_catalog_taxonomy_iam_member"),
 	"google_data_catalog_taxonomy_iam_policy":                                    registry.Resource("google_data_catalog_taxonomy_iam_policy"),
+	"google_dataform_folder":                                                     registry.Resource("google_dataform_folder"),
 	"google_data_fusion_instance":                                                registry.Resource("google_data_fusion_instance"),
 	"google_data_fusion_instance_iam_binding":                                    registry.Resource("google_data_fusion_instance_iam_binding"),
 	"google_data_fusion_instance_iam_member":                                     registry.Resource("google_data_fusion_instance_iam_member"),
@@ -1891,6 +1893,7 @@ func UseGeneratedProducts() {
 	var _ = corebilling.ProductName
 	var _ = databasemigrationservice.ProductName
 	var _ = datacatalog.ProductName
+	var _ = dataform.ProductName
 	var _ = datafusion.ProductName
 	var _ = datalossprevention.ProductName
 	var _ = datapipeline.ProductName

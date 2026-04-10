@@ -1932,17 +1932,7 @@ func resourceComputeBackendServiceCreate(d *schema.ResourceData, meta interface{
 		}
 
 		spr := emptySecurityPolicyReference()
-		spr.SecurityPolicy = pol.RelativeLink()
-
-		bodyBytes, err := json.Marshal(spr)
-		if err != nil {
-			return errwrap.Wrapf("Error marshaling security policy reference: {{err}}", err)
-		}
-
-		var sBody map[string]interface{}
-		if err := json.Unmarshal(bodyBytes, &sBody); err != nil {
-			return errwrap.Wrapf("Error unmarshaling security into map: {{err}}", err)
-		}
+		spr["securityPolicy"] = pol.RelativeLink()
 
 		securityPolicyPath := "{{ComputeBasePath}}projects/{{project}}/global/backendServices/{{name}}/setSecurityPolicy?prettyPrint=false"
 		sUrl, err := tpgresource.ReplaceVars(d, config, securityPolicyPath)
@@ -1956,7 +1946,7 @@ func resourceComputeBackendServiceCreate(d *schema.ResourceData, meta interface{
 			Project:   project,
 			RawURL:    sUrl,
 			UserAgent: userAgent,
-			Body:      sBody,
+			Body:      spr,
 			Headers:   headers,
 		})
 
@@ -1977,16 +1967,7 @@ func resourceComputeBackendServiceCreate(d *schema.ResourceData, meta interface{
 		}
 
 		spr := emptySecurityPolicyReference()
-		spr.SecurityPolicy = pol.RelativeLink()
-		bodyBytes, err := json.Marshal(spr)
-		if err != nil {
-			return errwrap.Wrapf("Error marshaling security policy reference: {{err}}", err)
-		}
-
-		var eBody map[string]interface{}
-		if err := json.Unmarshal(bodyBytes, &eBody); err != nil {
-			return errwrap.Wrapf("Error unmarshaling security into map: {{err}}", err)
-		}
+		spr["securityPolicy"] = pol.RelativeLink()
 
 		edgeSecurityPolicyPath := "{{ComputeBasePath}}projects/{{project}}/global/backendServices/{{name}}/setEdgeSecurityPolicy?prettyPrint=false"
 		eUrl, err := tpgresource.ReplaceVars(d, config, edgeSecurityPolicyPath)
@@ -2000,7 +1981,7 @@ func resourceComputeBackendServiceCreate(d *schema.ResourceData, meta interface{
 			Project:   project,
 			RawURL:    eUrl,
 			UserAgent: userAgent,
-			Body:      eBody,
+			Body:      spr,
 			Headers:   headers,
 		})
 		if err != nil {
@@ -2537,17 +2518,7 @@ func resourceComputeBackendServiceUpdate(d *schema.ResourceData, meta interface{
 		}
 
 		spr := emptySecurityPolicyReference()
-		spr.SecurityPolicy = pol.RelativeLink()
-
-		bodyBytes, err := json.Marshal(spr)
-		if err != nil {
-			return errwrap.Wrapf("Error marshaling security policy reference: {{err}}", err)
-		}
-
-		var sBody map[string]interface{}
-		if err := json.Unmarshal(bodyBytes, &sBody); err != nil {
-			return errwrap.Wrapf("Error unmarshaling security into map: {{err}}", err)
-		}
+		spr["securityPolicy"] = pol.RelativeLink()
 
 		securityPolicyPath := "{{ComputeBasePath}}projects/{{project}}/global/backendServices/{{name}}/setSecurityPolicy?prettyPrint=false"
 		sUrl, err := tpgresource.ReplaceVars(d, config, securityPolicyPath)
@@ -2561,7 +2532,7 @@ func resourceComputeBackendServiceUpdate(d *schema.ResourceData, meta interface{
 			Project:   project,
 			RawURL:    sUrl,
 			UserAgent: userAgent,
-			Body:      sBody,
+			Body:      spr,
 			Headers:   headers,
 		})
 
@@ -2582,16 +2553,7 @@ func resourceComputeBackendServiceUpdate(d *schema.ResourceData, meta interface{
 		}
 
 		spr := emptySecurityPolicyReference()
-		spr.SecurityPolicy = pol.RelativeLink()
-		bodyBytes, err := json.Marshal(spr)
-		if err != nil {
-			return errwrap.Wrapf("Error marshaling security policy reference: {{err}}", err)
-		}
-
-		var eBody map[string]interface{}
-		if err := json.Unmarshal(bodyBytes, &eBody); err != nil {
-			return errwrap.Wrapf("Error unmarshaling security into map: {{err}}", err)
-		}
+		spr["securityPolicy"] = pol.RelativeLink()
 
 		edgeSecurityPolicyPath := "{{ComputeBasePath}}projects/{{project}}/global/backendServices/{{name}}/setEdgeSecurityPolicy?prettyPrint=false"
 		eUrl, err := tpgresource.ReplaceVars(d, config, edgeSecurityPolicyPath)
@@ -2605,7 +2567,7 @@ func resourceComputeBackendServiceUpdate(d *schema.ResourceData, meta interface{
 			Project:   project,
 			RawURL:    eUrl,
 			UserAgent: userAgent,
-			Body:      eBody,
+			Body:      spr,
 			Headers:   headers,
 		})
 		if err != nil {

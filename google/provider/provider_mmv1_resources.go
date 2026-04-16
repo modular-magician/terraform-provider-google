@@ -98,6 +98,7 @@ import (
 	"github.com/hashicorp/terraform-provider-google/google/services/firebaseappcheck"
 	"github.com/hashicorp/terraform-provider-google/google/services/firebaseapphosting"
 	"github.com/hashicorp/terraform-provider-google/google/services/firebasedataconnect"
+	"github.com/hashicorp/terraform-provider-google/google/services/firebaseremoteconfig"
 	"github.com/hashicorp/terraform-provider-google/google/services/firestore"
 	"github.com/hashicorp/terraform-provider-google/google/services/gemini"
 	"github.com/hashicorp/terraform-provider-google/google/services/gkebackup"
@@ -621,9 +622,9 @@ var handwrittenIAMDatasources = map[string]*schema.Resource{
 }
 
 // Resources
-// Generated resources: 738
+// Generated resources: 739
 // Generated IAM resources: 342
-// Total generated resources: 1080
+// Total generated resources: 1081
 var generatedResources = map[string]*schema.Resource{
 	"google_folder_access_approval_settings":                                     registry.Resource("google_folder_access_approval_settings"),
 	"google_organization_access_approval_settings":                               registry.Resource("google_organization_access_approval_settings"),
@@ -1201,6 +1202,7 @@ var generatedResources = map[string]*schema.Resource{
 	"google_firebase_app_hosting_domain":                                         registry.Resource("google_firebase_app_hosting_domain"),
 	"google_firebase_app_hosting_traffic":                                        registry.Resource("google_firebase_app_hosting_traffic"),
 	"google_firebase_data_connect_service":                                       registry.Resource("google_firebase_data_connect_service"),
+	"google_firebase_remote_config_remote_config":                                registry.Resource("google_firebase_remote_config_remote_config"),
 	"google_firestore_backup_schedule":                                           registry.Resource("google_firestore_backup_schedule"),
 	"google_firestore_database":                                                  registry.Resource("google_firestore_database"),
 	"google_firestore_document":                                                  registry.Resource("google_firestore_document"),
@@ -1922,6 +1924,7 @@ func UseGeneratedProducts() {
 	var _ = firebaseappcheck.ProductName
 	var _ = firebaseapphosting.ProductName
 	var _ = firebasedataconnect.ProductName
+	var _ = firebaseremoteconfig.ProductName
 	var _ = firestore.ProductName
 	var _ = gemini.ProductName
 	var _ = gkebackup.ProductName

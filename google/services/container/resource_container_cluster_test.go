@@ -16303,3 +16303,24 @@ func testAccContainerCluster_custom_subnet(clusterName string, networkName strin
 
 	`, clusterName, networkName, sri[0].SubnetName, additionalIpRangesStr, firstSubnet, firstSubnet)
 }
+
+func testAccContainerCluster_bestEffortProvisioning(clusterName, networkName, subnetworkName string, enabled bool, minProvisionNodes int) string {
+	return fmt.Sprintf(`
+			resource "google_container_cluster" "primary" {
+				name               = "%s"
+				location           = "us-central1-a"
+				initial_node_count = 1
+				network            = "%s"
+				subnetwork         = "%s"
+				deletion_protection = false
+
+				node_pool {
+					node_count = 1
+					best_effort_provisioning {
+						enabled             = %t
+						min_provision_nodes = %d
+					}
+				}
+			}
+			`, clusterName, networkName, subnetworkName, enabled, minProvisionNodes)
+}

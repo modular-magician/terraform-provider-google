@@ -26,7 +26,9 @@ const ProductName = "parallelstore"
 
 func init() {
 	registry.Product{
-		Name:    "parallelstore",
-		BaseUrl: "https://parallelstore.googleapis.com/v1/",
+		Name:                 "parallelstore",
+		BaseUrl:              "https://parallelstore.googleapis.com/v1/",
+		CustomEndpointField:  "parallelstore_custom_endpoint",
+		CustomEndpointEnvVar: "GOOGLE_PARALLELSTORE_CUSTOM_ENDPOINT",
 	}.Register()
 }

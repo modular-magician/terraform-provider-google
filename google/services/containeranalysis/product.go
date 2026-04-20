@@ -26,7 +26,9 @@ const ProductName = "containeranalysis"
 
 func init() {
 	registry.Product{
-		Name:    "containeranalysis",
-		BaseUrl: "https://containeranalysis.googleapis.com/v1/",
+		Name:                 "containeranalysis",
+		BaseUrl:              "https://containeranalysis.googleapis.com/v1/",
+		CustomEndpointField:  "container_analysis_custom_endpoint",
+		CustomEndpointEnvVar: "GOOGLE_CONTAINER_ANALYSIS_CUSTOM_ENDPOINT",
 	}.Register()
 }

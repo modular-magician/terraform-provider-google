@@ -26,7 +26,9 @@ const ProductName = "serviceusage"
 
 func init() {
 	registry.Product{
-		Name:    "serviceusage",
-		BaseUrl: "https://serviceusage.googleapis.com/v1/",
+		Name:                 "serviceusage",
+		BaseUrl:              "https://serviceusage.googleapis.com/v1/",
+		CustomEndpointField:  "service_usage_custom_endpoint",
+		CustomEndpointEnvVar: "GOOGLE_SERVICE_USAGE_CUSTOM_ENDPOINT",
 	}.Register()
 }

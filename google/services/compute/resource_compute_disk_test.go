@@ -1728,9 +1728,9 @@ resource "google_compute_disk" "foobar" {
 
 func TestExpandStoragePoolUrl_withDataProjectAndZone(t *testing.T) {
 	config := &transport_tpg.Config{
-		ComputeBasePath: "https://www.googleapis.com/compute/v1/",
-		Project:         "other-project",
-		Zone:            "other-zone",
+		BasePaths: map[string]string{"compute": "https://www.googleapis.com/compute/v1/"},
+		Project:   "other-project",
+		Zone:      "other-zone",
 	}
 
 	data := &tpgresource.ResourceDataMock{
@@ -1743,7 +1743,7 @@ func TestExpandStoragePoolUrl_withDataProjectAndZone(t *testing.T) {
 	name := "test-storage-pool"
 	zoneUrl := "zones/test-zone/storagePools/" + name
 	projectUrl := "projects/test-project/" + zoneUrl
-	fullUrl := config.ComputeBasePath + projectUrl
+	fullUrl := config.BasePaths["compute"] + projectUrl
 
 	cases := []struct {
 		name     string
@@ -1793,9 +1793,9 @@ func TestExpandStoragePoolUrl_withDataProjectAndZone(t *testing.T) {
 
 func TestExpandStoragePoolUrl_withConfigProjectAndZone(t *testing.T) {
 	config := &transport_tpg.Config{
-		ComputeBasePath: "https://www.googleapis.com/compute/v1/",
-		Project:         "test-project",
-		Zone:            "test-zone",
+		BasePaths: map[string]string{"compute": "https://www.googleapis.com/compute/v1/"},
+		Project:   "test-project",
+		Zone:      "test-zone",
 	}
 
 	data := &tpgresource.ResourceDataMock{}
@@ -1803,7 +1803,7 @@ func TestExpandStoragePoolUrl_withConfigProjectAndZone(t *testing.T) {
 	name := "test-storage-pool"
 	zoneUrl := "zones/test-zone/storagePools/" + name
 	projectUrl := "projects/test-project/" + zoneUrl
-	fullUrl := config.ComputeBasePath + projectUrl
+	fullUrl := config.BasePaths["compute"] + projectUrl
 
 	cases := []struct {
 		name     string
@@ -1853,7 +1853,7 @@ func TestExpandStoragePoolUrl_withConfigProjectAndZone(t *testing.T) {
 
 func TestExpandStoragePoolUrl_noProjectAndZoneFromConfigAndData(t *testing.T) {
 	config := &transport_tpg.Config{
-		ComputeBasePath: "https://www.googleapis.com/compute/v1/",
+		BasePaths: map[string]string{"compute": "https://www.googleapis.com/compute/v1/"},
 	}
 
 	data := &tpgresource.ResourceDataMock{}
@@ -1861,7 +1861,7 @@ func TestExpandStoragePoolUrl_noProjectAndZoneFromConfigAndData(t *testing.T) {
 	name := "test-storage-pool"
 	zoneUrl := "zones/test-zone/storagePools/" + name
 	projectUrl := "projects/test-project/" + zoneUrl
-	fullUrl := config.ComputeBasePath + projectUrl
+	fullUrl := config.BasePaths["compute"] + projectUrl
 
 	cases := []struct {
 		name     string

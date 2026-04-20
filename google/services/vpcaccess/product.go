@@ -26,7 +26,9 @@ const ProductName = "vpcaccess"
 
 func init() {
 	registry.Product{
-		Name:    "vpcaccess",
-		BaseUrl: "https://vpcaccess.googleapis.com/v1/",
+		Name:                 "vpcaccess",
+		BaseUrl:              "https://vpcaccess.googleapis.com/v1/",
+		CustomEndpointField:  "vpc_access_custom_endpoint",
+		CustomEndpointEnvVar: "GOOGLE_VPC_ACCESS_CUSTOM_ENDPOINT",
 	}.Register()
 }

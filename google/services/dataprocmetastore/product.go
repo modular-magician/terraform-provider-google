@@ -26,7 +26,9 @@ const ProductName = "dataprocmetastore"
 
 func init() {
 	registry.Product{
-		Name:    "dataprocmetastore",
-		BaseUrl: "https://metastore.googleapis.com/v1/",
+		Name:                 "dataprocmetastore",
+		BaseUrl:              "https://metastore.googleapis.com/v1/",
+		CustomEndpointField:  "dataproc_metastore_custom_endpoint",
+		CustomEndpointEnvVar: "GOOGLE_DATAPROC_METASTORE_CUSTOM_ENDPOINT",
 	}.Register()
 }

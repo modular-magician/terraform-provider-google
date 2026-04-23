@@ -26,7 +26,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"google.golang.org/api/googleapi"
 
 	"google.golang.org/api/compute/v1"
 )
@@ -53,13 +52,13 @@ func instanceSchedulingNodeAffinitiesElemSchema() *schema.Resource {
 	}
 }
 
-func expandAliasIpRanges(ranges []interface{}) []*compute.AliasIpRange {
-	ipRanges := make([]*compute.AliasIpRange, 0, len(ranges))
+func expandAliasIpRanges(ranges []interface{}) []interface{} {
+	ipRanges := make([]interface{}, 0, len(ranges))
 	for _, raw := range ranges {
 		data := raw.(map[string]interface{})
-		ipRanges = append(ipRanges, &compute.AliasIpRange{
-			IpCidrRange:         data["ip_cidr_range"].(string),
-			SubnetworkRangeName: data["subnetwork_range_name"].(string),
+		ipRanges = append(ipRanges, map[string]interface{}{
+			"ipCidrRange":         data["ip_cidr_range"].(string),
+			"subnetworkRangeName": data["subnetwork_range_name"].(string),
 		})
 	}
 	return ipRanges
@@ -89,19 +88,17 @@ func flattenAliasIpRange(d *schema.ResourceData, ranges []*compute.AliasIpRange,
 	return sorted
 }
 
-func expandScheduling(v interface{}) (*compute.Scheduling, error) {
+func expandScheduling(v interface{}) (map[string]interface{}, error) {
 	if v == nil {
-		// We can't set default values for lists.
-		return &compute.Scheduling{
-			AutomaticRestart: googleapi.Bool(true),
+		return map[string]interface{}{
+			"automaticRestart": true,
 		}, nil
 	}
 
 	ls := v.([]interface{})
 	if len(ls) == 0 {
-		// We can't set default values for lists
-		return &compute.Scheduling{
-			AutomaticRestart: googleapi.Bool(true),
+		return map[string]interface{}{
+			"automaticRestart": true,
 		}, nil
 	}
 
@@ -110,64 +107,56 @@ func expandScheduling(v interface{}) (*compute.Scheduling, error) {
 	}
 
 	original := ls[0].(map[string]interface{})
-	scheduling := &compute.Scheduling{
-		ForceSendFields: make([]string, 0, 4),
-	}
+	scheduling := make(map[string]interface{})
 
 	if v, ok := original["automatic_restart"]; ok {
-		scheduling.AutomaticRestart = googleapi.Bool(v.(bool))
-		scheduling.ForceSendFields = append(scheduling.ForceSendFields, "AutomaticRestart")
+		scheduling["automaticRestart"] = v.(bool)
 	}
 
 	if v, ok := original["preemptible"]; ok {
-		scheduling.Preemptible = v.(bool)
-		scheduling.ForceSendFields = append(scheduling.ForceSendFields, "Preemptible")
+		scheduling["preemptible"] = v.(bool)
 	}
 
 	if v, ok := original["on_host_maintenance"]; ok {
-		scheduling.OnHostMaintenance = v.(string)
-		scheduling.ForceSendFields = append(scheduling.ForceSendFields, "OnHostMaintenance")
+		scheduling["onHostMaintenance"] = v.(string)
 	}
 
 	if v, ok := original["node_affinities"]; ok && v != nil {
 		naSet := v.(*schema.Set).List()
-		scheduling.NodeAffinities = make([]*compute.SchedulingNodeAffinity, len(ls))
-		scheduling.ForceSendFields = append(scheduling.ForceSendFields, "NodeAffinities")
+		nodeAffinities := make([]interface{}, 0, len(naSet))
 		for _, nodeAffRaw := range naSet {
 			if nodeAffRaw == nil {
 				continue
 			}
 			nodeAff := nodeAffRaw.(map[string]interface{})
-			transformed := &compute.SchedulingNodeAffinity{
-				Key:      nodeAff["key"].(string),
-				Operator: nodeAff["operator"].(string),
-				Values:   tpgresource.ConvertStringArr(nodeAff["values"].(*schema.Set).List()),
+			transformed := map[string]interface{}{
+				"key":      nodeAff["key"].(string),
+				"operator": nodeAff["operator"].(string),
+				"values":   tpgresource.ConvertStringArr(nodeAff["values"].(*schema.Set).List()),
 			}
-			scheduling.NodeAffinities = append(scheduling.NodeAffinities, transformed)
+			nodeAffinities = append(nodeAffinities, transformed)
 		}
+		scheduling["nodeAffinities"] = nodeAffinities
 	}
 
 	if v, ok := original["min_node_cpus"]; ok {
-		scheduling.MinNodeCpus = int64(v.(int))
+		scheduling["minNodeCpus"] = int64(v.(int))
 	}
 	if v, ok := original["provisioning_model"]; ok {
-		scheduling.ProvisioningModel = v.(string)
-		scheduling.ForceSendFields = append(scheduling.ForceSendFields, "ProvisioningModel")
+		scheduling["provisioningModel"] = v.(string)
 	}
 	if v, ok := original["instance_termination_action"]; ok {
-		scheduling.InstanceTerminationAction = v.(string)
-		scheduling.ForceSendFields = append(scheduling.ForceSendFields, "InstanceTerminationAction")
+		scheduling["instanceTerminationAction"] = v.(string)
 	}
 	if v, ok := original["availability_domain"]; ok && v != nil {
-		scheduling.AvailabilityDomain = int64(v.(int))
+		scheduling["availabilityDomain"] = int64(v.(int))
 	}
 	if v, ok := original["max_run_duration"]; ok {
 		transformedMaxRunDuration, err := expandComputeMaxRunDuration(v)
 		if err != nil {
 			return nil, err
 		}
-		scheduling.MaxRunDuration = transformedMaxRunDuration
-		scheduling.ForceSendFields = append(scheduling.ForceSendFields, "MaxRunDuration")
+		scheduling["maxRunDuration"] = transformedMaxRunDuration
 	}
 
 	if v, ok := original["on_instance_stop_action"]; ok {
@@ -175,47 +164,46 @@ func expandScheduling(v interface{}) (*compute.Scheduling, error) {
 		if err != nil {
 			return nil, err
 		}
-		scheduling.OnInstanceStopAction = transformedOnInstanceStopAction
-		scheduling.ForceSendFields = append(scheduling.ForceSendFields, "OnInstanceStopAction")
+		scheduling["onInstanceStopAction"] = transformedOnInstanceStopAction
 	}
 	if v, ok := original["local_ssd_recovery_timeout"]; ok {
 		transformedLocalSsdRecoveryTimeout, err := expandComputeLocalSsdRecoveryTimeout(v)
 		if err != nil {
 			return nil, err
 		}
-		scheduling.LocalSsdRecoveryTimeout = transformedLocalSsdRecoveryTimeout
-		scheduling.ForceSendFields = append(scheduling.ForceSendFields, "LocalSsdRecoveryTimeout")
+		scheduling["localSsdRecoveryTimeout"] = transformedLocalSsdRecoveryTimeout
 	}
 	if v, ok := original["termination_time"]; ok {
-		scheduling.TerminationTime = v.(string)
+		scheduling["terminationTime"] = v.(string)
 	}
 	return scheduling, nil
 }
 
-func expandComputeMaxRunDuration(v interface{}) (*compute.Duration, error) {
+func expandComputeMaxRunDuration(v interface{}) (map[string]interface{}, error) {
 	l := v.([]interface{})
-	duration := compute.Duration{}
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
 	}
 	raw := l[0]
 	original := raw.(map[string]interface{})
 
+	duration := make(map[string]interface{})
+
 	transformedNanos, err := expandComputeMaxRunDurationNanos(original["nanos"])
 	if err != nil {
 		return nil, err
 	} else if val := reflect.ValueOf(transformedNanos); val.IsValid() && !tpgresource.IsEmptyValue(val) {
-		duration.Nanos = int64(transformedNanos.(int))
+		duration["nanos"] = strconv.FormatInt(int64(transformedNanos.(int)), 10)
 	}
 
 	transformedSeconds, err := expandComputeMaxRunDurationSeconds(original["seconds"])
 	if err != nil {
 		return nil, err
 	} else if val := reflect.ValueOf(transformedSeconds); val.IsValid() && !tpgresource.IsEmptyValue(val) {
-		duration.Seconds = int64(transformedSeconds.(int))
+		duration["seconds"] = strconv.FormatInt(int64(transformedSeconds.(int)), 10)
 	}
 
-	return &duration, nil
+	return duration, nil
 }
 
 func expandComputeMaxRunDurationNanos(v interface{}) (interface{}, error) {
@@ -226,47 +214,48 @@ func expandComputeMaxRunDurationSeconds(v interface{}) (interface{}, error) {
 	return v, nil
 }
 
-func expandComputeOnInstanceStopAction(v interface{}) (*compute.SchedulingOnInstanceStopAction, error) {
+func expandComputeOnInstanceStopAction(v interface{}) (map[string]interface{}, error) {
 	l := v.([]interface{})
-	onInstanceStopAction := compute.SchedulingOnInstanceStopAction{}
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
 	}
 	raw := l[0]
 	original := raw.(map[string]interface{})
 
+	onInstanceStopAction := make(map[string]interface{})
 	if d, ok := original["discard_local_ssd"]; ok {
-		onInstanceStopAction.DiscardLocalSsd = d.(bool)
+		onInstanceStopAction["discardLocalSsd"] = d.(bool)
 	} else {
 		return nil, nil
 	}
 
-	return &onInstanceStopAction, nil
+	return onInstanceStopAction, nil
 }
 
-func expandComputeLocalSsdRecoveryTimeout(v interface{}) (*compute.Duration, error) {
+func expandComputeLocalSsdRecoveryTimeout(v interface{}) (map[string]interface{}, error) {
 	l := v.([]interface{})
-	duration := compute.Duration{}
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
 	}
 	raw := l[0]
 	original := raw.(map[string]interface{})
+
+	duration := make(map[string]interface{})
 
 	transformedNanos, err := expandComputeLocalSsdRecoveryTimeoutNanos(original["nanos"])
 	if err != nil {
 		return nil, err
 	} else if val := reflect.ValueOf(transformedNanos); val.IsValid() && !tpgresource.IsEmptyValue(val) {
-		duration.Nanos = int64(transformedNanos.(int))
+		duration["nanos"] = strconv.FormatInt(int64(transformedNanos.(int)), 10)
 	}
 
 	transformedSeconds, err := expandComputeLocalSsdRecoveryTimeoutSeconds(original["seconds"])
 	if err != nil {
 		return nil, err
 	} else if val := reflect.ValueOf(transformedSeconds); val.IsValid() && !tpgresource.IsEmptyValue(val) {
-		duration.Seconds = int64(transformedSeconds.(int))
+		duration["seconds"] = strconv.FormatInt(int64(transformedSeconds.(int)), 10)
 	}
-	return &duration, nil
+	return duration, nil
 }
 
 func expandComputeLocalSsdRecoveryTimeoutNanos(v interface{}) (interface{}, error) {
@@ -432,56 +421,58 @@ func flattenNetworkInterfaces(d *schema.ResourceData, config *transport_tpg.Conf
 	return flattened, region, internalIP, externalIP, nil
 }
 
-func expandAccessConfigs(configs []interface{}) []*compute.AccessConfig {
-	acs := make([]*compute.AccessConfig, len(configs))
+func expandAccessConfigs(configs []interface{}) []interface{} {
+	acs := make([]interface{}, len(configs))
 	for i, raw := range configs {
-		acs[i] = &compute.AccessConfig{}
-		acs[i].Type = "ONE_TO_ONE_NAT"
+		ac := make(map[string]interface{})
+		ac["type"] = "ONE_TO_ONE_NAT"
 		if raw != nil {
 			data := raw.(map[string]interface{})
-			acs[i].NatIP = data["nat_ip"].(string)
-			acs[i].NetworkTier = data["network_tier"].(string)
+			ac["natIP"] = data["nat_ip"].(string)
+			ac["networkTier"] = data["network_tier"].(string)
 			if ptr, ok := data["public_ptr_domain_name"]; ok && ptr != "" {
-				acs[i].SetPublicPtr = true
-				acs[i].PublicPtrDomainName = ptr.(string)
+				ac["publicPtrDomainName"] = ptr.(string)
+				ac["setPublicPtr"] = true
 			}
 		}
+		acs[i] = ac
 	}
 	return acs
 }
 
-func expandIpv6AccessConfigs(configs []interface{}) []*compute.AccessConfig {
-	iacs := make([]*compute.AccessConfig, len(configs))
+func expandIpv6AccessConfigs(configs []interface{}) []interface{} {
+	iacs := make([]interface{}, len(configs))
 	for i, raw := range configs {
-		iacs[i] = &compute.AccessConfig{}
+		iac := make(map[string]interface{})
 		if raw != nil {
 			data := raw.(map[string]interface{})
-			iacs[i].NetworkTier = data["network_tier"].(string)
+			iac["networkTier"] = data["network_tier"].(string)
 			if ptr, ok := data["public_ptr_domain_name"]; ok && ptr != "" {
-				iacs[i].PublicPtrDomainName = ptr.(string)
+				iac["publicPtrDomainName"] = ptr.(string)
 			}
 			if eip, ok := data["external_ipv6"]; ok && eip != "" {
-				iacs[i].ExternalIpv6 = eip.(string)
+				iac["externalIpv6"] = eip.(string)
 			}
 			if eipl, ok := data["external_ipv6_prefix_length"]; ok && eipl != "" {
 				if strVal, ok := eipl.(string); ok {
 					if intVal, err := tpgresource.StringToFixed64(strVal); err == nil {
-						iacs[i].ExternalIpv6PrefixLength = intVal
+						iac["externalIpv6PrefixLength"] = intVal
 					}
 				}
 			}
 			if name, ok := data["name"]; ok && name != "" {
-				iacs[i].Name = name.(string)
+				iac["name"] = name.(string)
 			}
-			iacs[i].Type = "DIRECT_IPV6" // Currently only type supported
+			iac["type"] = "DIRECT_IPV6" // Currently only type supported
 		}
+		iacs[i] = iac
 	}
 	return iacs
 }
 
-func expandNetworkInterfaces(d tpgresource.TerraformResourceData, config *transport_tpg.Config) ([]*compute.NetworkInterface, error) {
+func expandNetworkInterfaces(d tpgresource.TerraformResourceData, config *transport_tpg.Config) ([]interface{}, error) {
 	configs := d.Get("network_interface").([]interface{})
-	ifaces := make([]*compute.NetworkInterface, len(configs))
+	ifaces := make([]interface{}, len(configs))
 	for i, raw := range configs {
 		data := raw.(map[string]interface{})
 
@@ -507,21 +498,21 @@ func expandNetworkInterfaces(d tpgresource.TerraformResourceData, config *transp
 			return nil, fmt.Errorf("cannot determine self_link for subnetwork %q: %s", subnetwork, err)
 		}
 
-		ifaces[i] = &compute.NetworkInterface{
-			NetworkIP:                data["network_ip"].(string),
-			Network:                  nf.RelativeLink(),
-			NetworkAttachment:        networkAttachment,
-			Vlan:                     int64(data["vlan"].(int)),
-			Subnetwork:               sf.RelativeLink(),
-			AccessConfigs:            expandAccessConfigs(data["access_config"].([]interface{})),
-			AliasIpRanges:            expandAliasIpRanges(data["alias_ip_range"].([]interface{})),
-			NicType:                  data["nic_type"].(string),
-			StackType:                data["stack_type"].(string),
-			QueueCount:               int64(data["queue_count"].(int)),
-			Ipv6AccessConfigs:        expandIpv6AccessConfigs(data["ipv6_access_config"].([]interface{})),
-			Ipv6Address:              data["ipv6_address"].(string),
-			InternalIpv6PrefixLength: int64(data["internal_ipv6_prefix_length"].(int)),
-			IgmpQuery:                data["igmp_query"].(string),
+		ifaces[i] = map[string]interface{}{
+			"networkIP":                data["network_ip"].(string),
+			"network":                  nf.RelativeLink(),
+			"networkAttachment":        networkAttachment,
+			"vlan":                     int64(data["vlan"].(int)),
+			"subnetwork":               sf.RelativeLink(),
+			"accessConfigs":            expandAccessConfigs(data["access_config"].([]interface{})),
+			"aliasIpRanges":            expandAliasIpRanges(data["alias_ip_range"].([]interface{})),
+			"nicType":                  data["nic_type"].(string),
+			"stackType":                data["stack_type"].(string),
+			"queueCount":               int64(data["queue_count"].(int)),
+			"ipv6AccessConfigs":        expandIpv6AccessConfigs(data["ipv6_access_config"].([]interface{})),
+			"ipv6Address":              data["ipv6_address"].(string),
+			"internalIpv6PrefixLength": int64(data["internal_ipv6_prefix_length"].(int)),
+			"igmpQuery":                data["igmp_query"].(string),
 		}
 	}
 	return ifaces, nil
@@ -538,18 +529,19 @@ func flattenServiceAccounts(serviceAccounts []*compute.ServiceAccount) []map[str
 	return result
 }
 
-func expandServiceAccounts(configs []interface{}) []*compute.ServiceAccount {
-	accounts := make([]*compute.ServiceAccount, len(configs))
+func expandServiceAccounts(configs []interface{}) []interface{} {
+	accounts := make([]interface{}, len(configs))
 	for i, raw := range configs {
 		data := raw.(map[string]interface{})
 
-		accounts[i] = &compute.ServiceAccount{
-			Email:  data["email"].(string),
-			Scopes: tpgresource.CanonicalizeServiceScopes(tpgresource.ConvertStringSet(data["scopes"].(*schema.Set))),
+		email := data["email"].(string)
+		if email == "" {
+			email = "default"
 		}
 
-		if accounts[i].Email == "" {
-			accounts[i].Email = "default"
+		accounts[i] = map[string]interface{}{
+			"email":  email,
+			"scopes": tpgresource.CanonicalizeServiceScopes(tpgresource.ConvertStringSet(data["scopes"].(*schema.Set))),
 		}
 	}
 	return accounts
@@ -566,46 +558,45 @@ func flattenGuestAccelerators(accelerators []*compute.AcceleratorConfig) []map[s
 	return acceleratorsSchema
 }
 
-func resourceInstanceTags(d tpgresource.TerraformResourceData) *compute.Tags {
+func resourceInstanceTags(d tpgresource.TerraformResourceData) map[string]interface{} {
 	// Calculate the tags
-	var tags *compute.Tags
+	var tags map[string]interface{}
 	if v := d.Get("tags"); v != nil {
 		vs := v.(*schema.Set)
-		tags = new(compute.Tags)
-		tags.Items = make([]string, vs.Len())
+		tags = make(map[string]interface{})
+		items := make([]string, vs.Len())
 		for i, v := range vs.List() {
-			tags.Items[i] = v.(string)
+			items[i] = v.(string)
 		}
-
-		tags.Fingerprint = d.Get("tags_fingerprint").(string)
+		tags["items"] = items
+		tags["fingerprint"] = d.Get("tags_fingerprint").(string)
 	}
 
 	return tags
 }
 
-func expandShieldedVmConfigs(d tpgresource.TerraformResourceData) *compute.ShieldedInstanceConfig {
+func expandShieldedVmConfigs(d tpgresource.TerraformResourceData) map[string]interface{} {
 	if _, ok := d.GetOk("shielded_instance_config"); !ok {
 		return nil
 	}
 
 	prefix := "shielded_instance_config.0"
-	return &compute.ShieldedInstanceConfig{
-		EnableSecureBoot:          d.Get(prefix + ".enable_secure_boot").(bool),
-		EnableVtpm:                d.Get(prefix + ".enable_vtpm").(bool),
-		EnableIntegrityMonitoring: d.Get(prefix + ".enable_integrity_monitoring").(bool),
-		ForceSendFields:           []string{"EnableSecureBoot", "EnableVtpm", "EnableIntegrityMonitoring"},
+	return map[string]interface{}{
+		"enableSecureBoot":          d.Get(prefix + ".enable_secure_boot").(bool),
+		"enableVtpm":                d.Get(prefix + ".enable_vtpm").(bool),
+		"enableIntegrityMonitoring": d.Get(prefix + ".enable_integrity_monitoring").(bool),
 	}
 }
 
-func expandConfidentialInstanceConfig(d tpgresource.TerraformResourceData) *compute.ConfidentialInstanceConfig {
+func expandConfidentialInstanceConfig(d tpgresource.TerraformResourceData) map[string]interface{} {
 	if _, ok := d.GetOk("confidential_instance_config"); !ok {
 		return nil
 	}
 
 	prefix := "confidential_instance_config.0"
-	return &compute.ConfidentialInstanceConfig{
-		EnableConfidentialCompute: d.Get(prefix + ".enable_confidential_compute").(bool),
-		ConfidentialInstanceType:  d.Get(prefix + ".confidential_instance_type").(string),
+	return map[string]interface{}{
+		"enableConfidentialCompute": d.Get(prefix + ".enable_confidential_compute").(bool),
+		"confidentialInstanceType":  d.Get(prefix + ".confidential_instance_type").(string),
 	}
 }
 
@@ -620,19 +611,19 @@ func flattenConfidentialInstanceConfig(ConfidentialInstanceConfig *compute.Confi
 	}}
 }
 
-func expandAdvancedMachineFeatures(d tpgresource.TerraformResourceData) *compute.AdvancedMachineFeatures {
+func expandAdvancedMachineFeatures(d tpgresource.TerraformResourceData) map[string]interface{} {
 	if _, ok := d.GetOk("advanced_machine_features"); !ok {
 		return nil
 	}
 
 	prefix := "advanced_machine_features.0"
-	return &compute.AdvancedMachineFeatures{
-		EnableNestedVirtualization: d.Get(prefix + ".enable_nested_virtualization").(bool),
-		ThreadsPerCore:             int64(d.Get(prefix + ".threads_per_core").(int)),
-		TurboMode:                  d.Get(prefix + ".turbo_mode").(string),
-		VisibleCoreCount:           int64(d.Get(prefix + ".visible_core_count").(int)),
-		PerformanceMonitoringUnit:  d.Get(prefix + ".performance_monitoring_unit").(string),
-		EnableUefiNetworking:       d.Get(prefix + ".enable_uefi_networking").(bool),
+	return map[string]interface{}{
+		"enableNestedVirtualization": d.Get(prefix + ".enable_nested_virtualization").(bool),
+		"threadsPerCore":             int64(d.Get(prefix + ".threads_per_core").(int)),
+		"turboMode":                  d.Get(prefix + ".turbo_mode").(string),
+		"visibleCoreCount":           int64(d.Get(prefix + ".visible_core_count").(int)),
+		"performanceMonitoringUnit":  d.Get(prefix + ".performance_monitoring_unit").(string),
+		"enableUefiNetworking":       d.Get(prefix + ".enable_uefi_networking").(bool),
 	}
 }
 
@@ -662,13 +653,12 @@ func flattenShieldedVmConfig(shieldedVmConfig *compute.ShieldedInstanceConfig) [
 	}}
 }
 
-func expandDisplayDevice(d tpgresource.TerraformResourceData) *compute.DisplayDevice {
+func expandDisplayDevice(d tpgresource.TerraformResourceData) map[string]interface{} {
 	if _, ok := d.GetOk("enable_display"); !ok {
 		return nil
 	}
-	return &compute.DisplayDevice{
-		EnableDisplay:   d.Get("enable_display").(bool),
-		ForceSendFields: []string{"EnableDisplay"},
+	return map[string]interface{}{
+		"enableDisplay": d.Get("enable_display").(bool),
 	}
 }
 
@@ -800,7 +790,7 @@ func hasNodeAffinitiesChanged(oScheduling, newScheduling map[string]interface{})
 	return false
 }
 
-func expandReservationAffinity(d tpgresource.TerraformResourceData) (*compute.ReservationAffinity, error) {
+func expandReservationAffinity(d tpgresource.TerraformResourceData) (map[string]interface{}, error) {
 	_, ok := d.GetOk("reservation_affinity")
 	if !ok {
 		return nil, nil
@@ -809,10 +799,8 @@ func expandReservationAffinity(d tpgresource.TerraformResourceData) (*compute.Re
 	prefix := "reservation_affinity.0"
 	reservationAffinityType := d.Get(prefix + ".type").(string)
 
-	affinity := compute.ReservationAffinity{
-		ConsumeReservationType: reservationAffinityType,
-		ForceSendFields:        []string{"ConsumeReservationType"},
-	}
+	affinity := make(map[string]interface{})
+	affinity["consumeReservationType"] = reservationAffinityType
 
 	_, hasSpecificReservation := d.GetOk(prefix + ".specific_reservation")
 	if (reservationAffinityType == "SPECIFIC_RESERVATION") != hasSpecificReservation {
@@ -821,15 +809,15 @@ func expandReservationAffinity(d tpgresource.TerraformResourceData) (*compute.Re
 
 	prefix = prefix + ".specific_reservation.0"
 	if hasSpecificReservation {
-		affinity.Key = d.Get(prefix + ".key").(string)
-		affinity.ForceSendFields = append(affinity.ForceSendFields, "Key", "Values")
-
+		affinity["key"] = d.Get(prefix + ".key").(string)
+		var values []string
 		for _, v := range d.Get(prefix + ".values").([]interface{}) {
-			affinity.Values = append(affinity.Values, v.(string))
+			values = append(values, v.(string))
 		}
+		affinity["values"] = values
 	}
 
-	return &affinity, nil
+	return affinity, nil
 }
 
 func flattenReservationAffinity(affinity *compute.ReservationAffinity) []map[string]interface{} {
@@ -851,7 +839,7 @@ func flattenReservationAffinity(affinity *compute.ReservationAffinity) []map[str
 	return []map[string]interface{}{flattened}
 }
 
-func expandNetworkPerformanceConfig(d tpgresource.TerraformResourceData, config *transport_tpg.Config) (*compute.NetworkPerformanceConfig, error) {
+func expandNetworkPerformanceConfig(d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]interface{}, error) {
 	configs, ok := d.GetOk("network_performance_config")
 	if !ok {
 		return nil, nil
@@ -866,8 +854,8 @@ func expandNetworkPerformanceConfig(d tpgresource.TerraformResourceData, config 
 		return nil, nil
 	}
 	npc := npcSlice[0].(map[string]interface{})
-	return &compute.NetworkPerformanceConfig{
-		TotalEgressBandwidthTier: npc["total_egress_bandwidth_tier"].(string),
+	return map[string]interface{}{
+		"totalEgressBandwidthTier": npc["total_egress_bandwidth_tier"].(string),
 	}, nil
 }
 
@@ -888,13 +876,13 @@ func flattenComputeInstanceGuestOsFeatures(v interface{}) []interface{} {
 	return result
 }
 
-func expandComputeInstanceGuestOsFeatures(v interface{}) []*compute.GuestOsFeature {
+func expandComputeInstanceGuestOsFeatures(v interface{}) []interface{} {
 	if v == nil {
 		return nil
 	}
-	var result []*compute.GuestOsFeature
+	var result []interface{}
 	for _, feature := range v.([]interface{}) {
-		result = append(result, &compute.GuestOsFeature{Type: feature.(string)})
+		result = append(result, map[string]interface{}{"type": feature.(string)})
 	}
 	return result
 }
@@ -910,17 +898,17 @@ func flattenNetworkPerformanceConfig(c *compute.NetworkPerformanceConfig) []map[
 	}
 }
 
-func expandComputeInstanceEncryptionKey(d tpgresource.TerraformResourceData) *compute.CustomerEncryptionKey {
+func expandComputeInstanceEncryptionKey(d tpgresource.TerraformResourceData) map[string]interface{} {
 	iek, ok := d.GetOk("instance_encryption_key")
 	if !ok {
 		return nil
 	}
 
 	iekRes := iek.([]interface{})[0].(map[string]interface{})
-	return &compute.CustomerEncryptionKey{
-		KmsKeyName:           iekRes["kms_key_self_link"].(string),
-		Sha256:               iekRes["sha256"].(string),
-		KmsKeyServiceAccount: iekRes["kms_key_service_account"].(string),
+	return map[string]interface{}{
+		"kmsKeyName":           iekRes["kms_key_self_link"].(string),
+		"sha256":               iekRes["sha256"].(string),
+		"kmsKeyServiceAccount": iekRes["kms_key_service_account"].(string),
 	}
 }
 
@@ -937,19 +925,19 @@ func flattenComputeInstanceEncryptionKey(v *compute.CustomerEncryptionKey) []map
 	}
 }
 
-func expandComputeInstanceSourceEncryptionKey(d tpgresource.TerraformResourceData, field string) *compute.CustomerEncryptionKey {
+func expandComputeInstanceSourceEncryptionKey(d tpgresource.TerraformResourceData, field string) map[string]interface{} {
 	cek, ok := d.GetOk(field)
 	if !ok {
 		return nil
 	}
 
 	cekRes := cek.([]interface{})[0].(map[string]interface{})
-	return &compute.CustomerEncryptionKey{
-		RsaEncryptedKey:      cekRes["rsa_encrypted_key"].(string),
-		RawKey:               cekRes["raw_key"].(string),
-		KmsKeyName:           cekRes["kms_key_self_link"].(string),
-		Sha256:               cekRes["sha256"].(string),
-		KmsKeyServiceAccount: cekRes["kms_key_service_account"].(string),
+	return map[string]interface{}{
+		"rsaEncryptedKey":      cekRes["rsa_encrypted_key"].(string),
+		"rawKey":               cekRes["raw_key"].(string),
+		"kmsKeyName":           cekRes["kms_key_self_link"].(string),
+		"sha256":               cekRes["sha256"].(string),
+		"kmsKeyServiceAccount": cekRes["kms_key_service_account"].(string),
 	}
 }
 

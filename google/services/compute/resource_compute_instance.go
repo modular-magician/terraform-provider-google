@@ -20,6 +20,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -1689,34 +1690,48 @@ func expandComputeInstance(project string, d *schema.ResourceData, config *trans
 	}
 
 	// Create the instance information
-	return &compute.Instance{
-		CanIpForward:               d.Get("can_ip_forward").(bool),
-		Description:                d.Get("description").(string),
-		Disks:                      disks,
-		MachineType:                machineTypeUrl,
-		Metadata:                   metadata,
-		Name:                       d.Get("name").(string),
-		NetworkInterfaces:          networkInterfaces,
-		NetworkPerformanceConfig:   networkPerformanceConfig,
-		Tags:                       resourceInstanceTags(d),
-		Params:                     params,
-		Labels:                     tpgresource.ExpandEffectiveLabels(d),
-		ServiceAccounts:            expandServiceAccounts(d.Get("service_account").([]interface{})),
-		GuestAccelerators:          accels,
-		MinCpuPlatform:             d.Get("min_cpu_platform").(string),
-		Scheduling:                 scheduling,
-		DeletionProtection:         d.Get("deletion_protection").(bool),
-		Hostname:                   d.Get("hostname").(string),
-		ForceSendFields:            []string{"CanIpForward", "DeletionProtection"},
-		ConfidentialInstanceConfig: expandConfidentialInstanceConfig(d),
-		AdvancedMachineFeatures:    expandAdvancedMachineFeatures(d),
-		ShieldedInstanceConfig:     expandShieldedVmConfigs(d),
-		DisplayDevice:              expandDisplayDevice(d),
-		ResourcePolicies:           tpgresource.ConvertStringArr(d.Get("resource_policies").([]interface{})),
-		ReservationAffinity:        reservationAffinity,
-		KeyRevocationActionType:    d.Get("key_revocation_action_type").(string),
-		InstanceEncryptionKey:      expandComputeInstanceEncryptionKey(d),
-	}, nil
+	instanceMap := map[string]interface{}{
+		"canIpForward":               d.Get("can_ip_forward").(bool),
+		"description":                d.Get("description").(string),
+		"machineType":                machineTypeUrl,
+		"name":                       d.Get("name").(string),
+		"networkInterfaces":          networkInterfaces,
+		"networkPerformanceConfig":   networkPerformanceConfig,
+		"tags":                       resourceInstanceTags(d),
+		"labels":                     tpgresource.ExpandEffectiveLabels(d),
+		"serviceAccounts":            expandServiceAccounts(d.Get("service_account").([]interface{})),
+		"minCpuPlatform":             d.Get("min_cpu_platform").(string),
+		"scheduling":                 scheduling,
+		"deletionProtection":         d.Get("deletion_protection").(bool),
+		"hostname":                   d.Get("hostname").(string),
+		"confidentialInstanceConfig": expandConfidentialInstanceConfig(d),
+		"advancedMachineFeatures":    expandAdvancedMachineFeatures(d),
+		"shieldedInstanceConfig":     expandShieldedVmConfigs(d),
+		"displayDevice":              expandDisplayDevice(d),
+		"reservationAffinity":        reservationAffinity,
+		"keyRevocationActionType":    d.Get("key_revocation_action_type").(string),
+		"instanceEncryptionKey":      expandComputeInstanceEncryptionKey(d),
+		"metadata":                   metadata,
+	}
+
+	instanceBytes, err := json.Marshal(instanceMap)
+	if err != nil {
+		return nil, err
+	}
+
+	var instance compute.Instance
+	if err := json.Unmarshal(instanceBytes, &instance); err != nil {
+		return nil, err
+	}
+
+	// Re-assign typed slices/structs that are not handled by map
+	instance.Disks = disks
+	instance.GuestAccelerators = accels
+	instance.Params = params
+	instance.ResourcePolicies = tpgresource.ConvertStringArr(d.Get("resource_policies").([]interface{}))
+	instance.ForceSendFields = []string{"CanIpForward", "DeletionProtection"}
+
+	return &instance, nil
 }
 
 var computeInstanceStatus = []string{
@@ -2354,8 +2369,13 @@ func resourceComputeInstanceUpdate(d *schema.ResourceData, meta interface{}) err
 			return fmt.Errorf("Error creating request data to update scheduling: %s", err)
 		}
 
+		var typedScheduling *compute.Scheduling
+		if schedulingBytes, err := json.Marshal(scheduling); err == nil {
+			json.Unmarshal(schedulingBytes, &typedScheduling)
+		}
+
 		op, err := config.NewComputeClient(userAgent).Instances.SetScheduling(
-			project, zone, instance.Name, scheduling).Do()
+			project, zone, instance.Name, typedScheduling).Do()
 		if err != nil {
 			return fmt.Errorf("Error updating scheduling policy: %s", err)
 		}
@@ -2373,15 +2393,20 @@ func resourceComputeInstanceUpdate(d *schema.ResourceData, meta interface{}) err
 		return fmt.Errorf("Error getting network interface from config: %s", err)
 	}
 
+	var typedNetworkInterfaces []*compute.NetworkInterface
+	if niBytes, err := json.Marshal(networkInterfaces); err == nil {
+		json.Unmarshal(niBytes, &typedNetworkInterfaces)
+	}
+
 	// Sanity check
-	if len(networkInterfaces) != len(instance.NetworkInterfaces) {
+	if len(typedNetworkInterfaces) != len(instance.NetworkInterfaces) {
 		return fmt.Errorf("Instance had unexpected number of network interfaces: %d", len(instance.NetworkInterfaces))
 	}
 
 	var updatesToNIWhileStopped []func(inst *compute.Instance) error
-	for i := 0; i < len(networkInterfaces); i++ {
+	for i := 0; i < len(typedNetworkInterfaces); i++ {
 		prefix := fmt.Sprintf("network_interface.%d", i)
-		networkInterface := networkInterfaces[i]
+		networkInterface := typedNetworkInterfaces[i]
 		instNetworkInterface := instance.NetworkInterfaces[i]
 
 		networkName := d.Get(prefix + ".name").(string)
@@ -2921,7 +2946,12 @@ func resourceComputeInstanceUpdate(d *schema.ResourceData, meta interface{}) err
 		if d.HasChange("shielded_instance_config") {
 			shieldedVmConfig := expandShieldedVmConfigs(d)
 
-			op, err := config.NewComputeClient(userAgent).Instances.UpdateShieldedInstanceConfig(project, zone, instance.Name, shieldedVmConfig).Do()
+			var typedShieldedVmConfig *compute.ShieldedInstanceConfig
+			if svcBytes, err := json.Marshal(shieldedVmConfig); err == nil {
+				json.Unmarshal(svcBytes, &typedShieldedVmConfig)
+			}
+
+			op, err := config.NewComputeClient(userAgent).Instances.UpdateShieldedInstanceConfig(project, zone, instance.Name, typedShieldedVmConfig).Do()
 			if err != nil {
 				return fmt.Errorf("Error updating shielded vm config: %s", err)
 			}
@@ -2939,8 +2969,13 @@ func resourceComputeInstanceUpdate(d *schema.ResourceData, meta interface{}) err
 				return fmt.Errorf("Error creating request data to update scheduling: %s", err)
 			}
 
+			var typedScheduling *compute.Scheduling
+			if schedulingBytes, err := json.Marshal(scheduling); err == nil {
+				json.Unmarshal(schedulingBytes, &typedScheduling)
+			}
+
 			op, err := config.NewComputeClient(userAgent).Instances.SetScheduling(
-				project, zone, instance.Name, scheduling).Do()
+				project, zone, instance.Name, typedScheduling).Do()
 			if err != nil {
 				return fmt.Errorf("Error updating scheduling policy: %s", err)
 			}
@@ -2963,7 +2998,11 @@ func resourceComputeInstanceUpdate(d *schema.ResourceData, meta interface{}) err
 						return fmt.Errorf("Error retrieving instance: %s", err)
 					}
 
-					instance.AdvancedMachineFeatures = expandAdvancedMachineFeatures(d)
+					var typedAdvancedMachineFeatures *compute.AdvancedMachineFeatures
+					if amfBytes, err := json.Marshal(expandAdvancedMachineFeatures(d)); err == nil {
+						json.Unmarshal(amfBytes, &typedAdvancedMachineFeatures)
+					}
+					instance.AdvancedMachineFeatures = typedAdvancedMachineFeatures
 
 					op, err := config.NewComputeClient(userAgent).Instances.Update(project, zone, instance.Name, instance).Do()
 					if err != nil {
@@ -3364,7 +3403,11 @@ func expandBootDisk(d *schema.ResourceData, config *transport_tpg.Config, projec
 	}
 
 	if v, ok := d.GetOk("boot_disk.0.guest_os_features"); ok {
-		disk.GuestOsFeatures = expandComputeInstanceGuestOsFeatures(v)
+		var typedGuestOsFeatures []*compute.GuestOsFeature
+		if gofBytes, err := json.Marshal(expandComputeInstanceGuestOsFeatures(v)); err == nil {
+			json.Unmarshal(gofBytes, &typedGuestOsFeatures)
+		}
+		disk.GuestOsFeatures = typedGuestOsFeatures
 	}
 
 	if v, ok := d.GetOk("boot_disk.0.disk_encryption_key_raw"); ok {
@@ -3452,7 +3495,11 @@ func expandBootDisk(d *schema.ResourceData, config *transport_tpg.Config, projec
 		}
 
 		if _, ok := d.GetOk("boot_disk.0.initialize_params.0.source_image_encryption_key"); ok {
-			disk.InitializeParams.SourceImageEncryptionKey = expandComputeInstanceSourceEncryptionKey(d, "boot_disk.0.initialize_params.0.source_image_encryption_key")
+			var typedSourceImageEncryptionKey *compute.CustomerEncryptionKey
+			if siekBytes, err := json.Marshal(expandComputeInstanceSourceEncryptionKey(d, "boot_disk.0.initialize_params.0.source_image_encryption_key")); err == nil {
+				json.Unmarshal(siekBytes, &typedSourceImageEncryptionKey)
+			}
+			disk.InitializeParams.SourceImageEncryptionKey = typedSourceImageEncryptionKey
 		}
 
 		if v, ok := d.GetOk("boot_disk.0.initialize_params.0.snapshot"); ok {
@@ -3465,7 +3512,11 @@ func expandBootDisk(d *schema.ResourceData, config *transport_tpg.Config, projec
 		}
 
 		if _, ok := d.GetOk("boot_disk.0.initialize_params.0.source_snapshot_encryption_key"); ok {
-			disk.InitializeParams.SourceSnapshotEncryptionKey = expandComputeInstanceSourceEncryptionKey(d, "boot_disk.0.initialize_params.0.source_snapshot_encryption_key")
+			var typedSourceSnapshotEncryptionKey *compute.CustomerEncryptionKey
+			if ssekBytes, err := json.Marshal(expandComputeInstanceSourceEncryptionKey(d, "boot_disk.0.initialize_params.0.source_snapshot_encryption_key")); err == nil {
+				json.Unmarshal(ssekBytes, &typedSourceSnapshotEncryptionKey)
+			}
+			disk.InitializeParams.SourceSnapshotEncryptionKey = typedSourceSnapshotEncryptionKey
 		}
 
 		if _, ok := d.GetOk("boot_disk.0.initialize_params.0.labels"); ok {

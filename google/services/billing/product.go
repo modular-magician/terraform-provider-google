@@ -15,18 +15,18 @@
 //
 // ----------------------------------------------------------------------------
 
-// Package billingbudgets contains resources, datasources, etc. for the cloud billing service.
-package billingbudgets
+// Package billing contains resources, datasources, etc. for the cloud billing service.
+package billing
 
 import (
 	"github.com/hashicorp/terraform-provider-google/google/registry"
 )
 
 var Product = registry.Product{
-	Name:                 "billingbudgets",
+	Name:                 "billing",
 	BaseUrl:              "https://billingbudgets.googleapis.com/v1/",
-	CustomEndpointField:  "billing_budgets_custom_endpoint",
-	CustomEndpointEnvVar: "GOOGLE_BILLING_BUDGETS_CUSTOM_ENDPOINT",
+	CustomEndpointField:  "billing_custom_endpoint",
+	CustomEndpointEnvVar: "GOOGLE_BILLING_CUSTOM_ENDPOINT",
 }
 
 func init() {

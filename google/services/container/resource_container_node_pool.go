@@ -73,7 +73,7 @@ func (nodePoolCache *nodePoolCache) refreshIfNeeded(d *schema.ResourceData, conf
 	}
 
 	parent := fmt.Sprintf("projects/%s/locations/%s/clusters/%s", nodePoolInfo.project, nodePoolInfo.location, nodePoolInfo.cluster)
-	clusterNodePoolsListCall := config.NewContainerClient(userAgent).Projects.Locations.Clusters.NodePools.List(parent)
+	clusterNodePoolsListCall := NewClient(config, userAgent).Projects.Locations.Clusters.NodePools.List(parent)
 	if config.UserProjectOverride {
 		clusterNodePoolsListCall.Header().Add("X-Goog-User-Project", nodePoolInfo.project)
 	}
@@ -214,6 +214,7 @@ func ResourceContainerNodePool() *schema.Resource {
 		CustomizeDiff: customdiff.All(
 			tpgresource.DefaultProviderProject,
 			resourceNodeConfigEmptyGuestAccelerator,
+			nodePoolAcceleratorNetworkProfileCustomizeDiff,
 		),
 
 		UseJSONNumber: true,
@@ -530,7 +531,12 @@ var schemaNodePool = map[string]*schema.Schema{
 		Description: `Networking configuration for this NodePool. If specified, it overrides the cluster-level defaults.`,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
-
+				"accelerator_network_profile": {
+					Type:        schema.TypeString,
+					Description: "The accelerator network profile to use for this node pool.",
+					Optional:    true,
+					ForceNew:    true,
+				},
 				"create_pod_range": {
 					Type:        schema.TypeBool,
 					Optional:    true,
@@ -779,7 +785,7 @@ func resourceContainerNodePoolCreate(d *schema.ResourceData, meta interface{}) e
 	// we attempt to prefetch the node pool to make sure it doesn't exist before creation
 	var id = fmt.Sprintf("projects/%s/locations/%s/clusters/%s/nodePools/%s", nodePoolInfo.project, nodePoolInfo.location, nodePoolInfo.cluster, nodePool.Name)
 	name := getNodePoolName(id)
-	clusterNodePoolsGetCall := config.NewContainerClient(userAgent).Projects.Locations.Clusters.NodePools.Get(nodePoolInfo.fullyQualifiedName(name))
+	clusterNodePoolsGetCall := NewClient(config, userAgent).Projects.Locations.Clusters.NodePools.Get(nodePoolInfo.fullyQualifiedName(name))
 	if config.UserProjectOverride {
 		clusterNodePoolsGetCall.Header().Add("X-Goog-User-Project", nodePoolInfo.project)
 	}
@@ -795,7 +801,7 @@ func resourceContainerNodePoolCreate(d *schema.ResourceData, meta interface{}) e
 
 	var operation *container.Operation
 	err = retry.Retry(timeout, func() *retry.RetryError {
-		clusterNodePoolsCreateCall := config.NewContainerClient(userAgent).Projects.Locations.Clusters.NodePools.Create(nodePoolInfo.parent(), req)
+		clusterNodePoolsCreateCall := NewClient(config, userAgent).Projects.Locations.Clusters.NodePools.Create(nodePoolInfo.parent(), req)
 		if config.UserProjectOverride {
 			clusterNodePoolsCreateCall.Header().Add("X-Goog-User-Project", nodePoolInfo.project)
 		}
@@ -1006,7 +1012,7 @@ func resourceContainerNodePoolDelete(d *schema.ResourceData, meta interface{}) e
 
 	var operation *container.Operation
 	err = retry.Retry(timeout, func() *retry.RetryError {
-		clusterNodePoolsDeleteCall := config.NewContainerClient(userAgent).Projects.Locations.Clusters.NodePools.Delete(nodePoolInfo.fullyQualifiedName(name))
+		clusterNodePoolsDeleteCall := NewClient(config, userAgent).Projects.Locations.Clusters.NodePools.Delete(nodePoolInfo.fullyQualifiedName(name))
 		if config.UserProjectOverride {
 			clusterNodePoolsDeleteCall.Header().Add("X-Goog-User-Project", nodePoolInfo.project)
 		}
@@ -1451,6 +1457,7 @@ func flattenNodeNetworkConfig(c *container.NodeNetworkConfig, d *schema.Resource
 			"additional_node_network_configs": flattenAdditionalNodeNetworkConfig(c.AdditionalNodeNetworkConfigs),
 			"additional_pod_network_configs":  flattenAdditionalPodNetworkConfig(c.AdditionalPodNetworkConfigs),
 			"subnetwork":                      c.Subnetwork,
+			"accelerator_network_profile":     c.AcceleratorNetworkProfile,
 		})
 	}
 	return result
@@ -1565,6 +1572,9 @@ func expandNodeNetworkConfig(v interface{}) *container.NodeNetworkConfig {
 			nnc.NetworkPerformanceConfig.TotalEgressBandwidthTier = total_egress_bandwidth_tier.(string)
 		}
 	}
+	if v, ok := networkNodeConfig["accelerator_network_profile"]; ok {
+		nnc.AcceleratorNetworkProfile = v.(string)
+	}
 
 	// Allow user to set the top-level node-pool subnetwork via network_config.subnetwork
 	if v, ok := networkNodeConfig["subnetwork"]; ok {
@@ -1618,7 +1628,7 @@ func nodePoolUpdate(d *schema.ResourceData, meta interface{}, nodePoolInfo *Node
 		}
 
 		updateF := func() error {
-			clusterUpdateCall := config.NewContainerClient(userAgent).Projects.Locations.Clusters.Update(nodePoolInfo.parent(), req)
+			clusterUpdateCall := NewClient(config, userAgent).Projects.Locations.Clusters.Update(nodePoolInfo.parent(), req)
 			if config.UserProjectOverride {
 				clusterUpdateCall.Header().Add("X-Goog-User-Project", nodePoolInfo.project)
 			}
@@ -1652,7 +1662,7 @@ func nodePoolUpdate(d *schema.ResourceData, meta interface{}, nodePoolInfo *Node
 			NodeCount: newSize,
 		}
 		updateF := func() error {
-			clusterNodePoolsSetSizeCall := config.NewContainerClient(userAgent).Projects.Locations.Clusters.NodePools.SetSize(nodePoolInfo.fullyQualifiedName(name), req)
+			clusterNodePoolsSetSizeCall := NewClient(config, userAgent).Projects.Locations.Clusters.NodePools.SetSize(nodePoolInfo.fullyQualifiedName(name), req)
 			if config.UserProjectOverride {
 				clusterNodePoolsSetSizeCall.Header().Add("X-Goog-User-Project", nodePoolInfo.project)
 			}
@@ -1687,7 +1697,7 @@ func nodePoolUpdate(d *schema.ResourceData, meta interface{}, nodePoolInfo *Node
 		}
 
 		updateF := func() error {
-			clusterNodePoolsSetManagementCall := config.NewContainerClient(userAgent).Projects.Locations.Clusters.NodePools.SetManagement(nodePoolInfo.fullyQualifiedName(name), req)
+			clusterNodePoolsSetManagementCall := NewClient(config, userAgent).Projects.Locations.Clusters.NodePools.SetManagement(nodePoolInfo.fullyQualifiedName(name), req)
 			if config.UserProjectOverride {
 				clusterNodePoolsSetManagementCall.Header().Add("X-Goog-User-Project", nodePoolInfo.project)
 			}
@@ -1715,7 +1725,7 @@ func nodePoolUpdate(d *schema.ResourceData, meta interface{}, nodePoolInfo *Node
 			NodeVersion: d.Get(prefix + "version").(string),
 		}
 		updateF := func() error {
-			clusterNodePoolsUpdateCall := config.NewContainerClient(userAgent).Projects.Locations.Clusters.NodePools.Update(nodePoolInfo.fullyQualifiedName(name), req)
+			clusterNodePoolsUpdateCall := NewClient(config, userAgent).Projects.Locations.Clusters.NodePools.Update(nodePoolInfo.fullyQualifiedName(name), req)
 			if config.UserProjectOverride {
 				clusterNodePoolsUpdateCall.Header().Add("X-Goog-User-Project", nodePoolInfo.project)
 			}
@@ -1741,7 +1751,7 @@ func nodePoolUpdate(d *schema.ResourceData, meta interface{}, nodePoolInfo *Node
 			Locations: tpgresource.ConvertStringSet(d.Get(prefix + "node_locations").(*schema.Set)),
 		}
 		updateF := func() error {
-			clusterNodePoolsUpdateCall := config.NewContainerClient(userAgent).Projects.Locations.Clusters.NodePools.Update(nodePoolInfo.fullyQualifiedName(name), req)
+			clusterNodePoolsUpdateCall := NewClient(config, userAgent).Projects.Locations.Clusters.NodePools.Update(nodePoolInfo.fullyQualifiedName(name), req)
 			if config.UserProjectOverride {
 				clusterNodePoolsUpdateCall.Header().Add("X-Goog-User-Project", nodePoolInfo.project)
 			}
@@ -1823,7 +1833,7 @@ func nodePoolUpdate(d *schema.ResourceData, meta interface{}, nodePoolInfo *Node
 			UpgradeSettings: upgradeSettings,
 		}
 		updateF := func() error {
-			clusterNodePoolsUpdateCall := config.NewContainerClient(userAgent).Projects.Locations.Clusters.NodePools.Update(nodePoolInfo.fullyQualifiedName(name), req)
+			clusterNodePoolsUpdateCall := NewClient(config, userAgent).Projects.Locations.Clusters.NodePools.Update(nodePoolInfo.fullyQualifiedName(name), req)
 			if config.UserProjectOverride {
 				clusterNodePoolsUpdateCall.Header().Add("X-Goog-User-Project", nodePoolInfo.project)
 			}
@@ -1849,7 +1859,7 @@ func nodePoolUpdate(d *schema.ResourceData, meta interface{}, nodePoolInfo *Node
 				NodeNetworkConfig: expandNodeNetworkConfig(d.Get(prefix + "network_config")),
 			}
 			updateF := func() error {
-				clusterNodePoolsUpdateCall := config.NewContainerClient(userAgent).Projects.Locations.Clusters.NodePools.Update(nodePoolInfo.fullyQualifiedName(name), req)
+				clusterNodePoolsUpdateCall := NewClient(config, userAgent).Projects.Locations.Clusters.NodePools.Update(nodePoolInfo.fullyQualifiedName(name), req)
 				if config.UserProjectOverride {
 					clusterNodePoolsUpdateCall.Header().Add("X-Goog-User-Project", nodePoolInfo.project)
 				}
@@ -1888,7 +1898,7 @@ func nodePoolUpdate(d *schema.ResourceData, meta interface{}, nodePoolInfo *Node
 		}
 
 		updateF := func() error {
-			clusterNodePoolsUpdateCall := config.NewContainerClient(userAgent).Projects.Locations.Clusters.NodePools.Update(nodePoolInfo.fullyQualifiedName(name), req)
+			clusterNodePoolsUpdateCall := NewClient(config, userAgent).Projects.Locations.Clusters.NodePools.Update(nodePoolInfo.fullyQualifiedName(name), req)
 
 			if config.UserProjectOverride {
 				clusterNodePoolsUpdateCall.Header().Add("X-Goog-User-Project", nodePoolInfo.project)
@@ -1931,7 +1941,7 @@ var containerNodePoolRestingStates = RestingStates{
 // returns a state with no error if the state is a resting state, and the last state with an error otherwise
 func containerNodePoolAwaitRestingState(config *transport_tpg.Config, name, project, userAgent string, timeout time.Duration) (state string, err error) {
 	err = retry.Retry(timeout, func() *retry.RetryError {
-		clusterNodePoolsGetCall := config.NewContainerClient(userAgent).Projects.Locations.Clusters.NodePools.Get(name)
+		clusterNodePoolsGetCall := NewClient(config, userAgent).Projects.Locations.Clusters.NodePools.Get(name)
 		if config.UserProjectOverride {
 			clusterNodePoolsGetCall.Header().Add("X-Goog-User-Project", project)
 		}
@@ -1972,6 +1982,88 @@ func retryWhileIncompatibleOperation(timeout time.Duration, lockKey string, f fu
 		}
 		return nil
 	})
+}
+
+func nodePoolAcceleratorNetworkProfileCustomizeDiff(_ context.Context, diff *schema.ResourceDiff, meta any) error {
+	log.Printf("[DEBUG] ANP CustomizeDiff: Running...")
+
+	// 1. SKIP ON CREATE
+	if diff.Id() == "" {
+		return nil
+	}
+
+	// 2. DETECT USER CONFIG
+	userHasAdditionalConfigs := false
+	rawConfig := diff.GetRawConfig()
+	rawNetworkConfig := rawConfig.GetAttr("network_config")
+
+	if !rawNetworkConfig.IsNull() {
+		if rawNetworkConfig.Type().IsCollectionType() {
+			it := rawNetworkConfig.ElementIterator()
+			for it.Next() {
+				_, val := it.Element()
+				userConfig := val.GetAttr("additional_node_network_configs")
+				if !userConfig.IsNull() && userConfig.LengthInt() > 0 {
+					userHasAdditionalConfigs = true
+					break
+				}
+			}
+		}
+	}
+
+	// 3. LOGIC CHECK
+	shouldClear := false
+
+	oldProfile, newProfile := diff.GetChange("network_config.0.accelerator_network_profile")
+	anpIsActive := newProfile.(string) != ""
+	anpIsChanging := oldProfile.(string) != newProfile.(string)
+
+	if !userHasAdditionalConfigs {
+		if anpIsActive && anpIsChanging {
+			shouldClear = true
+		}
+		if !anpIsActive {
+			shouldClear = true
+		}
+	}
+
+	// Check the OLD state to avoid "Plan Not Empty" on defaults
+	currentCount := 0
+	if c, ok := diff.Get("network_config.0.additional_node_network_configs.#").(int); ok {
+		currentCount = c
+	}
+
+	if shouldClear && currentCount == 0 {
+		shouldClear = false
+	}
+
+	// 4. EXECUTE THE FIX
+	if shouldClear {
+		var newConfigMap map[string]interface{}
+		existingConfigs := diff.Get("network_config").([]interface{})
+
+		if len(existingConfigs) > 0 && existingConfigs[0] != nil {
+			currentMap := existingConfigs[0].(map[string]interface{})
+			newConfigMap = make(map[string]interface{})
+			for k, v := range currentMap {
+				newConfigMap[k] = v
+			}
+		} else {
+			newConfigMap = make(map[string]interface{})
+		}
+
+		newConfigMap["additional_node_network_configs"] = []interface{}{}
+		if !anpIsActive {
+			newConfigMap["accelerator_network_profile"] = ""
+		}
+
+		err := diff.SetNew("network_config", []interface{}{newConfigMap})
+		if err != nil {
+			return fmt.Errorf("Error updating network_config: %s", err)
+		}
+	}
+
+	return nil
 }
 
 func init() {

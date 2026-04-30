@@ -215,7 +215,12 @@ attached. Possible values: ["COLLOCATED"]`,
 							Optional: true,
 							Description: `Number of VMs in this placement group. Google does not recommend that you use this field
 unless you use a compact policy and you want your policy to work only if it contains this
-exact number of VMs.`,
+exact number of VMs.
+
+Do not set this when the policy is attached to a
+'google_compute_reservation': reservations only support incremental
+compact placement, and the API errors if the group placement policy is
+vm_count-scoped in that context.`,
 						},
 					},
 				},

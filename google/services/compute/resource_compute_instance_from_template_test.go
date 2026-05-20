@@ -26,13 +26,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/hashicorp/terraform-provider-google/google/acctest"
 	"github.com/hashicorp/terraform-provider-google/google/envvar"
-	compute_tpg "github.com/hashicorp/terraform-provider-google/google/services/compute"
+	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
+	transport_tpg "github.com/hashicorp/terraform-provider-google/google/transport"
 )
 
 func TestAccComputeInstanceFromTemplate_basic(t *testing.T) {
 	t.Parallel()
 
-	var instance map[string]interface{}
 	instanceName := fmt.Sprintf("tf-test-%s", acctest.RandString(t, 10))
 	templateName := fmt.Sprintf("tf-test-%s", acctest.RandString(t, 10))
 	resourceName := "google_compute_instance_from_template.foobar"
@@ -45,7 +45,7 @@ func TestAccComputeInstanceFromTemplate_basic(t *testing.T) {
 			{
 				Config: testAccComputeInstanceFromTemplate_basic(instanceName, templateName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckComputeInstanceExists(t, resourceName, &instance),
+					testAccCheckComputeInstanceFromTemplateExists(t, resourceName),
 
 					// Check that fields were set based on the template
 					resource.TestCheckResourceAttr(resourceName, "machine_type", "n1-standard-1"),
@@ -60,7 +60,6 @@ func TestAccComputeInstanceFromTemplate_basic(t *testing.T) {
 func TestAccComputeInstanceFromTemplate_self_link_unique(t *testing.T) {
 	t.Parallel()
 
-	var instance map[string]interface{}
 	instanceName := fmt.Sprintf("tf-test-%s", acctest.RandString(t, 10))
 	templateName := fmt.Sprintf("tf-test-%s", acctest.RandString(t, 10))
 	resourceName := "google_compute_instance_from_template.foobar"
@@ -73,7 +72,7 @@ func TestAccComputeInstanceFromTemplate_self_link_unique(t *testing.T) {
 			{
 				Config: testAccComputeInstanceFromTemplate_self_link_unique(instanceName, templateName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckComputeInstanceExists(t, resourceName, &instance),
+					testAccCheckComputeInstanceFromTemplateExists(t, resourceName),
 
 					// Check that fields were set based on the template
 					resource.TestCheckResourceAttr(resourceName, "machine_type", "n1-standard-1"),
@@ -88,12 +87,9 @@ func TestAccComputeInstanceFromTemplate_self_link_unique(t *testing.T) {
 func TestAccComputeInstanceFromTemplate_localSsdRecoveryTimeout(t *testing.T) {
 	t.Parallel()
 
-	var instance map[string]interface{}
 	instanceName := fmt.Sprintf("tf-test-%s", acctest.RandString(t, 10))
 	templateName := fmt.Sprintf("tf-test-%s", acctest.RandString(t, 10))
 	resourceName := "google_compute_instance_from_template.foobar"
-
-	var expectedLocalSsdRecoveryTimeout = map[string]interface{}{"nanos": float64(0), "seconds": "3600"}
 
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
@@ -103,10 +99,11 @@ func TestAccComputeInstanceFromTemplate_localSsdRecoveryTimeout(t *testing.T) {
 			{
 				Config: testAccComputeInstanceFromTemplate_localSsdRecoveryTimeout(instanceName, templateName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckComputeInstanceExists(t, resourceName, &instance),
+					testAccCheckComputeInstanceFromTemplateExists(t, resourceName),
 
 					// Check that fields were set based on the template
-					testAccCheckComputeInstanceLocalSsdRecoveryTimeout(&instance, expectedLocalSsdRecoveryTimeout),
+					resource.TestCheckResourceAttr(resourceName, "scheduling.0.local_ssd_recovery_timeout.0.nanos", "0"),
+					resource.TestCheckResourceAttr(resourceName, "scheduling.0.local_ssd_recovery_timeout.0.seconds", "3600"),
 				),
 			},
 		},
@@ -116,12 +113,9 @@ func TestAccComputeInstanceFromTemplate_localSsdRecoveryTimeout(t *testing.T) {
 func TestAccComputeInstanceFromTemplateWithOverride_localSsdRecoveryTimeout(t *testing.T) {
 	t.Parallel()
 
-	var instance map[string]interface{}
 	instanceName := fmt.Sprintf("tf-test-%s", acctest.RandString(t, 10))
 	templateName := fmt.Sprintf("tf-test-%s", acctest.RandString(t, 10))
 	resourceName := "google_compute_instance_from_template.foobar"
-
-	var expectedLocalSsdRecoveryTimeout = map[string]interface{}{"nanos": float64(0), "seconds": "7200"}
 
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
@@ -131,10 +125,11 @@ func TestAccComputeInstanceFromTemplateWithOverride_localSsdRecoveryTimeout(t *t
 			{
 				Config: testAccComputeInstanceFromTemplateWithOverride_localSsdRecoveryTimeout(instanceName, templateName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckComputeInstanceExists(t, resourceName, &instance),
+					testAccCheckComputeInstanceFromTemplateExists(t, resourceName),
 
 					// Check that fields were set based on the template
-					testAccCheckComputeInstanceLocalSsdRecoveryTimeout(&instance, expectedLocalSsdRecoveryTimeout),
+					resource.TestCheckResourceAttr(resourceName, "scheduling.0.local_ssd_recovery_timeout.0.nanos", "0"),
+					resource.TestCheckResourceAttr(resourceName, "scheduling.0.local_ssd_recovery_timeout.0.seconds", "7200"),
 				),
 			},
 		},
@@ -144,7 +139,6 @@ func TestAccComputeInstanceFromTemplateWithOverride_localSsdRecoveryTimeout(t *t
 func TestAccComputeInstanceFromTemplate_diskResourcePolicies(t *testing.T) {
 	t.Parallel()
 
-	var instance map[string]interface{}
 	templateName := fmt.Sprintf("tf-test-%s", acctest.RandString(t, 10))
 	suffix := acctest.RandString(t, 10)
 
@@ -156,13 +150,13 @@ func TestAccComputeInstanceFromTemplate_diskResourcePolicies(t *testing.T) {
 			{
 				Config: testAccComputeInstanceFromTemplate_diskResourcePoliciesCreate(suffix, templateName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckComputeInstanceExists(t, "google_compute_instance_from_template.foobar", &instance),
+					testAccCheckComputeInstanceFromTemplateExists(t, "google_compute_instance_from_template.foobar"),
 				),
 			},
 			{
 				Config: testAccComputeInstanceFromTemplate_diskResourcePoliciesUpdate(suffix, templateName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckComputeInstanceExists(t, "google_compute_instance_from_template.foobar", &instance),
+					testAccCheckComputeInstanceFromTemplateExists(t, "google_compute_instance_from_template.foobar"),
 				),
 			},
 			{
@@ -176,7 +170,6 @@ func TestAccComputeInstanceFromTemplate_diskResourcePolicies(t *testing.T) {
 func TestAccComputeInstanceFromTemplate_overrideBootDisk(t *testing.T) {
 	t.Parallel()
 
-	var instance map[string]interface{}
 	instanceName := fmt.Sprintf("tf-test-%s", acctest.RandString(t, 10))
 	templateName := fmt.Sprintf("tf-test-%s", acctest.RandString(t, 10))
 	templateDisk := fmt.Sprintf("tf-test-%s", acctest.RandString(t, 10))
@@ -191,7 +184,7 @@ func TestAccComputeInstanceFromTemplate_overrideBootDisk(t *testing.T) {
 			{
 				Config: testAccComputeInstanceFromTemplate_overrideBootDisk(templateDisk, overrideDisk, templateName, instanceName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckComputeInstanceExists(t, resourceName, &instance),
+					testAccCheckComputeInstanceFromTemplateExists(t, resourceName),
 
 					// Check that fields were set based on the template
 					resource.TestCheckResourceAttr(resourceName, "boot_disk.#", "1"),
@@ -205,7 +198,6 @@ func TestAccComputeInstanceFromTemplate_overrideBootDisk(t *testing.T) {
 func TestAccComputeInstanceFromTemplate_overrideAttachedDisk(t *testing.T) {
 	t.Parallel()
 
-	var instance map[string]interface{}
 	instanceName := fmt.Sprintf("tf-test-%s", acctest.RandString(t, 10))
 	templateName := fmt.Sprintf("tf-test-%s", acctest.RandString(t, 10))
 	templateDisk := fmt.Sprintf("tf-test-%s", acctest.RandString(t, 10))
@@ -220,7 +212,7 @@ func TestAccComputeInstanceFromTemplate_overrideAttachedDisk(t *testing.T) {
 			{
 				Config: testAccComputeInstanceFromTemplate_overrideAttachedDisk(templateDisk, overrideDisk, templateName, instanceName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckComputeInstanceExists(t, resourceName, &instance),
+					testAccCheckComputeInstanceFromTemplateExists(t, resourceName),
 
 					// Check that fields were set based on the template
 					resource.TestCheckResourceAttr(resourceName, "attached_disk.#", "1"),
@@ -234,7 +226,6 @@ func TestAccComputeInstanceFromTemplate_overrideAttachedDisk(t *testing.T) {
 func TestAccComputeInstanceFromTemplate_overrideScratchDisk(t *testing.T) {
 	t.Parallel()
 
-	var instance map[string]interface{}
 	instanceName := fmt.Sprintf("tf-test-%s", acctest.RandString(t, 10))
 	templateName := fmt.Sprintf("tf-test-%s", acctest.RandString(t, 10))
 	templateDisk := fmt.Sprintf("tf-test-%s", acctest.RandString(t, 10))
@@ -249,7 +240,7 @@ func TestAccComputeInstanceFromTemplate_overrideScratchDisk(t *testing.T) {
 			{
 				Config: testAccComputeInstanceFromTemplate_overrideScratchDisk(templateDisk, overrideDisk, templateName, instanceName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckComputeInstanceExists(t, resourceName, &instance),
+					testAccCheckComputeInstanceFromTemplateExists(t, resourceName),
 
 					// Check that fields were set based on the template
 					resource.TestCheckResourceAttr(resourceName, "scratch_disk.#", "2"),
@@ -265,7 +256,6 @@ func TestAccComputeInstanceFromTemplate_overrideScratchDisk(t *testing.T) {
 func TestAccComputeInstanceFromTemplate_overrideScheduling(t *testing.T) {
 	t.Parallel()
 
-	var instance map[string]interface{}
 	instanceName := fmt.Sprintf("tf-test-%s", acctest.RandString(t, 10))
 	templateName := fmt.Sprintf("tf-test-%s", acctest.RandString(t, 10))
 	templateDisk := fmt.Sprintf("tf-test-%s", acctest.RandString(t, 10))
@@ -279,7 +269,7 @@ func TestAccComputeInstanceFromTemplate_overrideScheduling(t *testing.T) {
 			{
 				Config: testAccComputeInstanceFromTemplate_overrideScheduling(templateDisk, templateName, instanceName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckComputeInstanceExists(t, resourceName, &instance),
+					testAccCheckComputeInstanceFromTemplateExists(t, resourceName),
 				),
 			},
 		},
@@ -291,7 +281,6 @@ func TestAccComputeInstanceFromTemplate_TerminationTime(t *testing.T) {
 	acctest.SkipIfVcr(t)
 	t.Parallel()
 
-	var instance map[string]interface{}
 	instanceName := fmt.Sprintf("tf-test-%s", acctest.RandString(t, 10))
 	templateName := fmt.Sprintf("tf-test-%s", acctest.RandString(t, 10))
 	templateDisk := fmt.Sprintf("tf-test-%s", acctest.RandString(t, 10))
@@ -307,7 +296,7 @@ func TestAccComputeInstanceFromTemplate_TerminationTime(t *testing.T) {
 			{
 				Config: testAccComputeInstanceFromTemplate_terminationTime(templateDisk, templateName, terminationTime, instanceName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckComputeInstanceExists(t, resourceName, &instance),
+					testAccCheckComputeInstanceFromTemplateExists(t, resourceName),
 				),
 			},
 		},
@@ -315,7 +304,6 @@ func TestAccComputeInstanceFromTemplate_TerminationTime(t *testing.T) {
 }
 
 func TestAccComputeInstanceFromTemplate_overrideMetadataDotStartupScript(t *testing.T) {
-	var instance map[string]interface{}
 	instanceName := fmt.Sprintf("tf-test-%s", acctest.RandString(t, 10))
 	templateName := fmt.Sprintf("tf-test-%s", acctest.RandString(t, 10))
 	resourceName := "google_compute_instance_from_template.inst"
@@ -328,7 +316,7 @@ func TestAccComputeInstanceFromTemplate_overrideMetadataDotStartupScript(t *test
 			{
 				Config: testAccComputeInstanceFromTemplate_overrideMetadataDotStartupScript(instanceName, templateName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckComputeInstanceExists(t, resourceName, &instance),
+					testAccCheckComputeInstanceFromTemplateExists(t, resourceName),
 					resource.TestCheckResourceAttr(resourceName, "metadata.startup-script", ""),
 				),
 			},
@@ -339,7 +327,6 @@ func TestAccComputeInstanceFromTemplate_overrideMetadataDotStartupScript(t *test
 func TestAccComputeInstanceFromTemplate_useDiskSelfLink(t *testing.T) {
 	t.Parallel()
 
-	var instance map[string]interface{}
 	instanceName := fmt.Sprintf("tf-test-%s", acctest.RandString(t, 10))
 	templateName := fmt.Sprintf("tf-test-%s", acctest.RandString(t, 10))
 	resourceName := "google_compute_instance_from_template.foobar"
@@ -352,7 +339,7 @@ func TestAccComputeInstanceFromTemplate_useDiskSelfLink(t *testing.T) {
 			{
 				Config: testAccComputeInstanceFromTemplate_regionalDisk(instanceName, templateName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckComputeInstanceExists(t, resourceName, &instance),
+					testAccCheckComputeInstanceFromTemplateExists(t, resourceName),
 				),
 			},
 		},
@@ -368,8 +355,17 @@ func testAccCheckComputeInstanceFromTemplateDestroyProducer(t *testing.T) func(s
 				continue
 			}
 
-			_, err := compute_tpg.NewClient(config, config.UserAgent).Instances.Get(
-				config.Project, rs.Primary.Attributes["zone"], rs.Primary.ID).Do()
+			url, err := tpgresource.ReplaceVarsForTest(config, rs, "{{ComputeBasePath}}projects/{{project}}/zones/{{zone}}/instances/"+rs.Primary.ID)
+			if err != nil {
+				return err
+			}
+			_, err = transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+				Config:    config,
+				Method:    "GET",
+				Project:   config.Project,
+				RawURL:    url,
+				UserAgent: config.UserAgent,
+			})
 			if err == nil {
 				return fmt.Errorf("Instance still exists")
 			}
@@ -379,11 +375,36 @@ func testAccCheckComputeInstanceFromTemplateDestroyProducer(t *testing.T) func(s
 	}
 }
 
+func testAccCheckComputeInstanceFromTemplateExists(t *testing.T, n string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[n]
+		if !ok {
+			return fmt.Errorf("Not found: %s", n)
+		}
+		if rs.Primary.ID == "" {
+			return fmt.Errorf("No ID is set")
+		}
+		config := acctest.GoogleProviderConfig(t)
+		url, err := tpgresource.ReplaceVarsForTest(config, rs, "{{ComputeBasePath}}projects/"+envvar.GetTestProjectFromEnv()+"/zones/{{zone}}/instances/{{name}}")
+		if err != nil {
+			return err
+		}
+		_, err = transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+			Config:    config,
+			Method:    "GET",
+			Project:   envvar.GetTestProjectFromEnv(),
+			RawURL:    url,
+			UserAgent: config.UserAgent,
+		})
+		if err != nil {
+			return fmt.Errorf("Instance %s not found: %s", n, err)
+		}
+		return nil
+	}
+}
+
 func TestAccComputeInstanceFromTemplate_confidentialInstanceConfigMain(t *testing.T) {
 	t.Parallel()
-
-	var instance map[string]interface{}
-	var instance2 map[string]interface{}
 
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
@@ -400,10 +421,12 @@ func TestAccComputeInstanceFromTemplate_confidentialInstanceConfigMain(t *testin
 					fmt.Sprintf("tf-test-%s", acctest.RandString(t, 10)),
 					"SEV"),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckComputeInstanceExists(t, "google_compute_instance_from_template.inst1", &instance),
-					testAccCheckComputeInstanceHasConfidentialInstanceConfig(&instance, true, "SEV"),
-					testAccCheckComputeInstanceExists(t, "google_compute_instance_from_template.inst2", &instance2),
-					testAccCheckComputeInstanceHasConfidentialInstanceConfig(&instance2, true, ""),
+					testAccCheckComputeInstanceFromTemplateExists(t, "google_compute_instance_from_template.inst1"),
+					resource.TestCheckResourceAttr("google_compute_instance_from_template.inst1", "confidential_instance_config.0.enable_confidential_compute", "true"),
+					resource.TestCheckResourceAttr("google_compute_instance_from_template.inst1", "confidential_instance_config.0.confidential_instance_type", "SEV"),
+					testAccCheckComputeInstanceFromTemplateExists(t, "google_compute_instance_from_template.inst2"),
+					resource.TestCheckResourceAttr("google_compute_instance_from_template.inst2", "confidential_instance_config.0.enable_confidential_compute", "true"),
+					resource.TestCheckResourceAttr("google_compute_instance_from_template.inst2", "confidential_instance_config.0.confidential_instance_type", ""),
 				),
 			},
 			{
@@ -416,10 +439,12 @@ func TestAccComputeInstanceFromTemplate_confidentialInstanceConfigMain(t *testin
 					fmt.Sprintf("tf-test-%s", acctest.RandString(t, 10)),
 					"SEV_SNP"),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckComputeInstanceExists(t, "google_compute_instance_from_template.inst1", &instance),
-					testAccCheckComputeInstanceHasConfidentialInstanceConfig(&instance, false, "SEV_SNP"),
-					testAccCheckComputeInstanceExists(t, "google_compute_instance_from_template.inst2", &instance2),
-					testAccCheckComputeInstanceHasConfidentialInstanceConfig(&instance2, false, "SEV_SNP"),
+					testAccCheckComputeInstanceFromTemplateExists(t, "google_compute_instance_from_template.inst1"),
+					resource.TestCheckResourceAttr("google_compute_instance_from_template.inst1", "confidential_instance_config.0.enable_confidential_compute", "false"),
+					resource.TestCheckResourceAttr("google_compute_instance_from_template.inst1", "confidential_instance_config.0.confidential_instance_type", "SEV_SNP"),
+					testAccCheckComputeInstanceFromTemplateExists(t, "google_compute_instance_from_template.inst2"),
+					resource.TestCheckResourceAttr("google_compute_instance_from_template.inst2", "confidential_instance_config.0.enable_confidential_compute", "false"),
+					resource.TestCheckResourceAttr("google_compute_instance_from_template.inst2", "confidential_instance_config.0.confidential_instance_type", "SEV_SNP"),
 				),
 			},
 			{
@@ -432,10 +457,12 @@ func TestAccComputeInstanceFromTemplate_confidentialInstanceConfigMain(t *testin
 					fmt.Sprintf("tf-test-%s", acctest.RandString(t, 10)),
 					"TDX"),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckComputeInstanceExists(t, "google_compute_instance_from_template.inst1", &instance),
-					testAccCheckComputeInstanceHasConfidentialInstanceConfig(&instance, false, "TDX"),
-					testAccCheckComputeInstanceExists(t, "google_compute_instance_from_template.inst2", &instance2),
-					testAccCheckComputeInstanceHasConfidentialInstanceConfig(&instance2, false, "TDX"),
+					testAccCheckComputeInstanceFromTemplateExists(t, "google_compute_instance_from_template.inst1"),
+					resource.TestCheckResourceAttr("google_compute_instance_from_template.inst1", "confidential_instance_config.0.enable_confidential_compute", "false"),
+					resource.TestCheckResourceAttr("google_compute_instance_from_template.inst1", "confidential_instance_config.0.confidential_instance_type", "TDX"),
+					testAccCheckComputeInstanceFromTemplateExists(t, "google_compute_instance_from_template.inst2"),
+					resource.TestCheckResourceAttr("google_compute_instance_from_template.inst2", "confidential_instance_config.0.enable_confidential_compute", "false"),
+					resource.TestCheckResourceAttr("google_compute_instance_from_template.inst2", "confidential_instance_config.0.confidential_instance_type", "TDX"),
 				),
 			},
 		},
@@ -445,7 +472,6 @@ func TestAccComputeInstanceFromTemplate_confidentialInstanceConfigMain(t *testin
 func TestAccComputeInstanceFromTemplate_DiskForceAttach(t *testing.T) {
 	t.Parallel()
 
-	var instance map[string]interface{}
 	instanceName := fmt.Sprintf("tf-test-%s", acctest.RandString(t, 10))
 	templateName := fmt.Sprintf("tf-test-%s", acctest.RandString(t, 10))
 	resourceName := "google_compute_instance_from_template.foobar"
@@ -462,7 +488,7 @@ func TestAccComputeInstanceFromTemplate_DiskForceAttach(t *testing.T) {
 			{
 				Config: testAccComputeInstanceFromTemplate_DiskForceAttach(instanceName, templateName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckComputeInstanceExists(t, resourceName, &instance),
+					testAccCheckComputeInstanceFromTemplateExists(t, resourceName),
 
 					// Check that fields were set based on the template
 					resource.TestCheckResourceAttr(resourceName, "boot_disk.0.force_attach", "true"),
@@ -1520,7 +1546,6 @@ resource "google_compute_instance_from_template" "inst2" {
 func TestAccComputeInstanceFromTemplateWithOverride_interface(t *testing.T) {
 	t.Parallel()
 
-	var instance map[string]interface{}
 	instanceName := fmt.Sprintf("tf-test-%s", acctest.RandString(t, 10))
 	templateName := fmt.Sprintf("tf-test-%s", acctest.RandString(t, 10))
 	resourceName := "google_compute_instance_from_template.foobar"
@@ -1533,7 +1558,7 @@ func TestAccComputeInstanceFromTemplateWithOverride_interface(t *testing.T) {
 			{
 				Config: testAccComputeInstanceFromTemplateWithOverride_interface(instanceName, templateName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckComputeInstanceExists(t, resourceName, &instance),
+					testAccCheckComputeInstanceFromTemplateExists(t, resourceName),
 					resource.TestCheckResourceAttr(resourceName, "boot_disk.0.interface", "SCSI"),
 				),
 			},
@@ -1544,7 +1569,6 @@ func TestAccComputeInstanceFromTemplateWithOverride_interface(t *testing.T) {
 func TestAccComputeInstanceFromTemplate_IgmpQuery_v2(t *testing.T) {
 	t.Parallel()
 
-	var instance map[string]interface{}
 	instanceName := fmt.Sprintf("tf-test-%s", acctest.RandString(t, 10))
 	suffix := acctest.RandString(t, 10)
 	envRegion := envvar.GetTestRegionFromEnv()
@@ -1569,24 +1593,24 @@ func TestAccComputeInstanceFromTemplate_IgmpQuery_v2(t *testing.T) {
 			{
 				Config: testAccComputeInstanceFromTemplate_igmpQuery_v2(context),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckComputeInstanceExists(
-						t, "google_compute_instance_from_template.foobar", &instance),
+					testAccCheckComputeInstanceFromTemplateExists(
+						t, "google_compute_instance_from_template.foobar"),
 					resource.TestCheckResourceAttr("google_compute_instance_from_template.foobar", "network_interface.0.igmp_query", "IGMP_QUERY_V2"),
 				),
 			},
 			{
 				Config: testAccComputeInstanceFromTemplate_igmpQuery_v2(contextUpdate),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckComputeInstanceExists(
-						t, "google_compute_instance_from_template.foobar", &instance),
+					testAccCheckComputeInstanceFromTemplateExists(
+						t, "google_compute_instance_from_template.foobar"),
 					resource.TestCheckResourceAttr("google_compute_instance_from_template.foobar", "network_interface.0.igmp_query", "IGMP_QUERY_DISABLED"),
 				),
 			},
 			{
 				Config: testAccComputeInstanceFromTemplate_igmpQuery_v2(context),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckComputeInstanceExists(
-						t, "google_compute_instance_from_template.foobar", &instance),
+					testAccCheckComputeInstanceFromTemplateExists(
+						t, "google_compute_instance_from_template.foobar"),
 					resource.TestCheckResourceAttr("google_compute_instance_from_template.foobar", "network_interface.0.igmp_query", "IGMP_QUERY_V2"),
 				),
 			},

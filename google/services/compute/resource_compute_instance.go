@@ -20,6 +20,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -1701,9 +1702,17 @@ func expandComputeInstance(project string, d *schema.ResourceData, config *trans
 		return nil, fmt.Errorf("Error creating metadata: %s", err)
 	}
 
-	networkInterfaces, err := expandNetworkInterfaces(d, config)
+	networkInterfacesIface, err := expandNetworkInterfaces(d, config)
 	if err != nil {
 		return nil, fmt.Errorf("Error creating network interfaces: %s", err)
+	}
+	niJSON, err := json.Marshal(networkInterfacesIface)
+	if err != nil {
+		return nil, fmt.Errorf("Error marshaling network interfaces: %s", err)
+	}
+	var networkInterfaces []*compute.NetworkInterface
+	if err := json.Unmarshal(niJSON, &networkInterfaces); err != nil {
+		return nil, fmt.Errorf("Error unmarshaling network interfaces: %s", err)
 	}
 	networkPerformanceConfig, err := expandNetworkPerformanceConfig(d, config)
 	if err != nil {
@@ -1972,7 +1981,15 @@ func resourceComputeInstanceRead(d *schema.ResourceData, meta interface{}) error
 	}
 	// Set the networks
 	// Use the first external IP found for the default connection info.
-	networkInterfaces, _, internalIP, externalIP, err := flattenNetworkInterfaces(d, config, instance.NetworkInterfaces)
+	niJSON, err := json.Marshal(instance.NetworkInterfaces)
+	if err != nil {
+		return fmt.Errorf("Error marshaling network interfaces: %s", err)
+	}
+	var networkInterfacesIface []interface{}
+	if err := json.Unmarshal(niJSON, &networkInterfacesIface); err != nil {
+		return fmt.Errorf("Error unmarshaling network interfaces: %s", err)
+	}
+	networkInterfaces, _, internalIP, externalIP, err := flattenNetworkInterfaces(d, config, networkInterfacesIface)
 	if err != nil {
 		return err
 	}
@@ -2518,9 +2535,17 @@ func resourceComputeInstanceUpdate(d *schema.ResourceData, meta interface{}) err
 		}
 	}
 
-	networkInterfaces, err := expandNetworkInterfaces(d, config)
+	networkInterfacesIface, err := expandNetworkInterfaces(d, config)
 	if err != nil {
 		return fmt.Errorf("Error getting network interface from config: %s", err)
+	}
+	niJSON, err := json.Marshal(networkInterfacesIface)
+	if err != nil {
+		return fmt.Errorf("Error marshaling network interfaces: %s", err)
+	}
+	var networkInterfaces []*compute.NetworkInterface
+	if err := json.Unmarshal(niJSON, &networkInterfaces); err != nil {
+		return fmt.Errorf("Error unmarshaling network interfaces: %s", err)
 	}
 
 	// Sanity check

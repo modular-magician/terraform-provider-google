@@ -171,8 +171,12 @@ func expandScheduling(v interface{}) (*compute.Scheduling, error) {
 	}
 
 	if v, ok := original["on_instance_stop_action"]; ok {
-		transformedOnInstanceStopAction, err := expandComputeOnInstanceStopAction(v)
+		transformedOnInstanceStopActionRaw, err := expandComputeOnInstanceStopAction(v)
 		if err != nil {
+			return nil, err
+		}
+		var transformedOnInstanceStopAction *compute.SchedulingOnInstanceStopAction
+		if err := tpgresource.Convert(transformedOnInstanceStopActionRaw, &transformedOnInstanceStopAction); err != nil {
 			return nil, err
 		}
 		scheduling.OnInstanceStopAction = transformedOnInstanceStopAction
@@ -226,22 +230,22 @@ func expandComputeMaxRunDurationSeconds(v interface{}) (interface{}, error) {
 	return v, nil
 }
 
-func expandComputeOnInstanceStopAction(v interface{}) (*compute.SchedulingOnInstanceStopAction, error) {
+func expandComputeOnInstanceStopAction(v interface{}) (interface{}, error) {
 	l := v.([]interface{})
-	onInstanceStopAction := compute.SchedulingOnInstanceStopAction{}
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
 	}
 	raw := l[0]
 	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
 
 	if d, ok := original["discard_local_ssd"]; ok {
-		onInstanceStopAction.DiscardLocalSsd = d.(bool)
+		transformed["discardLocalSsd"] = d.(bool)
 	} else {
 		return nil, nil
 	}
 
-	return &onInstanceStopAction, nil
+	return transformed, nil
 }
 
 func expandComputeLocalSsdRecoveryTimeout(v interface{}) (*compute.Duration, error) {

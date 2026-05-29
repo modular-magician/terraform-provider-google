@@ -426,6 +426,11 @@ with RFC1035.`,
 										Elem:         &schema.Schema{Type: schema.TypeString},
 										AtLeastOneOf: []string{"snapshot_schedule_policy.0.snapshot_properties.0.guest_flush", "snapshot_schedule_policy.0.snapshot_properties.0.labels", "snapshot_schedule_policy.0.snapshot_properties.0.storage_locations"},
 									},
+									"region": {
+										Type:        schema.TypeString,
+										Optional:    true,
+										Description: `Region where the snapshot is scoped to.`,
+									},
 									"storage_locations": {
 										Type:     schema.TypeSet,
 										Optional: true,
@@ -1179,6 +1184,8 @@ func flattenComputeResourcePolicySnapshotSchedulePolicySnapshotProperties(v inte
 		flattenComputeResourcePolicySnapshotSchedulePolicySnapshotPropertiesGuestFlush(original["guestFlush"], d, config)
 	transformed["chain_name"] =
 		flattenComputeResourcePolicySnapshotSchedulePolicySnapshotPropertiesChainName(original["chainName"], d, config)
+	transformed["region"] =
+		flattenComputeResourcePolicySnapshotSchedulePolicySnapshotPropertiesRegion(original["region"], d, config)
 	return []interface{}{transformed}
 }
 func flattenComputeResourcePolicySnapshotSchedulePolicySnapshotPropertiesLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -1197,6 +1204,10 @@ func flattenComputeResourcePolicySnapshotSchedulePolicySnapshotPropertiesGuestFl
 }
 
 func flattenComputeResourcePolicySnapshotSchedulePolicySnapshotPropertiesChainName(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenComputeResourcePolicySnapshotSchedulePolicySnapshotPropertiesRegion(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 
@@ -1660,6 +1671,13 @@ func expandComputeResourcePolicySnapshotSchedulePolicySnapshotProperties(v inter
 		transformed["chainName"] = transformedChainName
 	}
 
+	transformedRegion, err := expandComputeResourcePolicySnapshotSchedulePolicySnapshotPropertiesRegion(original["region"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedRegion); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["region"] = transformedRegion
+	}
+
 	return transformed, nil
 }
 
@@ -1684,6 +1702,10 @@ func expandComputeResourcePolicySnapshotSchedulePolicySnapshotPropertiesGuestFlu
 }
 
 func expandComputeResourcePolicySnapshotSchedulePolicySnapshotPropertiesChainName(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandComputeResourcePolicySnapshotSchedulePolicySnapshotPropertiesRegion(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 

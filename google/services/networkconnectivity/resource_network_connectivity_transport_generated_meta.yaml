@@ -19,8 +19,7 @@ fields:
     - api_field: network
     - api_field: peeringNetwork
     - api_field: providedActivationKey
-    - field: region
-      provider_only: true
+    - api_field: region
     - api_field: remoteAccountId
     - api_field: remoteProfile
     - api_field: stackType

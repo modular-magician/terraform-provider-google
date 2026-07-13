@@ -48,6 +48,7 @@ import (
 	_ "github.com/hashicorp/terraform-provider-google/google/services/blockchainnodeengine"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/certificatemanager"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/ces"
+	_ "github.com/hashicorp/terraform-provider-google/google/services/chromepolicy"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/chronicle"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/cloudasset"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/cloudbilling"

@@ -122,6 +122,8 @@ func ResourceStorageAnywhereCache() *schema.Resource {
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
+		DeprecationMessage: "`google_storage_anywhere_cache` is deprecated and will be removed in a future major release. Use `google_storage_rapid_cache` instead.",
+
 		Identity: &schema.ResourceIdentity{
 			Version: 1,
 			SchemaFunc: func() map[string]*schema.Schema {

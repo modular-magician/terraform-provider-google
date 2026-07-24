@@ -2206,7 +2206,7 @@ func TestAccComputeInstance_advancedMachineFeatures(t *testing.T) {
 						t, "google_compute_instance.foobar", &instance),
 				),
 			},
-			computeInstanceImportStep("us-central1-a", instanceName, []string{"allow_stopping_for_update"}),
+			computeInstanceImportStep("us-central1-b", instanceName, []string{"allow_stopping_for_update"}),
 			{
 				Config: testAccComputeInstance_advancedMachineFeaturesUpdated(instanceName),
 				Check: resource.ComposeTestCheckFunc(
@@ -2214,7 +2214,7 @@ func TestAccComputeInstance_advancedMachineFeatures(t *testing.T) {
 						t, "google_compute_instance.foobar", &instance),
 				),
 			},
-			computeInstanceImportStep("us-central1-a", instanceName, []string{"allow_stopping_for_update"}),
+			computeInstanceImportStep("us-central1-b", instanceName, []string{"allow_stopping_for_update"}),
 		},
 	})
 }
@@ -2244,7 +2244,7 @@ func TestAccComputeInstance_performanceMonitoringUnit(t *testing.T) {
 						t, "google_compute_instance.foobar", &instance),
 				),
 			},
-			computeInstanceImportStep("us-central1-a", context_1["instance_name"].(string), []string{"allow_stopping_for_update"}),
+			computeInstanceImportStep("us-central1-b", context_1["instance_name"].(string), []string{"allow_stopping_for_update"}),
 			{
 				Config: testAccComputeInstance_performanceMonitoringUnit(context_3),
 				Check: resource.ComposeTestCheckFunc(
@@ -8290,7 +8290,7 @@ data "google_compute_image" "my_image" {
 resource "google_compute_instance" "foobar" {
   name         = "%s"
   machine_type = "c4-standard-2"
-  zone         = "us-central1-a"
+  zone         = "us-central1-b"
 
   boot_disk {
     initialize_params {
@@ -8318,7 +8318,7 @@ data "google_compute_image" "my_image" {
 resource "google_compute_instance" "foobar" {
   name         = "%{instance_name}"
   machine_type = "c4-standard-2"
-  zone         = "us-central1-a"
+  zone         = "us-central1-b"
 
   boot_disk {
     initialize_params {
@@ -8378,7 +8378,7 @@ data "google_compute_image" "my_image" {
 resource "google_compute_instance" "foobar" {
   name         = "%s"
   machine_type = "c4-standard-2"
-  zone         = "us-central1-a"
+  zone         = "us-central1-b"
 
   boot_disk {
     initialize_params {

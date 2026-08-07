@@ -2120,7 +2120,7 @@ func TestAccComputeInstance_scheduling(t *testing.T) {
 						t, "google_compute_instance.foobar", &instance),
 				),
 			},
-			computeInstanceImportStep("us-central1-a", instanceName, []string{}),
+			computeInstanceImportStep("us-east1-d", instanceName, []string{}),
 			{
 				Config: testAccComputeInstance_schedulingUpdated(instanceName),
 				Check: resource.ComposeTestCheckFunc(
@@ -2128,7 +2128,7 @@ func TestAccComputeInstance_scheduling(t *testing.T) {
 						t, "google_compute_instance.foobar", &instance),
 				),
 			},
-			computeInstanceImportStep("us-central1-a", instanceName, []string{}),
+			computeInstanceImportStep("us-east1-d", instanceName, []string{}),
 		},
 	})
 }
@@ -4028,7 +4028,7 @@ func TestAccComputeInstance_standardVM_maxRunDuration_stopTerminationAction(t *t
 					testAccCheckComputeInstanceMaxRunDuration(&instance, expectedMaxRunDuration),
 				),
 			},
-			computeInstanceImportStep("us-central1-a", instanceName, []string{}),
+			computeInstanceImportStep("us-east1-d", instanceName, []string{}),
 		},
 	})
 }
@@ -4090,7 +4090,7 @@ func TestAccComputeInstance_spotVM_maxRunDuration_deleteTerminationAction(t *tes
 					testAccCheckComputeInstanceMaxRunDuration(&instance, expectedMaxRunDuration),
 				),
 			},
-			computeInstanceImportStep("us-central1-a", instanceName, []string{}),
+			computeInstanceImportStep("us-east1-d", instanceName, []string{}),
 		},
 	})
 }
@@ -4121,7 +4121,7 @@ func TestAccComputeInstance_standardVM_maxRunDuration_deleteTerminationAction(t 
 					testAccCheckComputeInstanceMaxRunDuration(&instance, expectedMaxRunDuration),
 				),
 			},
-			computeInstanceImportStep("us-central1-a", instanceName, []string{}),
+			computeInstanceImportStep("us-east1-d", instanceName, []string{}),
 		},
 	})
 }
@@ -4148,7 +4148,7 @@ func TestAccComputeInstance_spotVM_maxRunDuration_update(t *testing.T) {
 						t, "google_compute_instance.foobar", &instance),
 				),
 			},
-			computeInstanceImportStep("us-central1-a", instanceName, []string{}),
+			computeInstanceImportStep("us-east1-d", instanceName, []string{}),
 			{
 				Config: testAccComputeInstance_spotVM_maxRunDuration(instanceName, "DELETE"),
 				Check: resource.ComposeTestCheckFunc(
@@ -4157,7 +4157,7 @@ func TestAccComputeInstance_spotVM_maxRunDuration_update(t *testing.T) {
 					testAccCheckComputeInstanceMaxRunDuration(&instance, expectedMaxRunDuration),
 				),
 			},
-			computeInstanceImportStep("us-central1-a", instanceName, []string{}),
+			computeInstanceImportStep("us-east1-d", instanceName, []string{}),
 		},
 	})
 }
@@ -8241,7 +8241,7 @@ data "google_compute_image" "my_image" {
 resource "google_compute_instance" "foobar" {
   name         = "%s"
   machine_type = "e2-medium"
-  zone         = "us-central1-a"
+  zone         = "us-east1-d"
 
   boot_disk {
     initialize_params {
@@ -8270,7 +8270,7 @@ data "google_compute_image" "my_image" {
 resource "google_compute_instance" "foobar" {
   name         = "%s"
   machine_type = "e2-medium"
-  zone         = "us-central1-a"
+  zone         = "us-east1-d"
 
   boot_disk {
     initialize_params {
@@ -10898,7 +10898,7 @@ data "google_compute_image" "my_image" {
 resource "google_compute_instance" "foobar" {
   name         = "%s"
   machine_type = "e2-medium"
-  zone         = "us-central1-a"
+  zone         = "us-east1-d"
 
   boot_disk {
     initialize_params {
@@ -10933,7 +10933,7 @@ data "google_compute_image" "my_image" {
 resource "google_compute_instance" "foobar" {
   name         = "%s"
   machine_type = "e2-medium"
-  zone         = "us-central1-a"
+  zone         = "us-east1-d"
 
   boot_disk {
     initialize_params {
@@ -11009,7 +11009,7 @@ data "google_compute_image" "my_image" {
 resource "google_compute_instance" "foobar" {
   name         = "%s"
   machine_type = "e2-medium"
-  zone         = "us-central1-a"
+  zone         = "us-east1-d"
 
   boot_disk {
     initialize_params {

@@ -81,7 +81,7 @@ func TestAccColabNotebookExecution_colabNotebookExecutionBasicExample(t *testing
 				ResourceName:            "google_colab_notebook_execution.notebook-execution",
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"direct_notebook_source", "direct_notebook_source.0.content", "location", "notebook_execution_job_id"},
+				ImportStateVerifyIgnore: []string{"direct_notebook_source", "direct_notebook_source.0.content", "location", "notebook_execution_job_id", "workbench_runtime"},
 			},
 			{
 				ResourceName:       "google_colab_notebook_execution.notebook-execution",
@@ -200,7 +200,7 @@ func TestAccColabNotebookExecution_colabNotebookExecutionCustomEnvExample(t *tes
 				ResourceName:            "google_colab_notebook_execution.notebook-execution",
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"direct_notebook_source", "direct_notebook_source.0.content", "location", "notebook_execution_job_id"},
+				ImportStateVerifyIgnore: []string{"direct_notebook_source", "direct_notebook_source.0.content", "location", "notebook_execution_job_id", "workbench_runtime"},
 			},
 			{
 				ResourceName:       "google_colab_notebook_execution.notebook-execution",

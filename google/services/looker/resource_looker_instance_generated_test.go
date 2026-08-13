@@ -31,11 +31,11 @@ import (
 
 	"github.com/hashicorp/terraform-provider-google/google/acctest"
 	"github.com/hashicorp/terraform-provider-google/google/envvar"
-	"github.com/hashicorp/terraform-provider-google/google/services/compute"
-	"github.com/hashicorp/terraform-provider-google/google/services/kms"
+	compute "github.com/hashicorp/terraform-provider-google/google/services/compute"
+	kms "github.com/hashicorp/terraform-provider-google/google/services/kms"
 	"github.com/hashicorp/terraform-provider-google/google/services/looker"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/resourcemanager"
-	"github.com/hashicorp/terraform-provider-google/google/services/servicenetworking"
+	servicenetworking "github.com/hashicorp/terraform-provider-google/google/services/servicenetworking"
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
 	transport_tpg "github.com/hashicorp/terraform-provider-google/google/transport"
 

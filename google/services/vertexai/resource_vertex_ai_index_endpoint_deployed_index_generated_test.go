@@ -31,9 +31,9 @@ import (
 
 	"github.com/hashicorp/terraform-provider-google/google/acctest"
 	"github.com/hashicorp/terraform-provider-google/google/envvar"
-	"github.com/hashicorp/terraform-provider-google/google/services/compute"
+	compute "github.com/hashicorp/terraform-provider-google/google/services/compute"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/resourcemanager"
-	"github.com/hashicorp/terraform-provider-google/google/services/servicenetworking"
+	servicenetworking "github.com/hashicorp/terraform-provider-google/google/services/servicenetworking"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/storage"
 	"github.com/hashicorp/terraform-provider-google/google/services/vertexai"
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"

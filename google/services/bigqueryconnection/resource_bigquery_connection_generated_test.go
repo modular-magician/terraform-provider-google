@@ -35,7 +35,7 @@ import (
 	"github.com/hashicorp/terraform-provider-google/google/services/bigqueryconnection"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/compute"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/dataproc"
-	"github.com/hashicorp/terraform-provider-google/google/services/kms"
+	kms "github.com/hashicorp/terraform-provider-google/google/services/kms"
 	"github.com/hashicorp/terraform-provider-google/google/services/resourcemanager"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/servicenetworking"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/sql"

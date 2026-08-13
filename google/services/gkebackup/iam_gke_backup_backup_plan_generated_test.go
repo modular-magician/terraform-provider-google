@@ -30,7 +30,7 @@ import (
 
 	"github.com/hashicorp/terraform-provider-google/google/acctest"
 	"github.com/hashicorp/terraform-provider-google/google/envvar"
-	"github.com/hashicorp/terraform-provider-google/google/services/compute"
+	compute "github.com/hashicorp/terraform-provider-google/google/services/compute"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/container"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/gkebackup"
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"

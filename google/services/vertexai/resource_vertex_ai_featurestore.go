@@ -128,7 +128,7 @@ func ResourceVertexAIFeaturestore() *schema.Resource {
 					},
 					"region": {
 						Type:              schema.TypeString,
-						OptionalForImport: true,
+						RequiredForImport: true,
 					},
 					"project": {
 						Type:              schema.TypeString,
@@ -142,6 +142,12 @@ func ResourceVertexAIFeaturestore() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
+			"region": {
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: `The region of the dataset. eg us-central1`,
+			},
 			"encryption_spec": {
 				Type:        schema.TypeList,
 				Optional:    true,
@@ -209,13 +215,6 @@ Please refer to the field 'effective_labels' for all of the labels present on th
 						},
 					},
 				},
-			},
-			"region": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Optional:    true,
-				ForceNew:    true,
-				Description: `The region of the dataset. eg us-central1`,
 			},
 			"create_time": {
 				Type:        schema.TypeString,

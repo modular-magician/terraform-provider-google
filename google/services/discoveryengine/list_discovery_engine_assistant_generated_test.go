@@ -29,10 +29,12 @@ import (
 
 	"github.com/hashicorp/terraform-provider-google/google/acctest"
 	"github.com/hashicorp/terraform-provider-google/google/envvar"
+	"github.com/hashicorp/terraform-provider-google/google/services/kms"
 )
 
 var (
 	_ = envvar.TestEnvVar
+	_ = kms.BootstrapKMSKeyInLocation
 )
 
 func TestAccDiscoveryEngineAssistantListQuery_generated(t *testing.T) {

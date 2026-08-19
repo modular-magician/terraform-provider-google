@@ -160,7 +160,8 @@ func ListDiscoveryEngineControls(config *transport_tpg.Config,
 	if err != nil {
 		return err
 	}
-	billingProject := project
+
+	billingProject := ""
 	if bp, err := tpgresource.GetBillingProject(resourceData, config); err == nil {
 		billingProject = bp
 	}
@@ -200,6 +201,10 @@ func ListDiscoveryEngineControls(config *transport_tpg.Config,
 				if err := d.Set("control_id", v); err != nil {
 					return fmt.Errorf("error setting control_id: %w", err)
 				}
+			}
+			project := ""
+			if p, err := tpgresource.GetProject(d, config); err == nil {
+				project = p
 			}
 			if err = ResourceDiscoveryEngineControlFlatten(d, config, res, config, project, userAgent, billingProject, url, headers); err != nil {
 				return err

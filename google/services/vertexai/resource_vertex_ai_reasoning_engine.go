@@ -1412,13 +1412,6 @@ func resourceVertexAIReasoningEngineImport(d *schema.ResourceData, meta interfac
 	return []*schema.ResourceData{d}, nil
 }
 
-func flattenVertexAIReasoningEngineName(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	if v == nil {
-		return v
-	}
-	return tpgresource.GetResourceNameFromSelfLink(v.(string))
-}
-
 func flattenVertexAIReasoningEngineDisplayName(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
@@ -1500,18 +1493,6 @@ func flattenVertexAIReasoningEngineSpecAgentFramework(v interface{}, d *schema.R
 	return v
 }
 
-func flattenVertexAIReasoningEngineSpecClassMethods(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	if v == nil {
-		return nil
-	}
-	b, err := json.Marshal(v)
-	if err != nil {
-		// TODO: return error once https://github.com/GoogleCloudPlatform/magic-modules/issues/3257 is fixed.
-		log.Printf("[ERROR] failed to marshal schema to JSON: %v", err)
-	}
-	return string(b)
-}
-
 func flattenVertexAIReasoningEngineSpecDeploymentSpec(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	if v == nil {
 		return nil
@@ -1536,27 +1517,6 @@ func flattenVertexAIReasoningEngineSpecDeploymentSpec(v interface{}, d *schema.R
 	transformed["container_concurrency"] =
 		flattenVertexAIReasoningEngineSpecDeploymentSpecContainerConcurrency(original["containerConcurrency"], d, config)
 	return []interface{}{transformed}
-}
-func flattenVertexAIReasoningEngineSpecDeploymentSpecEnv(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	if v == nil {
-		return nil
-	}
-	l := v.([]interface{})
-	transformed := make([]interface{}, 0, len(l))
-	for _, raw := range l {
-		if raw == nil {
-			continue
-		}
-		original := raw.(map[string]interface{})
-		if original["name"] == "GOOGLE_CLOUD_AGENT_ENGINE_ENABLE_TELEMETRY" {
-			continue
-		}
-		transformed = append(transformed, map[string]interface{}{
-			"name":  original["name"],
-			"value": original["value"],
-		})
-	}
-	return transformed
 }
 
 func flattenVertexAIReasoningEngineSpecDeploymentSpecSecretEnv(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -2046,18 +2006,6 @@ func expandVertexAIReasoningEngineSpec(v interface{}, d tpgresource.TerraformRes
 
 func expandVertexAIReasoningEngineSpecAgentFramework(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
-}
-
-func expandVertexAIReasoningEngineSpecClassMethods(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	b := []byte(v.(string))
-	if len(b) == 0 {
-		return nil, nil
-	}
-	var j interface{}
-	if err := json.Unmarshal(b, &j); err != nil {
-		return nil, err
-	}
-	return j, nil
 }
 
 func expandVertexAIReasoningEngineSpecDeploymentSpec(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {

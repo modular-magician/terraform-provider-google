@@ -852,10 +852,6 @@ func flattenVertexAIFeatureOnlineStoreFeatureviewFeatureRegistrySourceFeatureGro
 	return v
 }
 
-func flattenVertexAIFeatureOnlineStoreFeatureviewFeatureRegistrySourceProjectNumber(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return d.Get("feature_registry_source.0.project_number")
-}
-
 func flattenVertexAIFeatureOnlineStoreFeatureviewTerraformLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	if v == nil {
 		return v

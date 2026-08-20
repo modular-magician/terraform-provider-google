@@ -2433,13 +2433,6 @@ func flattenComputeRegionBackendServiceBackendFailover(v interface{}, d *schema.
 	return v
 }
 
-func flattenComputeRegionBackendServiceBackendGroup(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	if v == nil {
-		return v
-	}
-	return tpgresource.ConvertSelfLinkToV1(v.(string))
-}
-
 func flattenComputeRegionBackendServiceBackendMaxConnections(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
@@ -3055,13 +3048,6 @@ func flattenComputeRegionBackendServiceEnableCDN(v interface{}, d *schema.Resour
 
 func flattenComputeRegionBackendServiceFingerprint(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
-}
-
-func flattenComputeRegionBackendServiceHealthChecks(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	if v == nil {
-		return v
-	}
-	return tpgresource.ConvertAndMapStringArr(v.([]interface{}), tpgresource.ConvertSelfLinkToV1)
 }
 
 func flattenComputeRegionBackendServiceGeneratedId(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -3836,13 +3822,6 @@ func flattenComputeRegionBackendServiceTlsSettingsSubjectAltNamesUniformResource
 
 func flattenComputeRegionBackendServiceTlsSettingsAuthenticationConfig(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
-}
-
-func flattenComputeRegionBackendServiceRegion(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	if v == nil {
-		return v
-	}
-	return tpgresource.GetResourceNameFromSelfLink(v.(string))
 }
 
 func expandComputeRegionBackendServiceAffinityCookieTtlSec(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
@@ -5219,14 +5198,6 @@ func expandComputeRegionBackendServiceLogConfigResponseHeadersHeaderName(v inter
 	return v, nil
 }
 
-func expandComputeRegionBackendServiceNetwork(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	f, err := tpgresource.ParseGlobalFieldValue("networks", v.(string), "project", d, config, true)
-	if err != nil {
-		return nil, fmt.Errorf("Invalid value for network: %s", err)
-	}
-	return f.RelativeLink(), nil
-}
-
 func expandComputeRegionBackendServiceHaPolicy(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	if v == nil {
 		return nil, nil
@@ -5434,70 +5405,6 @@ func expandComputeRegionBackendServiceTlsSettingsSubjectAltNamesUniformResourceI
 
 func expandComputeRegionBackendServiceTlsSettingsAuthenticationConfig(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
-}
-
-func expandComputeRegionBackendServiceRegion(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	f, err := tpgresource.ParseGlobalFieldValue("regions", v.(string), "project", d, config, true)
-	if err != nil {
-		return nil, fmt.Errorf("Invalid value for region: %s", err)
-	}
-	return f.RelativeLink(), nil
-}
-
-func resourceComputeRegionBackendServiceEncoder(d *schema.ResourceData, meta interface{}, obj map[string]interface{}) (map[string]interface{}, error) {
-	if d.Get("load_balancing_scheme").(string) == "EXTERNAL_MANAGED" || d.Get("load_balancing_scheme").(string) == "INTERNAL_MANAGED" || d.Get("load_balancing_scheme").(string) == "INTERNAL_SELF_MANAGED" {
-		return obj, nil
-	}
-
-	backendServiceOnlyManagedApiFieldNames := []string{
-		"capacityScaler",
-		"maxConnections",
-		"maxConnectionsPerInstance",
-		"maxConnectionsPerEndpoint",
-		"maxRate",
-		"maxRatePerInstance",
-		"maxRatePerEndpoint",
-		"maxUtilization",
-	}
-
-	var backends []interface{}
-	if lsV := obj["backends"]; lsV != nil {
-		backends = lsV.([]interface{})
-	}
-	for idx, v := range backends {
-		if v == nil {
-			continue
-		}
-		backend := v.(map[string]interface{})
-		// Remove fields from backends that cannot be sent for non-managed
-		// backend services
-		for _, k := range backendServiceOnlyManagedApiFieldNames {
-			log.Printf("[DEBUG] Removing field %q for request for non-managed backend service %s", k, d.Get("name"))
-			delete(backend, k)
-		}
-		backends[idx] = backend
-	}
-
-	obj["backends"] = backends
-	return obj, nil
-}
-
-func resourceComputeRegionBackendServiceDecoder(d *schema.ResourceData, meta interface{}, res map[string]interface{}) (map[string]interface{}, error) {
-
-	// Requests with consistentHash will error for specific values of
-	// localityLbPolicy. However, the API will not remove it if the backend
-	// service is updated to from supporting to non-supporting localityLbPolicy
-	// (e.g. RING_HASH to RANDOM), which causes an error on subsequent update.
-	// In order to prevent errors, we ignore any consistentHash returned
-	// from the API when the localityLbPolicy doesn't support it.
-	if v, ok := res["localityLbPolicy"]; ok {
-		lbPolicy := v.(string)
-		if lbPolicy != "MAGLEV" && lbPolicy != "RING_HASH" {
-			delete(res, "consistentHash")
-		}
-	}
-
-	return res, nil
 }
 
 func ResourceComputeRegionBackendServiceFlatten(d *schema.ResourceData, meta interface{}, res map[string]interface{}, config *transport_tpg.Config, project string, userAgent string, billingProject string, url string, headers http.Header) error {

@@ -732,13 +732,6 @@ func resourceContainerAnalysisNoteImport(d *schema.ResourceData, meta interface{
 	return []*schema.ResourceData{d}, nil
 }
 
-func flattenContainerAnalysisNoteName(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	if v == nil {
-		return v
-	}
-	return tpgresource.GetResourceNameFromSelfLink(v.(string))
-}
-
 func flattenContainerAnalysisNoteShortDescription(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
@@ -936,22 +929,6 @@ func expandContainerAnalysisNoteAttestationAuthorityHint(v interface{}, d tpgres
 
 func expandContainerAnalysisNoteAttestationAuthorityHintHumanReadableName(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
-}
-
-func resourceContainerAnalysisNoteEncoder(d *schema.ResourceData, meta interface{}, obj map[string]interface{}) (map[string]interface{}, error) {
-	// Field was renamed in GA API
-	obj["attestation"] = obj["attestationAuthority"]
-	delete(obj, "attestationAuthority")
-
-	return obj, nil
-}
-
-func resourceContainerAnalysisNoteDecoder(d *schema.ResourceData, meta interface{}, res map[string]interface{}) (map[string]interface{}, error) {
-	// Field was renamed in GA API
-	res["attestationAuthority"] = res["attestation"]
-	delete(res, "attestation")
-
-	return res, nil
 }
 
 func ResourceContainerAnalysisNoteFlatten(d *schema.ResourceData, meta interface{}, res map[string]interface{}, config *transport_tpg.Config, project string, userAgent string, billingProject string, url string, headers http.Header) error {

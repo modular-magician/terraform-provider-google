@@ -680,13 +680,6 @@ func resourceContainerAnalysisOccurrenceImport(d *schema.ResourceData, meta inte
 	return []*schema.ResourceData{d}, nil
 }
 
-func flattenContainerAnalysisOccurrenceName(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	if v == nil {
-		return v
-	}
-	return tpgresource.GetResourceNameFromSelfLink(v.(string))
-}
-
 func flattenContainerAnalysisOccurrenceResourceUri(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
@@ -844,28 +837,6 @@ func expandContainerAnalysisOccurrenceAttestationSignaturesPublicKeyId(v interfa
 	return v, nil
 }
 
-func resourceContainerAnalysisOccurrenceEncoder(d *schema.ResourceData, meta interface{}, obj map[string]interface{}) (map[string]interface{}, error) {
-	// encoder logic only in non-GA versions
-
-	return obj, nil
-}
-
-func resourceContainerAnalysisOccurrenceUpdateEncoder(d *schema.ResourceData, meta interface{}, obj map[string]interface{}) (map[string]interface{}, error) {
-	// Note is required, even for PATCH
-	noteNameProp, err := expandContainerAnalysisOccurrenceNoteName(d.Get("note_name"), d, meta.(*transport_tpg.Config))
-	if err != nil {
-		return nil, err
-	} else if v, ok := d.GetOkExists("note_name"); !tpgresource.IsEmptyValue(reflect.ValueOf(noteNameProp)) && (ok || !reflect.DeepEqual(v, noteNameProp)) {
-		obj["noteName"] = noteNameProp
-	}
-
-	return resourceContainerAnalysisOccurrenceEncoder(d, meta, obj)
-}
-
-func resourceContainerAnalysisOccurrenceDecoder(d *schema.ResourceData, meta interface{}, res map[string]interface{}) (map[string]interface{}, error) {
-	// encoder logic only in non-GA version
-	return res, nil
-}
 func resourceContainerAnalysisOccurrencePostCreateSetComputedFields(d *schema.ResourceData, meta interface{}, res map[string]interface{}) error {
 	config := meta.(*transport_tpg.Config)
 	res, err := resourceContainerAnalysisOccurrenceDecoder(d, meta, res)

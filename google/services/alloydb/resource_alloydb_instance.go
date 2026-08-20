@@ -1077,23 +1077,7 @@ func resourceAlloydbInstanceDelete(d *schema.ResourceData, meta interface{}) err
 }
 
 func resourceAlloydbInstanceImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	config := meta.(*transport_tpg.Config)
-
-	// current import_formats can't import fields with forward slashes in their value
-	if err := tpgresource.ParseImportId([]string{
-		"(?P<cluster>.+)/instances/(?P<instance_id>[^/]+)",
-	}, d, config); err != nil {
-		return nil, err
-	}
-
-	// Replace import id for the resource id
-	id, err := tpgresource.ReplaceVars(d, config, "{{cluster}}/instances/{{instance_id}}")
-	if err != nil {
-		return nil, fmt.Errorf("Error constructing id: %s", err)
-	}
-	d.SetId(id)
-
-	return []*schema.ResourceData{d}, nil
+	return resourceAlloydbInstanceCustomImport(d, meta)
 }
 
 func flattenAlloydbInstanceName(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -1495,59 +1479,6 @@ func flattenAlloydbInstancePublicIpAddress(v interface{}, d *schema.ResourceData
 }
 
 func flattenAlloydbInstanceOutboundPublicIpAddresses(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenAlloydbInstanceConnectionPoolConfig(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	if v == nil {
-		return nil
-	}
-	original := v.(map[string]interface{})
-	if len(original) == 0 {
-		return flattenAlloyDBInstanceEmptyConnectionPoolConfig(v, d, config)
-	}
-	transformed := make(map[string]interface{})
-	transformed["enabled"] =
-		flattenAlloydbInstanceConnectionPoolConfigEnabled(original["enabled"], d, config)
-	transformed["pooler_count"] =
-		flattenAlloydbInstanceConnectionPoolConfigPoolerCount(original["poolerCount"], d, config)
-	transformed["flags"] =
-		flattenAlloydbInstanceConnectionPoolConfigFlags(original["flags"], d, config)
-	return []interface{}{transformed}
-}
-
-func flattenAlloyDBInstanceEmptyConnectionPoolConfig(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	// The API returns an nil/empty value for connectionPoolConfig.enabled when
-	// it's set to false. So keep the user's value to avoid a permadiff.
-	return []interface{}{
-		map[string]interface{}{
-			"enabled": d.Get("connection_pool_config.0.enabled"),
-		},
-	}
-}
-
-func flattenAlloydbInstanceConnectionPoolConfigEnabled(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenAlloydbInstanceConnectionPoolConfigPoolerCount(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	// Handles the string fixed64 format
-	if strVal, ok := v.(string); ok {
-		if intVal, err := tpgresource.StringToFixed64(strVal); err == nil {
-			return intVal
-		}
-	}
-
-	// number values are represented as float64
-	if floatVal, ok := v.(float64); ok {
-		intVal := int(floatVal)
-		return intVal
-	}
-
-	return v // let terraform core handle it otherwise
-}
-
-func flattenAlloydbInstanceConnectionPoolConfigFlags(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 

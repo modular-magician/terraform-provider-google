@@ -683,7 +683,7 @@ func resourceCloudIdentityGroupMembershipDelete(d *schema.ResourceData, meta int
 		Headers:   headers,
 	})
 	if err != nil {
-		return transport_tpg.HandleNotFoundError(err, d, "GroupMembership")
+		return transport_tpg.HandleNotFoundError(transformCloudIdentityGroupMembershipReadError(err), d, "GroupMembership")
 	}
 
 	log.Printf("[DEBUG] Finished deleting GroupMembership %q: %#v", d.Id(), res)

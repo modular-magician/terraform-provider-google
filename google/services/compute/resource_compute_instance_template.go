@@ -53,6 +53,7 @@ var (
 		"scheduling.0.termination_time",
 		"scheduling.0.host_error_timeout_seconds",
 		"scheduling.0.local_ssd_recovery_timeout",
+		"scheduling.0.expose_host_topology",
 	}
 
 	shieldedInstanceTemplateConfigKeys = []string{
@@ -898,6 +899,14 @@ be from 0 to 999,999,999 inclusive.`,
 									},
 								},
 							},
+						},
+
+						"expose_host_topology": {
+							Type:         schema.TypeBool,
+							Optional:     true,
+							ForceNew:     true,
+							AtLeastOneOf: schedulingInstTemplateKeys,
+							Description:  `Opt-in flag to expose the hashed physical host ID in the VM's ResourceStatus.`,
 						},
 					},
 				},
@@ -2153,6 +2162,7 @@ func expandResourceComputeInstanceTemplateScheduling(d *schema.ResourceData, met
 		{"provisioningModel", "ProvisioningModel"},
 		{"instanceTerminationAction", "InstanceTerminationAction"},
 		{"skipGuestOsShutdown", "SkipGuestOsShutdown"},
+		{"exposeHostTopology", "ExposeHostTopology"},
 	} {
 		if _, ok := expanded[pair[0]]; ok {
 			schedulingTyped.ForceSendFields = append(schedulingTyped.ForceSendFields, pair[1])

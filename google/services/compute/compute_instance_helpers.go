@@ -215,6 +215,9 @@ func expandScheduling(v interface{}) (map[string]interface{}, error) {
 			result["localSsdRecoveryTimeout"] = transformedLocalSsdRecoveryTimeout
 		}
 	}
+	if v, ok := original["expose_host_topology"]; ok {
+		result["exposeHostTopology"] = v.(bool)
+	}
 	if v, ok := original["termination_time"]; ok && v.(string) != "" {
 		result["terminationTime"] = v.(string)
 	}
@@ -325,6 +328,10 @@ func flattenScheduling(resp map[string]interface{}) []map[string]interface{} {
 
 	if ois, ok := resp["onInstanceStopAction"].(map[string]interface{}); ok {
 		schedulingMap["on_instance_stop_action"] = flattenOnInstanceStopAction(ois)
+	}
+
+	if eth, ok := resp["exposeHostTopology"].(bool); ok {
+		schedulingMap["expose_host_topology"] = eth
 	}
 
 	if h := getInt(resp["hostErrorTimeoutSeconds"]); h != 0 {
@@ -1098,6 +1105,10 @@ func schedulingHasChangeWithoutReboot(d *schema.ResourceData) bool {
 		return true
 	}
 	if oScheduling["host_error_timeout_seconds"] != newScheduling["host_error_timeout_seconds"] {
+		return true
+	}
+
+	if oScheduling["expose_host_topology"] != newScheduling["expose_host_topology"] {
 		return true
 	}
 

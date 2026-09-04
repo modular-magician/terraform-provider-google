@@ -18,6 +18,7 @@ package container
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"log"
 	"reflect"

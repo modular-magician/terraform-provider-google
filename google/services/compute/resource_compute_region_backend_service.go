@@ -4282,7 +4282,7 @@ func expandComputeRegionBackendServiceCdnPolicy(v interface{}, d tpgresource.Ter
 	transformedDefaultTtl, err := expandComputeRegionBackendServiceCdnPolicyDefaultTtl(original["default_ttl"], d, config)
 	if err != nil {
 		return nil, err
-	} else if val := reflect.ValueOf(transformedDefaultTtl); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+	} else {
 		transformed["defaultTtl"] = transformedDefaultTtl
 	}
 
@@ -4296,7 +4296,7 @@ func expandComputeRegionBackendServiceCdnPolicy(v interface{}, d tpgresource.Ter
 	transformedClientTtl, err := expandComputeRegionBackendServiceCdnPolicyClientTtl(original["client_ttl"], d, config)
 	if err != nil {
 		return nil, err
-	} else if val := reflect.ValueOf(transformedClientTtl); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+	} else {
 		transformed["clientTtl"] = transformedClientTtl
 	}
 

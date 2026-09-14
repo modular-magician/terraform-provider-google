@@ -2798,6 +2798,26 @@ func ResourceContainerCluster() *schema.Resource {
 					},
 				},
 			},
+			"control_plane_egress": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				MaxItems:    1,
+				Computed:    true,
+				Description: `Configuration for control plane egress control.`,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"mode": {
+							Type:         schema.TypeString,
+							Required:     true,
+							ValidateFunc: validation.StringInSlice([]string{"VIA_CONTROL_PLANE", "NONE"}, false),
+							Description: `The egress mode of the control plane.
+ Accepted values are:
+* VIA_CONTROL_PLANE: Control plane egress traffic goes through cluster control plane.
+* NONE: Control plane egress traffic is blocked.`,
+						},
+					},
+				},
+			},
 			"rbac_binding_config": {
 				Type:        schema.TypeList,
 				Optional:    true,
@@ -3198,6 +3218,10 @@ func resourceContainerClusterCreate(d *schema.ResourceData, meta interface{}) er
 
 	if v, ok := d.GetOk("node_creation_config"); ok {
 		cluster.NodeCreationConfig = expandNodeCreationConfig(v)
+	}
+
+	if v, ok := d.GetOk("control_plane_egress"); ok {
+		cluster.ControlPlaneEgress = expandControlPlaneEgress(v)
 	}
 
 	if v, ok := d.GetOk("rbac_binding_config"); ok {
@@ -3797,6 +3821,10 @@ func resourceContainerClusterRead(d *schema.ResourceData, meta interface{}) erro
 	}
 
 	if err := d.Set("node_creation_config", flattenNodeCreationConfig(cluster.NodeCreationConfig)); err != nil {
+		return err
+	}
+
+	if err := d.Set("control_plane_egress", flattenControlPlaneEgress(cluster.ControlPlaneEgress)); err != nil {
 		return err
 	}
 
@@ -5229,6 +5257,22 @@ func resourceContainerClusterUpdate(d *schema.ResourceData, meta interface{}) er
 		}
 	}
 
+	if d.HasChange("control_plane_egress") {
+		req := &container.UpdateClusterRequest{
+			Update: &container.ClusterUpdate{
+				DesiredControlPlaneEgress: expandControlPlaneEgress(
+					d.Get("control_plane_egress"),
+				),
+				ForceSendFields: []string{"DesiredControlPlaneEgress"},
+			},
+		}
+		updateF := updateFunc(req, "updating control plane egress")
+		// Call update serially.
+		if err := updateF(); err != nil {
+			return err
+		}
+	}
+
 	if d.HasChange("rbac_binding_config") {
 		req := &container.UpdateClusterRequest{
 			Update: &container.ClusterUpdate{
@@ -6144,6 +6188,15 @@ func flattenNodeCreationConfig(ncc *container.NodeCreationConfig) []map[string]i
 	return []map[string]interface{}{result}
 }
 
+func flattenControlPlaneEgress(cpe *container.ControlPlaneEgress) []map[string]interface{} {
+	if cpe == nil {
+		return nil
+	}
+	result := make(map[string]interface{})
+	result["mode"] = cpe.Mode
+	return []map[string]interface{}{result}
+}
+
 func flattenAdditionalPodRangesConfig(ipAllocationPolicy *container.IPAllocationPolicy) []map[string]interface{} {
 	if ipAllocationPolicy == nil {
 		return nil
@@ -6299,6 +6352,23 @@ func expandNodeCreationConfig(configured interface{}) *container.NodeCreationCon
 	if v, ok := nodeCreationConfig["node_creation_mode"]; ok {
 		if mode, ok := v.(string); ok && mode != "" {
 			result.NodeCreationMode = mode
+		}
+	}
+	return &result
+}
+
+func expandControlPlaneEgress(configured interface{}) *container.ControlPlaneEgress {
+	l, ok := configured.([]interface{})
+	if len(l) == 0 || l[0] == nil || !ok {
+		return nil
+	}
+
+	cpe := l[0].(map[string]interface{})
+	result := container.ControlPlaneEgress{}
+
+	if v, ok := cpe["mode"]; ok {
+		if mode, ok := v.(string); ok && mode != "" {
+			result.Mode = mode
 		}
 	}
 	return &result

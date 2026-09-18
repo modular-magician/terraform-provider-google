@@ -14034,6 +14034,11 @@ func flattenWorkflowTemplatePlacementManagedClusterConfigMasterConfigDiskConfigA
 		return EmptyWorkflowTemplatePlacementManagedClusterConfigMasterConfigDiskConfigAttachedDiskConfig
 	}
 	r.DiskType = dcl.FlattenString(m["diskType"])
+	if r.DiskType == nil {
+		if t, ok := m["type"].(string); ok && t != "" {
+			r.DiskType = dcl.FlattenString(strings.ToUpper(strings.ReplaceAll(t, "-", "_")))
+		}
+	}
 	r.DiskSizeGb = dcl.FlattenInteger(m["diskSizeGb"])
 	r.ProvisionedIops = dcl.FlattenInteger(m["provisionedIops"])
 	r.ProvisionedThroughput = dcl.FlattenInteger(m["provisionedThroughput"])
@@ -15071,6 +15076,11 @@ func flattenWorkflowTemplatePlacementManagedClusterConfigWorkerConfigDiskConfigA
 		return EmptyWorkflowTemplatePlacementManagedClusterConfigWorkerConfigDiskConfigAttachedDiskConfig
 	}
 	r.DiskType = dcl.FlattenString(m["diskType"])
+	if r.DiskType == nil {
+		if t, ok := m["type"].(string); ok && t != "" {
+			r.DiskType = dcl.FlattenString(strings.ToUpper(strings.ReplaceAll(t, "-", "_")))
+		}
+	}
 	r.DiskSizeGb = dcl.FlattenInteger(m["diskSizeGb"])
 	r.ProvisionedIops = dcl.FlattenInteger(m["provisionedIops"])
 	r.ProvisionedThroughput = dcl.FlattenInteger(m["provisionedThroughput"])
@@ -15944,6 +15954,11 @@ func flattenWorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfigDi
 		return EmptyWorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfigDiskConfigAttachedDiskConfig
 	}
 	r.DiskType = dcl.FlattenString(m["diskType"])
+	if r.DiskType == nil {
+		if t, ok := m["type"].(string); ok && t != "" {
+			r.DiskType = dcl.FlattenString(strings.ToUpper(strings.ReplaceAll(t, "-", "_")))
+		}
+	}
 	r.DiskSizeGb = dcl.FlattenInteger(m["diskSizeGb"])
 	r.ProvisionedIops = dcl.FlattenInteger(m["provisionedIops"])
 	r.ProvisionedThroughput = dcl.FlattenInteger(m["provisionedThroughput"])

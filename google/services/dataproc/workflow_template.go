@@ -809,7 +809,7 @@ func (r *WorkflowTemplatePlacementManagedClusterConfigMasterConfigDiskConfig) Ha
 
 type WorkflowTemplatePlacementManagedClusterConfigMasterConfigDiskConfigAttachedDiskConfig struct {
 	empty                 bool    `json:"-"`
-	DiskType              *string `json:"diskType"`
+	DiskType              *string `json:"type"`
 	DiskSizeGb            *int64  `json:"diskSizeGb"`
 	ProvisionedIops       *int64  `json:"provisionedIops"`
 	ProvisionedThroughput *int64  `json:"provisionedThroughput"`
@@ -1255,7 +1255,7 @@ func (r *WorkflowTemplatePlacementManagedClusterConfigWorkerConfigDiskConfig) Ha
 
 type WorkflowTemplatePlacementManagedClusterConfigWorkerConfigDiskConfigAttachedDiskConfig struct {
 	empty                 bool    `json:"-"`
-	DiskType              *string `json:"diskType"`
+	DiskType              *string `json:"type"`
 	DiskSizeGb            *int64  `json:"diskSizeGb"`
 	ProvisionedIops       *int64  `json:"provisionedIops"`
 	ProvisionedThroughput *int64  `json:"provisionedThroughput"`
@@ -1701,7 +1701,7 @@ func (r *WorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfigDiskC
 
 type WorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfigDiskConfigAttachedDiskConfig struct {
 	empty                 bool    `json:"-"`
-	DiskType              *string `json:"diskType"`
+	DiskType              *string `json:"type"`
 	DiskSizeGb            *int64  `json:"diskSizeGb"`
 	ProvisionedIops       *int64  `json:"provisionedIops"`
 	ProvisionedThroughput *int64  `json:"provisionedThroughput"`

@@ -912,18 +912,23 @@ func ResourceCloudIdentityGroupMembershipFlatten(d *schema.ResourceData, meta in
 	if err = d.Set("name", flattenCloudIdentityGroupMembershipName(res["name"], d, config)); err != nil {
 		return fmt.Errorf("Error reading GroupMembership: %s", err)
 	}
+
 	if err = d.Set("preferred_member_key", flattenCloudIdentityGroupMembershipPreferredMemberKey(res["preferredMemberKey"], d, config)); err != nil {
 		return fmt.Errorf("Error reading GroupMembership: %s", err)
 	}
+
 	if err = d.Set("create_time", flattenCloudIdentityGroupMembershipCreateTime(res["createTime"], d, config)); err != nil {
 		return fmt.Errorf("Error reading GroupMembership: %s", err)
 	}
+
 	if err = d.Set("update_time", flattenCloudIdentityGroupMembershipUpdateTime(res["updateTime"], d, config)); err != nil {
 		return fmt.Errorf("Error reading GroupMembership: %s", err)
 	}
+
 	if err = d.Set("roles", flattenCloudIdentityGroupMembershipRoles(res["roles"], d, config)); err != nil {
 		return fmt.Errorf("Error reading GroupMembership: %s", err)
 	}
+
 	if err = d.Set("type", flattenCloudIdentityGroupMembershipType(res["type"], d, config)); err != nil {
 		return fmt.Errorf("Error reading GroupMembership: %s", err)
 	}

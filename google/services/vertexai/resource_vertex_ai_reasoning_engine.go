@@ -5863,33 +5863,43 @@ func ResourceVertexAIReasoningEngineFlatten(d *schema.ResourceData, meta interfa
 	if err = d.Set("name", flattenVertexAIReasoningEngineName(res["name"], d, config)); err != nil {
 		return fmt.Errorf("Error reading ReasoningEngine: %s", err)
 	}
+
 	if err = d.Set("display_name", flattenVertexAIReasoningEngineDisplayName(res["displayName"], d, config)); err != nil {
 		return fmt.Errorf("Error reading ReasoningEngine: %s", err)
 	}
+
 	if err = d.Set("description", flattenVertexAIReasoningEngineDescription(res["description"], d, config)); err != nil {
 		return fmt.Errorf("Error reading ReasoningEngine: %s", err)
 	}
+
 	if err = d.Set("labels", flattenVertexAIReasoningEngineLabels(res["labels"], d, config)); err != nil {
 		return fmt.Errorf("Error reading ReasoningEngine: %s", err)
 	}
+
 	if err = d.Set("create_time", flattenVertexAIReasoningEngineCreateTime(res["createTime"], d, config)); err != nil {
 		return fmt.Errorf("Error reading ReasoningEngine: %s", err)
 	}
+
 	if err = d.Set("update_time", flattenVertexAIReasoningEngineUpdateTime(res["updateTime"], d, config)); err != nil {
 		return fmt.Errorf("Error reading ReasoningEngine: %s", err)
 	}
+
 	if err = d.Set("encryption_spec", flattenVertexAIReasoningEngineEncryptionSpec(res["encryptionSpec"], d, config)); err != nil {
 		return fmt.Errorf("Error reading ReasoningEngine: %s", err)
 	}
+
 	if err = d.Set("spec", flattenVertexAIReasoningEngineSpec(res["spec"], d, config)); err != nil {
 		return fmt.Errorf("Error reading ReasoningEngine: %s", err)
 	}
+
 	if err = d.Set("context_spec", flattenVertexAIReasoningEngineContextSpec(res["contextSpec"], d, config)); err != nil {
 		return fmt.Errorf("Error reading ReasoningEngine: %s", err)
 	}
+
 	if err = d.Set("terraform_labels", flattenVertexAIReasoningEngineTerraformLabels(res["labels"], d, config)); err != nil {
 		return fmt.Errorf("Error reading ReasoningEngine: %s", err)
 	}
+
 	if err = d.Set("effective_labels", flattenVertexAIReasoningEngineEffectiveLabels(res["labels"], d, config)); err != nil {
 		return fmt.Errorf("Error reading ReasoningEngine: %s", err)
 	}

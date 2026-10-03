@@ -1695,6 +1695,7 @@ func TestAccComputeRegionInstanceTemplate_networkAttachment(t *testing.T) {
 		"subnet":             subnet,
 		"network_attachment": networkAttachment,
 		"region":             region,
+		"service_class_id":   testAccServiceClassId,
 	}
 
 	acctest.VcrTest(t, resource.TestCase{
@@ -1704,6 +1705,9 @@ func TestAccComputeRegionInstanceTemplate_networkAttachment(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: testAccComputeRegionInstanceTemplate_networkAttachment(context),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("google_compute_region_instance_template.foobar", "network_interface.1.service_class_id", testAccServiceClassId),
+				),
 			},
 			{
 				ResourceName:      "google_compute_region_instance_template.foobar",
@@ -1740,6 +1744,7 @@ resource "google_compute_region_instance_template" "foobar" {
   network_interface {
 	network_attachment    = "%{network_attachment}"
 	enable_vpc_scoped_dns = true
+	service_class_id      = "%{service_class_id}"
   }
 }
 `, context)

@@ -31,8 +31,6 @@ import (
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
 	transport_tpg "github.com/hashicorp/terraform-provider-google/google/transport"
 	"google.golang.org/api/googleapi"
-
-	"google.golang.org/api/container/v1"
 )
 
 func TestContainerClusterEnableK8sBetaApisCustomizeDiff(t *testing.T) {
@@ -240,7 +238,7 @@ func TestContainerCluster_flattenUserManagedKeysConfig(t *testing.T) {
 
 	cases := []struct {
 		name   string
-		config *container.UserManagedKeysConfig
+		config map[string]interface{}
 		want   []map[string]interface{}
 	}{
 		{
@@ -248,12 +246,12 @@ func TestContainerCluster_flattenUserManagedKeysConfig(t *testing.T) {
 		},
 		{
 			name:   "empty",
-			config: &container.UserManagedKeysConfig{},
+			config: map[string]interface{}{},
 		},
 		{
 			name: "cluster_ca",
-			config: &container.UserManagedKeysConfig{
-				ClusterCa: "value",
+			config: map[string]interface{}{
+				"clusterCa": "value",
 			},
 			want: []map[string]interface{}{
 				{
@@ -268,8 +266,8 @@ func TestContainerCluster_flattenUserManagedKeysConfig(t *testing.T) {
 		},
 		{
 			name: "etcd_api_ca",
-			config: &container.UserManagedKeysConfig{
-				EtcdApiCa: "value",
+			config: map[string]interface{}{
+				"etcdApiCa": "value",
 			},
 			want: []map[string]interface{}{
 				{
@@ -284,8 +282,8 @@ func TestContainerCluster_flattenUserManagedKeysConfig(t *testing.T) {
 		},
 		{
 			name: "etcd_peer_ca",
-			config: &container.UserManagedKeysConfig{
-				EtcdPeerCa: "value",
+			config: map[string]interface{}{
+				"etcdPeerCa": "value",
 			},
 			want: []map[string]interface{}{
 				{
@@ -300,8 +298,8 @@ func TestContainerCluster_flattenUserManagedKeysConfig(t *testing.T) {
 		},
 		{
 			name: "aggregation_ca",
-			config: &container.UserManagedKeysConfig{
-				AggregationCa: "value",
+			config: map[string]interface{}{
+				"aggregationCa": "value",
 			},
 			want: []map[string]interface{}{
 				{
@@ -316,8 +314,8 @@ func TestContainerCluster_flattenUserManagedKeysConfig(t *testing.T) {
 		},
 		{
 			name: "control_plane_disk_encryption_key",
-			config: &container.UserManagedKeysConfig{
-				ControlPlaneDiskEncryptionKey: "value",
+			config: map[string]interface{}{
+				"controlPlaneDiskEncryptionKey": "value",
 			},
 			want: []map[string]interface{}{
 				{
@@ -332,8 +330,8 @@ func TestContainerCluster_flattenUserManagedKeysConfig(t *testing.T) {
 		},
 		{
 			name: "gkeops_etcd_backup_encryption_key",
-			config: &container.UserManagedKeysConfig{
-				GkeopsEtcdBackupEncryptionKey: "value",
+			config: map[string]interface{}{
+				"gkeopsEtcdBackupEncryptionKey": "value",
 			},
 			want: []map[string]interface{}{
 				{
@@ -348,8 +346,8 @@ func TestContainerCluster_flattenUserManagedKeysConfig(t *testing.T) {
 		},
 		{
 			name: "service_account_signing_keys",
-			config: &container.UserManagedKeysConfig{
-				ServiceAccountSigningKeys: []string{"value"},
+			config: map[string]interface{}{
+				"serviceAccountSigningKeys": []interface{}{"value"},
 			},
 			want: []map[string]interface{}{
 				{
@@ -365,8 +363,8 @@ func TestContainerCluster_flattenUserManagedKeysConfig(t *testing.T) {
 		},
 		{
 			name: "service_account_verification_keys",
-			config: &container.UserManagedKeysConfig{
-				ServiceAccountVerificationKeys: []string{"value"},
+			config: map[string]interface{}{
+				"serviceAccountVerificationKeys": []interface{}{"value"},
 			},
 			want: []map[string]interface{}{
 				{
@@ -463,7 +461,7 @@ func TestUnitFlattenClusterNodePools(t *testing.T) {
 	cases := []struct {
 		name        string
 		d           *schema.ResourceData
-		c           []*container.NodePool
+		c           []interface{}
 		expected    []map[string]interface{}
 		expectError bool
 	}{
@@ -475,15 +473,15 @@ func TestUnitFlattenClusterNodePools(t *testing.T) {
 					map[string]interface{}{"name": "pool-2"},
 				},
 			}),
-			c: []*container.NodePool{
-				&container.NodePool{Name: "pool-1"},
-				&container.NodePool{Name: "pool-2"},
+			c: []interface{}{
+				map[string]interface{}{"name": "pool-1"},
+				map[string]interface{}{"name": "pool-2"},
 			},
 			expected: []map[string]interface{}{
 				{
 					"name":                        "pool-1",
 					"name_prefix":                 "",
-					"initial_node_count":          int64(0),
+					"initial_node_count":          0,
 					"node_locations":              schema.NewSet(schema.HashString, []interface{}{}),
 					"node_count":                  0,
 					"node_config":                 []map[string]interface{}{},
@@ -496,7 +494,7 @@ func TestUnitFlattenClusterNodePools(t *testing.T) {
 				{
 					"name":                        "pool-2",
 					"name_prefix":                 "",
-					"initial_node_count":          int64(0),
+					"initial_node_count":          0,
 					"node_locations":              schema.NewSet(schema.HashString, []interface{}{}),
 					"node_count":                  0,
 					"node_config":                 []map[string]interface{}{},
@@ -514,7 +512,7 @@ func TestUnitFlattenClusterNodePools(t *testing.T) {
 			d: schema.TestResourceDataRaw(t, resourceSchema, map[string]interface{}{
 				"node_pool": []interface{}{map[string]interface{}{"name": "default-pool"}},
 			}),
-			c:           []*container.NodePool{},
+			c:           []interface{}{},
 			expected:    []map[string]interface{}{},
 			expectError: false,
 		},
@@ -527,9 +525,9 @@ func TestUnitFlattenClusterNodePools(t *testing.T) {
 				},
 				"skip_node_pool_refresh": true,
 			}),
-			c: []*container.NodePool{
-				&container.NodePool{Name: "pool-1"},
-				&container.NodePool{Name: "pool-2"},
+			c: []interface{}{
+				map[string]interface{}{"name": "pool-1"},
+				map[string]interface{}{"name": "pool-2"},
 			},
 			expected:    nil,
 			expectError: false,
@@ -539,7 +537,7 @@ func TestUnitFlattenClusterNodePools(t *testing.T) {
 			d: schema.TestResourceDataRaw(t, resourceSchema, map[string]interface{}{
 				"skip_node_pool_refresh": true,
 			}),
-			c:           []*container.NodePool{&container.NodePool{Name: "pool-1"}},
+			c:           []interface{}{map[string]interface{}{"name": "pool-1"}},
 			expected:    nil,
 			expectError: false,
 		},
@@ -907,14 +905,14 @@ func TestUnitContainerCluster_flattenManagedOpenTelemetryConfig(t *testing.T) {
 	t.Parallel()
 
 	cases := map[string]struct {
-		in   *container.ManagedOpenTelemetryConfig
+		in   map[string]interface{}
 		want []map[string]interface{}
 	}{
 		"nil":   {nil, nil},
-		"empty": {&container.ManagedOpenTelemetryConfig{}, []map[string]interface{}{map[string]interface{}{"scope": ""}}},
-		"NONE":  {&container.ManagedOpenTelemetryConfig{Scope: "NONE"}, []map[string]interface{}{map[string]interface{}{"scope": "NONE"}}},
+		"empty": {map[string]interface{}{}, []map[string]interface{}{map[string]interface{}{"scope": ""}}},
+		"NONE":  {map[string]interface{}{"scope": "NONE"}, []map[string]interface{}{map[string]interface{}{"scope": "NONE"}}},
 		"COLLECTION": {
-			&container.ManagedOpenTelemetryConfig{Scope: "COLLECTION_AND_INSTRUMENTATION_COMPONENTS"},
+			map[string]interface{}{"scope": "COLLECTION_AND_INSTRUMENTATION_COMPONENTS"},
 			[]map[string]interface{}{map[string]interface{}{"scope": "COLLECTION_AND_INSTRUMENTATION_COMPONENTS"}},
 		},
 	}

@@ -2739,6 +2739,24 @@ func ResourceContainerCluster() *schema.Resource {
 					},
 				},
 			},
+			"schedule_upgrade_config": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Computed:    true,
+				ForceNew:    true,
+				MaxItems:    1,
+				Description: `Configuration for scheduled upgrades on the cluster.`,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"enabled": {
+							Type:        schema.TypeBool,
+							Required:    true,
+							ForceNew:    true,
+							Description: `Whether scheduled upgrades are enabled.`,
+						},
+					},
+				},
+			},
 			"enterprise_config": {
 				Type:        schema.TypeList,
 				Optional:    true,
@@ -3260,6 +3278,10 @@ func resourceContainerClusterCreate(d *schema.ResourceData, meta interface{}) er
 			cluster.AddonsConfig.GcePersistentDiskCsiDriverConfig = &container.GcePersistentDiskCsiDriverConfig{}
 		}
 		cluster.AddonsConfig.GcePersistentDiskCsiDriverConfig.Enabled = true
+	}
+
+	if v, ok := d.GetOk("schedule_upgrade_config"); ok {
+		cluster.ScheduleUpgradeConfig = expandScheduleUpgradeConfig(v)
 	}
 
 	req := &container.CreateClusterRequest{
@@ -3819,6 +3841,10 @@ func resourceContainerClusterRead(d *schema.ResourceData, meta interface{}) erro
 	}
 
 	if err := d.Set("security_posture_config", flattenSecurityPostureConfig(cluster.SecurityPostureConfig)); err != nil {
+		return err
+	}
+
+	if err := d.Set("schedule_upgrade_config", flattenScheduleUpgradeConfig(cluster.ScheduleUpgradeConfig)); err != nil {
 		return err
 	}
 
@@ -6103,7 +6129,7 @@ func shouldInclude(d *schema.ResourceData, key string) bool {
 
 func expandAuthenticatorGroupsConfig(configured interface{}) *container.AuthenticatorGroupsConfig {
 	l := configured.([]interface{})
-	if len(l) == 0 {
+	if len(l) == 0 || l[0] == nil {
 		return nil
 	}
 	result := &container.AuthenticatorGroupsConfig{}
@@ -6147,7 +6173,7 @@ func flattenSecurityPostureConfig(spc *container.SecurityPostureConfig) []map[st
 
 func expandEnterpriseConfig(configured interface{}) *container.EnterpriseConfig {
 	l := configured.([]interface{})
-	if len(l) == 0 {
+	if len(l) == 0 || l[0] == nil {
 		return nil
 	}
 
@@ -6404,7 +6430,7 @@ func flattenManagedOpenTelemetryConfig(c *container.ManagedOpenTelemetryConfig) 
 func expandNetworkPolicy(configured interface{}) *container.NetworkPolicy {
 	result := &container.NetworkPolicy{}
 	l := configured.([]interface{})
-	if len(l) == 0 {
+	if len(l) == 0 || l[0] == nil {
 		return result
 	}
 	config := l[0].(map[string]interface{})
@@ -6518,7 +6544,7 @@ func expandControlPlaneEndpointsConfig(d *schema.ResourceData) *container.Contro
 
 func expandVerticalPodAutoscaling(configured interface{}) *container.VerticalPodAutoscaling {
 	l := configured.([]interface{})
-	if len(l) == 0 {
+	if len(l) == 0 || l[0] == nil {
 		return nil
 	}
 	config := l[0].(map[string]interface{})
@@ -6529,7 +6555,7 @@ func expandVerticalPodAutoscaling(configured interface{}) *container.VerticalPod
 
 func expandServiceExternalIpsConfig(configured interface{}) *container.ServiceExternalIPsConfig {
 	l := configured.([]interface{})
-	if len(l) == 0 {
+	if len(l) == 0 || l[0] == nil {
 		return nil
 	}
 	config := l[0].(map[string]interface{})
@@ -6541,7 +6567,7 @@ func expandServiceExternalIpsConfig(configured interface{}) *container.ServiceEx
 
 func expandMeshCertificates(configured interface{}) *container.MeshCertificates {
 	l := configured.([]interface{})
-	if len(l) == 0 {
+	if len(l) == 0 || l[0] == nil {
 		return nil
 	}
 	config := l[0].(map[string]interface{})
@@ -6553,7 +6579,7 @@ func expandMeshCertificates(configured interface{}) *container.MeshCertificates 
 
 func expandDatabaseEncryption(configured interface{}) *container.DatabaseEncryption {
 	l := configured.([]interface{})
-	if len(l) == 0 {
+	if len(l) == 0 || l[0] == nil {
 		return nil
 	}
 	config := l[0].(map[string]interface{})
@@ -6631,6 +6657,9 @@ func expandWorkloadIdentityConfig(configured interface{}) *container.WorkloadIde
 func expandIdentityServiceConfig(configured interface{}) *container.IdentityServiceConfig {
 	l := configured.([]interface{})
 	v := &container.IdentityServiceConfig{}
+	if len(l) == 0 || l[0] == nil {
+		return v
+	}
 
 	config := l[0].(map[string]interface{})
 	v.Enabled = config["enabled"].(bool)
@@ -6734,7 +6763,7 @@ func expandDefaultMaxPodsConstraint(v interface{}) *container.MaxPodsConstraint 
 
 func expandCostManagementConfig(configured interface{}) *container.CostManagementConfig {
 	l := configured.([]interface{})
-	if len(l) == 0 {
+	if len(l) == 0 || l[0] == nil {
 		return nil
 	}
 
@@ -7053,6 +7082,19 @@ func expandNodePoolAutoConfigNetworkTags(configured interface{}) *container.Netw
 		nt.Tags = tpgresource.ConvertStringArr(v.([]interface{}))
 	}
 	return nt
+}
+
+func expandScheduleUpgradeConfig(configured interface{}) *container.ScheduleUpgradeConfig {
+	l := configured.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil
+	}
+
+	config := l[0].(map[string]interface{})
+	return &container.ScheduleUpgradeConfig{
+		Enabled:         config["enabled"].(bool),
+		ForceSendFields: []string{"Enabled"},
+	}
 }
 
 func expandRBACBindingConfig(configured interface{}) *container.RBACBindingConfig {
@@ -8220,6 +8262,17 @@ func flattenNodePoolAutoConfigNetworkTags(c *container.NetworkTags) []map[string
 	return []map[string]interface{}{result}
 }
 
+func flattenScheduleUpgradeConfig(c *container.ScheduleUpgradeConfig) []map[string]interface{} {
+	if c == nil {
+		return nil
+	}
+	return []map[string]interface{}{
+		{
+			"enabled": c.Enabled,
+		},
+	}
+}
+
 func flattenRBACBindingConfig(c *container.RBACBindingConfig) []map[string]interface{} {
 	if c == nil {
 		return nil
@@ -8480,7 +8533,7 @@ func SecretManagerCfgSuppress(k, old, new string, r *schema.ResourceData) bool {
 	if k == "secret_manager_config.#" && old == "1" && new == "0" {
 		if v, ok := r.GetOk("secret_manager_config"); ok {
 			cfgList := v.([]interface{})
-			if len(cfgList) > 0 {
+			if len(cfgList) > 0 && cfgList[0] != nil {
 				d := cfgList[0].(map[string]interface{})
 				// Suppress if old value was {enabled == false}
 				return !d["enabled"].(bool)
@@ -8506,7 +8559,7 @@ func SecretSyncCfgSuppress(k, old, new string, r *schema.ResourceData) bool {
 	if k == "secret_sync_config.#" && old == "1" && new == "0" {
 		if v, ok := r.GetOk("secret_sync_config"); ok {
 			cfgList := v.([]interface{})
-			if len(cfgList) > 0 {
+			if len(cfgList) > 0 && cfgList[0] != nil {
 				d := cfgList[0].(map[string]interface{})
 				// Suppress if old value was {enabled == false}
 				return !d["enabled"].(bool)

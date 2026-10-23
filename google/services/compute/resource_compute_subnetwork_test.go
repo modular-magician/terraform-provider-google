@@ -1533,7 +1533,7 @@ resource "google_compute_subnetwork" "subnet" {
 
 resource "google_compute_instance" "vm" {
   name         = "tf-test-vm-%{random_suffix}"
-  machine_type = "e2-medium"
+  machine_type = "e2-micro"
   zone         = "us-central1-a"
   boot_disk {
     initialize_params {
@@ -1588,7 +1588,7 @@ resource "google_compute_subnetwork" "subnet" {
 
 resource "google_compute_instance" "vm" {
   name         = "tf-test-vm-%{random_suffix}"
-  machine_type = "e2-medium"
+  machine_type = "e2-micro"
   zone         = "us-central1-a"
   boot_disk {
     initialize_params {
@@ -1747,7 +1747,7 @@ resource "google_compute_subnetwork" "subnet" {
 
 resource "google_compute_instance" "vm" {
   name         = "tf-test-vm-%{random_suffix}"
-  machine_type = "e2-medium"
+  machine_type = "e2-micro"
   zone         = "us-central1-a"
   boot_disk {
     initialize_params {
@@ -1799,7 +1799,7 @@ resource "google_compute_subnetwork" "test_subnet" {
 
 resource "google_compute_instance" "vm1" {
   name         = "%{vm1_name}"
-  machine_type = "e2-medium"
+  machine_type = "e2-micro"
   zone         = "%{zone}"
 
   boot_disk {
@@ -1836,7 +1836,7 @@ resource "google_compute_subnetwork" "test_subnet" {
 
 resource "google_compute_instance" "vm1" {
   name         = "%{vm1_name}"
-  machine_type = "e2-medium"
+  machine_type = "e2-micro"
   zone         = "%{zone}"
 
   boot_disk {
@@ -1852,7 +1852,7 @@ resource "google_compute_instance" "vm1" {
 
 resource "google_compute_instance" "vm2" {
   name         = "%{vm2_name}"
-  machine_type = "e2-medium"
+  machine_type = "e2-micro"
   zone         = "%{zone}"
 
   boot_disk {

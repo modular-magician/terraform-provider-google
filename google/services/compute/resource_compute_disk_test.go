@@ -1368,7 +1368,7 @@ data "google_compute_image" "my_image" {
 resource "google_compute_disk" "foobar" {
   name  = "%s"
   image = data.google_compute_image.my_image.self_link
-  size  = 50
+  size  = 10
   type  = "%s"
   zone  = "us-central1-a"
   labels = {
@@ -1388,7 +1388,7 @@ data "google_compute_image" "my_image" {
 resource "google_compute_disk" "foobar" {
   name  = "%s"
   image = data.google_compute_image.my_image.self_link
-  size  = 100
+  size  = 20
   type  = "%s"
   zone  = "us-central1-a"
   labels = {
@@ -1409,7 +1409,7 @@ data "google_compute_image" "my_image" {
 resource "google_compute_disk" "foobar" {
   name    = "%s-d1"
   image   = data.google_compute_image.my_image.self_link
-  size    = 50
+  size    = 10
   type    = "pd-ssd"
   zone    = "us-central1-a"
   project = "%s"
@@ -1442,7 +1442,7 @@ data "google_compute_image" "my_image" {
 resource "google_compute_disk" "foobar" {
   name  = "%s"
   image = data.google_compute_image.my_image.self_link
-  size  = 50
+  size  = 10
   type  = "pd-ssd"
   zone  = "us-central1-a"
   disk_encryption_key {
@@ -1525,14 +1525,14 @@ data "google_compute_image" "my_image" {
 resource "google_compute_disk" "foo" {
   name  = "%s"
   image = data.google_compute_image.my_image.self_link
-  size  = 50
+  size  = 10
   type  = "pd-ssd"
   zone  = "us-central1-a"
 }
 
 resource "google_compute_instance" "bar" {
   name         = "%s"
-  machine_type = "e2-medium"
+  machine_type = "e2-micro"
   zone         = "us-central1-a"
 
   boot_disk {
@@ -1562,7 +1562,7 @@ data "google_compute_image" "my_image" {
 resource "google_compute_disk" "foo" {
   name  = "%s"
   image = data.google_compute_image.my_image.self_link
-  size  = 50
+  size  = 10
   type  = "pd-ssd"
   zone  = "us-central1-a"
 }

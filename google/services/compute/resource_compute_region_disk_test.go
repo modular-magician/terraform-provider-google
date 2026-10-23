@@ -161,7 +161,7 @@ func TestAccComputeRegionDisk_basicUpdate(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckComputeRegionDiskExists(
 						t, "google_compute_region_disk.regiondisk", &disk),
-					resource.TestCheckResourceAttr("google_compute_region_disk.regiondisk", "size", "100"),
+					resource.TestCheckResourceAttr("google_compute_region_disk.regiondisk", "size", "20"),
 					testAccCheckComputeRegionDiskHasLabel(&disk, "my-label", "my-updated-label-value"),
 					testAccCheckComputeRegionDiskHasLabel(&disk, "a-new-label", "a-new-label-value"),
 					testAccCheckComputeRegionDiskHasLabelFingerprint(&disk, "google_compute_region_disk.regiondisk"),
@@ -748,7 +748,7 @@ func testAccComputeRegionDisk_basic(diskName, refSelector string) string {
 resource "google_compute_disk" "disk" {
   name  = "%s"
   image = "debian-cloud/debian-13"
-  size  = 50
+  size  = 10
   type  = "pd-ssd"
   zone  = "us-central1-a"
 }
@@ -773,7 +773,7 @@ func testAccComputeRegionDisk_basicUpdated(diskName, refSelector string) string 
 resource "google_compute_disk" "disk" {
   name  = "%s"
   image = "debian-cloud/debian-13"
-  size  = 50
+  size  = 10
   type  = "pd-ssd"
   zone  = "us-central1-a"
 }
@@ -792,7 +792,7 @@ resource "google_compute_region_disk" "regiondisk" {
 
   replica_zones = ["us-central1-a", "us-central1-f"]
 
-  size = 100
+  size = 20
   labels = {
     my-label    = "my-updated-label-value"
     a-new-label = "a-new-label-value"
@@ -806,7 +806,7 @@ func testAccComputeRegionDisk_encryption(diskName string) string {
 resource "google_compute_disk" "disk" {
   name  = "%s"
   image = "debian-cloud/debian-13"
-  size  = 50
+  size  = 10
   type  = "pd-ssd"
   zone  = "us-central1-a"
 }
@@ -837,7 +837,7 @@ func testAccComputeRegionDisk_deleteDetach(instanceName, diskName, regionDiskNam
 resource "google_compute_disk" "disk" {
   name  = "%s"
   image = "debian-cloud/debian-13"
-  size  = 50
+  size  = 10
   type  = "pd-ssd"
   zone  = "us-central1-a"
 }
@@ -858,7 +858,7 @@ resource "google_compute_region_disk" "regiondisk" {
 
 resource "google_compute_instance" "inst" {
   name         = "%s"
-  machine_type = "e2-medium"
+  machine_type = "e2-micro"
   zone         = "us-central1-a"
 
   boot_disk {
@@ -893,7 +893,7 @@ func testAccComputeRegionDisk_diskClone(diskName, refSelector string) string {
 	  resource "google_compute_disk" "disk" {
 		name  = "%s"
 		image = "debian-13-trixie-v20260827"
-		size  = 50
+		size  = 10
 		type  = "pd-ssd"
 		zone  = "us-central1-a"
 	  }

@@ -2011,7 +2011,7 @@ func TestAccContainerNodePool_regionalAutoscaling(t *testing.T) {
 				Config: testAccContainerNodePool_regionalAutoscaling(cluster, np, networkName, subnetworkName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("google_container_node_pool.np", "autoscaling.0.min_node_count", "1"),
-					resource.TestCheckResourceAttr("google_container_node_pool.np", "autoscaling.0.max_node_count", "3"),
+					resource.TestCheckResourceAttr("google_container_node_pool.np", "autoscaling.0.max_node_count", "2"),
 				),
 			},
 			{
@@ -2028,7 +2028,7 @@ func TestAccContainerNodePool_regionalAutoscaling(t *testing.T) {
 				},
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("google_container_node_pool.np", "autoscaling.0.min_node_count", "0"),
-					resource.TestCheckResourceAttr("google_container_node_pool.np", "autoscaling.0.max_node_count", "5"),
+					resource.TestCheckResourceAttr("google_container_node_pool.np", "autoscaling.0.max_node_count", "3"),
 				),
 			},
 			{
@@ -2077,8 +2077,8 @@ func TestAccContainerNodePool_totalSize(t *testing.T) {
 			{
 				Config: testAccContainerNodePool_totalSize(cluster, np, networkName, subnetworkName),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("google_container_node_pool.np", "autoscaling.0.total_min_node_count", "4"),
-					resource.TestCheckResourceAttr("google_container_node_pool.np", "autoscaling.0.total_max_node_count", "12"),
+					resource.TestCheckResourceAttr("google_container_node_pool.np", "autoscaling.0.total_min_node_count", "2"),
+					resource.TestCheckResourceAttr("google_container_node_pool.np", "autoscaling.0.total_max_node_count", "6"),
 					resource.TestCheckResourceAttr("google_container_node_pool.np", "autoscaling.0.location_policy", "BALANCED"),
 				),
 			},
@@ -2095,8 +2095,8 @@ func TestAccContainerNodePool_totalSize(t *testing.T) {
 					},
 				},
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("google_container_node_pool.np", "autoscaling.0.total_min_node_count", "2"),
-					resource.TestCheckResourceAttr("google_container_node_pool.np", "autoscaling.0.total_max_node_count", "22"),
+					resource.TestCheckResourceAttr("google_container_node_pool.np", "autoscaling.0.total_min_node_count", "1"),
+					resource.TestCheckResourceAttr("google_container_node_pool.np", "autoscaling.0.total_max_node_count", "4"),
 					resource.TestCheckResourceAttr("google_container_node_pool.np", "autoscaling.0.location_policy", "ANY"),
 				),
 			},
@@ -2146,7 +2146,7 @@ func TestAccContainerNodePool_autoscaling(t *testing.T) {
 				Config: testAccContainerNodePool_autoscaling(cluster, np, networkName, subnetworkName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("google_container_node_pool.np", "autoscaling.0.min_node_count", "1"),
-					resource.TestCheckResourceAttr("google_container_node_pool.np", "autoscaling.0.max_node_count", "3"),
+					resource.TestCheckResourceAttr("google_container_node_pool.np", "autoscaling.0.max_node_count", "2"),
 				),
 			},
 			{
@@ -2163,7 +2163,7 @@ func TestAccContainerNodePool_autoscaling(t *testing.T) {
 				},
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("google_container_node_pool.np", "autoscaling.0.min_node_count", "0"),
-					resource.TestCheckResourceAttr("google_container_node_pool.np", "autoscaling.0.max_node_count", "5"),
+					resource.TestCheckResourceAttr("google_container_node_pool.np", "autoscaling.0.max_node_count", "3"),
 				),
 			},
 			{
@@ -2211,7 +2211,7 @@ func TestAccContainerNodePool_resize(t *testing.T) {
 			{
 				Config: testAccContainerNodePool_additionalZones(cluster, np, networkName, subnetworkName),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("google_container_node_pool.np", "node_count", "2"),
+					resource.TestCheckResourceAttr("google_container_node_pool.np", "node_count", "1"),
 				),
 			},
 			{
@@ -2227,7 +2227,7 @@ func TestAccContainerNodePool_resize(t *testing.T) {
 					},
 				},
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("google_container_node_pool.np", "node_count", "3"),
+					resource.TestCheckResourceAttr("google_container_node_pool.np", "node_count", "2"),
 				),
 			},
 			{
@@ -2772,7 +2772,7 @@ resource "google_container_node_pool" "np" {
   initial_node_count = 1
 
   node_config {
-    machine_type = "n1-standard-8"
+    machine_type = "e2-medium"
     image_type = "COS_CONTAINERD"
     gcfs_config {
       enabled = true
@@ -2791,7 +2791,7 @@ resource "google_container_node_pool" "np-no-mode" {
   initial_node_count = 1
 
   node_config {
-    machine_type = "n1-standard-8"
+    machine_type = "e2-medium"
     image_type = "COS_CONTAINERD"
     gcfs_config {
       enabled = true
@@ -2860,7 +2860,7 @@ resource "google_container_node_pool" "np" {
   initial_node_count = 1
 
   node_config {
-    machine_type = "n1-standard-8"
+    machine_type = "e2-medium"
     image_type = "COS_CONTAINERD"
     gcfs_config {
       enabled = %t
@@ -2939,7 +2939,7 @@ resource "google_container_node_pool" "np" {
   initial_node_count = 1
 
   node_config {
-    machine_type = "n1-standard-8"
+    machine_type = "e2-medium"
     image_type   = "COS_CONTAINERD"
     gvnic {
       enabled = "%t"
@@ -3013,7 +3013,7 @@ resource "google_container_node_pool" "np" {
   initial_node_count = 1
 
   node_config {
-    machine_type = "n1-standard-8"
+    machine_type = "n1-standard-2"
     image_type   = "COS_CONTAINERD"
     guest_accelerator {
       type  = "nvidia-tesla-t4"
@@ -3270,7 +3270,7 @@ resource "google_container_node_pool" "np" {
   name               = "%s"
   location           = "us-east1-b"
   cluster            = google_container_cluster.cluster.name
-  initial_node_count = 2
+  initial_node_count = 1
 
   node_config {
     machine_type = "c2-standard-4"
@@ -3331,7 +3331,7 @@ resource "google_container_node_pool" "np" {
   name               = "%s"
   location           = "us-east1-b"
   cluster            = google_container_cluster.cluster.name
-  initial_node_count = 2
+  initial_node_count = 1
 
   node_config {
     machine_type = "c2-standard-4"
@@ -3393,7 +3393,7 @@ resource "google_container_node_pool" "np" {
   name               = "%s"
   location           = "us-east1-b"
   cluster            = google_container_cluster.cluster.name
-  initial_node_count = 2
+  initial_node_count = 1
 
   node_config {
     machine_type = "c4-standard-4"
@@ -3710,7 +3710,7 @@ resource "google_container_node_pool" "np" {
   initial_node_count = 1
   autoscaling {
     min_node_count = 1
-    max_node_count = 3
+    max_node_count = 2
   }
 }
 `, cluster, networkName, subnetworkName, np)
@@ -3733,10 +3733,10 @@ resource "google_container_node_pool" "np" {
   name               = "%s"
   location           = "us-east1"
   cluster            = google_container_cluster.cluster.name
-  initial_node_count = 2
+  initial_node_count = 1
   autoscaling {
-    total_min_node_count = 4
-    total_max_node_count = 12
+    total_min_node_count = 2
+    total_max_node_count = 6
     location_policy      = "BALANCED"
   }
 }
@@ -3760,10 +3760,10 @@ resource "google_container_node_pool" "np" {
   name               = "%s"
   location           = "us-east1"
   cluster            = google_container_cluster.cluster.name
-  initial_node_count = 2
+  initial_node_count = 1
   autoscaling {
-    total_min_node_count = 2
-    total_max_node_count = 22
+    total_min_node_count = 1
+    total_max_node_count = 4
     location_policy      = "ANY"
   }
 }
@@ -3793,7 +3793,7 @@ resource "google_container_node_pool" "np" {
   name               = "%s"
   location           = "us-east1"
   cluster            = google_container_cluster.cluster.name
-  initial_node_count = 2
+  initial_node_count = 1
 }
 `, cluster, networkName, subnetworkName, np)
 }
@@ -3816,7 +3816,7 @@ resource "google_container_node_pool" "np" {
   initial_node_count = 1
   autoscaling {
     min_node_count = 1
-    max_node_count = 3
+    max_node_count = 2
   }
 }
 `, cluster, networkName, subnetworkName, np)
@@ -3840,7 +3840,7 @@ resource "google_container_node_pool" "np" {
   initial_node_count = 1
   autoscaling {
     min_node_count = 0
-    max_node_count = 5
+    max_node_count = 3
   }
 }
 `, cluster, networkName, subnetworkName, np)
@@ -3866,7 +3866,7 @@ resource "google_container_node_pool" "np" {
   name       = "%s"
   location   = "us-east1-b"
   cluster    = google_container_cluster.cluster.name
-  node_count = 2
+  node_count = 1
 }
 `, cluster, networkName, subnetworkName, nodePool)
 }
@@ -3891,7 +3891,7 @@ resource "google_container_node_pool" "np" {
   name       = "%s"
   location   = "us-east1-b"
   cluster    = google_container_cluster.cluster.name
-  node_count = 3
+  node_count = 2
 }
 `, cluster, networkName, subnetworkName, nodePool)
 }
@@ -5441,7 +5441,7 @@ resource "google_container_node_pool" "np" {
       count = 0
       type  = "nvidia-tesla-p100"
     }
-    machine_type = "n1-highmem-4"
+    machine_type = "n1-standard-2"
   }
 }
 `, cluster, networkName, subnetworkName, np)
@@ -5474,7 +5474,7 @@ resource "google_container_node_pool" "np" {
       count = %d
       type  = "nvidia-tesla-p100"
     }
-    machine_type = "n1-highmem-4"
+    machine_type = "n1-standard-2"
   }
 }
 `, cluster, networkName, subnetworkName, np, count)
@@ -5512,7 +5512,7 @@ resource "google_container_node_pool" "np" {
       count = 1
       type  = "nvidia-tesla-p9000"
     }
-	machine_type = "n1-highmem-4"
+	machine_type = "n1-standard-2"
   }
 }
 `, cluster, networkName, subnetworkName, np)
@@ -6866,7 +6866,7 @@ resource "google_container_node_pool" "np" {
 
   node_config {
     service_account = "default"
-    machine_type    = "n1-standard-8"
+    machine_type    = "n1-standard-2"
 
     guest_accelerator {
       type  = "nvidia-tesla-t4"
@@ -7353,32 +7353,19 @@ func TestAccContainerNodePool_ignoreNodeCountChanges(t *testing.T) {
 		CheckDestroy:             testAccCheckContainerNodePoolDestroyProducer(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccContainerNodePool_ignoreNodeCountChanges(suffix, clusterName, poolName, 2, true),
+				Config: testAccContainerNodePool_ignoreNodeCountChanges(suffix, clusterName, poolName, 1, true),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("google_container_node_pool.np", "node_count", "2"),
+					resource.TestCheckResourceAttr("google_container_node_pool.np", "node_count", "1"),
 				),
 			},
 			{
-				PreConfig: func() { testAccResizeNodePoolExternally(t, clusterName, poolName, 3) },
-				Config:    testAccContainerNodePool_ignoreNodeCountChanges(suffix, clusterName, poolName, 2, true),
+				PreConfig: func() { testAccResizeNodePoolExternally(t, clusterName, poolName, 2) },
+				Config:    testAccContainerNodePool_ignoreNodeCountChanges(suffix, clusterName, poolName, 1, true),
 				PlanOnly:  true,
 			},
 			{
 				// Step 3: Flip ignore_node_count_changes to false and set node_count = 3 (matching GKE cloud state).
 				// This registers the flag update and aligns HCL with the actual GKE size.
-				Config: testAccContainerNodePool_ignoreNodeCountChanges(suffix, clusterName, poolName, 3, false),
-				ConfigPlanChecks: resource.ConfigPlanChecks{
-					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectResourceAction("google_container_node_pool.np", plancheck.ResourceActionUpdate),
-					},
-				},
-				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("google_container_node_pool.np", "node_count", "3"),
-				),
-			},
-			{
-				// Step 4: Now that drift detection is active (flag is false in state), set node_count = 2.
-				// This detects the difference (3 -> 2) and resizes the GKE Node Pool back to 2.
 				Config: testAccContainerNodePool_ignoreNodeCountChanges(suffix, clusterName, poolName, 2, false),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
@@ -7387,6 +7374,19 @@ func TestAccContainerNodePool_ignoreNodeCountChanges(t *testing.T) {
 				},
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("google_container_node_pool.np", "node_count", "2"),
+				),
+			},
+			{
+				// Step 4: Now that drift detection is active (flag is false in state), set node_count = 2.
+				// This detects the difference (3 -> 2) and resizes the GKE Node Pool back to 2.
+				Config: testAccContainerNodePool_ignoreNodeCountChanges(suffix, clusterName, poolName, 1, false),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction("google_container_node_pool.np", plancheck.ResourceActionUpdate),
+					},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("google_container_node_pool.np", "node_count", "1"),
 				),
 			},
 		},

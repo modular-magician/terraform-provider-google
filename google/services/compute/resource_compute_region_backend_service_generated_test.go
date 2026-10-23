@@ -420,7 +420,7 @@ resource "google_compute_region_instance_group_manager" "rigm" {
 
 resource "google_compute_instance_template" "instance_template" {
   name         = "%{region_backend_service_name}-template"
-  machine_type = "e2-medium"
+  machine_type = "e2-micro"
 
   network_interface {
     network    = google_compute_network.default.id
@@ -791,7 +791,7 @@ data "google_compute_image" "my_image" {
 
 resource "google_compute_instance" "endpoint-instance" {
   name         = "%{instance_name}"
-  machine_type = "e2-medium"
+  machine_type = "e2-micro"
 
   boot_disk {
     initialize_params {

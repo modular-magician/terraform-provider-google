@@ -1117,7 +1117,7 @@ resource "google_compute_disk" "override_disk" {
 
 resource "google_compute_instance_template" "template" {
   name         = "%s"
-  machine_type = "e2-medium"
+  machine_type = "e2-micro"
 
   disk {
     source_image = data.google_compute_image.my_image.self_link
@@ -1182,7 +1182,7 @@ resource "google_compute_disk" "override_disk" {
 
 resource "google_compute_instance_template" "template" {
   name         = "%s"
-  machine_type = "e2-medium"
+  machine_type = "e2-micro"
 
   disk {
     source_image = data.google_compute_image.my_image.self_link
@@ -1316,7 +1316,7 @@ resource "google_compute_disk" "foobar" {
 
 resource "google_compute_instance_template" "foobar" {
   name         = "%s"
-  machine_type = "e2-medium"
+  machine_type = "e2-micro"
 
   disk {
     source      = google_compute_disk.foobar.name
@@ -1461,7 +1461,7 @@ resource "google_compute_disk" "foobar" {
 
 resource "google_compute_instance_template" "foobar" {
   name         = "%s"
-  machine_type = "e2-medium"
+  machine_type = "e2-micro"
 
   disk {
     source      = google_compute_disk.foobar.name
@@ -1508,7 +1508,7 @@ data "google_compute_image" "my_image" {
 
 resource "google_compute_instance_template" "foobar" {
   name         = "%s"
-  machine_type = "e2-medium"
+  machine_type = "e2-micro"
 
   disk {
     source_image = data.google_compute_image.my_image.self_link
@@ -1991,7 +1991,7 @@ data "google_compute_image" "my_image" {
 resource "google_compute_region_instance_template" "foobar" {
   name         = "%s"
   region = "us-central1"
-  machine_type = "n1-standard-1"
+  machine_type = "e2-micro"
   disk {
     resource_policies = [ google_compute_resource_policy.test-snapshot-policy.name ]
     source_image = data.google_compute_image.my_image.self_link
@@ -2043,7 +2043,7 @@ data "google_compute_image" "my_image" {
 resource "google_compute_region_instance_template" "foobar" {
   name         = "%s"
   region = "us-central1"
-  machine_type = "n1-standard-1"
+  machine_type = "e2-micro"
   disk {
     resource_policies = [ google_compute_resource_policy.test-snapshot-policy2.name ]
     source_image = data.google_compute_image.my_image.self_link
@@ -2095,7 +2095,7 @@ data "google_compute_image" "my_image" {
 resource "google_compute_region_instance_template" "foobar" {
   name         = "%s"
   region = "us-central1"
-  machine_type = "n1-standard-1"
+  machine_type = "e2-micro"
   disk {
     resource_policies = [ google_compute_resource_policy.test-snapshot-policy.name, google_compute_resource_policy.test-snapshot-policy2.name ]
     source_image = data.google_compute_image.my_image.self_link
@@ -2301,7 +2301,7 @@ resource "google_compute_instance_template" "foobar" {
 
 resource "google_compute_instance_from_template" "foobar" {
 	name         = "%{instance_name}"
-	machine_type = "e2-medium"
+	machine_type = "e2-micro"
 	zone         = "%{env_region}-a"
 
  	source_instance_template = google_compute_instance_template.foobar.self_link
@@ -2347,7 +2347,7 @@ resource "google_iam_workload_identity_pool_managed_identity" "id" {
 
 resource "google_compute_instance_template" "foobar" {
   name         = "%{template_name}"
-  machine_type = "e2-medium"
+  machine_type = "e2-micro"
 
   disk {
     source_image = data.google_compute_image.my_image.self_link
@@ -2405,7 +2405,7 @@ resource "google_compute_network_attachment" "test_network_attachment" {
 
 resource "google_compute_instance_template" "foobar" {
   name         = "tf-test-template-%{suffix}"
-  machine_type = "e2-medium"
+  machine_type = "e2-micro"
 
   disk {
     source_image = data.google_compute_image.my_image.self_link
@@ -2471,7 +2471,7 @@ resource "google_compute_network_attachment" "test_network_attachment" {
 
 resource "google_compute_instance_template" "foobar" {
   name         = "tf-test-template-%{suffix}"
-  machine_type = "e2-medium"
+  machine_type = "e2-micro"
 
   disk {
     source_image = data.google_compute_image.my_image.self_link

@@ -208,7 +208,7 @@ resource "google_container_aws_cluster" "primary" {
 
 resource "google_container_aws_node_pool" "primary" {
   autoscaling {
-    max_node_count = 5
+    max_node_count = 2
     min_node_count = 1
   }
 
@@ -374,7 +374,7 @@ resource "google_container_aws_cluster" "primary" {
 
 resource "google_container_aws_node_pool" "primary" {
   autoscaling {
-    max_node_count = 5
+    max_node_count = 2
     min_node_count = 1
   }
 
@@ -541,7 +541,7 @@ resource "google_container_aws_cluster" "primary" {
 
 resource "google_container_aws_node_pool" "primary" {
   autoscaling {
-    max_node_count = 5
+    max_node_count = 2
     min_node_count = 1
   }
 
@@ -697,7 +697,7 @@ resource "google_container_aws_cluster" "primary" {
 
 resource "google_container_aws_node_pool" "primary" {
   autoscaling {
-    max_node_count = 5
+    max_node_count = 2
     min_node_count = 1
   }
 

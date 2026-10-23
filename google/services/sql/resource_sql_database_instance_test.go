@@ -7491,11 +7491,6 @@ resource "google_sql_database_instance" "instance" {
   deletion_protection = false
   settings {
     tier = "db-g1-small"
-	backup_configuration {
-		enabled = true
-		binary_log_enabled = true
-	}
-	availability_type = "REGIONAL"
   }
 }
 `, projectId, projectId, orgId, billingAccount, instanceName)
@@ -7525,11 +7520,6 @@ resource "google_sql_database_instance" "instance" {
 		}
 		ipv4_enabled = true
     }
-	backup_configuration {
-		enabled = true
-		binary_log_enabled = true
-	}
-	availability_type = "REGIONAL"
   }
 }
 `, projectId, projectId, orgId, billingAccount, instanceName)
@@ -7559,11 +7549,6 @@ resource "google_sql_database_instance" "instance" {
 		}
 		ipv4_enabled = false
     }
-	backup_configuration {
-		enabled = true
-		binary_log_enabled = true
-	  }
-	availability_type = "REGIONAL"
   }
 }
 `, projectId, projectId, orgId, billingAccount, instanceName)
@@ -7594,11 +7579,6 @@ resource "google_sql_database_instance" "instance" {
 		}
 		ipv4_enabled = false
     }
-	backup_configuration {
-		enabled = true
-		binary_log_enabled = true
-	}
-	availability_type = "REGIONAL"
   }
 }
 `, projectId, projectId, orgId, billingAccount, instanceName)
@@ -7629,11 +7609,6 @@ resource "google_sql_database_instance" "instance" {
 		}
 		ipv4_enabled = false
     }
-	backup_configuration {
-		enabled = true
-		binary_log_enabled = true
-	}
-	availability_type = "REGIONAL"
   }
 }
 `, projectId, projectId, orgId, billingAccount, instanceName, projectId)
@@ -8047,11 +8022,6 @@ resource "google_sql_database_instance" "instance" {
 		}
 		ipv4_enabled = false
     }
-	backup_configuration {
-		enabled = true
-		binary_log_enabled = true
-	}
-	availability_type = "REGIONAL"
   }
 }
 `, instanceName)
@@ -8073,11 +8043,6 @@ resource "google_sql_database_instance" "instance" {
 		}
 		ipv4_enabled = false
     }
-	backup_configuration {
-		enabled = true
-		binary_log_enabled = true
-	}
-	availability_type = "REGIONAL"
   }
 }
 `, instanceName)
@@ -8106,11 +8071,6 @@ resource "google_sql_database_instance" "instance" {
 		}
 		ipv4_enabled = false
     }
-	backup_configuration {
-		enabled = true
-		binary_log_enabled = true
-	}
-	availability_type = "REGIONAL"
   }
 }
 `, networkName, instanceName, projectId, networkName, projectId)
@@ -8133,11 +8093,6 @@ resource "google_sql_database_instance" "instance" {
 		}
 		ipv4_enabled = false
     }
-	backup_configuration {
-		enabled = true
-		binary_log_enabled = true
-	}
-	availability_type = "REGIONAL"
   }
 }`, instanceName, networkAttachmentUri)
 }

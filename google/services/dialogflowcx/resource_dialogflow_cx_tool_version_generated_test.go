@@ -66,7 +66,6 @@ func TestAccDialogflowCXToolVersion_dialogflowcxToolVersionOpenApiExample(t *tes
 		"tool_name":     "tf-test-open-api-tool" + randomSuffix,
 		"random_suffix": randomSuffix,
 	}
-
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),
@@ -259,7 +258,6 @@ func TestAccDialogflowCXToolVersion_dialogflowcxToolVersionDataStoreExample(t *t
 		"tool_name":     "tf-test-datastore-tool" + randomSuffix,
 		"random_suffix": randomSuffix,
 	}
-
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),
@@ -361,7 +359,6 @@ func TestAccDialogflowCXToolVersion_dialogflowcxToolVersionFunctionExample(t *te
 		"tool_name":     "tf-test-function-tool" + randomSuffix,
 		"random_suffix": randomSuffix,
 	}
-
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),

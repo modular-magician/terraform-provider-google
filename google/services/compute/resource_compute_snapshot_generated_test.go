@@ -64,7 +64,6 @@ func TestAccComputeSnapshot_snapshotBasicExample(t *testing.T) {
 		"snapshot_name": "tf-test-my-snapshot" + randomSuffix,
 		"random_suffix": randomSuffix,
 	}
-
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),
@@ -127,7 +126,6 @@ func TestAccComputeSnapshot_snapshotBasicSourceInstantSnapshotExample(t *testing
 		"snapshot_name":         "tf-test-my-snapshot" + randomSuffix,
 		"random_suffix":         randomSuffix,
 	}
-
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),
@@ -197,7 +195,6 @@ func TestAccComputeSnapshot_snapshotChainnameExample(t *testing.T) {
 		"snapshot_name": "tf-test-my-snapshot" + randomSuffix,
 		"random_suffix": randomSuffix,
 	}
-
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),

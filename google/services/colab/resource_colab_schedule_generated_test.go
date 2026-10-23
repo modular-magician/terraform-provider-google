@@ -73,7 +73,6 @@ func TestAccColabSchedule_colabScheduleBasicExample(t *testing.T) {
 		"runtime_template_name": "tf-test-runtime-template" + randomSuffix,
 		"random_suffix":         randomSuffix,
 	}
-
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),
@@ -204,7 +203,6 @@ func TestAccColabSchedule_colabSchedulePausedExample(t *testing.T) {
 		"runtime_template_name": "tf-test-runtime-template" + randomSuffix,
 		"random_suffix":         randomSuffix,
 	}
-
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),
@@ -340,7 +338,6 @@ func TestAccColabSchedule_colabScheduleNotebookFullExample(t *testing.T) {
 		"network_name":             "tf-test-colab-test-default" + randomSuffix,
 		"random_suffix":            randomSuffix,
 	}
-
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),
@@ -519,7 +516,6 @@ func TestAccColabSchedule_colabSchedulePipelineExample(t *testing.T) {
 		"storage_bucket":                  "tf-test-pipeline-job" + randomSuffix,
 		"random_suffix":                   randomSuffix,
 	}
-
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),

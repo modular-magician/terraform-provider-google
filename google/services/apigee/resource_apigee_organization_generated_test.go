@@ -67,7 +67,6 @@ func TestAccApigeeOrganization_apigeeOrganizationCloudBasicTestExample(t *testin
 		"org_id":          envvar.GetTestOrgFromEnv(t),
 		"random_suffix":   randomSuffix,
 	}
-
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),
@@ -182,7 +181,6 @@ func TestAccApigeeOrganization_apigeeOrganizationCloudBasicDisableVpcPeeringTest
 		"org_id":          envvar.GetTestOrgFromEnv(t),
 		"random_suffix":   randomSuffix,
 	}
-
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),
@@ -257,7 +255,6 @@ func TestAccApigeeOrganization_apigeeOrganizationCloudBasicDataResidencyTestExam
 		"org_id":          envvar.GetTestOrgFromEnv(t),
 		"random_suffix":   randomSuffix,
 	}
-
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),

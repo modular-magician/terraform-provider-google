@@ -64,7 +64,6 @@ func TestAccVertexAIIndexEndpoint_vertexAiIndexEndpointWithPscExample(t *testing
 		"index_endpoint_display_name": "tf-test-sample-endpoint" + randomSuffix,
 		"random_suffix":               randomSuffix,
 	}
-
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),
@@ -120,7 +119,6 @@ func TestAccVertexAIIndexEndpoint_vertexAiIndexEndpointWithFalsePscExample(t *te
 		"index_endpoint_display_name": "tf-test-sample-endpoint" + randomSuffix,
 		"random_suffix":               randomSuffix,
 	}
-
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),
@@ -159,7 +157,6 @@ func TestAccVertexAIIndexEndpoint_vertexAiIndexEndpointWithPublicEndpointExample
 		"index_endpoint_display_name": "tf-test-sample-endpoint" + randomSuffix,
 		"random_suffix":               randomSuffix,
 	}
-
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),

@@ -67,7 +67,6 @@ func TestAccComputeForwardingRule_forwardingRuleExternallbByoipv6Example(t *test
 		"network_name":         "tf-test-website-net" + randomSuffix,
 		"random_suffix":        randomSuffix,
 	}
-
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),
@@ -140,7 +139,6 @@ func TestAccComputeForwardingRule_forwardingRuleGlobalInternallbExample(t *testi
 		"network_name":         "tf-test-website-net" + randomSuffix,
 		"random_suffix":        randomSuffix,
 	}
-
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),
@@ -214,7 +212,6 @@ func TestAccComputeForwardingRule_forwardingRuleBasicExample(t *testing.T) {
 		"target_pool_name":     "tf-test-website-target-pool" + randomSuffix,
 		"random_suffix":        randomSuffix,
 	}
-
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),
@@ -264,7 +261,6 @@ func TestAccComputeForwardingRule_forwardingRuleInternallbExample(t *testing.T) 
 		"network_name":         "tf-test-website-net" + randomSuffix,
 		"random_suffix":        randomSuffix,
 	}
-
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),
@@ -351,7 +347,6 @@ func TestAccComputeForwardingRule_forwardingRuleVpcPscExample(t *testing.T) {
 		"service_attachment_name":       "tf-test-producer-service" + randomSuffix,
 		"random_suffix":                 randomSuffix,
 	}
-
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),
@@ -492,7 +487,6 @@ func TestAccComputeForwardingRule_forwardingRuleVpcPscNoAutomateDnsExample(t *te
 		"service_attachment_name":       "tf-test-producer-service" + randomSuffix,
 		"random_suffix":                 randomSuffix,
 	}
-
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),
@@ -624,7 +618,6 @@ func TestAccComputeForwardingRule_forwardingRuleRegionalSteeringExample(t *testi
 		"ip_name":                       "tf-test-website-ip" + randomSuffix,
 		"random_suffix":                 randomSuffix,
 	}
-
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),
@@ -694,7 +687,6 @@ func TestAccComputeForwardingRule_forwardingRuleInternallbIpv6Example(t *testing
 		"subnet_name":          "tf-test-subnet-internal-ipv6" + randomSuffix,
 		"random_suffix":        randomSuffix,
 	}
-
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),

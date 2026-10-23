@@ -72,7 +72,6 @@ func TestAccComputeFirewallPolicyRule_firewallPolicyRuleExample(t *testing.T) {
 		"tag_value":     "tf-test-tag-value" + randomSuffix,
 		"random_suffix": randomSuffix,
 	}
-
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),
@@ -184,7 +183,6 @@ func TestAccComputeFirewallPolicyRule_firewallPolicyRuleNetworkContextExample(t 
 		"tag_value":     "tf-test-tag-value" + randomSuffix,
 		"random_suffix": randomSuffix,
 	}
-
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),
@@ -299,7 +297,6 @@ func TestAccComputeFirewallPolicyRule_firewallPolicyRuleSecureTagsExample(t *tes
 		"tag_value":     "tf-test-tag-value" + randomSuffix,
 		"random_suffix": randomSuffix,
 	}
-
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),

@@ -73,7 +73,6 @@ func TestAccComputeRegionNetworkFirewallPolicyRule_regionNetworkFirewallPolicyRu
 		"tag_value":     "tf-test-tag-value" + randomSuffix,
 		"random_suffix": randomSuffix,
 	}
-
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),
@@ -181,7 +180,6 @@ func TestAccComputeRegionNetworkFirewallPolicyRule_regionNetworkFirewallPolicyRu
 		"fw_policy":     "tf-test-fw-policy" + randomSuffix,
 		"random_suffix": randomSuffix,
 	}
-
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),
@@ -251,7 +249,6 @@ func TestAccComputeRegionNetworkFirewallPolicyRule_regionNetworkFirewallPolicyRu
 		"network":       "tf-test-network" + randomSuffix,
 		"random_suffix": randomSuffix,
 	}
-
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),

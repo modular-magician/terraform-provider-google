@@ -67,7 +67,6 @@ func TestAccBigQueryJob_bigqueryJobQueryExample(t *testing.T) {
 		"job_id":        "tf_test_job_query" + randomSuffix,
 		"random_suffix": randomSuffix,
 	}
-
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),
@@ -137,7 +136,6 @@ func TestAccBigQueryJob_bigqueryJobQueryTableReferenceExample(t *testing.T) {
 		"job_id":        "tf_test_job_query" + randomSuffix,
 		"random_suffix": randomSuffix,
 	}
-
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),
@@ -208,7 +206,6 @@ func TestAccBigQueryJob_bigqueryJobLoadExample(t *testing.T) {
 		"job_id":        "tf_test_job_load" + randomSuffix,
 		"random_suffix": randomSuffix,
 	}
-
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),
@@ -280,7 +277,6 @@ func TestAccBigQueryJob_bigqueryJobLoadGeojsonExample(t *testing.T) {
 		"job_id":        "tf_test_job_load" + randomSuffix,
 		"random_suffix": randomSuffix,
 	}
-
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),
@@ -370,7 +366,6 @@ func TestAccBigQueryJob_bigqueryJobLoadParquetExample(t *testing.T) {
 		"job_id":        "tf_test_job_load" + randomSuffix,
 		"random_suffix": randomSuffix,
 	}
-
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),
@@ -456,7 +451,6 @@ func TestAccBigQueryJob_bigqueryJobLoadTableReferenceExample(t *testing.T) {
 		"job_id":        "tf_test_job_load" + randomSuffix,
 		"random_suffix": randomSuffix,
 	}
-
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),
@@ -527,7 +521,6 @@ func TestAccBigQueryJob_bigqueryJobCopyExample(t *testing.T) {
 		"kms_key_name":  kms.BootstrapKMSKeyWithPurposeInLocationAndName(t, "ENCRYPT_DECRYPT", "global", "tf-bootstrap-bigquery-job-key1").CryptoKey.Name,
 		"random_suffix": randomSuffix,
 	}
-
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),
@@ -682,7 +675,6 @@ func TestAccBigQueryJob_bigqueryJobCopyTableReferenceExample(t *testing.T) {
 		"kms_key_name":  kms.BootstrapKMSKeyWithPurposeInLocationAndName(t, "ENCRYPT_DECRYPT", "global", "tf-bootstrap-bigquery-job-key2").CryptoKey.Name,
 		"random_suffix": randomSuffix,
 	}
-
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),
@@ -830,7 +822,6 @@ func TestAccBigQueryJob_bigqueryJobExtractExample(t *testing.T) {
 		"job_id":        "tf_test_job_extract" + randomSuffix,
 		"random_suffix": randomSuffix,
 	}
-
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),
@@ -918,7 +909,6 @@ func TestAccBigQueryJob_bigqueryJobExtractTableReferenceExample(t *testing.T) {
 		"job_id":        "tf_test_job_extract" + randomSuffix,
 		"random_suffix": randomSuffix,
 	}
-
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),

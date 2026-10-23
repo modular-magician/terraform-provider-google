@@ -64,7 +64,6 @@ func TestAccComputeTargetInstance_targetInstanceBasicExample(t *testing.T) {
 		"target_name":   "tf-test-target" + randomSuffix,
 		"random_suffix": randomSuffix,
 	}
-
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),

@@ -66,7 +66,6 @@ func TestAccNetworkSecuritySecurityProfileGroup_networkSecuritySecurityProfileGr
 		"security_profile_name":       "tf-test-sec-profile" + randomSuffix,
 		"random_suffix":               randomSuffix,
 	}
-
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),
@@ -124,7 +123,6 @@ func TestAccNetworkSecuritySecurityProfileGroup_networkSecuritySecurityProfileGr
 		"security_profile_name":       "tf-test-sec-profile" + randomSuffix,
 		"random_suffix":               randomSuffix,
 	}
-
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),
@@ -209,7 +207,6 @@ func TestAccNetworkSecuritySecurityProfileGroup_networkSecuritySecurityProfileGr
 		"wildfire_profile_updated_name":  "tf-test-wf-sec-profile-updated" + randomSuffix,
 		"random_suffix":                  randomSuffix,
 	}
-
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),

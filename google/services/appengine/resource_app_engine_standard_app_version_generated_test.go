@@ -69,7 +69,6 @@ func TestAccAppEngineStandardAppVersion_appEngineStandardAppVersionExample(t *te
 		"service_name":  "tf-test-ae-service" + randomSuffix,
 		"random_suffix": randomSuffix,
 	}
-
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),
@@ -203,7 +202,6 @@ func TestAccAppEngineStandardAppVersion_appEngineStandardAppVersionBundledServic
 		"service_id":    "tf-test-bundled-service" + randomSuffix,
 		"random_suffix": randomSuffix,
 	}
-
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),

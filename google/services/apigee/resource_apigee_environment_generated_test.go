@@ -68,7 +68,6 @@ func TestAccApigeeEnvironment_apigeeEnvironmentBasicTestExample(t *testing.T) {
 		"org_id":          envvar.GetTestOrgFromEnv(t),
 		"random_suffix":   randomSuffix,
 	}
-
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),
@@ -187,7 +186,6 @@ func TestAccApigeeEnvironment_apigeeEnvironmentBasicDeploymentApiproxyTypeTestEx
 		"org_id":          envvar.GetTestOrgFromEnv(t),
 		"random_suffix":   randomSuffix,
 	}
-
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),
@@ -307,7 +305,6 @@ func TestAccApigeeEnvironment_apigeeEnvironmentBasicPropertiesTestExample(t *tes
 		"org_id":          envvar.GetTestOrgFromEnv(t),
 		"random_suffix":   randomSuffix,
 	}
-
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),
@@ -431,7 +428,6 @@ func TestAccApigeeEnvironment_apigeeEnvironmentClientIpResolutionConfigTestExamp
 		"org_id":          envvar.GetTestOrgFromEnv(t),
 		"random_suffix":   randomSuffix,
 	}
-
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),

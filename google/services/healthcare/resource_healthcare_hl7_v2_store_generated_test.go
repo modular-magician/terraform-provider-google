@@ -66,7 +66,6 @@ func TestAccHealthcareHl7V2Store_healthcareHl7V2StoreBasicExample(t *testing.T) 
 		"pubsub_topic":      "tf-test-hl7-v2-notifications" + randomSuffix,
 		"random_suffix":     randomSuffix,
 	}
-
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),

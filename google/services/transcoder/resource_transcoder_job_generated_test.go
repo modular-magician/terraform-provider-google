@@ -66,7 +66,6 @@ func TestAccTranscoderJob_transcoderJobBasicExample(t *testing.T) {
 		"job_template_id": "tf-test-example-job-template" + randomSuffix,
 		"random_suffix":   randomSuffix,
 	}
-
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),
@@ -215,7 +214,6 @@ func TestAccTranscoderJob_transcoderJobPubsubExample(t *testing.T) {
 		"pub_sub_topic_name": "tf-test-transcoder-notifications" + randomSuffix,
 		"random_suffix":      randomSuffix,
 	}
-
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),
@@ -364,7 +362,6 @@ func TestAccTranscoderJob_transcoderJobOverlaysExample(t *testing.T) {
 		"job_template_id": "tf-test-example-job-template" + randomSuffix,
 		"random_suffix":   randomSuffix,
 	}
-
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),
@@ -528,7 +525,6 @@ func TestAccTranscoderJob_transcoderJobManifestsExample(t *testing.T) {
 		"job_template_id": "tf-test-example-job-template" + randomSuffix,
 		"random_suffix":   randomSuffix,
 	}
-
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),

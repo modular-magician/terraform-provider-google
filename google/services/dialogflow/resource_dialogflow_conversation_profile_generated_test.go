@@ -82,7 +82,6 @@ func TestAccDialogflowConversationProfile_dialogflowConversationProfileBasicExam
 		"use_gemini_asr":              false,
 		"random_suffix":               randomSuffix,
 	}
-
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),
@@ -170,7 +169,6 @@ func TestAccDialogflowConversationProfile_dialogflowConversationProfileRecogniti
 		"topic_name":    "tf-test-recognition-result-notification" + randomSuffix,
 		"random_suffix": randomSuffix,
 	}
-
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),

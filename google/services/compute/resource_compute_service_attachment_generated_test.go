@@ -71,7 +71,6 @@ func TestAccComputeServiceAttachment_serviceAttachmentBasicExample(t *testing.T)
 		"service_attachment_name":       "tf-test-my-psc-ilb" + randomSuffix,
 		"random_suffix":                 randomSuffix,
 	}
-
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),
@@ -195,7 +194,6 @@ func TestAccComputeServiceAttachment_serviceAttachmentNatIpsExample(t *testing.T
 		"service_attachment_name":       "tf-test-my-psc-ilb" + randomSuffix,
 		"random_suffix":                 randomSuffix,
 	}
-
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),
@@ -304,7 +302,6 @@ func TestAccComputeServiceAttachment_serviceAttachmentExplicitProjectsExample(t 
 		"service_attachment_name":       "tf-test-my-psc-ilb" + randomSuffix,
 		"random_suffix":                 randomSuffix,
 	}
-
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),
@@ -438,7 +435,6 @@ func TestAccComputeServiceAttachment_serviceAttachmentExplicitNetworksExample(t 
 		"service_attachment_name":       "tf-test-my-psc-ilb" + randomSuffix,
 		"random_suffix":                 randomSuffix,
 	}
-
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),
@@ -582,7 +578,6 @@ func TestAccComputeServiceAttachment_serviceAttachmentReconcileConnectionsExampl
 		"service_attachment_name":       "tf-test-my-psc-ilb" + randomSuffix,
 		"random_suffix":                 randomSuffix,
 	}
-
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),
@@ -691,7 +686,6 @@ func TestAccComputeServiceAttachment_serviceAttachmentCrossRegionIlbExample(t *t
 		"name":          "tf-test-sa" + randomSuffix,
 		"random_suffix": randomSuffix,
 	}
-
 	acctest.VcrTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.AccTestPreCheck(t) },
 		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories(t),

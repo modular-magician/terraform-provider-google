@@ -106,7 +106,7 @@ resource "google_colab_runtime_template" "my_runtime_template" {
   location = "us-central1"
 
   machine_spec {
-    machine_type     = "e2-standard-4"
+    machine_type     = "e2-standard-2"
   }
 
   network_spec {
@@ -237,7 +237,7 @@ resource "google_colab_runtime_template" "my_runtime_template" {
   location = "us-central1"
 
   machine_spec {
-    machine_type     = "e2-standard-4"
+    machine_type     = "e2-standard-2"
   }
 
   network_spec {
@@ -451,7 +451,7 @@ resource "google_colab_schedule" "schedule" {
 
       custom_environment_spec {
         machine_spec {
-          machine_type             = "n1-standard-4"
+          machine_type             = "n1-standard-2"
           accelerator_type         = "NVIDIA_TESLA_T4"
           accelerator_count        = 1
           gpu_partition_size       = "1g.10gb"

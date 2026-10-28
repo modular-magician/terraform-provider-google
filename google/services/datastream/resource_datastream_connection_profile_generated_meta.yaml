@@ -71,6 +71,12 @@ fields:
     - api_field: postgresqlProfile.sslConfig.serverVerification.caCertificate
     - api_field: postgresqlProfile.username
     - api_field: privateConnectivity.privateConnection
+    - api_field: salesforceProfile.domain
+    - api_field: salesforceProfile.oauth2ClientCredentials.clientId
+    - api_field: salesforceProfile.oauth2ClientCredentials.clientSecret
+    - api_field: salesforceProfile.oauth2ClientCredentials.secretManagerStoredClientSecret
+    - api_field: spannerProfile.database
+    - api_field: spannerProfile.host
     - api_field: sqlServerProfile.database
     - api_field: sqlServerProfile.hostname
     - api_field: sqlServerProfile.password

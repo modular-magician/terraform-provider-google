@@ -178,7 +178,7 @@ func ResourceDatastreamConnectionProfile() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{},
 				},
-				ExactlyOneOf: []string{"bigquery_profile", "gcs_profile", "mongodb_profile", "mysql_profile", "oracle_profile", "postgresql_profile", "sql_server_profile"},
+				ExactlyOneOf: []string{"bigquery_profile", "gcs_profile", "mongodb_profile", "mysql_profile", "oracle_profile", "postgresql_profile", "salesforce_profile", "spanner_profile", "sql_server_profile"},
 			},
 			"create_without_validation": {
 				Type:             schema.TypeBool,
@@ -249,7 +249,7 @@ func ResourceDatastreamConnectionProfile() *schema.Resource {
 						},
 					},
 				},
-				ExactlyOneOf: []string{"bigquery_profile", "gcs_profile", "mongodb_profile", "mysql_profile", "oracle_profile", "postgresql_profile", "sql_server_profile"},
+				ExactlyOneOf: []string{"bigquery_profile", "gcs_profile", "mongodb_profile", "mysql_profile", "oracle_profile", "postgresql_profile", "salesforce_profile", "spanner_profile", "sql_server_profile"},
 			},
 			"labels": {
 				Type:     schema.TypeMap,
@@ -409,7 +409,7 @@ host[:port] in the connection URI.`,
 						},
 					},
 				},
-				ExactlyOneOf: []string{"bigquery_profile", "gcs_profile", "mongodb_profile", "mysql_profile", "oracle_profile", "postgresql_profile", "sql_server_profile"},
+				ExactlyOneOf: []string{"bigquery_profile", "gcs_profile", "mongodb_profile", "mysql_profile", "oracle_profile", "postgresql_profile", "salesforce_profile", "spanner_profile", "sql_server_profile"},
 			},
 			"mysql_profile": {
 				Type:        schema.TypeList,
@@ -499,7 +499,7 @@ If this field is used then the 'client_certificate' and the
 						},
 					},
 				},
-				ExactlyOneOf: []string{"bigquery_profile", "gcs_profile", "mongodb_profile", "mysql_profile", "oracle_profile", "postgresql_profile", "sql_server_profile"},
+				ExactlyOneOf: []string{"bigquery_profile", "gcs_profile", "mongodb_profile", "mysql_profile", "oracle_profile", "postgresql_profile", "salesforce_profile", "spanner_profile", "sql_server_profile"},
 			},
 			"oracle_profile": {
 				Type:        schema.TypeList,
@@ -548,7 +548,7 @@ If this field is used then the 'client_certificate' and the
 						},
 					},
 				},
-				ExactlyOneOf: []string{"bigquery_profile", "gcs_profile", "mongodb_profile", "mysql_profile", "oracle_profile", "postgresql_profile", "sql_server_profile"},
+				ExactlyOneOf: []string{"bigquery_profile", "gcs_profile", "mongodb_profile", "mysql_profile", "oracle_profile", "postgresql_profile", "salesforce_profile", "spanner_profile", "sql_server_profile"},
 			},
 			"postgresql_profile": {
 				Type:        schema.TypeList,
@@ -660,7 +660,7 @@ and the server identity will be authenticated.`,
 						},
 					},
 				},
-				ExactlyOneOf: []string{"bigquery_profile", "gcs_profile", "mongodb_profile", "mysql_profile", "oracle_profile", "postgresql_profile", "sql_server_profile"},
+				ExactlyOneOf: []string{"bigquery_profile", "gcs_profile", "mongodb_profile", "mysql_profile", "oracle_profile", "postgresql_profile", "salesforce_profile", "spanner_profile", "sql_server_profile"},
 			},
 			"private_connectivity": {
 				Type:        schema.TypeList,
@@ -677,6 +677,75 @@ and the server identity will be authenticated.`,
 					},
 				},
 				ConflictsWith: []string{"forward_ssh_connectivity"},
+			},
+			"salesforce_profile": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: `Salesforce profile.`,
+				MaxItems:    1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"domain": {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: `Domain for the Salesforce Org.`,
+						},
+						"oauth2_client_credentials": {
+							Type:        schema.TypeList,
+							Optional:    true,
+							Description: `OAuth credentials to use for Salesforce authentication.`,
+							MaxItems:    1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"client_id": {
+										Type:        schema.TypeString,
+										Required:    true,
+										Description: `Client ID to use for authentication.`,
+									},
+									"client_secret": {
+										Type:         schema.TypeString,
+										Optional:     true,
+										Description:  `Client secret to use for authentication.`,
+										Sensitive:    true,
+										ExactlyOneOf: []string{"salesforce_profile.0.oauth2_client_credentials.0.client_secret", "salesforce_profile.0.oauth2_client_credentials.0.secret_manager_stored_client_secret"},
+									},
+									"secret_manager_stored_client_secret": {
+										Type:         schema.TypeString,
+										Optional:     true,
+										Description:  `A reference to a Secret Manager resource name storing the client secret.`,
+										ExactlyOneOf: []string{"salesforce_profile.0.oauth2_client_credentials.0.client_secret", "salesforce_profile.0.oauth2_client_credentials.0.secret_manager_stored_client_secret"},
+									},
+								},
+							},
+							ExactlyOneOf: []string{"salesforce_profile.0.oauth2_client_credentials"},
+						},
+					},
+				},
+				ExactlyOneOf: []string{"bigquery_profile", "gcs_profile", "mongodb_profile", "mysql_profile", "oracle_profile", "postgresql_profile", "salesforce_profile", "spanner_profile", "sql_server_profile"},
+			},
+			"spanner_profile": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: `Spanner profile.`,
+				MaxItems:    1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"database": {
+							Type:     schema.TypeString,
+							Required: true,
+							ForceNew: true,
+							Description: `The full project and resource path for Spanner database. Format:
+projects/{project}/instances/{instance}/databases/{database}.`,
+						},
+						"host": {
+							Type:     schema.TypeString,
+							Optional: true,
+							Description: `The regional Spanner endpoint. Format:
+https://spanner.{region}.rep.googleapis.com.`,
+						},
+					},
+				},
+				ExactlyOneOf: []string{"bigquery_profile", "gcs_profile", "mongodb_profile", "mysql_profile", "oracle_profile", "postgresql_profile", "salesforce_profile", "spanner_profile", "sql_server_profile"},
 			},
 			"sql_server_profile": {
 				Type:        schema.TypeList,
@@ -719,7 +788,7 @@ and the server identity will be authenticated.`,
 						},
 					},
 				},
-				ExactlyOneOf: []string{"bigquery_profile", "gcs_profile", "mongodb_profile", "mysql_profile", "oracle_profile", "postgresql_profile", "sql_server_profile"},
+				ExactlyOneOf: []string{"bigquery_profile", "gcs_profile", "mongodb_profile", "mysql_profile", "oracle_profile", "postgresql_profile", "salesforce_profile", "spanner_profile", "sql_server_profile"},
 			},
 			"effective_labels": {
 				Type:        schema.TypeMap,
@@ -805,6 +874,18 @@ func resourceDatastreamConnectionProfileCreate(d *schema.ResourceData, meta inte
 		return err
 	} else if v, ok := d.GetOkExists("postgresql_profile"); !tpgresource.IsEmptyValue(reflect.ValueOf(postgresqlProfileProp)) && (ok || !reflect.DeepEqual(v, postgresqlProfileProp)) {
 		obj["postgresqlProfile"] = postgresqlProfileProp
+	}
+	salesforceProfileProp, err := expandDatastreamConnectionProfileSalesforceProfile(d.Get("salesforce_profile"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("salesforce_profile"); !tpgresource.IsEmptyValue(reflect.ValueOf(salesforceProfileProp)) && (ok || !reflect.DeepEqual(v, salesforceProfileProp)) {
+		obj["salesforceProfile"] = salesforceProfileProp
+	}
+	spannerProfileProp, err := expandDatastreamConnectionProfileSpannerProfile(d.Get("spanner_profile"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("spanner_profile"); !tpgresource.IsEmptyValue(reflect.ValueOf(spannerProfileProp)) && (ok || !reflect.DeepEqual(v, spannerProfileProp)) {
+		obj["spannerProfile"] = spannerProfileProp
 	}
 	sqlServerProfileProp, err := expandDatastreamConnectionProfileSqlServerProfile(d.Get("sql_server_profile"), d, config)
 	if err != nil {
@@ -1093,6 +1174,18 @@ func resourceDatastreamConnectionProfileUpdate(d *schema.ResourceData, meta inte
 	} else if v, ok := d.GetOkExists("postgresql_profile"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, postgresqlProfileProp)) {
 		obj["postgresqlProfile"] = postgresqlProfileProp
 	}
+	salesforceProfileProp, err := expandDatastreamConnectionProfileSalesforceProfile(d.Get("salesforce_profile"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("salesforce_profile"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, salesforceProfileProp)) {
+		obj["salesforceProfile"] = salesforceProfileProp
+	}
+	spannerProfileProp, err := expandDatastreamConnectionProfileSpannerProfile(d.Get("spanner_profile"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("spanner_profile"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, spannerProfileProp)) {
+		obj["spannerProfile"] = spannerProfileProp
+	}
 	sqlServerProfileProp, err := expandDatastreamConnectionProfileSqlServerProfile(d.Get("sql_server_profile"), d, config)
 	if err != nil {
 		return err
@@ -1155,6 +1248,14 @@ func resourceDatastreamConnectionProfileUpdate(d *schema.ResourceData, meta inte
 
 	if d.HasChange("postgresql_profile") {
 		updateMask = append(updateMask, "postgresqlProfile")
+	}
+
+	if d.HasChange("salesforce_profile") {
+		updateMask = append(updateMask, "salesforceProfile")
+	}
+
+	if d.HasChange("spanner_profile") {
+		updateMask = append(updateMask, "spannerProfile")
 	}
 
 	if d.HasChange("sql_server_profile") {
@@ -1663,6 +1764,77 @@ func flattenDatastreamConnectionProfilePostgresqlProfileSslConfigServerAndClient
 
 func flattenDatastreamConnectionProfilePostgresqlProfileSslConfigServerAndClientVerificationCaCertificate(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return d.Get("postgresql_profile.0.ssl_config.0.server_and_client_verification.0.ca_certificate")
+}
+
+func flattenDatastreamConnectionProfileSalesforceProfile(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["domain"] =
+		flattenDatastreamConnectionProfileSalesforceProfileDomain(original["domain"], d, config)
+	transformed["oauth2_client_credentials"] =
+		flattenDatastreamConnectionProfileSalesforceProfileOauth2ClientCredentials(original["oauth2ClientCredentials"], d, config)
+	return []interface{}{transformed}
+}
+func flattenDatastreamConnectionProfileSalesforceProfileDomain(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenDatastreamConnectionProfileSalesforceProfileOauth2ClientCredentials(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["client_id"] =
+		flattenDatastreamConnectionProfileSalesforceProfileOauth2ClientCredentialsClientId(original["clientId"], d, config)
+	transformed["client_secret"] =
+		flattenDatastreamConnectionProfileSalesforceProfileOauth2ClientCredentialsClientSecret(original["clientSecret"], d, config)
+	transformed["secret_manager_stored_client_secret"] =
+		flattenDatastreamConnectionProfileSalesforceProfileOauth2ClientCredentialsSecretManagerStoredClientSecret(original["secretManagerStoredClientSecret"], d, config)
+	return []interface{}{transformed}
+}
+func flattenDatastreamConnectionProfileSalesforceProfileOauth2ClientCredentialsClientId(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenDatastreamConnectionProfileSalesforceProfileOauth2ClientCredentialsClientSecret(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return d.Get("salesforce_profile.0.oauth2_client_credentials.0.client_secret")
+}
+
+func flattenDatastreamConnectionProfileSalesforceProfileOauth2ClientCredentialsSecretManagerStoredClientSecret(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenDatastreamConnectionProfileSpannerProfile(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["database"] =
+		flattenDatastreamConnectionProfileSpannerProfileDatabase(original["database"], d, config)
+	transformed["host"] =
+		flattenDatastreamConnectionProfileSpannerProfileHost(original["host"], d, config)
+	return []interface{}{transformed}
+}
+func flattenDatastreamConnectionProfileSpannerProfileDatabase(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenDatastreamConnectionProfileSpannerProfileHost(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
 }
 
 func flattenDatastreamConnectionProfileSqlServerProfile(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -2487,6 +2659,124 @@ func expandDatastreamConnectionProfilePostgresqlProfileSslConfigServerAndClientV
 	return v, nil
 }
 
+func expandDatastreamConnectionProfileSalesforceProfile(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedDomain, err := expandDatastreamConnectionProfileSalesforceProfileDomain(original["domain"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedDomain); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["domain"] = transformedDomain
+	}
+
+	transformedOauth2ClientCredentials, err := expandDatastreamConnectionProfileSalesforceProfileOauth2ClientCredentials(original["oauth2_client_credentials"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedOauth2ClientCredentials); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["oauth2ClientCredentials"] = transformedOauth2ClientCredentials
+	}
+
+	return transformed, nil
+}
+
+func expandDatastreamConnectionProfileSalesforceProfileDomain(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandDatastreamConnectionProfileSalesforceProfileOauth2ClientCredentials(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedClientId, err := expandDatastreamConnectionProfileSalesforceProfileOauth2ClientCredentialsClientId(original["client_id"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedClientId); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["clientId"] = transformedClientId
+	}
+
+	transformedClientSecret, err := expandDatastreamConnectionProfileSalesforceProfileOauth2ClientCredentialsClientSecret(original["client_secret"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedClientSecret); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["clientSecret"] = transformedClientSecret
+	}
+
+	transformedSecretManagerStoredClientSecret, err := expandDatastreamConnectionProfileSalesforceProfileOauth2ClientCredentialsSecretManagerStoredClientSecret(original["secret_manager_stored_client_secret"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedSecretManagerStoredClientSecret); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["secretManagerStoredClientSecret"] = transformedSecretManagerStoredClientSecret
+	}
+
+	return transformed, nil
+}
+
+func expandDatastreamConnectionProfileSalesforceProfileOauth2ClientCredentialsClientId(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandDatastreamConnectionProfileSalesforceProfileOauth2ClientCredentialsClientSecret(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandDatastreamConnectionProfileSalesforceProfileOauth2ClientCredentialsSecretManagerStoredClientSecret(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandDatastreamConnectionProfileSpannerProfile(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedDatabase, err := expandDatastreamConnectionProfileSpannerProfileDatabase(original["database"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedDatabase); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["database"] = transformedDatabase
+	}
+
+	transformedHost, err := expandDatastreamConnectionProfileSpannerProfileHost(original["host"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedHost); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["host"] = transformedHost
+	}
+
+	return transformed, nil
+}
+
+func expandDatastreamConnectionProfileSpannerProfileDatabase(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandDatastreamConnectionProfileSpannerProfileHost(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
 func expandDatastreamConnectionProfileSqlServerProfile(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	if v == nil {
 		return nil, nil
@@ -2986,6 +3276,12 @@ func ResourceDatastreamConnectionProfileFlatten(d *schema.ResourceData, meta int
 		return fmt.Errorf("Error reading ConnectionProfile: %s", err)
 	}
 	if err = d.Set("postgresql_profile", flattenDatastreamConnectionProfilePostgresqlProfile(res["postgresqlProfile"], d, config)); err != nil {
+		return fmt.Errorf("Error reading ConnectionProfile: %s", err)
+	}
+	if err = d.Set("salesforce_profile", flattenDatastreamConnectionProfileSalesforceProfile(res["salesforceProfile"], d, config)); err != nil {
+		return fmt.Errorf("Error reading ConnectionProfile: %s", err)
+	}
+	if err = d.Set("spanner_profile", flattenDatastreamConnectionProfileSpannerProfile(res["spannerProfile"], d, config)); err != nil {
 		return fmt.Errorf("Error reading ConnectionProfile: %s", err)
 	}
 	if err = d.Set("sql_server_profile", flattenDatastreamConnectionProfileSqlServerProfile(res["sqlServerProfile"], d, config)); err != nil {

@@ -81,7 +81,7 @@ func TestAccComputeSubnetwork_subnetworkBasicExample(t *testing.T) {
 			},
 			{
 				ResourceName:       "google_compute_subnetwork.network-with-private-secondary-ip-ranges",
-				RefreshState:       true,
+				ImportState:        true,
 				ExpectNonEmptyPlan: true,
 				ImportStateKind:    resource.ImportBlockWithResourceIdentity,
 			},
@@ -136,7 +136,7 @@ func TestAccComputeSubnetwork_subnetworkLoggingConfigExample(t *testing.T) {
 			},
 			{
 				ResourceName:       "google_compute_subnetwork.subnet-with-logging",
-				RefreshState:       true,
+				ImportState:        true,
 				ExpectNonEmptyPlan: true,
 				ImportStateKind:    resource.ImportBlockWithResourceIdentity,
 			},
@@ -193,7 +193,7 @@ func TestAccComputeSubnetwork_subnetworkIpv6Example(t *testing.T) {
 			},
 			{
 				ResourceName:       "google_compute_subnetwork.subnetwork-ipv6",
-				RefreshState:       true,
+				ImportState:        true,
 				ExpectNonEmptyPlan: true,
 				ImportStateKind:    resource.ImportBlockWithResourceIdentity,
 			},
@@ -249,7 +249,7 @@ func TestAccComputeSubnetwork_subnetworkInternalIpv6Example(t *testing.T) {
 			},
 			{
 				ResourceName:       "google_compute_subnetwork.subnetwork-internal-ipv6",
-				RefreshState:       true,
+				ImportState:        true,
 				ExpectNonEmptyPlan: true,
 				ImportStateKind:    resource.ImportBlockWithResourceIdentity,
 			},
@@ -306,7 +306,7 @@ func TestAccComputeSubnetwork_subnetworkResolveSubnetMaskExample(t *testing.T) {
 			},
 			{
 				ResourceName:       "google_compute_subnetwork.subnetwork-resolve-subnet-mask",
-				RefreshState:       true,
+				ImportState:        true,
 				ExpectNonEmptyPlan: true,
 				ImportStateKind:    resource.ImportBlockWithResourceIdentity,
 			},
@@ -361,7 +361,7 @@ func TestAccComputeSubnetwork_subnetworkCidrOverlapExample(t *testing.T) {
 			},
 			{
 				ResourceName:       "google_compute_subnetwork.subnetwork-cidr-overlap",
-				RefreshState:       true,
+				ImportState:        true,
 				ExpectNonEmptyPlan: true,
 				ImportStateKind:    resource.ImportBlockWithResourceIdentity,
 			},
@@ -415,7 +415,7 @@ func TestAccComputeSubnetwork_subnetworkIpv6OnlyInternalExample(t *testing.T) {
 			},
 			{
 				ResourceName:       "google_compute_subnetwork.subnetwork-ipv6-only",
-				RefreshState:       true,
+				ImportState:        true,
 				ExpectNonEmptyPlan: true,
 				ImportStateKind:    resource.ImportBlockWithResourceIdentity,
 			},
@@ -469,7 +469,7 @@ func TestAccComputeSubnetwork_subnetworkWithSubnetModePdpExample(t *testing.T) {
 			},
 			{
 				ResourceName:       "google_compute_subnetwork.subnetwork-with-subnet-mode-pdp",
-				RefreshState:       true,
+				ImportState:        true,
 				ExpectNonEmptyPlan: true,
 				ImportStateKind:    resource.ImportBlockWithResourceIdentity,
 			},
@@ -523,7 +523,7 @@ func TestAccComputeSubnetwork_subnetworkWithInternalSubnetModePdpExample(t *test
 			},
 			{
 				ResourceName:       "google_compute_subnetwork.subnetwork-with-internal-subnet-mode-pdp",
-				RefreshState:       true,
+				ImportState:        true,
 				ExpectNonEmptyPlan: true,
 				ImportStateKind:    resource.ImportBlockWithResourceIdentity,
 			},
@@ -578,7 +578,7 @@ func TestAccComputeSubnetwork_subnetworkWithInternalSubnetModePdpExplicitIpPrefi
 			},
 			{
 				ResourceName:       "google_compute_subnetwork.subnetwork-with-internal-subnet-mode-pdp-explicit-ip-prefix",
-				RefreshState:       true,
+				ImportState:        true,
 				ExpectNonEmptyPlan: true,
 				ImportStateKind:    resource.ImportBlockWithResourceIdentity,
 			},
@@ -632,7 +632,7 @@ func TestAccComputeSubnetwork_subnetworkIpv6OnlyExternalExample(t *testing.T) {
 			},
 			{
 				ResourceName:       "google_compute_subnetwork.subnetwork-ipv6-only",
-				RefreshState:       true,
+				ImportState:        true,
 				ExpectNonEmptyPlan: true,
 				ImportStateKind:    resource.ImportBlockWithResourceIdentity,
 			},

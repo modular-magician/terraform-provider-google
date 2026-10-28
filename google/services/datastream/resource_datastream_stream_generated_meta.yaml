@@ -40,6 +40,13 @@ fields:
     - api_field: backfillAll.postgresqlExcludedObjects.postgresqlSchemas.postgresqlTables.postgresqlColumns.scale
     - api_field: backfillAll.postgresqlExcludedObjects.postgresqlSchemas.postgresqlTables.table
     - api_field: backfillAll.postgresqlExcludedObjects.postgresqlSchemas.schema
+    - api_field: backfillAll.saasExcludedObjects.objects.objectName
+    - api_field: backfillAll.saasExcludedObjects.objects.properties.primaryKey
+    - api_field: backfillAll.saasExcludedObjects.objects.properties.properties.primaryKey
+    - api_field: backfillAll.saasExcludedObjects.objects.properties.properties.properties.primaryKey
+    - api_field: backfillAll.saasExcludedObjects.objects.properties.properties.properties.propertyName
+    - api_field: backfillAll.saasExcludedObjects.objects.properties.properties.propertyName
+    - api_field: backfillAll.saasExcludedObjects.objects.properties.propertyName
     - api_field: backfillAll.salesforceExcludedObjects.objects.fields.name
     - api_field: backfillAll.salesforceExcludedObjects.objects.objectName
     - api_field: backfillAll.spannerExcludedObjects.schemas.schema

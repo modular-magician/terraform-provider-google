@@ -2155,6 +2155,91 @@ https://www.postgresql.org/docs/current/datatype.html`,
 								},
 							},
 						},
+						"saas_excluded_objects": {
+							Type:        schema.TypeList,
+							Optional:    true,
+							Description: `SaaS data source objects to avoid backfilling.`,
+							MaxItems:    1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"objects": {
+										Type:        schema.TypeList,
+										Required:    true,
+										Description: `Source objects in the catalog.`,
+										MinItems:    1,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"object_name": {
+													Type:        schema.TypeString,
+													Required:    true,
+													Description: `The object name.`,
+												},
+												"properties": {
+													Type:     schema.TypeList,
+													Optional: true,
+													Description: `Source properties. When unspecified as part of include objects, includes
+everything, when unspecified as part of exclude objects, excludes nothing.`,
+													Elem: &schema.Resource{
+														Schema: map[string]*schema.Schema{
+															"property_name": {
+																Type:        schema.TypeString,
+																Required:    true,
+																Description: `The property name.`,
+															},
+															"primary_key": {
+																Type:        schema.TypeBool,
+																Optional:    true,
+																Description: `Whether or not the property is a primary key.`,
+															},
+															"properties": {
+																Type:     schema.TypeList,
+																Optional: true,
+																Description: `Source properties. When specified, it means that the current property
+contains nested properties of its own.`,
+																Elem: &schema.Resource{
+																	Schema: map[string]*schema.Schema{
+																		"property_name": {
+																			Type:        schema.TypeString,
+																			Required:    true,
+																			Description: `The property name.`,
+																		},
+																		"primary_key": {
+																			Type:        schema.TypeBool,
+																			Optional:    true,
+																			Description: `Whether or not the property is a primary key.`,
+																		},
+																		"properties": {
+																			Type:     schema.TypeList,
+																			Optional: true,
+																			Description: `Source properties. When specified, it means that the current property
+contains nested properties of its own.`,
+																			Elem: &schema.Resource{
+																				Schema: map[string]*schema.Schema{
+																					"property_name": {
+																						Type:        schema.TypeString,
+																						Required:    true,
+																						Description: `The property name.`,
+																					},
+																					"primary_key": {
+																						Type:        schema.TypeBool,
+																						Optional:    true,
+																						Description: `Whether or not the property is a primary key.`,
+																					},
+																				},
+																			},
+																		},
+																	},
+																},
+															},
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
 						"salesforce_excluded_objects": {
 							Type:        schema.TypeList,
 							Optional:    true,
@@ -5796,6 +5881,8 @@ func flattenDatastreamStreamBackfillAll(v interface{}, d *schema.ResourceData, c
 		flattenDatastreamStreamBackfillAllSpannerExcludedObjects(original["spannerExcludedObjects"], d, config)
 	transformed["mongodb_excluded_objects"] =
 		flattenDatastreamStreamBackfillAllMongodbExcludedObjects(original["mongodbExcludedObjects"], d, config)
+	transformed["saas_excluded_objects"] =
+		flattenDatastreamStreamBackfillAllSaasExcludedObjects(original["saasExcludedObjects"], d, config)
 	return []interface{}{transformed}
 }
 func flattenDatastreamStreamBackfillAllMysqlExcludedObjects(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -6709,6 +6796,129 @@ func flattenDatastreamStreamBackfillAllMongodbExcludedObjectsDatabasesCollection
 	return transformed
 }
 func flattenDatastreamStreamBackfillAllMongodbExcludedObjectsDatabasesCollectionsFieldsField(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenDatastreamStreamBackfillAllSaasExcludedObjects(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["objects"] =
+		flattenDatastreamStreamBackfillAllSaasExcludedObjectsObjects(original["objects"], d, config)
+	return []interface{}{transformed}
+}
+func flattenDatastreamStreamBackfillAllSaasExcludedObjectsObjects(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+	l := v.([]interface{})
+	transformed := make([]interface{}, 0, len(l))
+	for i, raw := range l {
+		_ = i
+		original := raw.(map[string]interface{})
+		if len(original) < 1 {
+			// Do not include empty json objects coming back from the api
+			continue
+		}
+		transformed = append(transformed, map[string]interface{}{
+			"object_name": flattenDatastreamStreamBackfillAllSaasExcludedObjectsObjectsObjectName(original["objectName"], d, config),
+			"properties":  flattenDatastreamStreamBackfillAllSaasExcludedObjectsObjectsProperties(original["properties"], d, config),
+		})
+	}
+	return transformed
+}
+func flattenDatastreamStreamBackfillAllSaasExcludedObjectsObjectsObjectName(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenDatastreamStreamBackfillAllSaasExcludedObjectsObjectsProperties(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+	l := v.([]interface{})
+	transformed := make([]interface{}, 0, len(l))
+	for i, raw := range l {
+		_ = i
+		original := raw.(map[string]interface{})
+		if len(original) < 1 {
+			// Do not include empty json objects coming back from the api
+			continue
+		}
+		transformed = append(transformed, map[string]interface{}{
+			"property_name": flattenDatastreamStreamBackfillAllSaasExcludedObjectsObjectsPropertiesPropertyName(original["propertyName"], d, config),
+			"primary_key":   flattenDatastreamStreamBackfillAllSaasExcludedObjectsObjectsPropertiesPrimaryKey(original["primaryKey"], d, config),
+			"properties":    flattenDatastreamStreamBackfillAllSaasExcludedObjectsObjectsPropertiesProperties(original["properties"], d, config),
+		})
+	}
+	return transformed
+}
+func flattenDatastreamStreamBackfillAllSaasExcludedObjectsObjectsPropertiesPropertyName(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenDatastreamStreamBackfillAllSaasExcludedObjectsObjectsPropertiesPrimaryKey(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenDatastreamStreamBackfillAllSaasExcludedObjectsObjectsPropertiesProperties(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+	l := v.([]interface{})
+	transformed := make([]interface{}, 0, len(l))
+	for i, raw := range l {
+		_ = i
+		original := raw.(map[string]interface{})
+		if len(original) < 1 {
+			// Do not include empty json objects coming back from the api
+			continue
+		}
+		transformed = append(transformed, map[string]interface{}{
+			"property_name": flattenDatastreamStreamBackfillAllSaasExcludedObjectsObjectsPropertiesPropertiesPropertyName(original["propertyName"], d, config),
+			"primary_key":   flattenDatastreamStreamBackfillAllSaasExcludedObjectsObjectsPropertiesPropertiesPrimaryKey(original["primaryKey"], d, config),
+			"properties":    flattenDatastreamStreamBackfillAllSaasExcludedObjectsObjectsPropertiesPropertiesProperties(original["properties"], d, config),
+		})
+	}
+	return transformed
+}
+func flattenDatastreamStreamBackfillAllSaasExcludedObjectsObjectsPropertiesPropertiesPropertyName(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenDatastreamStreamBackfillAllSaasExcludedObjectsObjectsPropertiesPropertiesPrimaryKey(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenDatastreamStreamBackfillAllSaasExcludedObjectsObjectsPropertiesPropertiesProperties(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+	l := v.([]interface{})
+	transformed := make([]interface{}, 0, len(l))
+	for i, raw := range l {
+		_ = i
+		original := raw.(map[string]interface{})
+		if len(original) < 1 {
+			// Do not include empty json objects coming back from the api
+			continue
+		}
+		transformed = append(transformed, map[string]interface{}{
+			"property_name": flattenDatastreamStreamBackfillAllSaasExcludedObjectsObjectsPropertiesPropertiesPropertiesPropertyName(original["propertyName"], d, config),
+			"primary_key":   flattenDatastreamStreamBackfillAllSaasExcludedObjectsObjectsPropertiesPropertiesPropertiesPrimaryKey(original["primaryKey"], d, config),
+		})
+	}
+	return transformed
+}
+func flattenDatastreamStreamBackfillAllSaasExcludedObjectsObjectsPropertiesPropertiesPropertiesPropertyName(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenDatastreamStreamBackfillAllSaasExcludedObjectsObjectsPropertiesPropertiesPropertiesPrimaryKey(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 
@@ -10619,6 +10829,13 @@ func expandDatastreamStreamBackfillAll(v interface{}, d tpgresource.TerraformRes
 		transformed["mongodbExcludedObjects"] = transformedMongodbExcludedObjects
 	}
 
+	transformedSaasExcludedObjects, err := expandDatastreamStreamBackfillAllSaasExcludedObjects(original["saas_excluded_objects"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedSaasExcludedObjects); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["saasExcludedObjects"] = transformedSaasExcludedObjects
+	}
+
 	return transformed, nil
 }
 
@@ -11785,6 +12002,198 @@ func expandDatastreamStreamBackfillAllMongodbExcludedObjectsDatabasesCollections
 }
 
 func expandDatastreamStreamBackfillAllMongodbExcludedObjectsDatabasesCollectionsFieldsField(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandDatastreamStreamBackfillAllSaasExcludedObjects(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedObjects, err := expandDatastreamStreamBackfillAllSaasExcludedObjectsObjects(original["objects"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedObjects); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["objects"] = transformedObjects
+	}
+
+	return transformed, nil
+}
+
+func expandDatastreamStreamBackfillAllSaasExcludedObjectsObjects(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
+	l := v.([]interface{})
+	req := make([]interface{}, 0, len(l))
+	for _, raw := range l {
+		if raw == nil {
+			continue
+		}
+		original := raw.(map[string]interface{})
+		transformed := make(map[string]interface{})
+
+		transformedObjectName, err := expandDatastreamStreamBackfillAllSaasExcludedObjectsObjectsObjectName(original["object_name"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedObjectName); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["objectName"] = transformedObjectName
+		}
+
+		transformedProperties, err := expandDatastreamStreamBackfillAllSaasExcludedObjectsObjectsProperties(original["properties"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedProperties); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["properties"] = transformedProperties
+		}
+
+		req = append(req, transformed)
+	}
+	return req, nil
+}
+
+func expandDatastreamStreamBackfillAllSaasExcludedObjectsObjectsObjectName(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandDatastreamStreamBackfillAllSaasExcludedObjectsObjectsProperties(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
+	l := v.([]interface{})
+	req := make([]interface{}, 0, len(l))
+	for _, raw := range l {
+		if raw == nil {
+			continue
+		}
+		original := raw.(map[string]interface{})
+		transformed := make(map[string]interface{})
+
+		transformedPropertyName, err := expandDatastreamStreamBackfillAllSaasExcludedObjectsObjectsPropertiesPropertyName(original["property_name"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedPropertyName); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["propertyName"] = transformedPropertyName
+		}
+
+		transformedPrimaryKey, err := expandDatastreamStreamBackfillAllSaasExcludedObjectsObjectsPropertiesPrimaryKey(original["primary_key"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedPrimaryKey); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["primaryKey"] = transformedPrimaryKey
+		}
+
+		transformedProperties, err := expandDatastreamStreamBackfillAllSaasExcludedObjectsObjectsPropertiesProperties(original["properties"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedProperties); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["properties"] = transformedProperties
+		}
+
+		req = append(req, transformed)
+	}
+	return req, nil
+}
+
+func expandDatastreamStreamBackfillAllSaasExcludedObjectsObjectsPropertiesPropertyName(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandDatastreamStreamBackfillAllSaasExcludedObjectsObjectsPropertiesPrimaryKey(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandDatastreamStreamBackfillAllSaasExcludedObjectsObjectsPropertiesProperties(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
+	l := v.([]interface{})
+	req := make([]interface{}, 0, len(l))
+	for _, raw := range l {
+		if raw == nil {
+			continue
+		}
+		original := raw.(map[string]interface{})
+		transformed := make(map[string]interface{})
+
+		transformedPropertyName, err := expandDatastreamStreamBackfillAllSaasExcludedObjectsObjectsPropertiesPropertiesPropertyName(original["property_name"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedPropertyName); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["propertyName"] = transformedPropertyName
+		}
+
+		transformedPrimaryKey, err := expandDatastreamStreamBackfillAllSaasExcludedObjectsObjectsPropertiesPropertiesPrimaryKey(original["primary_key"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedPrimaryKey); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["primaryKey"] = transformedPrimaryKey
+		}
+
+		transformedProperties, err := expandDatastreamStreamBackfillAllSaasExcludedObjectsObjectsPropertiesPropertiesProperties(original["properties"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedProperties); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["properties"] = transformedProperties
+		}
+
+		req = append(req, transformed)
+	}
+	return req, nil
+}
+
+func expandDatastreamStreamBackfillAllSaasExcludedObjectsObjectsPropertiesPropertiesPropertyName(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandDatastreamStreamBackfillAllSaasExcludedObjectsObjectsPropertiesPropertiesPrimaryKey(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandDatastreamStreamBackfillAllSaasExcludedObjectsObjectsPropertiesPropertiesProperties(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
+	l := v.([]interface{})
+	req := make([]interface{}, 0, len(l))
+	for _, raw := range l {
+		if raw == nil {
+			continue
+		}
+		original := raw.(map[string]interface{})
+		transformed := make(map[string]interface{})
+
+		transformedPropertyName, err := expandDatastreamStreamBackfillAllSaasExcludedObjectsObjectsPropertiesPropertiesPropertiesPropertyName(original["property_name"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedPropertyName); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["propertyName"] = transformedPropertyName
+		}
+
+		transformedPrimaryKey, err := expandDatastreamStreamBackfillAllSaasExcludedObjectsObjectsPropertiesPropertiesPropertiesPrimaryKey(original["primary_key"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedPrimaryKey); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["primaryKey"] = transformedPrimaryKey
+		}
+
+		req = append(req, transformed)
+	}
+	return req, nil
+}
+
+func expandDatastreamStreamBackfillAllSaasExcludedObjectsObjectsPropertiesPropertiesPropertiesPropertyName(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandDatastreamStreamBackfillAllSaasExcludedObjectsObjectsPropertiesPropertiesPropertiesPrimaryKey(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 

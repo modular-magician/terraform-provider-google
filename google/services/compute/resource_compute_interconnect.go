@@ -58,6 +58,36 @@ func InterconnectTypeDiffSuppress(k, old, new string, d *schema.ResourceData) bo
 	return old == "IT_PRIVATE" && new == "DEDICATED"
 }
 
+// computeInterconnectKeyGroupDiffSuppress treats two InterconnectKeyGroup references as equal when
+// they name the same key group: full URL vs relative name, and project number vs project ID.
+func computeInterconnectKeyGroupDiffSuppress(_, old, new string, _ *schema.ResourceData) bool {
+	if old == new {
+		return true
+	}
+	parse := func(s string) []string {
+		if i := strings.Index(s, "projects/"); i >= 0 {
+			s = s[i:]
+		}
+		return strings.Split(strings.Trim(s, "/"), "/")
+	}
+	o, n := parse(old), parse(new)
+	valid := func(p []string) bool {
+		return len(p) == 6 && p[0] == "projects" && p[2] == "locations" && p[4] == "interconnectKeyGroups"
+	}
+	if !valid(o) || !valid(n) || o[3] != n[3] || o[5] != n[5] {
+		return false
+	}
+	if o[1] == n[1] {
+		return true
+	}
+	// The API may return the project number where the config uses the project ID, or vice versa.
+	isNumber := func(s string) bool {
+		_, err := strconv.ParseUint(s, 10, 64)
+		return err == nil
+	}
+	return isNumber(o[1]) != isNumber(n[1])
+}
+
 var (
 	_ = bytes.Clone
 	_ = context.WithCancel
@@ -227,9 +257,18 @@ Interconnect connection between Google and your on-premises router.`,
 				MaxItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
+						"fail_open": {
+							Type:     schema.TypeBool,
+							Optional: true,
+							Description: `If set to true, the Interconnect connection is configured with a should-secure
+MACsec security policy, that allows the Google router to fallback to cleartext
+traffic if the MKA session cannot be established. By default, the Interconnect
+connection is configured with a must-secure security policy that drops all traffic
+if the MKA session cannot be established with your router.`,
+						},
 						"pre_shared_keys": {
 							Type:     schema.TypeList,
-							Required: true,
+							Optional: true,
 							Description: `A keychain placeholder describing a set of named key objects along with their
 start times. A MACsec CKN/CAK is generated for each key in the key chain.
 Google router automatically picks the key with the most recent startTime when establishing
@@ -267,15 +306,6 @@ hours apart.`,
 									},
 								},
 							},
-						},
-						"fail_open": {
-							Type:     schema.TypeBool,
-							Optional: true,
-							Description: `If set to true, the Interconnect connection is configured with a should-secure
-MACsec security policy, that allows the Google router to fallback to cleartext
-traffic if the MKA session cannot be established. By default, the Interconnect
-connection is configured with a must-secure security policy that drops all traffic
-if the MKA session cannot be established with your router.`,
 						},
 					},
 				},
@@ -980,6 +1010,11 @@ func resourceComputeInterconnectUpdate(d *schema.ResourceData, meta interface{})
 		obj["macsecEnabled"] = macsecEnabledProp
 	}
 
+	obj, err = resourceComputeInterconnectUpdateEncoder(d, meta, obj)
+	if err != nil {
+		return err
+	}
+
 	url, err := tpgresource.ReplaceVars(d, config, transport_tpg.BaseUrl(Product, config)+"projects/{{project}}/global/interconnects/{{name}}")
 	if err != nil {
 		return err
@@ -1033,6 +1068,11 @@ func resourceComputeInterconnectUpdate(d *schema.ResourceData, meta interface{})
 			return err
 		} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
 			obj["labels"] = labelsProp
+		}
+
+		obj, err = resourceComputeInterconnectUpdateEncoder(d, meta, obj)
+		if err != nil {
+			return err
 		}
 
 		url, err := tpgresource.ReplaceVars(d, config, transport_tpg.BaseUrl(Product, config)+"projects/{{project}}/global/interconnects/{{name}}/setLabels")
@@ -1376,56 +1416,40 @@ func flattenComputeInterconnectSatisfiesPzs(v interface{}, d *schema.ResourceDat
 	return v
 }
 
+// After MACsec configuration is removed (pre-shared keys and key group cleared), the API keeps
+// returning an empty `macsec` object with `failOpen: false`. Treat that as "no macsec block" so
+// that a config without a macsec block doesn't show a permanent diff.
 func flattenComputeInterconnectMacsec(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	if v == nil {
+	original, ok := v.(map[string]interface{})
+	if !ok || len(original) == 0 {
 		return nil
 	}
-	original := v.(map[string]interface{})
-	if len(original) == 0 {
+	psks, _ := original["preSharedKeys"].([]interface{})
+	failOpen, _ := original["failOpen"].(bool)
+	kg, _ := original["interconnectKeyGroup"].(string)
+	if len(psks) == 0 && kg == "" && !failOpen {
 		return nil
 	}
-	transformed := make(map[string]interface{})
-	transformed["pre_shared_keys"] =
-		flattenComputeInterconnectMacsecPreSharedKeys(original["preSharedKeys"], d, config)
-	transformed["fail_open"] =
-		flattenComputeInterconnectMacsecFailOpen(original["failOpen"], d, config)
-	return []interface{}{transformed}
-}
-func flattenComputeInterconnectMacsecPreSharedKeys(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	if v == nil {
-		return v
+	transformed := map[string]interface{}{
+		"fail_open": failOpen,
 	}
-	l := v.([]interface{})
-	transformed := make([]interface{}, 0, len(l))
-	for i, raw := range l {
-		_ = i
-		original := raw.(map[string]interface{})
-		if len(original) < 1 {
-			// Do not include empty json objects coming back from the api
+	pskList := make([]interface{}, 0, len(psks))
+	for _, raw := range psks {
+		p, ok := raw.(map[string]interface{})
+		if !ok || len(p) == 0 {
 			continue
 		}
-		transformed = append(transformed, map[string]interface{}{
-			"name":       flattenComputeInterconnectMacsecPreSharedKeysName(original["name"], d, config),
-			"start_time": flattenComputeInterconnectMacsecPreSharedKeysStartTime(original["startTime"], d, config),
-			"fail_open":  flattenComputeInterconnectMacsecPreSharedKeysFailOpen(original["failOpen"], d, config),
-		})
+		psk := map[string]interface{}{
+			"name":       p["name"],
+			"start_time": p["startTime"],
+		}
+		if fo, ok := p["failOpen"]; ok {
+			psk["fail_open"] = fo
+		}
+		pskList = append(pskList, psk)
 	}
-	return transformed
-}
-func flattenComputeInterconnectMacsecPreSharedKeysName(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenComputeInterconnectMacsecPreSharedKeysStartTime(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenComputeInterconnectMacsecPreSharedKeysFailOpen(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenComputeInterconnectMacsecFailOpen(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
+	transformed["pre_shared_keys"] = pskList
+	return []interface{}{transformed}
 }
 
 func flattenComputeInterconnectMacsecEnabled(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -1652,6 +1676,15 @@ func expandComputeInterconnectEffectiveLabels(v interface{}, d tpgresource.Terra
 		m[k] = val.(string)
 	}
 	return m, nil
+}
+
+func resourceComputeInterconnectUpdateEncoder(d *schema.ResourceData, meta interface{}, obj map[string]interface{}) (map[string]interface{}, error) {
+	// macsecEnabled=false is an empty value, so the generated code leaves it out of the PATCH body and
+	// MACsec stays enabled. Send it explicitly when it is being turned off. (Skip the setLabels body.)
+	if _, isSetLabels := obj["labelFingerprint"]; !isSetLabels && d.HasChange("macsec_enabled") && !d.Get("macsec_enabled").(bool) {
+		obj["macsecEnabled"] = false
+	}
+	return obj, nil
 }
 
 func ResourceComputeInterconnectFlatten(d *schema.ResourceData, meta interface{}, res map[string]interface{}, config *transport_tpg.Config, project string, userAgent string, billingProject string, url string, headers http.Header) error {

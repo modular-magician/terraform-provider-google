@@ -179,6 +179,7 @@ import (
 	_ "github.com/hashicorp/terraform-provider-google/google/services/servicemanagement"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/servicenetworking"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/serviceusage"
+	_ "github.com/hashicorp/terraform-provider-google/google/services/serviceusagev2"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/siteverification"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/sourcerepo"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/spanner"

@@ -5941,7 +5941,8 @@ func expandMaintenancePolicy(d *schema.ResourceData, meta interface{}) *containe
 					Recurrence:     rmw["recurrence"].(string),
 				},
 			},
-			ResourceVersion: resourceVersion,
+			DisruptionBudget: budget,
+			ResourceVersion:  resourceVersion,
 		}
 
 		if _, ok := rmw["delay_until"]; ok && len(rmw["delay_until"].([]interface{})) == 1 {
@@ -7758,6 +7759,7 @@ func flattenMaintenancePolicy(mp *container.MaintenancePolicy) []map[string]inte
 					},
 				},
 				"maintenance_exclusion": exclusions,
+				"disruption_budget":     budget,
 			},
 		}
 

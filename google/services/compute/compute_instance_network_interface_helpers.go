@@ -185,3 +185,90 @@ func computeInstanceCreateUpdateWhileStoppedCall(d *schema.ResourceData, config 
 		return nil
 	}
 }
+
+func resolveDynamicNicParentName(instNics []interface{}, targetIndex int) (string, error) {
+	startIdx := targetIndex - 1
+	if startIdx >= len(instNics) {
+		startIdx = len(instNics) - 1
+	}
+	for j := startIdx; j >= 0; j-- {
+		nic, ok := instNics[j].(map[string]interface{})
+		if !ok {
+			continue
+		}
+		if flattenNetworkInterfaceInt64(nic["vlan"]) == 0 {
+			if name, _ := nic["name"].(string); name != "" {
+				return name, nil
+			}
+		}
+		if parentName, _ := nic["parentNicName"].(string); parentName != "" {
+			return parentName, nil
+		}
+	}
+	return "", fmt.Errorf("cannot determine parent_nic_name for dynamic network_interface at index %d", targetIndex)
+}
+
+func computeInstanceAddNetworkInterface(d *schema.ResourceData, config *transport_tpg.Config, networkInterface map[string]interface{}, parentNicName, project, userAgent string) error {
+	body := make(map[string]interface{}, len(networkInterface)+1)
+	for k, v := range networkInterface {
+		body[k] = v
+	}
+	body["parentNicName"] = parentNicName
+
+	url, err := tpgresource.ReplaceVars(d, config, "{{ComputeBasePath}}projects/{{project}}/zones/{{zone}}/instances/{{name}}/addNetworkInterface")
+	if err != nil {
+		return fmt.Errorf("error replacing vars for AddNetworkInterface URL: %w", err)
+	}
+
+	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+		Config:    config,
+		Method:    "POST",
+		Project:   project,
+		RawURL:    url,
+		UserAgent: userAgent,
+		Body:      body,
+	})
+	if err != nil {
+		return fmt.Errorf("error adding dynamic network_interface (parent %q, vlan %v): %w", parentNicName, body["vlan"], err)
+	}
+
+	err = ComputeOperationWaitTime(config, res, project, "dynamic network_interface to add", userAgent, d.Timeout(schema.TimeoutUpdate))
+	if err != nil {
+		return fmt.Errorf("error waiting for dynamic network_interface (parent %q, vlan %v) addition: %w", parentNicName, body["vlan"], err)
+	}
+
+	return nil
+}
+
+func computeInstanceDeleteNetworkInterface(d *schema.ResourceData, config *transport_tpg.Config, nicName, project, userAgent string) error {
+	url, err := tpgresource.ReplaceVars(d, config, "{{ComputeBasePath}}projects/{{project}}/zones/{{zone}}/instances/{{name}}/deleteNetworkInterface")
+	if err != nil {
+		return fmt.Errorf("error replacing vars for DeleteNetworkInterface URL: %w", err)
+	}
+
+	params := map[string]string{
+		"networkInterfaceName": nicName,
+	}
+	url, err = transport_tpg.AddQueryParams(url, params)
+	if err != nil {
+		return fmt.Errorf("error adding query params for DeleteNetworkInterface: %w", err)
+	}
+
+	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+		Config:    config,
+		Method:    "POST",
+		Project:   project,
+		RawURL:    url,
+		UserAgent: userAgent,
+	})
+	if err != nil {
+		return fmt.Errorf("error deleting dynamic network_interface %q: %w", nicName, err)
+	}
+
+	err = ComputeOperationWaitTime(config, res, project, "dynamic network_interface to delete", userAgent, d.Timeout(schema.TimeoutUpdate))
+	if err != nil {
+		return fmt.Errorf("error waiting for dynamic network_interface %q deletion: %w", nicName, err)
+	}
+
+	return nil
+}

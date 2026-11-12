@@ -308,6 +308,11 @@ Cannot be used with delete_after_duration.`,
 				ForceNew:    true,
 				Description: `An optional description of this resource.`,
 			},
+			"enable_emergent_maintenance": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: `Indicates if this group of VMs have emergent maintenance enabled.`,
+			},
 			"params": {
 				Type:        schema.TypeList,
 				Optional:    true,
@@ -677,6 +682,12 @@ func resourceComputeReservationCreate(d *schema.ResourceData, meta interface{}) 
 	} else if v, ok := d.GetOkExists("reservation_sharing_policy"); !tpgresource.IsEmptyValue(reflect.ValueOf(reservationSharingPolicyProp)) && (ok || !reflect.DeepEqual(v, reservationSharingPolicyProp)) {
 		obj["reservationSharingPolicy"] = reservationSharingPolicyProp
 	}
+	enableEmergentMaintenanceProp, err := expandComputeReservationEnableEmergentMaintenance(d.Get("enable_emergent_maintenance"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("enable_emergent_maintenance"); ok || !reflect.DeepEqual(v, enableEmergentMaintenanceProp) {
+		obj["enableEmergentMaintenance"] = enableEmergentMaintenanceProp
+	}
 	paramsProp, err := expandComputeReservationParams(d.Get("params"), d, config)
 	if err != nil {
 		return err
@@ -907,6 +918,12 @@ func resourceComputeReservationUpdate(d *schema.ResourceData, meta interface{}) 
 	} else if v, ok := d.GetOkExists("reservation_sharing_policy"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, reservationSharingPolicyProp)) {
 		obj["reservationSharingPolicy"] = reservationSharingPolicyProp
 	}
+	enableEmergentMaintenanceProp, err := expandComputeReservationEnableEmergentMaintenance(d.Get("enable_emergent_maintenance"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("enable_emergent_maintenance"); ok || !reflect.DeepEqual(v, enableEmergentMaintenanceProp) {
+		obj["enableEmergentMaintenance"] = enableEmergentMaintenanceProp
+	}
 
 	obj, err = resourceComputeReservationUpdateEncoder(d, meta, obj)
 	if err != nil {
@@ -932,6 +949,10 @@ func resourceComputeReservationUpdate(d *schema.ResourceData, meta interface{}) 
 
 	if d.HasChange("reservation_sharing_policy") {
 		updateMask = append(updateMask, "reservationSharingPolicy")
+	}
+
+	if d.HasChange("enable_emergent_maintenance") {
+		updateMask = append(updateMask, "enableEmergentMaintenance")
 	}
 	// updateMask is a URL parameter but not present in the schema, so ReplaceVars
 	// won't set it
@@ -2090,6 +2111,10 @@ func expandComputeReservationReservationSharingPolicyServiceShareType(v interfac
 	return v, nil
 }
 
+func expandComputeReservationEnableEmergentMaintenance(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
 func expandComputeReservationParams(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	if v == nil {
 		return nil, nil
@@ -2242,6 +2267,12 @@ func resourceComputeReservationUpdateEncoder(d *schema.ResourceData, meta interf
 		count := obj["specificReservation"].(map[string]interface{})["count"]
 		if count != nil {
 			newObj["specificSkuCount"] = obj["specificReservation"].(map[string]interface{})["count"]
+		}
+	} else if d.HasChange("enable_emergent_maintenance") {
+		newObj["enableEmergentMaintenance"] = d.Get("enable_emergent_maintenance")
+		if urlUpdateMask != "" {
+			urlUpdateMask = urlUpdateMask + "&paths=enableEmergentMaintenance"
+			newObj["urlUpdateMask"] = urlUpdateMask
 		}
 	}
 

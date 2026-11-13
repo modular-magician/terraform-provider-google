@@ -1265,12 +1265,14 @@ be from 0 to 999,999,999 inclusive.`,
 						"identity": {
 							Type:        schema.TypeString,
 							Optional:    true,
+							Computed:    true,
 							ForceNew:    true,
 							Description: `Identity SPIFFE id.`,
 						},
 						"identity_certificate_enabled": {
 							Type:        schema.TypeBool,
 							Optional:    true,
+							Computed:    true,
 							ForceNew:    true,
 							Description: `Specifies whether identity certificates are enabled.`,
 						},
@@ -1666,11 +1668,21 @@ func resourceComputeInstanceTemplateCreate(d *schema.ResourceData, meta interfac
 		ReservationAffinity:      reservationAffinity,
 		KeyRevocationActionType:  d.Get("key_revocation_action_type").(string),
 	}
+	// In instance_template, we populate the typed compute.WorkloadIdentityConfig struct
+	// where json:",omitempty" would drop explicit false for IdentityCertificateEnabled
+	// unless ForceSendFields is specified. In contrast, region_instance_template sends
+	// the raw map from expandWorkloadIdentityConfig directly via SendRequest, which
+	// preserves explicit false boolean keys without ForceSendFields.
 	if wic := expandWorkloadIdentityConfig(d); wic != nil {
-		instanceProperties.WorkloadIdentityConfig = &compute.WorkloadIdentityConfig{
-			Identity:                   wic["identity"].(string),
-			IdentityCertificateEnabled: wic["identityCertificateEnabled"].(bool),
+		wicTyped := &compute.WorkloadIdentityConfig{}
+		if v, ok := wic["identity"]; ok {
+			wicTyped.Identity = v.(string)
 		}
+		if v, ok := wic["identityCertificateEnabled"]; ok {
+			wicTyped.IdentityCertificateEnabled = v.(bool)
+			wicTyped.ForceSendFields = append(wicTyped.ForceSendFields, "IdentityCertificateEnabled")
+		}
+		instanceProperties.WorkloadIdentityConfig = wicTyped
 	}
 	if cic := expandConfidentialInstanceConfig(d); cic != nil {
 		instanceProperties.ConfidentialInstanceConfig = &compute.ConfidentialInstanceConfig{

@@ -4034,6 +4034,26 @@ func resourceContainerClusterUpdate(d *schema.ResourceData, meta interface{}) er
 		}
 	}
 
+	secretSyncEnabled := false
+	if c, ok := d.GetOk("secret_sync_config"); ok {
+		if ssc := expandSecretSyncConfig(c); ssc != nil && ssc.Enabled {
+			secretSyncEnabled = true
+		}
+	}
+
+	if d.HasChange("secret_sync_config") && secretSyncEnabled {
+		req := &container.UpdateClusterRequest{
+			Update: &container.ClusterUpdate{
+				DesiredSecretSyncConfig: expandSecretSyncConfig(d.Get("secret_sync_config")),
+			},
+		}
+		updateF := updateFunc(req, "updating GKE secret sync add-on")
+		// Call update serially.
+		if err := updateF(); err != nil {
+			return err
+		}
+	}
+
 	if d.HasChange("addons_config") {
 		if ac, ok := d.GetOk("addons_config"); ok {
 			req := &container.UpdateClusterRequest{
@@ -4845,7 +4865,7 @@ func resourceContainerClusterUpdate(d *schema.ResourceData, meta interface{}) er
 		log.Printf("[INFO] GKE cluster %s secret manager csi add-on has been updated", d.Id())
 	}
 
-	if d.HasChange("secret_sync_config") {
+	if d.HasChange("secret_sync_config") && !secretSyncEnabled {
 		req := &container.UpdateClusterRequest{}
 		if c, ok := d.GetOk("secret_sync_config"); !ok {
 			req.Update = &container.ClusterUpdate{

@@ -6,6 +6,7 @@ source_file: products/dialogflowcx/Tool.yaml
 api_service_name: dialogflow.googleapis.com
 api_version: v3
 api_resource_type_kind: Tool
+supports_update: true
 fields:
     - api_field: dataStoreSpec.dataStoreConnections.dataStore
     - api_field: dataStoreSpec.dataStoreConnections.dataStoreType

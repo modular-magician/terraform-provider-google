@@ -304,12 +304,19 @@ func resourceComputeSubnetworkSecondaryIpRangeSetStyleDiff(_ context.Context, di
 	// Extract explicit CIDRs from HCL config to prevent wrong index-based computed inheritance
 	explicitCidrByName := make(map[string]bool)
 	rawConfig := diff.GetRawConfig().GetAttr("secondary_ip_range")
-	if rawConfig.IsKnown() && !rawConfig.IsNull() {
+	// SetNew would replace unknown list elements or range names with known empty values, so leave those diffs to the SDK.
+	if !rawConfig.IsKnown() {
+		return nil
+	}
+	if !rawConfig.IsNull() {
 		for _, item := range rawConfig.AsValueSlice() {
-			if item.IsKnown() && !item.IsNull() && item.GetAttr("range_name").IsKnown() && !item.GetAttr("range_name").IsNull() {
+			if !item.IsKnown() || (!item.IsNull() && !item.GetAttr("range_name").IsKnown()) {
+				return nil
+			}
+			if !item.IsNull() && !item.GetAttr("range_name").IsNull() {
 				nameVal := item.GetAttr("range_name").AsString()
 				if nameVal != "" {
-					if cidrVal := item.GetAttr("ip_cidr_range"); cidrVal.IsKnown() && !cidrVal.IsNull() && cidrVal.AsString() != "" {
+					if cidrVal := item.GetAttr("ip_cidr_range"); !cidrVal.IsKnown() || (!cidrVal.IsNull() && cidrVal.AsString() != "") {
 						explicitCidrByName[nameVal] = true
 					}
 				}

@@ -1453,8 +1453,15 @@ func expandWorkloadIdentityConfig(d tpgresource.TerraformResourceData) map[strin
 	if !ok {
 		return nil
 	}
+	s, ok := iek.([]interface{})
+	if !ok || len(s) == 0 || s[0] == nil {
+		return nil
+	}
 
-	wicRes := iek.([]interface{})[0].(map[string]interface{})
+	wicRes, ok := s[0].(map[string]interface{})
+	if !ok {
+		return nil
+	}
 	return map[string]interface{}{
 		"identity":                   wicRes["identity"].(string),
 		"identityCertificateEnabled": wicRes["identity_certificate_enabled"].(bool),
@@ -1462,7 +1469,7 @@ func expandWorkloadIdentityConfig(d tpgresource.TerraformResourceData) map[strin
 }
 
 func flattenWorkloadIdentityConfig(v map[string]interface{}) []map[string]interface{} {
-	if v == nil {
+	if len(v) == 0 {
 		return nil
 	}
 	return []map[string]interface{}{

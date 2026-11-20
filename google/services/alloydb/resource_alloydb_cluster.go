@@ -53,6 +53,13 @@ import (
 	"google.golang.org/api/googleapi"
 )
 
+// alloydbClusterExpressConfigCustomizeDiff forces a new cluster when express_config.0.enabled
+// changes from false to true. AlloyDB can upgrade an Express cluster to a standard cluster in
+// place, but it can't convert a standard cluster to an Express cluster.
+func alloydbClusterExpressConfigCustomizeDiff(_ context.Context, diff *schema.ResourceDiff, meta interface{}) error {
+	return nil
+}
+
 var (
 	_ = bytes.Clone
 	_ = context.WithCancel
@@ -111,6 +118,7 @@ func ResourceAlloydbCluster() *schema.Resource {
 		},
 
 		CustomizeDiff: customdiff.All(
+			alloydbClusterExpressConfigCustomizeDiff,
 			tpgresource.SetLabelsDiff,
 			tpgresource.SetAnnotationsDiff,
 			tpgresource.DefaultProviderProject,

@@ -34,7 +34,7 @@ import (
 	_ "github.com/hashicorp/terraform-provider-google/google/services/compute"
 	_ "github.com/hashicorp/terraform-provider-google/google/services/dns"
 	"github.com/hashicorp/terraform-provider-google/google/services/networkservices"
-	_ "github.com/hashicorp/terraform-provider-google/google/services/resourcemanager"
+	"github.com/hashicorp/terraform-provider-google/google/services/resourcemanager"
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
 	transport_tpg "github.com/hashicorp/terraform-provider-google/google/transport"
 
@@ -59,6 +59,16 @@ var (
 
 func TestAccNetworkServicesAgentGateway_networkServicesAgentGatewayFullExample(t *testing.T) {
 	t.Parallel()
+	resourcemanager.BootstrapIamMembers(t, []resourcemanager.IamMember{
+		{
+			Member: "serviceAccount:service-{project_number}@gcp-sa-agentgateway.iam.gserviceaccount.com",
+			Role:   "roles/compute.networkViewer",
+		},
+		{
+			Member: "serviceAccount:service-{project_number}@gcp-sa-agentgateway.iam.gserviceaccount.com",
+			Role:   "roles/dns.reader",
+		},
+	})
 
 	randomSuffix := acctest.RandString(t, 10)
 
@@ -187,6 +197,16 @@ resource "google_dns_managed_zone" "default" {
 
 func TestAccNetworkServicesAgentGateway_networkServicesAgentGatewayDnsPeeringExample(t *testing.T) {
 	t.Parallel()
+	resourcemanager.BootstrapIamMembers(t, []resourcemanager.IamMember{
+		{
+			Member: "serviceAccount:service-{project_number}@gcp-sa-agentgateway.iam.gserviceaccount.com",
+			Role:   "roles/compute.networkViewer",
+		},
+		{
+			Member: "serviceAccount:service-{project_number}@gcp-sa-agentgateway.iam.gserviceaccount.com",
+			Role:   "roles/dns.reader",
+		},
+	})
 
 	randomSuffix := acctest.RandString(t, 10)
 

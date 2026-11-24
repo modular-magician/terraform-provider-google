@@ -1311,14 +1311,24 @@ be from 0 to 999,999,999 inclusive.`,
 						"identity": {
 							Type:        schema.TypeString,
 							Optional:    true,
+							Computed:    true,
 							ForceNew:    true,
 							Description: `Identity SPIFFE id.`,
 						},
 						"identity_certificate_enabled": {
 							Type:        schema.TypeBool,
 							Optional:    true,
+							Computed:    true,
 							ForceNew:    true,
 							Description: `Specifies whether identity certificates are enabled.`,
+						},
+						"identity_type": {
+							Type:         schema.TypeString,
+							Optional:     true,
+							Computed:     true,
+							ForceNew:     true,
+							ValidateFunc: verify.ValidateEnum([]string{"IDENTITY_TYPE_UNSPECIFIED", "SERVICE_ACCOUNT", "AGENT_IDENTITY", ""}),
+							Description:  `The type of identity to use. Possible values: ["IDENTITY_TYPE_UNSPECIFIED", "SERVICE_ACCOUNT", "AGENT_IDENTITY"]`,
 						},
 					},
 				},
@@ -1712,12 +1722,6 @@ func resourceComputeInstanceTemplateCreate(d *schema.ResourceData, meta interfac
 		ReservationAffinity:      reservationAffinity,
 		KeyRevocationActionType:  d.Get("key_revocation_action_type").(string),
 	}
-	if wic := expandWorkloadIdentityConfig(d); wic != nil {
-		instanceProperties.WorkloadIdentityConfig = &compute.WorkloadIdentityConfig{
-			Identity:                   wic["identity"].(string),
-			IdentityCertificateEnabled: wic["identityCertificateEnabled"].(bool),
-		}
-	}
 	if cic := expandConfidentialInstanceConfig(d); cic != nil {
 		instanceProperties.ConfidentialInstanceConfig = &compute.ConfidentialInstanceConfig{
 			EnableConfidentialCompute: cic["enableConfidentialCompute"].(bool),
@@ -1767,6 +1771,9 @@ func resourceComputeInstanceTemplateCreate(d *schema.ResourceData, meta interfac
 	}
 	if props, ok := itBody["properties"].(map[string]interface{}); ok {
 		props["metadata"] = metadataMap
+		if wic := expandWorkloadIdentityConfig(d); wic != nil {
+			props["workloadIdentityConfig"] = wic
+		}
 	}
 
 	url, err := tpgresource.ReplaceVars(d, config, "{{ComputeBasePath}}projects/{{project}}/global/instanceTemplates")
@@ -1774,12 +1781,13 @@ func resourceComputeInstanceTemplateCreate(d *schema.ResourceData, meta interfac
 		return err
 	}
 	op, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-		Config:    config,
-		Method:    "POST",
-		Project:   project,
-		RawURL:    url,
-		UserAgent: userAgent,
-		Body:      itBody,
+		Config:     config,
+		Method:     "POST",
+		Project:    project,
+		RawURL:     url,
+		UserAgent:  userAgent,
+		Body:       itBody,
+		ApiVersion: "2026-11-01",
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating instance template: %s", err)
@@ -1915,11 +1923,12 @@ func resourceComputeInstanceTemplateRead(d *schema.ResourceData, meta interface{
 	}
 	url := fmt.Sprintf("%s/%s", baseUrl, splits[len(splits)-1])
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-		Config:    config,
-		Method:    "GET",
-		Project:   project,
-		RawURL:    url,
-		UserAgent: userAgent,
+		Config:     config,
+		Method:     "GET",
+		Project:    project,
+		RawURL:     url,
+		UserAgent:  userAgent,
+		ApiVersion: "2026-11-01",
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("Instance Template %q", d.Get("name").(string)))
@@ -2148,12 +2157,16 @@ func resourceComputeInstanceTemplateRead(d *schema.ResourceData, meta interface{
 		}
 	}
 
-	if instanceTemplate.Properties.WorkloadIdentityConfig != nil {
-		wicMap, convErr := tpgresource.ConvertToMap(instanceTemplate.Properties.WorkloadIdentityConfig)
-		if convErr != nil {
-			return fmt.Errorf("Error converting workload_identity_config: %s", convErr)
+	var wicMap map[string]interface{}
+	if props, ok := res["properties"].(map[string]interface{}); ok {
+		wicMap, _ = props["workloadIdentityConfig"].(map[string]interface{})
+	}
+	if len(wicMap) > 0 {
+		if err = d.Set("workload_identity_config", flattenInstanceWorkloadIdentityConfig(wicMap)); err != nil {
+			return fmt.Errorf("Error setting workload_identity_config: %s", err)
 		}
-		if err = d.Set("workload_identity_config", flattenWorkloadIdentityConfig(wicMap)); err != nil {
+	} else {
+		if err = d.Set("workload_identity_config", nil); err != nil {
 			return fmt.Errorf("Error setting workload_identity_config: %s", err)
 		}
 	}

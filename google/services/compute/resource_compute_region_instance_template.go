@@ -1274,14 +1274,24 @@ be from 0 to 999,999,999 inclusive.`,
 						"identity": {
 							Type:        schema.TypeString,
 							Optional:    true,
+							Computed:    true,
 							ForceNew:    true,
 							Description: `Identity SPIFFE id.`,
 						},
 						"identity_certificate_enabled": {
 							Type:        schema.TypeBool,
 							Optional:    true,
+							Computed:    true,
 							ForceNew:    true,
 							Description: `Specifies whether identity certificates are enabled.`,
+						},
+						"identity_type": {
+							Type:         schema.TypeString,
+							Optional:     true,
+							Computed:     true,
+							ForceNew:     true,
+							ValidateFunc: verify.ValidateEnum([]string{"IDENTITY_TYPE_UNSPECIFIED", "SERVICE_ACCOUNT", "AGENT_IDENTITY", ""}),
+							Description:  `The type of identity to use. Possible values: ["IDENTITY_TYPE_UNSPECIFIED", "SERVICE_ACCOUNT", "AGENT_IDENTITY"]`,
 						},
 					},
 				},
@@ -1434,13 +1444,14 @@ func resourceComputeRegionInstanceTemplateCreate(d *schema.ResourceData, meta in
 	}
 
 	op, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-		Config:    config,
-		Method:    "POST",
-		Project:   project,
-		RawURL:    url,
-		UserAgent: userAgent,
-		Body:      instanceTemplate,
-		Timeout:   d.Timeout(schema.TimeoutCreate),
+		Config:     config,
+		Method:     "POST",
+		Project:    project,
+		RawURL:     url,
+		UserAgent:  userAgent,
+		Body:       instanceTemplate,
+		Timeout:    d.Timeout(schema.TimeoutCreate),
+		ApiVersion: "2026-11-01",
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating RegionInstanceTemplate: %s", err)
@@ -1483,11 +1494,12 @@ func resourceComputeRegionInstanceTemplateRead(d *schema.ResourceData, meta inte
 	}
 
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-		Config:    config,
-		Method:    "GET",
-		Project:   project,
-		RawURL:    url,
-		UserAgent: userAgent,
+		Config:     config,
+		Method:     "GET",
+		Project:    project,
+		RawURL:     url,
+		UserAgent:  userAgent,
+		ApiVersion: "2026-11-01",
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("ComputeRegionInstanceTemplate %q", d.Id()))
@@ -1733,6 +1745,10 @@ func resourceComputeRegionInstanceTemplateRead(d *schema.ResourceData, meta inte
 
 	if wic, ok := properties["workloadIdentityConfig"]; ok && wic != nil {
 		if err = d.Set("workload_identity_config", FlattenWorkloadIdentityConfigHTTP(wic)); err != nil {
+			return fmt.Errorf("Error setting workload_identity_config: %s", err)
+		}
+	} else {
+		if err = d.Set("workload_identity_config", nil); err != nil {
 			return fmt.Errorf("Error setting workload_identity_config: %s", err)
 		}
 	}

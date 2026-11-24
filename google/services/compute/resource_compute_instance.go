@@ -195,11 +195,6 @@ var (
 		"shielded_instance_config.0.enable_vtpm",
 		"shielded_instance_config.0.enable_integrity_monitoring",
 	}
-
-	workloadIdentityConfigKeys = []string{
-		"workload_identity_config.0.identity",
-		"workload_identity_config.0.identity_certificate_enabled",
-	}
 )
 
 // This checks if the project provided in subnetwork's self_link matches
@@ -239,6 +234,12 @@ func ValidateSubnetworkProjectFunc(d tpgresource.TerraformResourceDiff) error {
 func forceNewIfNetworkIPNotUpdatable(ctx context.Context, d *schema.ResourceDiff, meta interface{}) error {
 	// separate func to allow unit testing
 	return forceNewIfNetworkIPNotUpdatableFunc(d)
+}
+
+func workloadIdentityConfigForceNewCustomDiff() schema.CustomizeDiffFunc {
+	return customdiff.ForceNewIf("workload_identity_config", func(_ context.Context, d *schema.ResourceDiff, meta interface{}) bool {
+		return d.Id() != "" && d.HasChange("workload_identity_config")
+	})
 }
 
 func forceNewIfNetworkIPNotUpdatableFunc(d tpgresource.TerraformResourceDiff) error {
@@ -1736,14 +1737,24 @@ be from 0 to 999,999,999 inclusive.`,
 						"identity": {
 							Type:        schema.TypeString,
 							Optional:    true,
+							Computed:    true,
 							ForceNew:    true,
 							Description: `Identity SPIFFE id.`,
 						},
 						"identity_certificate_enabled": {
 							Type:        schema.TypeBool,
 							Optional:    true,
+							Computed:    true,
 							ForceNew:    true,
 							Description: `Specifies whether identity certificates are enabled.`,
+						},
+						"identity_type": {
+							Type:         schema.TypeString,
+							Optional:     true,
+							Computed:     true,
+							ForceNew:     true,
+							ValidateFunc: verify.ValidateEnum([]string{"IDENTITY_TYPE_UNSPECIFIED", "SERVICE_ACCOUNT", "AGENT_IDENTITY", ""}),
+							Description:  `The type of identity to use. Possible values: ["IDENTITY_TYPE_UNSPECIFIED", "SERVICE_ACCOUNT", "AGENT_IDENTITY"]`,
 						},
 					},
 				},
@@ -1769,6 +1780,7 @@ be from 0 to 999,999,999 inclusive.`,
 			customdiff.ForceNewIf("boot_disk.0.initialize_params.0.provisioned_iops", func(_ context.Context, d *schema.ResourceDiff, meta interface{}) bool {
 				return d.HasChange("boot_disk.0.initialize_params.0.provisioned_iops") && !strings.Contains(d.Get("boot_disk.0.initialize_params.0.type").(string), "hyperdisk")
 			}),
+			workloadIdentityConfigForceNewCustomDiff(),
 			validateSubnetworkProject,
 			forceNewIfNetworkIPNotUpdatable,
 			tpgresource.SetLabelsDiff,
@@ -1791,11 +1803,12 @@ func getInstance(config *transport_tpg.Config, d *schema.ResourceData) (map[stri
 		return nil, err
 	}
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-		Config:    config,
-		Method:    "GET",
-		Project:   project,
-		RawURL:    url,
-		UserAgent: userAgent,
+		Config:     config,
+		Method:     "GET",
+		Project:    project,
+		RawURL:     url,
+		UserAgent:  userAgent,
+		ApiVersion: "2026-11-01",
 	})
 	if err != nil {
 		return nil, transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("Instance %s", d.Get("name").(string)))
@@ -2128,12 +2141,13 @@ func resourceComputeInstanceCreate(d *schema.ResourceData, meta interface{}) err
 		return fmt.Errorf("Error generating URL: %s", err)
 	}
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-		Config:    config,
-		Method:    "POST",
-		Project:   project,
-		RawURL:    insertUrl,
-		UserAgent: userAgent,
-		Body:      instanceBody,
+		Config:     config,
+		Method:     "POST",
+		Project:    project,
+		RawURL:     insertUrl,
+		UserAgent:  userAgent,
+		Body:       instanceBody,
+		ApiVersion: "2026-11-01",
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating instance: %s", err)
@@ -2547,6 +2561,20 @@ func populateComputeInstanceResourceData(d *schema.ResourceData, instance map[st
 	if err := d.Set("instance_encryption_key", flattenComputeInstanceEncryptionKey(instanceEncryptionKeyMap)); err != nil {
 		return fmt.Errorf("Error setting instance_encryption_key: %s", err)
 	}
+	if wicMap, ok := instance["workloadIdentityConfig"].(map[string]interface{}); ok && len(wicMap) > 0 {
+		flattenedWic := flattenInstanceWorkloadIdentityConfig(wicMap)
+		// instance_from_template and instance_from_machine_image omit identity_type from their schemas until follow-up PRs land.
+		if d.Get("source_instance_template") != nil || d.Get("source_machine_image") != nil {
+			flattenedWic = flattenWorkloadIdentityConfig(wicMap)
+		}
+		if err := d.Set("workload_identity_config", flattenedWic); err != nil {
+			return fmt.Errorf("Error setting workload_identity_config: %s", err)
+		}
+	} else {
+		if err := d.Set("workload_identity_config", nil); err != nil {
+			return fmt.Errorf("Error setting workload_identity_config: %s", err)
+		}
+	}
 
 	return nil
 }
@@ -2578,11 +2606,12 @@ func resourceComputeInstanceUpdate(d *schema.ResourceData, meta interface{}) err
 		return fmt.Errorf("Error generating instance URL: %s", err)
 	}
 	instanceMap, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-		Config:    config,
-		Method:    "GET",
-		Project:   project,
-		RawURL:    instanceUrl,
-		UserAgent: userAgent,
+		Config:     config,
+		Method:     "GET",
+		Project:    project,
+		RawURL:     instanceUrl,
+		UserAgent:  userAgent,
+		ApiVersion: "2026-11-01",
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("Instance %s", d.Get("name").(string)))
@@ -2596,11 +2625,12 @@ func resourceComputeInstanceUpdate(d *schema.ResourceData, meta interface{}) err
 		err = transport_tpg.Retry(transport_tpg.RetryOptions{
 			RetryFunc: func() error {
 				instMap, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-					Config:    config,
-					Method:    "GET",
-					Project:   project,
-					RawURL:    instanceUrl,
-					UserAgent: userAgent,
+					Config:     config,
+					Method:     "GET",
+					Project:    project,
+					RawURL:     instanceUrl,
+					UserAgent:  userAgent,
+					ApiVersion: "2026-11-01",
 				})
 				if err != nil {
 					return fmt.Errorf("Error retrieving instance: %s", err)
@@ -2611,12 +2641,13 @@ func resourceComputeInstanceUpdate(d *schema.ResourceData, meta interface{}) err
 				stripInitializeParams(instMap)
 
 				res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-					Config:    config,
-					Method:    "PUT",
-					Project:   project,
-					RawURL:    instanceUrl,
-					UserAgent: userAgent,
-					Body:      instMap,
+					Config:     config,
+					Method:     "PUT",
+					Project:    project,
+					RawURL:     instanceUrl,
+					UserAgent:  userAgent,
+					Body:       instMap,
+					ApiVersion: "2026-11-01",
 				})
 				if err != nil {
 					return fmt.Errorf("Error updating instance: %s", err)
@@ -2747,11 +2778,12 @@ func resourceComputeInstanceUpdate(d *schema.ResourceData, meta interface{}) err
 		err = transport_tpg.Retry(transport_tpg.RetryOptions{
 			RetryFunc: func() error {
 				instMap, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-					Config:    config,
-					Method:    "GET",
-					Project:   project,
-					RawURL:    instanceUrl,
-					UserAgent: userAgent,
+					Config:     config,
+					Method:     "GET",
+					Project:    project,
+					RawURL:     instanceUrl,
+					UserAgent:  userAgent,
+					ApiVersion: "2026-11-01",
 				})
 				if err != nil {
 					return fmt.Errorf("Error retrieving instance: %s", err)
@@ -2766,12 +2798,13 @@ func resourceComputeInstanceUpdate(d *schema.ResourceData, meta interface{}) err
 				stripInitializeParams(instMap)
 
 				res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-					Config:    config,
-					Method:    "PUT",
-					Project:   project,
-					RawURL:    instanceUrl,
-					UserAgent: userAgent,
-					Body:      instMap,
+					Config:     config,
+					Method:     "PUT",
+					Project:    project,
+					RawURL:     instanceUrl,
+					UserAgent:  userAgent,
+					Body:       instMap,
+					ApiVersion: "2026-11-01",
 				})
 				if err != nil {
 					return fmt.Errorf("Error updating instance: %s", err)
@@ -3474,11 +3507,12 @@ func resourceComputeInstanceUpdate(d *schema.ResourceData, meta interface{}) err
 		err = transport_tpg.Retry(transport_tpg.RetryOptions{
 			RetryFunc: func() error {
 				instMap, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-					Config:    config,
-					Method:    "GET",
-					Project:   project,
-					RawURL:    instanceUrl,
-					UserAgent: userAgent,
+					Config:     config,
+					Method:     "GET",
+					Project:    project,
+					RawURL:     instanceUrl,
+					UserAgent:  userAgent,
+					ApiVersion: "2026-11-01",
 				})
 				if err != nil {
 					return fmt.Errorf("Error retrieving instance: %s", err)
@@ -3489,12 +3523,13 @@ func resourceComputeInstanceUpdate(d *schema.ResourceData, meta interface{}) err
 				stripInitializeParams(instMap)
 
 				res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-					Config:    config,
-					Method:    "PUT",
-					Project:   project,
-					RawURL:    instanceUrl,
-					UserAgent: userAgent,
-					Body:      instMap,
+					Config:     config,
+					Method:     "PUT",
+					Project:    project,
+					RawURL:     instanceUrl,
+					UserAgent:  userAgent,
+					Body:       instMap,
+					ApiVersion: "2026-11-01",
 				})
 				if err != nil {
 					return fmt.Errorf("Error updating instance: %s", err)
@@ -3784,11 +3819,12 @@ func resourceComputeInstanceUpdate(d *schema.ResourceData, meta interface{}) err
 				RetryFunc: func() error {
 					// retrieve up-to-date instance from the API in case several updates hit simultaneously.
 					instMap, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-						Config:    config,
-						Method:    "GET",
-						Project:   project,
-						RawURL:    instanceUrl,
-						UserAgent: userAgent,
+						Config:     config,
+						Method:     "GET",
+						Project:    project,
+						RawURL:     instanceUrl,
+						UserAgent:  userAgent,
+						ApiVersion: "2026-11-01",
 					})
 					if err != nil {
 						return fmt.Errorf("Error retrieving instance: %s", err)
@@ -3799,12 +3835,13 @@ func resourceComputeInstanceUpdate(d *schema.ResourceData, meta interface{}) err
 					stripInitializeParams(instMap)
 
 					res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-						Config:    config,
-						Method:    "PUT",
-						Project:   project,
-						RawURL:    instanceUrl,
-						UserAgent: userAgent,
-						Body:      instMap,
+						Config:     config,
+						Method:     "PUT",
+						Project:    project,
+						RawURL:     instanceUrl,
+						UserAgent:  userAgent,
+						Body:       instMap,
+						ApiVersion: "2026-11-01",
 					})
 					if err != nil {
 						return fmt.Errorf("Error updating instance: %s", err)
@@ -3823,11 +3860,12 @@ func resourceComputeInstanceUpdate(d *schema.ResourceData, meta interface{}) err
 		// refresh the instance to get a new fingerprint
 		if len(updatesToNIWhileStopped) > 0 {
 			freshInstMap, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-				Config:    config,
-				Method:    "GET",
-				Project:   project,
-				RawURL:    instanceUrl,
-				UserAgent: userAgent,
+				Config:     config,
+				Method:     "GET",
+				Project:    project,
+				RawURL:     instanceUrl,
+				UserAgent:  userAgent,
+				ApiVersion: "2026-11-01",
 			})
 			if err != nil {
 				return err

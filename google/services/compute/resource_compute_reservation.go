@@ -276,14 +276,12 @@ instanceProperties field.`,
 						"nanos": {
 							Type:          schema.TypeInt,
 							Optional:      true,
-							ForceNew:      true,
 							Description:   `Number of nanoseconds for the auto-delete duration.`,
 							ConflictsWith: []string{"delete_at_time"},
 						},
 						"seconds": {
 							Type:          schema.TypeString,
 							Optional:      true,
-							ForceNew:      true,
 							Description:   `Number of seconds for the auto-delete duration.`,
 							ConflictsWith: []string{"delete_at_time"},
 						},
@@ -294,7 +292,6 @@ instanceProperties field.`,
 				Type:     schema.TypeString,
 				Computed: true,
 				Optional: true,
-				ForceNew: true,
 				Description: `Absolute time in future when the reservation will be auto-deleted by Compute Engine. Timestamp is represented in RFC3339 text format.
 Cannot be used with delete_after_duration.`,
 				ConflictsWith: []string{"delete_after_duration.0.nanos", "delete_after_duration.0.seconds"},
@@ -336,7 +333,6 @@ and values are in the format tagValues/456.`,
 							Type:         schema.TypeString,
 							Computed:     true,
 							Optional:     true,
-							ForceNew:     true,
 							ValidateFunc: verify.ValidateEnum([]string{"ALLOW_ALL", "DISALLOW_ALL", ""}),
 							Description:  `Sharing config for all Google Cloud services. Possible values: ["ALLOW_ALL", "DISALLOW_ALL"]`,
 						},
@@ -374,7 +370,6 @@ and values are in the format tagValues/456.`,
 							Type:         schema.TypeString,
 							Computed:     true,
 							Optional:     true,
-							ForceNew:     true,
 							ValidateFunc: verify.ValidateEnum([]string{"LOCAL", "SPECIFIC_PROJECTS", ""}),
 							Description:  `Type of sharing for this shared-reservation Possible values: ["LOCAL", "SPECIFIC_PROJECTS"]`,
 						},
@@ -384,7 +379,6 @@ and values are in the format tagValues/456.`,
 			"specific_reservation_required": {
 				Type:     schema.TypeBool,
 				Optional: true,
-				ForceNew: true,
 				Description: `When set to true, only VMs that target this reservation by name can
 consume this reservation. Otherwise, it can be consumed by VMs with
 affinity for any reservation. Defaults to false.`,
@@ -1053,6 +1047,44 @@ func resourceComputeReservationUpdate(d *schema.ResourceData, meta interface{}) 
 	}
 	var clearPatches []reservationPatch
 	var setPatches []reservationPatch
+
+	if d.HasChange("specific_reservation_required") {
+		patchObj := make(map[string]interface{})
+		specificReservationRequiredProp, err := expandComputeReservationSpecificReservationRequired(d.Get("specific_reservation_required"), d, config)
+		if err != nil {
+			return err
+		} else {
+			patchObj["specificReservationRequired"] = specificReservationRequiredProp
+		}
+		p := reservationPatch{
+			paths: []string{"specificReservationRequired"},
+			body:  patchObj,
+		}
+		if len(patchObj) == 0 {
+			clearPatches = append(clearPatches, p)
+		} else {
+			setPatches = append(setPatches, p)
+		}
+	}
+
+	if d.HasChange("delete_at_time") {
+		patchObj := make(map[string]interface{})
+		deleteAtTimeProp, err := expandComputeReservationDeleteAtTime(d.Get("delete_at_time"), d, config)
+		if err != nil {
+			return err
+		} else if v, ok := d.GetOkExists("delete_at_time"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, deleteAtTimeProp)) {
+			patchObj["deleteAtTime"] = deleteAtTimeProp
+		}
+		p := reservationPatch{
+			paths: []string{"deleteAtTime"},
+			body:  patchObj,
+		}
+		if len(patchObj) == 0 {
+			clearPatches = append(clearPatches, p)
+		} else {
+			setPatches = append(setPatches, p)
+		}
+	}
 
 	if d.HasChange("delete_after_duration") {
 		patchObj := make(map[string]interface{})
